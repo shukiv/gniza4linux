@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-REPO_URL="ssh://git@git.linux-hosting.co.il:2222/shukivaknin/gniza4linux.git"
+REPO_URL="https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git"
 
-# Colors
-if [[ -t 1 ]]; then
-    C_GREEN=$'\033[0;32m'
-    C_RED=$'\033[0;31m'
-    C_YELLOW=$'\033[0;33m'
-    C_BOLD=$'\033[1m'
-    C_RESET=$'\033[0m'
-else
-    C_GREEN="" C_RED="" C_YELLOW="" C_BOLD="" C_RESET=""
-fi
+# Colors — force enable when piped (curl | bash), since output still goes to terminal
+C_GREEN=$'\033[0;32m'
+C_RED=$'\033[0;31m'
+C_YELLOW=$'\033[0;33m'
+C_BOLD=$'\033[1m'
+C_RESET=$'\033[0m'
 
 info()  { echo "${C_GREEN}[INFO]${C_RESET} $*"; }
 warn()  { echo "${C_YELLOW}[WARN]${C_RESET} $*" >&2; }
@@ -43,12 +39,16 @@ echo ""
 # ── Determine source ────────────────────────────────────────
 SOURCE_DIR=""
 
-# Check if running from a local clone
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$SCRIPT_DIR/../lib/constants.sh" && -f "$SCRIPT_DIR/../bin/gniza" ]]; then
-    SOURCE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-    info "Installing from local clone: $SOURCE_DIR"
-else
+# Check if running from a local clone (won't work when piped via curl)
+if [[ -n "${BASH_SOURCE[0]:-}" && "${BASH_SOURCE[0]}" != "bash" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || true
+    if [[ -n "${SCRIPT_DIR:-}" && -f "$SCRIPT_DIR/../lib/constants.sh" && -f "$SCRIPT_DIR/../bin/gniza" ]]; then
+        SOURCE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+        info "Installing from local clone: $SOURCE_DIR"
+    fi
+fi
+
+if [[ -z "$SOURCE_DIR" ]]; then
     # Clone from git
     if ! command -v git &>/dev/null; then
         die "git is required to install gniza4linux (or run from a local clone)"

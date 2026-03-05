@@ -41,10 +41,26 @@ A generic Linux backup tool with a Whiptail TUI and CLI interface. Define named 
 
 ## Installation
 
+### One-liner (root)
+
 ```bash
-git clone ssh://git@git.linux-hosting.co.il:2222/shukivaknin/gniza4linux.git
+curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
+```
+
+### One-liner (user mode)
+
+```bash
+curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | bash
+```
+
+### From source
+
+```bash
+git clone https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git
 cd gniza4linux
-bash scripts/install.sh
+sudo bash scripts/install.sh    # root mode
+# or
+bash scripts/install.sh          # user mode
 ```
 
 Root mode installs to `/usr/local/gniza`. User mode installs to `~/.local/share/gniza`.

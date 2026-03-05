@@ -1,0 +1,445 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ── Resolve GNIZA_DIR ────────────────────────────────────────
+GNIZA_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+export GNIZA_DIR
+
+# ── Source libraries in dependency order ─────────────────────
+source "$GNIZA_DIR/lib/constants.sh"
+source "$GNIZA_DIR/lib/utils.sh"
+detect_mode
+source "$GNIZA_DIR/lib/logging.sh"
+source "$GNIZA_DIR/lib/config.sh"
+source "$GNIZA_DIR/lib/locking.sh"
+source "$GNIZA_DIR/lib/targets.sh"
+source "$GNIZA_DIR/lib/remotes.sh"
+source "$GNIZA_DIR/lib/backup.sh"
+source "$GNIZA_DIR/lib/restore.sh"
+source "$GNIZA_DIR/lib/retention.sh"
+source "$GNIZA_DIR/lib/verify.sh"
+source "$GNIZA_DIR/lib/schedule.sh"
+source "$GNIZA_DIR/lib/notify.sh"
+source "$GNIZA_DIR/lib/ssh.sh"
+source "$GNIZA_DIR/lib/rclone.sh"
+source "$GNIZA_DIR/lib/snapshot.sh"
+source "$GNIZA_DIR/lib/transfer.sh"
+source "$GNIZA_DIR/lib/ui_common.sh"
+source "$GNIZA_DIR/lib/ui_main.sh"
+source "$GNIZA_DIR/lib/ui_targets.sh"
+source "$GNIZA_DIR/lib/ui_remotes.sh"
+source "$GNIZA_DIR/lib/ui_backup.sh"
+source "$GNIZA_DIR/lib/ui_restore.sh"
+source "$GNIZA_DIR/lib/ui_snapshots.sh"
+source "$GNIZA_DIR/lib/ui_verify.sh"
+source "$GNIZA_DIR/lib/ui_retention.sh"
+source "$GNIZA_DIR/lib/ui_logs.sh"
+source "$GNIZA_DIR/lib/ui_schedule.sh"
+source "$GNIZA_DIR/lib/ui_settings.sh"
+
+# ── ASCII Logo ───────────────────────────────────────────────
+show_logo() {
+    echo "${C_GREEN}"
+    cat <<'LOGO'
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓          ▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓          ▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓          ▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+               ▓▓▓▓▓▓▓
+                ▓▓▓▓▓
+                  ▓▓
+LOGO
+    echo "${C_RESET}"
+    echo "  gniza v${GNIZA4LINUX_VERSION} - Linux Backup Manager"
+    echo ""
+}
+
+# ── Help ─────────────────────────────────────────────────────
+show_help() {
+    cat <<EOF
+gniza v${GNIZA4LINUX_VERSION} - Linux Backup Manager
+
+Usage: gniza [OPTIONS] [COMMAND]
+
+Options:
+  --cli             Force CLI mode (no TUI)
+  --debug           Enable debug logging
+  --config=FILE     Override config file path
+  --help            Show this help
+  --version         Show version
+
+Commands:
+  backup            [--target=NAME] [--remote=NAME] [--all]
+  restore           --target=NAME [--snapshot=TS] [--remote=NAME] [--dest=DIR] [--folder=PATH]
+  targets           list|add|delete|show [--name=NAME] [--folders=PATHS]
+  remotes           list|add|delete|show|test [--name=NAME]
+  snapshots         list [--target=NAME] [--remote=NAME]
+  verify            [--target=NAME] [--remote=NAME] [--all]
+  retention         [--target=NAME] [--remote=NAME] [--all]
+  schedule          install|show|remove
+  logs              [--last] [--tail=N]
+  version
+
+If no command is given and whiptail is available, the TUI is launched.
+EOF
+}
+
+# ── CLI argument parsing ─────────────────────────────────────
+FORCE_CLI=false
+CONFIG_FILE=""
+SUBCOMMAND=""
+declare -a SUBCMD_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --cli)
+            FORCE_CLI=true
+            shift
+            ;;
+        --debug)
+            export GNIZA4LINUX_DEBUG="true"
+            shift
+            ;;
+        --config=*)
+            CONFIG_FILE="${1#--config=}"
+            shift
+            ;;
+        --help)
+            show_help
+            exit 0
+            ;;
+        --version)
+            echo "gniza v${GNIZA4LINUX_VERSION}"
+            exit 0
+            ;;
+        -*)
+            # Unknown flags before subcommand are errors
+            die "Unknown option: $1 (see --help)"
+            ;;
+        *)
+            SUBCOMMAND="$1"
+            shift
+            SUBCMD_ARGS=("$@")
+            break
+            ;;
+    esac
+done
+
+# ── Initialise ───────────────────────────────────────────────
+ensure_dirs
+
+# Load config if it exists
+if [[ -n "$CONFIG_FILE" ]]; then
+    load_config "$CONFIG_FILE"
+elif [[ -f "$CONFIG_DIR/gniza.conf" ]]; then
+    load_config
+fi
+
+init_logging
+
+# ── Parse subcommand flags helper ────────────────────────────
+_parse_flag() {
+    local flag="$1"
+    shift
+    local arg
+    for arg in "$@"; do
+        if [[ "$arg" == "${flag}="* ]]; then
+            echo "${arg#"${flag}="}"
+            return 0
+        fi
+    done
+    return 1
+}
+
+_has_flag() {
+    local flag="$1"
+    shift
+    local arg
+    for arg in "$@"; do
+        [[ "$arg" == "$flag" ]] && return 0
+    done
+    return 1
+}
+
+# ── CLI subcommand dispatch ──────────────────────────────────
+run_cli() {
+    case "${SUBCOMMAND:-}" in
+        backup)
+            local target="" remote="" all=false
+            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
+
+            acquire_lock
+            trap release_lock EXIT
+
+            if [[ "$all" == "true" || -z "$target" ]]; then
+                backup_all_targets "$remote"
+            else
+                backup_target "$target" "$remote"
+            fi
+            ;;
+
+        restore)
+            local target="" snapshot="" remote="" dest="" folder=""
+            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            snapshot=$(_parse_flag "--snapshot" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            dest=$(_parse_flag "--dest" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            folder=$(_parse_flag "--folder" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+
+            [[ -z "$target" ]] && die "restore requires --target=NAME"
+
+            if [[ -z "$remote" ]]; then
+                remote=$(list_remotes | head -1)
+                [[ -z "$remote" ]] && die "No remotes configured"
+            fi
+
+            if [[ -n "$folder" ]]; then
+                restore_folder "$target" "$folder" "${snapshot:-latest}" "$remote" "$dest"
+            else
+                restore_target "$target" "${snapshot:-latest}" "$remote" "$dest"
+            fi
+            ;;
+
+        targets)
+            local action="${SUBCMD_ARGS[0]:-list}"
+            local name="" folders=""
+            name=$(_parse_flag "--name" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            folders=$(_parse_flag "--folders" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+
+            case "$action" in
+                list)
+                    local targets; targets=$(list_targets)
+                    if [[ -z "$targets" ]]; then
+                        echo "No targets configured."
+                    else
+                        echo "$targets"
+                    fi
+                    ;;
+                add)
+                    [[ -z "$name" ]] && die "targets add requires --name=NAME"
+                    [[ -z "$folders" ]] && die "targets add requires --folders=PATHS"
+                    create_target "$name" "$folders"
+                    ;;
+                delete)
+                    [[ -z "$name" ]] && die "targets delete requires --name=NAME"
+                    delete_target "$name"
+                    ;;
+                show)
+                    [[ -z "$name" ]] && die "targets show requires --name=NAME"
+                    load_target "$name"
+                    echo "TARGET_NAME=$TARGET_NAME"
+                    echo "TARGET_FOLDERS=$TARGET_FOLDERS"
+                    echo "TARGET_EXCLUDE=$TARGET_EXCLUDE"
+                    echo "TARGET_REMOTE=$TARGET_REMOTE"
+                    echo "TARGET_RETENTION=$TARGET_RETENTION"
+                    echo "TARGET_PRE_HOOK=$TARGET_PRE_HOOK"
+                    echo "TARGET_POST_HOOK=$TARGET_POST_HOOK"
+                    echo "TARGET_ENABLED=$TARGET_ENABLED"
+                    ;;
+                *)
+                    die "Unknown targets action: $action (expected list|add|delete|show)"
+                    ;;
+            esac
+            ;;
+
+        remotes)
+            local action="${SUBCMD_ARGS[0]:-list}"
+            local name=""
+            name=$(_parse_flag "--name" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+
+            case "$action" in
+                list)
+                    local remotes; remotes=$(list_remotes)
+                    if [[ -z "$remotes" ]]; then
+                        echo "No remotes configured."
+                    else
+                        echo "$remotes"
+                    fi
+                    ;;
+                add)
+                    [[ -z "$name" ]] && die "remotes add requires --name=NAME"
+                    echo "Use the TUI or manually create $CONFIG_DIR/remotes.d/${name}.conf"
+                    ;;
+                delete)
+                    [[ -z "$name" ]] && die "remotes delete requires --name=NAME"
+                    local conf="$CONFIG_DIR/remotes.d/${name}.conf"
+                    [[ ! -f "$conf" ]] && die "Remote config not found: $conf"
+                    rm -f "$conf"
+                    log_info "Deleted remote config: $conf"
+                    ;;
+                show)
+                    [[ -z "$name" ]] && die "remotes show requires --name=NAME"
+                    load_remote "$name"
+                    echo "REMOTE_TYPE=$REMOTE_TYPE"
+                    echo "REMOTE_HOST=${REMOTE_HOST:-}"
+                    echo "REMOTE_PORT=$REMOTE_PORT"
+                    echo "REMOTE_USER=$REMOTE_USER"
+                    echo "REMOTE_AUTH_METHOD=$REMOTE_AUTH_METHOD"
+                    echo "REMOTE_BASE=$REMOTE_BASE"
+                    echo "BWLIMIT=$BWLIMIT"
+                    echo "RETENTION_COUNT=$RETENTION_COUNT"
+                    ;;
+                test)
+                    [[ -z "$name" ]] && die "remotes test requires --name=NAME"
+                    validate_remote "$name"
+                    echo "Remote '$name' is valid."
+                    ;;
+                *)
+                    die "Unknown remotes action: $action (expected list|add|delete|show|test)"
+                    ;;
+            esac
+            ;;
+
+        snapshots)
+            local action="${SUBCMD_ARGS[0]:-list}"
+            local target="" remote=""
+            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+
+            case "$action" in
+                list)
+                    if [[ -z "$remote" ]]; then
+                        remote=$(list_remotes | head -1)
+                        [[ -z "$remote" ]] && die "No remotes configured"
+                    fi
+                    _save_remote_globals
+                    load_remote "$remote" || die "Failed to load remote: $remote"
+                    if [[ -n "$target" ]]; then
+                        list_remote_snapshots "$target"
+                    else
+                        local targets; targets=$(list_targets)
+                        while IFS= read -r t; do
+                            [[ -z "$t" ]] && continue
+                            echo "=== $t ==="
+                            list_remote_snapshots "$t" || true
+                        done <<< "$targets"
+                    fi
+                    _restore_remote_globals
+                    ;;
+                *)
+                    die "Unknown snapshots action: $action (expected list)"
+                    ;;
+            esac
+            ;;
+
+        verify)
+            local target="" remote="" all=false
+            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
+
+            if [[ -z "$remote" ]]; then
+                remote=$(list_remotes | head -1)
+                [[ -z "$remote" ]] && die "No remotes configured"
+            fi
+            _save_remote_globals
+            load_remote "$remote" || die "Failed to load remote: $remote"
+
+            if [[ "$all" == "true" || -z "$target" ]]; then
+                verify_all_targets
+            else
+                verify_target_backup "$target"
+            fi
+            _restore_remote_globals
+            ;;
+
+        retention)
+            local target="" remote="" all=false
+            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
+
+            if [[ -z "$remote" ]]; then
+                remote=$(list_remotes | head -1)
+                [[ -z "$remote" ]] && die "No remotes configured"
+            fi
+            _save_remote_globals
+            load_remote "$remote" || die "Failed to load remote: $remote"
+
+            if [[ "$all" == "true" || -z "$target" ]]; then
+                local targets; targets=$(list_targets)
+                while IFS= read -r t; do
+                    [[ -z "$t" ]] && continue
+                    enforce_retention "$t"
+                done <<< "$targets"
+            else
+                enforce_retention "$target"
+            fi
+            _restore_remote_globals
+            ;;
+
+        schedule)
+            local action="${SUBCMD_ARGS[0]:-show}"
+            case "$action" in
+                install) install_schedules ;;
+                show)    show_schedules ;;
+                remove)  remove_schedules ;;
+                *)       die "Unknown schedule action: $action (expected install|show|remove)" ;;
+            esac
+            ;;
+
+        logs)
+            local last=false tail_n=""
+            _has_flag "--last" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && last=true
+            tail_n=$(_parse_flag "--tail" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+
+            local log_dir="${LOG_DIR}"
+            if [[ "$last" == "true" ]]; then
+                local latest; latest=$(ls -t "$log_dir"/gniza-*.log 2>/dev/null | head -1)
+                if [[ -z "$latest" ]]; then
+                    echo "No log files found."
+                else
+                    if [[ -n "$tail_n" ]]; then
+                        tail -n "$tail_n" "$latest"
+                    else
+                        cat "$latest"
+                    fi
+                fi
+            else
+                ls -lt "$log_dir"/gniza-*.log 2>/dev/null || echo "No log files found."
+            fi
+            ;;
+
+        version)
+            echo "gniza v${GNIZA4LINUX_VERSION}"
+            ;;
+
+        "")
+            show_help
+            ;;
+
+        *)
+            die "Unknown command: $SUBCOMMAND (see --help)"
+            ;;
+    esac
+}
+
+# ── Mode selection ───────────────────────────────────────────
+if [[ -n "$SUBCOMMAND" ]]; then
+    # Explicit subcommand: always CLI
+    run_cli
+elif [[ "$FORCE_CLI" == "true" ]]; then
+    run_cli
+elif command -v whiptail &>/dev/null && [[ -t 1 ]]; then
+    # TUI mode
+    show_logo
+    ui_main_menu
+else
+    # Fallback to CLI help
+    run_cli
+fi

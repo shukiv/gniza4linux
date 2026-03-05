@@ -1,0 +1,34 @@
+# gniza — Main Configuration
+# Copy to ~/.config/gniza/gniza.conf (user) or /etc/gniza/gniza.conf (root)
+
+# Backup mode: full or incremental
+BACKUP_MODE="full"
+
+# Default bandwidth limit in KB/s (0 = unlimited)
+BWLIMIT=0
+
+# Default retention: number of snapshots to keep per target
+RETENTION_COUNT=30
+
+# Logging
+LOG_LEVEL="info"
+LOG_RETAIN=90
+
+# Notifications
+NOTIFY_EMAIL=""
+NOTIFY_ON="failure"
+
+# SMTP Settings (leave SMTP_HOST empty to use system mail command)
+SMTP_HOST=""
+SMTP_PORT=587
+SMTP_USER=""
+SMTP_PASSWORD=""
+SMTP_FROM=""
+SMTP_SECURITY="tls"
+
+# SSH defaults
+SSH_TIMEOUT=30
+SSH_RETRIES=3
+
+# Extra rsync options (careful: validated for safe characters)
+RSYNC_EXTRA_OPTS=""

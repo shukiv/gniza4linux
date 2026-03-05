@@ -1,0 +1,20 @@
+# gniza — Schedule Configuration
+# Copy to schedules.d/<name>.conf
+
+# Schedule type: hourly, daily, weekly, monthly, custom
+SCHEDULE="daily"
+
+# Time (HH:MM format, 24h)
+SCHEDULE_TIME="02:00"
+
+# Day: day of week (0-6, 0=Sun) for weekly, day of month (1-28) for monthly
+SCHEDULE_DAY=""
+
+# Custom cron expression (only used when SCHEDULE=custom)
+SCHEDULE_CRON=""
+
+# Comma-separated remote names (empty = all remotes)
+REMOTES=""
+
+# Comma-separated target names (empty = all targets)
+TARGETS=""

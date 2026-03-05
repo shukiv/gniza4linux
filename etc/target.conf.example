@@ -1,0 +1,11 @@
+# gniza — Target Configuration
+# Copy to targets.d/<name>.conf
+
+TARGET_NAME="example"
+TARGET_FOLDERS="/var/www,/etc/nginx"
+TARGET_EXCLUDE=""
+TARGET_REMOTE=""
+TARGET_RETENTION=""
+TARGET_PRE_HOOK=""
+TARGET_POST_HOOK=""
+TARGET_ENABLED="yes"

@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# gniza4linux/lib/logging.sh — Per-run log files, log_info/warn/error/debug
+
+[[ -n "${_GNIZA4LINUX_LOGGING_LOADED:-}" ]] && return 0
+_GNIZA4LINUX_LOGGING_LOADED=1
+
+declare -g LOG_FILE=""
+
+_log_level_num() {
+    case "$1" in
+        debug) echo 0 ;;
+        info)  echo 1 ;;
+        warn)  echo 2 ;;
+        error) echo 3 ;;
+        *)     echo 1 ;;
+    esac
+}
+
+init_logging() {
+    local log_dir="${LOG_DIR:-/var/log/gniza}"
+    mkdir -p "$log_dir" || die "Cannot create log directory: $log_dir"
+
+    LOG_FILE="$log_dir/gniza-$(date -u +%Y%m%d-%H%M%S).log"
+    touch "$LOG_FILE" || die "Cannot write to log file: $LOG_FILE"
+
+    # Clean old logs
+    local retain="${LOG_RETAIN:-$DEFAULT_LOG_RETAIN}"
+    find "$log_dir" -name "gniza-*.log" -mtime +"$retain" -delete 2>/dev/null || true
+}
+
+_log() {
+    local level="$1"; shift
+    local msg="$*"
+
+    local ts; ts=$(date -u +"%d/%m/%Y %H:%M:%S")
+    local upper; upper=$(echo "$level" | tr '[:lower:]' '[:upper:]')
+    local line="[$ts] [$upper] $msg"
+
+    local configured_level="${LOG_LEVEL:-$DEFAULT_LOG_LEVEL}"
+    local level_num; level_num=$(_log_level_num "$level")
+    local configured_num; configured_num=$(_log_level_num "$configured_level")
+
+    # Log file: always write info/warn/error; debug only when LOG_LEVEL=debug
+    if [[ -n "$LOG_FILE" ]]; then
+        if [[ "$level" != "debug" ]] || (( level_num >= configured_num )); then
+            echo "$line" >> "$LOG_FILE"
+        fi
+    fi
+
+    # Console: only print if level meets configured threshold
+    (( level_num < configured_num )) && return 0
+
+    case "$level" in
+        error) echo "${C_RED}${line}${C_RESET}" >&2 ;;
+        warn)  echo "${C_YELLOW}${line}${C_RESET}" >&2 ;;
+        info)  echo "${line}" >&2 ;;
+        debug) echo "${C_BLUE}${line}${C_RESET}" >&2 ;;
+    esac
+}
+
+log_info()  { _log info "$@"; }
+log_warn()  { _log warn "$@"; }
+log_error() { _log error "$@"; }
+log_debug() { _log debug "$@"; }

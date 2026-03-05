@@ -100,7 +100,6 @@ Commands:
   targets           list|add|delete|show [--name=NAME] [--folders=PATHS]
   remotes           list|add|delete|show|test [--name=NAME]
   snapshots         list [--target=NAME] [--remote=NAME]
-  verify            [--target=NAME] [--remote=NAME] [--all]
   retention         [--target=NAME] [--remote=NAME] [--all]
   schedule          install|show|remove
   logs              [--last] [--tail=N]

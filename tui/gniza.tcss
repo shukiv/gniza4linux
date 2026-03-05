@@ -29,8 +29,8 @@ Screen {
 #menu-list {
     width: 1fr;
     max-width: 35;
-    height: auto;
-    margin: 1 2;
+    height: 21;
+    margin: 0 2;
 }
 
 /* Data tables */
@@ -46,7 +46,6 @@ DataTable {
 #schedule-screen,
 #backup-screen,
 #restore-screen,
-#verify-screen,
 #retention-screen,
 #snapshots-screen,
 #targets-screen,
@@ -83,7 +82,6 @@ Select {
 /* Button rows */
 #backup-buttons,
 #restore-buttons,
-#verify-buttons,
 #ret-buttons,
 #targets-buttons,
 #remotes-buttons,
@@ -98,7 +96,6 @@ Select {
 
 #backup-buttons Button,
 #restore-buttons Button,
-#verify-buttons Button,
 #ret-buttons Button,
 #targets-buttons Button,
 #remotes-buttons Button,

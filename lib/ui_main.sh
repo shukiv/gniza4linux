@@ -13,11 +13,10 @@ ui_main_menu() {
             "3" "Targets" \
             "4" "Remotes" \
             "5" "Snapshots" \
-            "6" "Verify" \
-            "7" "Retention" \
-            "8" "Schedules" \
-            "9" "Logs" \
-            "10" "Settings" \
+            "6" "Retention" \
+            "7" "Schedules" \
+            "8" "Logs" \
+            "9" "Settings" \
             "Q" "Quit") || break
 
         case "$choice" in
@@ -26,11 +25,10 @@ ui_main_menu() {
             3)  ui_targets_menu ;;
             4)  ui_remotes_menu ;;
             5)  ui_snapshots_menu ;;
-            6)  ui_verify_menu ;;
-            7)  ui_retention_menu ;;
-            8)  ui_schedule_menu ;;
-            9)  ui_logs_menu ;;
-            10) ui_settings_menu ;;
+            6)  ui_retention_menu ;;
+            7)  ui_schedule_menu ;;
+            8)  ui_logs_menu ;;
+            9)  ui_settings_menu ;;
             Q)  break ;;
         esac
     done

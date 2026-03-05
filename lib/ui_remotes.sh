@@ -98,6 +98,24 @@ _ui_remote_add_ssh() {
     local bwlimit; bwlimit=$(ui_inputbox "SSH Remote" "Bandwidth limit (KB/s, 0=unlimited):" "$DEFAULT_BWLIMIT") || bwlimit="$DEFAULT_BWLIMIT"
     local retention; retention=$(ui_inputbox "SSH Remote" "Retention count:" "$DEFAULT_RETENTION_COUNT") || retention="$DEFAULT_RETENTION_COUNT"
 
+    # Test connection before saving
+    if ui_yesno "Test connection to ${user}@${host}:${port} before saving?"; then
+        local test_result
+        local -a ssh_cmd=(ssh -o BatchMode=yes -o ConnectTimeout=10 -p "$port")
+        if [[ "$auth_method" == "key" && -n "$key" ]]; then
+            ssh_cmd+=(-i "$key")
+        fi
+        ssh_cmd+=("${user}@${host}" "echo OK")
+        if test_result=$("${ssh_cmd[@]}" 2>&1); then
+            ui_msgbox "Connection successful!"
+        else
+            ui_msgbox "Connection failed:\n\n$test_result"
+            if ! ui_yesno "Save remote anyway?"; then
+                return 0
+            fi
+        fi
+    fi
+
     cat > "$conf" <<EOF
 REMOTE_TYPE="ssh"
 REMOTE_HOST="$host"
@@ -122,6 +140,13 @@ _ui_remote_add_local() {
 
     local retention; retention=$(ui_inputbox "Local Remote" "Retention count:" "$DEFAULT_RETENTION_COUNT") || retention="$DEFAULT_RETENTION_COUNT"
 
+    # Test path exists
+    if [[ -d "$base" ]]; then
+        ui_msgbox "Directory '$base' exists and is accessible."
+    else
+        ui_msgbox "Directory '$base' does NOT exist yet.\nIt will be created during the first backup."
+    fi
+
     cat > "$conf" <<EOF
 REMOTE_TYPE="local"
 REMOTE_BASE="$base"
@@ -143,6 +168,23 @@ _ui_remote_add_s3() {
     local secret_key; secret_key=$(ui_password "Secret Access Key:") || secret_key=""
     local base; base=$(ui_inputbox "S3 Remote" "Base path in bucket:" "/backups") || base="/backups"
     local retention; retention=$(ui_inputbox "S3 Remote" "Retention count:" "$DEFAULT_RETENTION_COUNT") || retention="$DEFAULT_RETENTION_COUNT"
+
+    # Test S3 connection before saving
+    if command -v rclone &>/dev/null && ui_yesno "Test S3 connection before saving?"; then
+        # Set globals temporarily for test_rclone_connection
+        REMOTE_TYPE="s3" S3_BUCKET="$bucket" S3_REGION="$region" \
+        S3_ENDPOINT="$endpoint" S3_ACCESS_KEY_ID="$access_key" \
+        S3_SECRET_ACCESS_KEY="$secret_key" REMOTE_BASE="$base"
+        local test_result
+        if test_result=$(test_rclone_connection 2>&1); then
+            ui_msgbox "S3 connection successful!"
+        else
+            ui_msgbox "S3 connection failed:\n\n$test_result"
+            if ! ui_yesno "Save remote anyway?"; then
+                return 0
+            fi
+        fi
+    fi
 
     cat > "$conf" <<EOF
 REMOTE_TYPE="s3"
@@ -167,6 +209,21 @@ _ui_remote_add_gdrive() {
     local folder_id; folder_id=$(ui_inputbox "Google Drive Remote" "Root folder ID:" "") || folder_id=""
     local base; base=$(ui_inputbox "Google Drive Remote" "Base path:" "/backups") || base="/backups"
     local retention; retention=$(ui_inputbox "Google Drive Remote" "Retention count:" "$DEFAULT_RETENTION_COUNT") || retention="$DEFAULT_RETENTION_COUNT"
+
+    # Test GDrive connection before saving
+    if command -v rclone &>/dev/null && ui_yesno "Test Google Drive connection before saving?"; then
+        REMOTE_TYPE="gdrive" GDRIVE_SERVICE_ACCOUNT_FILE="$sa_file" \
+        GDRIVE_ROOT_FOLDER_ID="$folder_id" REMOTE_BASE="$base"
+        local test_result
+        if test_result=$(test_rclone_connection 2>&1); then
+            ui_msgbox "Google Drive connection successful!"
+        else
+            ui_msgbox "Google Drive connection failed:\n\n$test_result"
+            if ! ui_yesno "Save remote anyway?"; then
+                return 0
+            fi
+        fi
+    fi
 
     cat > "$conf" <<EOF
 REMOTE_TYPE="gdrive"

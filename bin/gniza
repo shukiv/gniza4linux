@@ -439,7 +439,7 @@ elif [[ "$FORCE_CLI" == "true" ]]; then
 elif command -v gum &>/dev/null && [[ -t 1 ]]; then
     # TUI mode
     show_logo
-    if ! has_remotes && ! has_targets; then
+    if ! has_remotes || ! has_targets; then
         ui_first_run_wizard
     fi
     ui_main_menu

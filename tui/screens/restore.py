@@ -1,0 +1,110 @@
+from textual.app import ComposeResult
+from textual.screen import Screen
+from textual.widgets import Header, Footer, Static, Button, Select, Input, RadioSet, RadioButton
+from textual.containers import Vertical, Horizontal
+from textual import work
+
+from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
+from tui.backend import run_cli, stream_cli
+from tui.widgets import ConfirmDialog, OperationLog
+
+
+class RestoreScreen(Screen):
+
+    BINDINGS = [("escape", "go_back", "Back")]
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        targets = list_conf_dir("targets.d")
+        remotes = list_conf_dir("remotes.d")
+        with Vertical(id="restore-screen"):
+            yield Static("Restore", id="screen-title")
+            if not targets or not remotes:
+                yield Static("Both targets and remotes must be configured for restore.")
+            else:
+                yield Static("Target:")
+                yield Select([(t, t) for t in targets], id="restore-target", prompt="Select target")
+                yield Static("Remote:")
+                yield Select([(r, r) for r in remotes], id="restore-remote", prompt="Select remote")
+                yield Static("Snapshot:")
+                yield Select([], id="restore-snapshot", prompt="Load snapshots first")
+                yield Button("Load Snapshots", id="btn-load-snaps")
+                yield Static("Restore location:")
+                with RadioSet(id="restore-location"):
+                    yield RadioButton("In-place (original)", value=True)
+                    yield RadioButton("Custom directory")
+                yield Input(placeholder="Destination directory (e.g. /tmp/restore)", id="restore-dest")
+                with Horizontal(id="restore-buttons"):
+                    yield Button("Restore", variant="primary", id="btn-restore")
+                    yield Button("Back", id="btn-back")
+        yield Footer()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-back":
+            self.app.pop_screen()
+        elif event.button.id == "btn-load-snaps":
+            self._load_snapshots()
+        elif event.button.id == "btn-restore":
+            self._start_restore()
+
+    @work
+    async def _load_snapshots(self) -> None:
+        target_sel = self.query_one("#restore-target", Select)
+        remote_sel = self.query_one("#restore-remote", Select)
+        if target_sel.value is Select.BLANK or remote_sel.value is Select.BLANK:
+            self.notify("Select target and remote first", severity="error")
+            return
+        target = str(target_sel.value)
+        remote = str(remote_sel.value)
+        rc, stdout, stderr = await run_cli("snapshots", "list", f"--target={target}", f"--remote={remote}")
+        snap_sel = self.query_one("#restore-snapshot", Select)
+        lines = [l.strip() for l in stdout.splitlines() if l.strip() and not l.startswith("===")]
+        if lines:
+            snap_sel.set_options([(s, s) for s in lines])
+        else:
+            self.notify("No snapshots found", severity="warning")
+
+    def _start_restore(self) -> None:
+        target_sel = self.query_one("#restore-target", Select)
+        remote_sel = self.query_one("#restore-remote", Select)
+        snap_sel = self.query_one("#restore-snapshot", Select)
+        if target_sel.value is Select.BLANK:
+            self.notify("Select a target", severity="error")
+            return
+        if remote_sel.value is Select.BLANK:
+            self.notify("Select a remote", severity="error")
+            return
+        if snap_sel.value is Select.BLANK:
+            self.notify("Select a snapshot", severity="error")
+            return
+        target = str(target_sel.value)
+        remote = str(remote_sel.value)
+        snapshot = str(snap_sel.value)
+        radio = self.query_one("#restore-location", RadioSet)
+        dest_input = self.query_one("#restore-dest", Input)
+        dest = "" if radio.pressed_index == 0 else dest_input.value
+        msg = f"Restore snapshot?\n\nTarget: {target}\nRemote: {remote}\nSnapshot: {snapshot}"
+        if dest:
+            msg += f"\nDestination: {dest}"
+        else:
+            msg += "\nLocation: In-place"
+        self.app.push_screen(
+            ConfirmDialog(msg, "Confirm Restore"),
+            callback=lambda ok: self._do_restore(target, remote, snapshot, dest) if ok else None,
+        )
+
+    @work
+    async def _do_restore(self, target: str, remote: str, snapshot: str, dest: str) -> None:
+        log_screen = OperationLog(f"Restore: {target}")
+        self.app.push_screen(log_screen)
+        args = ["restore", f"--target={target}", f"--remote={remote}", f"--snapshot={snapshot}"]
+        if dest:
+            args.append(f"--dest={dest}")
+        rc = await stream_cli(log_screen.write, *args)
+        if rc == 0:
+            log_screen.write("\n[green]Restore completed successfully.[/green]")
+        else:
+            log_screen.write(f"\n[red]Restore failed (exit code {rc}).[/red]")
+
+    def action_go_back(self) -> None:
+        self.app.pop_screen()

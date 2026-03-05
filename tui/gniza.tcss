@@ -1,0 +1,197 @@
+/* gniza TUI theme */
+
+Screen {
+    background: $surface;
+}
+
+#screen-title {
+    text-style: bold;
+    color: #00cc00;
+    padding: 1 0;
+    text-align: center;
+}
+
+/* Main menu */
+#main-menu {
+    width: 50;
+    padding: 1 2;
+}
+
+#main-menu Button {
+    width: 100%;
+    margin: 0 0 1 0;
+}
+
+#logo {
+    text-align: center;
+    padding: 0 0 1 0;
+}
+
+/* Data tables */
+DataTable {
+    height: 12;
+    margin: 1 0;
+}
+
+/* Form screens */
+#target-edit,
+#remote-edit,
+#settings-screen,
+#schedule-screen,
+#backup-screen,
+#restore-screen,
+#verify-screen,
+#retention-screen,
+#snapshots-screen,
+#targets-screen,
+#remotes-screen,
+#logs-screen {
+    padding: 1 2;
+    overflow-y: auto;
+}
+
+Input {
+    margin: 0 0 1 0;
+}
+
+Select {
+    margin: 0 0 1 0;
+}
+
+/* Button rows */
+#backup-buttons,
+#restore-buttons,
+#verify-buttons,
+#ret-buttons,
+#targets-buttons,
+#remotes-buttons,
+#logs-buttons,
+#sched-buttons,
+#te-buttons,
+#re-buttons,
+#set-buttons {
+    height: auto;
+    margin: 1 0;
+}
+
+#backup-buttons Button,
+#restore-buttons Button,
+#verify-buttons Button,
+#ret-buttons Button,
+#targets-buttons Button,
+#remotes-buttons Button,
+#logs-buttons Button,
+#sched-buttons Button,
+#te-buttons Button,
+#re-buttons Button,
+#set-buttons Button {
+    margin: 0 1 0 0;
+}
+
+/* Dialogs */
+#confirm-dialog {
+    width: 60;
+    height: auto;
+    padding: 2;
+    background: $panel;
+    border: thick $accent;
+}
+
+#cd-title {
+    text-style: bold;
+    color: #00cc00;
+    margin: 0 0 1 0;
+}
+
+#cd-message {
+    margin: 0 0 1 0;
+}
+
+#cd-buttons {
+    height: auto;
+    align: center middle;
+}
+
+#cd-buttons Button {
+    margin: 0 1 0 0;
+}
+
+/* Folder picker */
+#folder-picker {
+    width: 70;
+    height: 30;
+    padding: 1;
+    background: $panel;
+    border: thick $accent;
+}
+
+#fp-title {
+    text-style: bold;
+    color: #00cc00;
+    margin: 0 0 1 0;
+}
+
+#fp-tree {
+    height: 1fr;
+}
+
+#fp-buttons {
+    height: auto;
+    margin: 1 0 0 0;
+}
+
+#fp-buttons Button {
+    margin: 0 1 0 0;
+}
+
+/* Operation log */
+#op-log {
+    width: 80%;
+    height: 80%;
+    padding: 1;
+    background: $panel;
+    border: thick $accent;
+}
+
+#ol-title {
+    text-style: bold;
+    color: #00cc00;
+    margin: 0 0 1 0;
+}
+
+#ol-log {
+    height: 1fr;
+    border: round $accent;
+}
+
+#ol-close {
+    margin: 1 0 0 0;
+}
+
+/* Log viewer */
+#log-viewer {
+    height: 1fr;
+    min-height: 8;
+    border: round $accent;
+    margin: 1 0;
+}
+
+/* Wizard */
+#wizard {
+    width: 60;
+    padding: 2;
+}
+
+#wizard Button {
+    width: 100%;
+    margin: 0 0 1 0;
+}
+
+#wizard-welcome {
+    margin: 0 0 1 0;
+}
+
+/* Switch row */
+Switch {
+    margin: 0 0 1 1;
+}

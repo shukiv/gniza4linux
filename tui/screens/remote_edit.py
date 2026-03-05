@@ -1,0 +1,161 @@
+import re
+from textual.app import ComposeResult
+from textual.screen import Screen
+from textual.widgets import Header, Footer, Static, Button, Input, Select, RadioSet, RadioButton
+from textual.containers import Vertical, Horizontal
+
+from tui.config import parse_conf, write_conf, CONFIG_DIR
+from tui.models import Remote
+
+_NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')
+
+REMOTE_TYPES = [("SSH", "ssh"), ("Local directory", "local"), ("Amazon S3", "s3"), ("Google Drive", "gdrive")]
+
+
+class RemoteEditScreen(Screen):
+
+    BINDINGS = [("escape", "go_back", "Back")]
+
+    def __init__(self, name: str = ""):
+        super().__init__()
+        self._edit_name = name
+        self._is_new = not name
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        title = "Add Remote" if self._is_new else f"Edit Remote: {self._edit_name}"
+        remote = Remote()
+        if not self._is_new:
+            data = parse_conf(CONFIG_DIR / "remotes.d" / f"{self._edit_name}.conf")
+            remote = Remote.from_conf(self._edit_name, data)
+
+        with Vertical(id="remote-edit"):
+            yield Static(title, id="screen-title")
+            if self._is_new:
+                yield Static("Name:")
+                yield Input(value="", placeholder="Remote name", id="re-name")
+            yield Static("Type:")
+            yield Select(
+                REMOTE_TYPES,
+                id="re-type",
+                value=remote.type,
+            )
+            # SSH fields
+            yield Static("Host:", id="lbl-host", classes="ssh-field")
+            yield Input(value=remote.host, placeholder="hostname or IP", id="re-host", classes="ssh-field")
+            yield Static("Port:", id="lbl-port", classes="ssh-field")
+            yield Input(value=remote.port, placeholder="22", id="re-port", classes="ssh-field")
+            yield Static("User:", id="lbl-user", classes="ssh-field")
+            yield Input(value=remote.user, placeholder="root", id="re-user", classes="ssh-field")
+            yield Static("Auth method:", id="lbl-auth", classes="ssh-field")
+            yield Select(
+                [("SSH Key", "key"), ("Password", "password")],
+                id="re-auth",
+                value=remote.auth_method,
+                classes="ssh-field",
+            )
+            yield Static("SSH Key path:", id="lbl-key", classes="ssh-field")
+            yield Input(value=remote.key, placeholder="~/.ssh/id_rsa", id="re-key", classes="ssh-field")
+            yield Static("Password:", id="lbl-password", classes="ssh-field")
+            yield Input(value=remote.password, placeholder="SSH password", password=True, id="re-password", classes="ssh-field")
+            # Common fields
+            yield Static("Base path:")
+            yield Input(value=remote.base, placeholder="/backups", id="re-base")
+            yield Static("Bandwidth limit (KB/s, 0=unlimited):")
+            yield Input(value=remote.bwlimit, placeholder="0", id="re-bwlimit")
+            yield Static("Retention count:")
+            yield Input(value=remote.retention_count, placeholder="30", id="re-retention")
+            # S3 fields
+            yield Static("S3 Bucket:", id="lbl-s3bucket", classes="s3-field")
+            yield Input(value=remote.s3_bucket, placeholder="bucket-name", id="re-s3bucket", classes="s3-field")
+            yield Static("S3 Region:", id="lbl-s3region", classes="s3-field")
+            yield Input(value=remote.s3_region, placeholder="us-east-1", id="re-s3region", classes="s3-field")
+            yield Static("S3 Endpoint:", id="lbl-s3endpoint", classes="s3-field")
+            yield Input(value=remote.s3_endpoint, placeholder="Leave empty for AWS", id="re-s3endpoint", classes="s3-field")
+            yield Static("Access Key ID:", id="lbl-s3key", classes="s3-field")
+            yield Input(value=remote.s3_access_key_id, id="re-s3key", classes="s3-field")
+            yield Static("Secret Access Key:", id="lbl-s3secret", classes="s3-field")
+            yield Input(value=remote.s3_secret_access_key, password=True, id="re-s3secret", classes="s3-field")
+            # GDrive fields
+            yield Static("Service Account JSON:", id="lbl-gdsa", classes="gdrive-field")
+            yield Input(value=remote.gdrive_sa_file, placeholder="/path/to/sa.json", id="re-gdsa", classes="gdrive-field")
+            yield Static("Root Folder ID:", id="lbl-gdfolder", classes="gdrive-field")
+            yield Input(value=remote.gdrive_root_folder_id, id="re-gdfolder", classes="gdrive-field")
+            with Horizontal(id="re-buttons"):
+                yield Button("Save", variant="primary", id="btn-save")
+                yield Button("Cancel", id="btn-cancel")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self._update_field_visibility()
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id == "re-type":
+            self._update_field_visibility()
+
+    def _update_field_visibility(self) -> None:
+        type_sel = self.query_one("#re-type", Select)
+        rtype = str(type_sel.value) if type_sel.value is not Select.BLANK else "ssh"
+        for w in self.query(".ssh-field"):
+            w.display = rtype == "ssh"
+        for w in self.query(".s3-field"):
+            w.display = rtype == "s3"
+        for w in self.query(".gdrive-field"):
+            w.display = rtype == "gdrive"
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-cancel":
+            self.dismiss(None)
+        elif event.button.id == "btn-save":
+            self._save()
+
+    def _save(self) -> None:
+        if self._is_new:
+            name = self.query_one("#re-name", Input).value.strip()
+            if not name:
+                self.notify("Name is required", severity="error")
+                return
+            if not _NAME_RE.match(name):
+                self.notify("Invalid name.", severity="error")
+                return
+            if (CONFIG_DIR / "remotes.d" / f"{name}.conf").exists():
+                self.notify(f"Remote '{name}' already exists.", severity="error")
+                return
+        else:
+            name = self._edit_name
+
+        type_sel = self.query_one("#re-type", Select)
+        rtype = str(type_sel.value) if type_sel.value is not Select.BLANK else "ssh"
+
+        remote = Remote(
+            name=name,
+            type=rtype,
+            host=self.query_one("#re-host", Input).value.strip(),
+            port=self.query_one("#re-port", Input).value.strip() or "22",
+            user=self.query_one("#re-user", Input).value.strip() or "root",
+            auth_method=str(self.query_one("#re-auth", Select).value) if self.query_one("#re-auth", Select).value is not Select.BLANK else "key",
+            key=self.query_one("#re-key", Input).value.strip(),
+            password=self.query_one("#re-password", Input).value,
+            base=self.query_one("#re-base", Input).value.strip() or "/backups",
+            bwlimit=self.query_one("#re-bwlimit", Input).value.strip() or "0",
+            retention_count=self.query_one("#re-retention", Input).value.strip() or "30",
+            s3_bucket=self.query_one("#re-s3bucket", Input).value.strip(),
+            s3_region=self.query_one("#re-s3region", Input).value.strip() or "us-east-1",
+            s3_endpoint=self.query_one("#re-s3endpoint", Input).value.strip(),
+            s3_access_key_id=self.query_one("#re-s3key", Input).value.strip(),
+            s3_secret_access_key=self.query_one("#re-s3secret", Input).value,
+            gdrive_sa_file=self.query_one("#re-gdsa", Input).value.strip(),
+            gdrive_root_folder_id=self.query_one("#re-gdfolder", Input).value.strip(),
+        )
+
+        if rtype == "ssh" and not remote.host:
+            self.notify("Host is required for SSH remotes", severity="error")
+            return
+
+        conf = CONFIG_DIR / "remotes.d" / f"{name}.conf"
+        write_conf(conf, remote.to_conf())
+        self.notify(f"Remote '{name}' saved.")
+        self.dismiss(name)
+
+    def action_go_back(self) -> None:
+        self.dismiss(None)

@@ -41,7 +41,7 @@ ui_targets_menu() {
 
 ui_target_add() {
     local name
-    name=$(ui_inputbox "Add Target" "Enter target name (letters, digits, _ -):" "") || return 0
+    name=$(ui_inputbox "Add Target" "Enter target name (letters, digits, _ -). A folder browser will open next:" "") || return 0
     [[ -z "$name" ]] && return 0
 
     if ! validate_target_name "$name" 2>/dev/null; then

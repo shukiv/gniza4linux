@@ -5,6 +5,9 @@ set -euo pipefail
 GNIZA_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 export GNIZA_DIR
 
+# Add bundled binaries (gum) to PATH if present
+[[ -d "$GNIZA_DIR/bin" ]] && export PATH="$GNIZA_DIR/bin:$PATH"
+
 # ── Source libraries in dependency order ─────────────────────
 source "$GNIZA_DIR/lib/constants.sh"
 source "$GNIZA_DIR/lib/utils.sh"

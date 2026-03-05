@@ -65,7 +65,9 @@ Root mode installs to `/usr/local/gniza`. User mode installs to `~/.local/share/
 ### Dependencies
 
 - **Required**: bash 4+, rsync
-- **Optional**: ssh, [gum](https://github.com/charmbracelet/gum) (TUI), curl (SMTP notifications), rclone (S3/GDrive)
+- **Optional**: ssh, curl (SMTP notifications), rclone (S3/GDrive)
+
+> **Note**: [gum](https://github.com/charmbracelet/gum) (TUI engine) is automatically downloaded during installation.
 
 ## Quick Start
 

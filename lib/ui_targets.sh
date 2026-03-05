@@ -152,6 +152,8 @@ ui_target_folder_picker() {
                 path=$(gum file --directory --header "Select folder to back up" \
                     --cursor.foreground "$_GUM_ACCENT" --height 15 /) || continue
                 [[ -z "$path" ]] && continue
+                # gum file returns path relative to start dir — make absolute
+                [[ "$path" != /* ]] && path="/$path"
                 # Avoid duplicates
                 local dup=false
                 for f in "${folders[@]}"; do

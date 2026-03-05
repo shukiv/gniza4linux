@@ -132,6 +132,10 @@ cp -r "$SOURCE_DIR/bin"  "$INSTALL_DIR/"
 cp -r "$SOURCE_DIR/lib"  "$INSTALL_DIR/"
 cp -r "$SOURCE_DIR/etc"  "$INSTALL_DIR/"
 
+if [[ -d "$SOURCE_DIR/tui" ]]; then
+    cp -r "$SOURCE_DIR/tui" "$INSTALL_DIR/"
+fi
+
 if [[ -d "$SOURCE_DIR/scripts" ]]; then
     cp -r "$SOURCE_DIR/scripts" "$INSTALL_DIR/"
 fi
@@ -142,6 +146,21 @@ fi
 
 # Make entrypoint executable
 chmod +x "$INSTALL_DIR/bin/gniza"
+
+# ── Install Python TUI dependencies ─────────────────────────
+if command -v python3 &>/dev/null; then
+    info "Installing Python TUI dependencies (textual, textual-serve)..."
+    if python3 -m pip install --break-system-packages textual textual-serve 2>/dev/null; then
+        info "Python TUI dependencies installed."
+    elif python3 -m pip install textual textual-serve 2>/dev/null; then
+        info "Python TUI dependencies installed."
+    else
+        warn "Could not install Python TUI dependencies. TUI/web mode may not work."
+        warn "Install manually: pip3 install textual textual-serve"
+    fi
+else
+    warn "python3 not found. TUI mode will not be available."
+fi
 
 # ── Create symlink ───────────────────────────────────────────
 info "Creating symlink: $BIN_LINK -> $INSTALL_DIR/bin/gniza"

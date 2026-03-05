@@ -431,7 +431,10 @@ run_cli() {
 }
 
 # ── Mode selection ───────────────────────────────────────────
-if [[ -n "$SUBCOMMAND" ]]; then
+if [[ "$SUBCOMMAND" == "web" || " $* " == *" --web "* ]]; then
+    # Web GUI mode
+    PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m tui --web "$@"
+elif [[ -n "$SUBCOMMAND" ]]; then
     # Explicit subcommand: always CLI
     run_cli
 elif [[ "$FORCE_CLI" == "true" ]]; then

@@ -15,9 +15,9 @@ def main():
         for i, arg in enumerate(sys.argv):
             if arg == "--port" and i + 1 < len(sys.argv):
                 port = int(sys.argv[i + 1])
-        env_path = f"{_PROJECT_ROOT}:{os.environ.get('PYTHONPATH', '')}"
-        cmd = f"PYTHONPATH={env_path} GNIZA_DIR={_PROJECT_ROOT} python3 -m tui"
-        server = Server(cmd, host="0.0.0.0", port=port)
+        os.environ["PYTHONPATH"] = f"{_PROJECT_ROOT}:{os.environ.get('PYTHONPATH', '')}"
+        os.environ["GNIZA_DIR"] = _PROJECT_ROOT
+        server = Server("python3 -m tui", host="0.0.0.0", port=port, title="gniza")
         server.serve()
     else:
         app = GnizaApp()

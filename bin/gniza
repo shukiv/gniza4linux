@@ -36,6 +36,7 @@ source "$GNIZA_DIR/lib/ui_retention.sh"
 source "$GNIZA_DIR/lib/ui_logs.sh"
 source "$GNIZA_DIR/lib/ui_schedule.sh"
 source "$GNIZA_DIR/lib/ui_settings.sh"
+source "$GNIZA_DIR/lib/ui_wizard.sh"
 
 # ── ASCII Logo ───────────────────────────────────────────────
 show_logo() {
@@ -438,6 +439,9 @@ elif [[ "$FORCE_CLI" == "true" ]]; then
 elif command -v whiptail &>/dev/null && [[ -t 1 ]]; then
     # TUI mode
     show_logo
+    if ! has_remotes && ! has_targets; then
+        ui_first_run_wizard
+    fi
     ui_main_menu
 else
     # Fallback to CLI help

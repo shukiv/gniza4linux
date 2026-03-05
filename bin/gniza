@@ -436,8 +436,11 @@ if [[ -n "$SUBCOMMAND" ]]; then
     run_cli
 elif [[ "$FORCE_CLI" == "true" ]]; then
     run_cli
+elif python3 -c "import textual" 2>/dev/null && [[ -t 1 ]]; then
+    # Python Textual TUI mode
+    PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m tui "$@"
 elif command -v gum &>/dev/null && [[ -t 1 ]]; then
-    # TUI mode
+    # Legacy gum TUI mode
     show_logo
     if ! has_remotes || ! has_targets; then
         ui_first_run_wizard

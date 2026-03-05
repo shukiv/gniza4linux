@@ -132,27 +132,36 @@ ui_target_folder_picker() {
         IFS=',' read -ra folders <<< "$existing"
     fi
 
+    # If no existing folders, open file browser immediately
+    if [[ ${#folders[@]} -eq 0 ]]; then
+        local path
+        path=$(gum file --directory --header "Select folder to back up (Esc when done)" \
+            --cursor.foreground "$_GUM_ACCENT" --height 15 /) || return 1
+        [[ -z "$path" ]] && return 1
+        [[ "$path" != /* ]] && path="/$path"
+        folders+=("$path")
+    fi
+
     while true; do
-        local -a items=()
-        local i=1
-        for f in "${folders[@]}"; do
-            items+=("$i" "$f")
-            ((i++))
+        # Show current selection and options
+        local selected_list=""
+        local i
+        for i in "${!folders[@]}"; do
+            selected_list+="  $(( i + 1 )). ${folders[$i]}\n"
         done
-        items+=("ADD" "Browse & add folder")
-        [[ ${#folders[@]} -gt 0 ]] && items+=("REMOVE" "Remove folder")
-        items+=("DONE" "Finish selection")
 
-        local choice
-        choice=$(ui_menu "Folder Picker (${#folders[@]} selected)" "${items[@]}") || return 1
+        local action
+        action=$(ui_menu "Selected folders:\n${selected_list}" \
+            "ADD" "Add another folder" \
+            "REMOVE" "Remove a folder" \
+            "DONE" "Done — use these ${#folders[@]} folder(s)") || return 1
 
-        case "$choice" in
+        case "$action" in
             ADD)
                 local path
                 path=$(gum file --directory --header "Select folder to back up" \
                     --cursor.foreground "$_GUM_ACCENT" --height 15 /) || continue
                 [[ -z "$path" ]] && continue
-                # gum file returns path relative to start dir — make absolute
                 [[ "$path" != /* ]] && path="/$path"
                 # Avoid duplicates
                 local dup=false
@@ -173,9 +182,18 @@ ui_target_folder_picker() {
                     ((j++))
                 done
                 local idx
-                idx=$(ui_menu "Remove Folder" "${rm_items[@]}") || continue
+                idx=$(ui_menu "Remove which folder?" "${rm_items[@]}") || continue
                 unset 'folders[idx]'
                 folders=("${folders[@]}")
+                if [[ ${#folders[@]} -eq 0 ]]; then
+                    ui_msgbox "All folders removed. Please select at least one."
+                    local path
+                    path=$(gum file --directory --header "Select folder to back up" \
+                        --cursor.foreground "$_GUM_ACCENT" --height 15 /) || return 1
+                    [[ -z "$path" ]] && return 1
+                    [[ "$path" != /* ]] && path="/$path"
+                    folders+=("$path")
+                fi
                 ;;
             DONE)
                 local result

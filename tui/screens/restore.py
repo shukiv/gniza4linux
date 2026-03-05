@@ -6,7 +6,7 @@ from textual import work, on
 
 from tui.config import list_conf_dir
 from tui.backend import run_cli, stream_cli
-from tui.widgets import ConfirmDialog, OperationLog
+from tui.widgets import ConfirmDialog, OperationLog, FolderPicker
 
 
 class RestoreScreen(Screen):
@@ -32,7 +32,9 @@ class RestoreScreen(Screen):
                 with RadioSet(id="restore-location"):
                     yield RadioButton("In-place (original)", value=True)
                     yield RadioButton("Custom directory")
-                yield Input(placeholder="Destination directory (e.g. /tmp/restore)", id="restore-dest")
+                with Horizontal(id="restore-dest-row"):
+                    yield Input(placeholder="Destination directory (e.g. /tmp/restore)", id="restore-dest")
+                    yield Button("Browse...", id="btn-browse-dest")
                 with Horizontal(id="restore-buttons"):
                     yield Button("Restore", variant="primary", id="btn-restore")
                     yield Button("Back", id="btn-back")
@@ -67,8 +69,17 @@ class RestoreScreen(Screen):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-back":
             self.app.pop_screen()
+        elif event.button.id == "btn-browse-dest":
+            self.app.push_screen(
+                FolderPicker("Select destination directory"),
+                callback=self._dest_selected,
+            )
         elif event.button.id == "btn-restore":
             self._start_restore()
+
+    def _dest_selected(self, path: str | None) -> None:
+        if path:
+            self.query_one("#restore-dest", Input).value = path
 
     def _start_restore(self) -> None:
         target_sel = self.query_one("#restore-target", Select)

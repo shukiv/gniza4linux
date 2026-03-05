@@ -15,7 +15,7 @@ class OperationLog(ModalScreen[None]):
     def compose(self) -> ComposeResult:
         with Vertical(id="op-log"):
             yield Static(self._title, id="ol-title")
-            yield RichLog(id="ol-log", wrap=True, highlight=True)
+            yield RichLog(id="ol-log", wrap=True, highlight=True, markup=True)
             yield Button("Close", variant="primary", id="ol-close")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

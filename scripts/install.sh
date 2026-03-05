@@ -68,7 +68,7 @@ for cmd in bash rsync; do
     fi
 done
 
-for cmd in ssh whiptail curl; do
+for cmd in ssh gum curl; do
     if ! command -v "$cmd" &>/dev/null; then
         warn "Optional dependency not found: $cmd"
     fi
@@ -140,5 +140,5 @@ echo "  Logs:    $LOG_DIR"
 echo ""
 echo "Get started:"
 echo "  gniza --help        Show CLI help"
-echo "  gniza               Launch TUI (requires whiptail)"
+echo "  gniza               Launch TUI (requires gum)"
 echo ""

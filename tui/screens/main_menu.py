@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, OptionList
 from textual.widgets.option_list import Option
-from textual.containers import Vertical, Center
+from textual.containers import Horizontal, Vertical
 
 LOGO = """\
   [green]
@@ -35,9 +35,10 @@ class MainMenuScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        with Center():
-            with Vertical(id="main-menu"):
+        with Horizontal(id="main-layout"):
+            with Vertical(id="logo-panel"):
                 yield Static(LOGO, id="logo", markup=True)
+            with Vertical(id="menu-panel"):
                 yield OptionList(
                     *[Option(label, id=mid) for mid, label in MENU_ITEMS],
                     id="menu-list",

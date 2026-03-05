@@ -13,18 +13,22 @@ Screen {
 
 /* Main menu */
 #main-menu {
-    width: 50;
+    width: 1fr;
+    max-width: 60;
     padding: 1 2;
+    overflow-y: auto;
 }
 
 #main-menu Button {
     width: 100%;
-    margin: 0 0 1 0;
+    height: 3;
+    margin: 0;
 }
 
 #logo {
     text-align: center;
-    padding: 0 0 1 0;
+    height: auto;
+    padding: 0;
 }
 
 /* Data tables */

@@ -2,9 +2,9 @@ from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Select, Input, RadioSet, RadioButton
 from textual.containers import Vertical, Horizontal
-from textual import work
+from textual import work, on
 
-from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
+from tui.config import list_conf_dir
 from tui.backend import run_cli, stream_cli
 from tui.widgets import ConfirmDialog, OperationLog
 
@@ -27,8 +27,7 @@ class RestoreScreen(Screen):
                 yield Static("Remote:")
                 yield Select([(r, r) for r in remotes], id="restore-remote", prompt="Select remote")
                 yield Static("Snapshot:")
-                yield Select([], id="restore-snapshot", prompt="Load snapshots first")
-                yield Button("Load Snapshots", id="btn-load-snaps")
+                yield Select([], id="restore-snapshot", prompt="Select target and remote first")
                 yield Static("Restore location:")
                 with RadioSet(id="restore-location"):
                     yield RadioButton("In-place (original)", value=True)
@@ -39,30 +38,37 @@ class RestoreScreen(Screen):
                     yield Button("Back", id="btn-back")
         yield Footer()
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-back":
-            self.app.pop_screen()
-        elif event.button.id == "btn-load-snaps":
-            self._load_snapshots()
-        elif event.button.id == "btn-restore":
-            self._start_restore()
+    @on(Select.Changed, "#restore-target")
+    @on(Select.Changed, "#restore-remote")
+    def _on_selection_changed(self, event: Select.Changed) -> None:
+        self._try_load_snapshots()
 
     @work
-    async def _load_snapshots(self) -> None:
-        target_sel = self.query_one("#restore-target", Select)
-        remote_sel = self.query_one("#restore-remote", Select)
+    async def _try_load_snapshots(self) -> None:
+        try:
+            target_sel = self.query_one("#restore-target", Select)
+            remote_sel = self.query_one("#restore-remote", Select)
+        except Exception:
+            return
         if target_sel.value is Select.BLANK or remote_sel.value is Select.BLANK:
-            self.notify("Select target and remote first", severity="error")
             return
         target = str(target_sel.value)
         remote = str(remote_sel.value)
-        rc, stdout, stderr = await run_cli("snapshots", "list", f"--target={target}", f"--remote={remote}")
         snap_sel = self.query_one("#restore-snapshot", Select)
+        snap_sel.set_options([])
+        self.notify(f"Loading snapshots for {target}/{remote}...")
+        rc, stdout, stderr = await run_cli("snapshots", "list", f"--target={target}", f"--remote={remote}")
         lines = [l.strip() for l in stdout.splitlines() if l.strip() and not l.startswith("===")]
         if lines:
             snap_sel.set_options([(s, s) for s in lines])
         else:
             self.notify("No snapshots found", severity="warning")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-back":
+            self.app.pop_screen()
+        elif event.button.id == "btn-restore":
+            self._start_restore()
 
     def _start_restore(self) -> None:
         target_sel = self.query_one("#restore-target", Select)

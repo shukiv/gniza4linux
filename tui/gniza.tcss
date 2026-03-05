@@ -12,11 +12,24 @@ Screen {
 }
 
 /* Main menu */
-#main-menu {
-    width: 1fr;
-    max-width: 60;
+#main-layout {
+    width: 100%;
+    height: 1fr;
+    align: center middle;
+}
+
+#logo-panel {
+    width: auto;
+    height: auto;
     padding: 1 2;
-    overflow-y: auto;
+    align: center middle;
+}
+
+#menu-panel {
+    width: 1fr;
+    max-width: 40;
+    height: auto;
+    padding: 1 2;
 }
 
 #menu-list {
@@ -26,9 +39,7 @@ Screen {
 }
 
 #logo {
-    text-align: center;
     height: auto;
-    padding: 0;
 }
 
 /* Data tables */

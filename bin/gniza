@@ -20,7 +20,6 @@ source "$GNIZA_DIR/lib/remotes.sh"
 source "$GNIZA_DIR/lib/backup.sh"
 source "$GNIZA_DIR/lib/restore.sh"
 source "$GNIZA_DIR/lib/retention.sh"
-source "$GNIZA_DIR/lib/verify.sh"
 source "$GNIZA_DIR/lib/schedule.sh"
 source "$GNIZA_DIR/lib/notify.sh"
 source "$GNIZA_DIR/lib/ssh.sh"
@@ -34,7 +33,6 @@ source "$GNIZA_DIR/lib/ui_remotes.sh"
 source "$GNIZA_DIR/lib/ui_backup.sh"
 source "$GNIZA_DIR/lib/ui_restore.sh"
 source "$GNIZA_DIR/lib/ui_snapshots.sh"
-source "$GNIZA_DIR/lib/ui_verify.sh"
 source "$GNIZA_DIR/lib/ui_retention.sh"
 source "$GNIZA_DIR/lib/ui_logs.sh"
 source "$GNIZA_DIR/lib/ui_schedule.sh"
@@ -88,7 +86,6 @@ Commands:
   targets           list|add|delete|show [--name=NAME] [--folders=PATHS]
   remotes           list|add|delete|show|test [--name=NAME]
   snapshots         list [--target=NAME] [--remote=NAME]
-  verify            [--target=NAME] [--remote=NAME] [--all]
   retention         [--target=NAME] [--remote=NAME] [--all]
   schedule          install|show|remove
   logs              [--last] [--tail=N]
@@ -336,27 +333,6 @@ run_cli() {
                     die "Unknown snapshots action: $action (expected list)"
                     ;;
             esac
-            ;;
-
-        verify)
-            local target="" remote="" all=false
-            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
-            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
-            _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
-
-            if [[ -z "$remote" ]]; then
-                remote=$(list_remotes | head -1)
-                [[ -z "$remote" ]] && die "No remotes configured"
-            fi
-            _save_remote_globals
-            load_remote "$remote" || die "Failed to load remote: $remote"
-
-            if [[ "$all" == "true" || -z "$target" ]]; then
-                verify_all_targets
-            else
-                verify_target_backup "$target"
-            fi
-            _restore_remote_globals
             ;;
 
         retention)

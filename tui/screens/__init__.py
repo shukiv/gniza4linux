@@ -6,7 +6,6 @@ from tui.screens.target_edit import TargetEditScreen
 from tui.screens.remotes import RemotesScreen
 from tui.screens.remote_edit import RemoteEditScreen
 from tui.screens.snapshots import SnapshotsScreen
-from tui.screens.verify import VerifyScreen
 from tui.screens.retention import RetentionScreen
 from tui.screens.schedule import ScheduleScreen
 from tui.screens.logs import LogsScreen

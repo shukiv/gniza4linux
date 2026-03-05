@@ -1,6 +1,6 @@
 # gniza - Linux Backup Manager
 
-A generic Linux backup tool with a Whiptail TUI and CLI interface. Define named backup targets (sets of directories), configure remote destinations (SSH, local, S3, Google Drive), and run incremental backups with rsync `--link-dest` deduplication.
+A generic Linux backup tool with a Gum TUI and CLI interface. Define named backup targets (sets of directories), configure remote destinations (SSH, local, S3, Google Drive), and run incremental backups with rsync `--link-dest` deduplication.
 
 ```
   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -30,7 +30,7 @@ A generic Linux backup tool with a Whiptail TUI and CLI interface. Define named 
 - **Target-based backups** - Define named profiles with sets of directories to back up
 - **Multiple remote types** - SSH, local (USB/NFS), S3, Google Drive
 - **Incremental snapshots** - rsync `--link-dest` for space-efficient deduplication
-- **Whiptail TUI** - Full terminal UI for interactive management
+- **Gum TUI** - Beautiful terminal UI powered by [gum](https://github.com/charmbracelet/gum)
 - **CLI interface** - Scriptable commands for automation and cron
 - **Atomic snapshots** - `.partial` directory during backup, renamed on success
 - **Retention policies** - Automatic pruning of old snapshots
@@ -68,7 +68,7 @@ Root mode installs to `/usr/local/gniza`. User mode installs to `~/.local/share/
 ### Dependencies
 
 - **Required**: bash 4+, rsync
-- **Optional**: ssh, whiptail (TUI), curl (SMTP notifications), rclone (S3/GDrive)
+- **Optional**: ssh, [gum](https://github.com/charmbracelet/gum) (TUI), curl (SMTP notifications), rclone (S3/GDrive)
 
 ## Quick Start
 

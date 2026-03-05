@@ -94,7 +94,7 @@ Commands:
   logs              [--last] [--tail=N]
   version
 
-If no command is given and whiptail is available, the TUI is launched.
+If no command is given and gum is available, the TUI is launched.
 EOF
 }
 
@@ -436,7 +436,7 @@ if [[ -n "$SUBCOMMAND" ]]; then
     run_cli
 elif [[ "$FORCE_CLI" == "true" ]]; then
     run_cli
-elif command -v whiptail &>/dev/null && [[ -t 1 ]]; then
+elif command -v gum &>/dev/null && [[ -t 1 ]]; then
     # TUI mode
     show_logo
     if ! has_remotes && ! has_targets; then

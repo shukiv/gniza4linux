@@ -139,23 +139,29 @@ ui_target_folder_picker() {
             items+=("$i" "$f")
             ((i++))
         done
-        items+=("ADD" "Add folder")
+        items+=("ADD" "Browse & add folder")
         [[ ${#folders[@]} -gt 0 ]] && items+=("REMOVE" "Remove folder")
         items+=("DONE" "Finish selection")
 
         local choice
-        choice=$(ui_menu "Folder Picker" "${items[@]}") || return 1
+        choice=$(ui_menu "Folder Picker (${#folders[@]} selected)" "${items[@]}") || return 1
 
         case "$choice" in
             ADD)
                 local path
-                path=$(ui_inputbox "Add Folder" "Enter absolute folder path:" "/") || continue
+                path=$(gum file --directory --header "Select folder to back up" \
+                    --cursor.foreground "$_GUM_ACCENT" --height 15 /) || continue
                 [[ -z "$path" ]] && continue
-                if [[ "$path" != /* ]]; then
-                    ui_msgbox "Path must be absolute (start with /)."
-                    continue
+                # Avoid duplicates
+                local dup=false
+                for f in "${folders[@]}"; do
+                    [[ "$f" == "$path" ]] && dup=true
+                done
+                if $dup; then
+                    ui_msgbox "Folder '$path' is already selected."
+                else
+                    folders+=("$path")
                 fi
-                folders+=("$path")
                 ;;
             REMOVE)
                 local -a rm_items=()

@@ -42,7 +42,7 @@ A generic Linux backup tool with a Whiptail TUI and CLI interface. Define named 
 ## Installation
 
 ```bash
-git clone https://github.com/shukiv/gniza4linux.git
+git clone ssh://git@git.linux-hosting.co.il:2222/shukivaknin/gniza4linux.git
 cd gniza4linux
 bash scripts/install.sh
 ```

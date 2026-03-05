@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-REPO_URL="https://github.com/shukiv/gniza4linux.git"
+REPO_URL="ssh://git@git.linux-hosting.co.il:2222/shukivaknin/gniza4linux.git"
 
 # Colors
 if [[ -t 1 ]]; then

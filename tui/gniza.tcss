@@ -18,28 +18,19 @@ Screen {
     align: center middle;
 }
 
-#logo-panel {
+#logo {
     width: auto;
+    min-width: 40;
     height: auto;
-    padding: 1 2;
-    align: center middle;
-}
-
-#menu-panel {
-    width: 1fr;
-    max-width: 40;
-    height: auto;
-    padding: 1 2;
+    padding: 1 3;
+    content-align: center middle;
 }
 
 #menu-list {
-    width: 100%;
+    width: 1fr;
+    max-width: 35;
     height: auto;
-    max-height: 100%;
-}
-
-#logo {
-    height: auto;
+    margin: 1 2;
 }
 
 /* Data tables */

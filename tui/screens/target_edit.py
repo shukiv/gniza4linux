@@ -46,7 +46,7 @@ class TargetEditScreen(Screen):
             yield Input(value=target.pre_hook, placeholder="Command to run before backup", id="te-prehook")
             yield Static("Post-backup hook:")
             yield Input(value=target.post_hook, placeholder="Command to run after backup", id="te-posthook")
-            with Horizontal():
+            with Horizontal(id="te-switch-row"):
                 yield Static("Enabled: ")
                 yield Switch(value=target.enabled == "yes", id="te-enabled")
             with Horizontal(id="te-buttons"):

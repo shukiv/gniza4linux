@@ -192,6 +192,12 @@ Select {
 }
 
 /* Switch row */
+#te-switch-row {
+    height: auto;
+    align: left middle;
+    margin: 0 0 1 0;
+}
+
 Switch {
-    margin: 0 0 1 1;
+    margin: 0 1;
 }

@@ -1,3 +1,4 @@
+from rich.text import Text
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.widgets import RichLog, Button, Static
@@ -25,4 +26,8 @@ class OperationLog(ModalScreen[None]):
         self.dismiss(None)
 
     def write(self, text: str) -> None:
-        self.query_one("#ol-log", RichLog).write(text)
+        log = self.query_one("#ol-log", RichLog)
+        if "[" in text and "[/" in text:
+            log.write(Text.from_markup(text))
+        else:
+            log.write(text)

@@ -28,7 +28,7 @@ else
     INSTALL_DIR="$HOME/.local/share/gniza"
     BIN_LINK="$HOME/.local/bin/gniza"
     CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gniza"
-    LOG_DIR="$HOME/.local/share/gniza/logs"
+    LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gniza/log"
 fi
 
 info "Uninstall mode: ${C_BOLD}${MODE}${C_RESET}"

@@ -19,10 +19,10 @@ Screen {
     overflow-y: auto;
 }
 
-#main-menu Button {
+#menu-list {
     width: 100%;
-    height: 3;
-    margin: 0;
+    height: auto;
+    max-height: 100%;
 }
 
 #logo {

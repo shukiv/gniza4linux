@@ -1,7 +1,7 @@
 import re
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, Input, Switch
+from textual.widgets import Header, Footer, Static, Button, Input, Select
 from textual.containers import Vertical, Horizontal
 
 from tui.config import parse_conf, write_conf, CONFIG_DIR, list_conf_dir
@@ -46,9 +46,12 @@ class TargetEditScreen(Screen):
             yield Input(value=target.pre_hook, placeholder="Command to run before backup", id="te-prehook")
             yield Static("Post-backup hook:")
             yield Input(value=target.post_hook, placeholder="Command to run after backup", id="te-posthook")
-            with Horizontal(id="te-switch-row"):
-                yield Static("Enabled: ")
-                yield Switch(value=target.enabled == "yes", id="te-enabled")
+            yield Static("Enabled:")
+            yield Select(
+                [("Yes", "yes"), ("No", "no")],
+                value="yes" if target.enabled == "yes" else "no",
+                id="te-enabled",
+            )
             with Horizontal(id="te-buttons"):
                 yield Button("Save", variant="primary", id="btn-save")
                 yield Button("Cancel", id="btn-cancel")
@@ -105,7 +108,7 @@ class TargetEditScreen(Screen):
             retention=self.query_one("#te-retention", Input).value.strip(),
             pre_hook=self.query_one("#te-prehook", Input).value.strip(),
             post_hook=self.query_one("#te-posthook", Input).value.strip(),
-            enabled="yes" if self.query_one("#te-enabled", Switch).value else "no",
+            enabled=str(self.query_one("#te-enabled", Select).value),
         )
         conf = CONFIG_DIR / "targets.d" / f"{name}.conf"
         write_conf(conf, target.to_conf())

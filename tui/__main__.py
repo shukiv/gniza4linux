@@ -1,6 +1,11 @@
+import os
 import sys
+from pathlib import Path
 
 from tui.app import GnizaApp
+
+# Resolve project root (parent of tui/)
+_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 
 
 def main():
@@ -10,7 +15,9 @@ def main():
         for i, arg in enumerate(sys.argv):
             if arg == "--port" and i + 1 < len(sys.argv):
                 port = int(sys.argv[i + 1])
-        server = Server("python3 -m tui", host="0.0.0.0", port=port)
+        env_path = f"{_PROJECT_ROOT}:{os.environ.get('PYTHONPATH', '')}"
+        cmd = f"PYTHONPATH={env_path} GNIZA_DIR={_PROJECT_ROOT} python3 -m tui"
+        server = Server(cmd, host="0.0.0.0", port=port)
         server.serve()
     else:
         app = GnizaApp()

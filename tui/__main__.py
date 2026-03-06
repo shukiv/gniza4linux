@@ -120,34 +120,33 @@ def main():
             public_url=public_url,
         )
 
-        # Add HTTP Basic Auth middleware if API key is configured
+        # Add HTTP Basic Auth if API key is configured
         if web_key:
+            @aio_web.middleware
+            async def basic_auth_middleware(request, handler):
+                auth_header = request.headers.get("Authorization", "")
+                if auth_header.startswith("Basic "):
+                    try:
+                        decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
+                        req_user, req_pass = decoded.split(":", 1)
+                        if (
+                            secrets.compare_digest(req_user, web_user)
+                            and secrets.compare_digest(req_pass, web_key)
+                        ):
+                            return await handler(request)
+                    except Exception:
+                        pass
+                return aio_web.Response(
+                    status=401,
+                    headers={"WWW-Authenticate": 'Basic realm="GNIZA"'},
+                    text="Authentication required",
+                )
+
             _orig_make_app = server._make_app
 
             async def _authed_make_app():
                 app = await _orig_make_app()
-
-                @aio_web.middleware
-                async def basic_auth(request, handler):
-                    auth_header = request.headers.get("Authorization", "")
-                    if auth_header.startswith("Basic "):
-                        try:
-                            decoded = base64.b64decode(auth_header[6:]).decode("utf-8")
-                            req_user, req_pass = decoded.split(":", 1)
-                            if (
-                                secrets.compare_digest(req_user, web_user)
-                                and secrets.compare_digest(req_pass, web_key)
-                            ):
-                                return await handler(request)
-                        except Exception:
-                            pass
-                    return aio_web.Response(
-                        status=401,
-                        headers={"WWW-Authenticate": 'Basic realm="GNIZA"'},
-                        text="Authentication required",
-                    )
-
-                app.middlewares.insert(0, basic_auth)
+                app.middlewares.insert(0, basic_auth_middleware)
                 return app
 
             server._make_app = _authed_make_app

@@ -160,36 +160,14 @@ for example in target.conf.example remote.conf.example schedule.conf.example; do
 done
 
 # -- Web dashboard setup --
-setup_web_dashboard() {
-    local conf="$CONFIG_DIR/gniza.conf"
-    # Update config: WEB_ENABLED
-    if grep -q "^WEB_ENABLED=" "$conf" 2>/dev/null; then
-        sed -i 's|^WEB_ENABLED=.*|WEB_ENABLED="yes"|' "$conf"
-    else
-        echo 'WEB_ENABLED="yes"' >> "$conf"
-    fi
-    # Generate random API key
-    local api_key
-    api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
-    if grep -q "^WEB_API_KEY=" "$conf" 2>/dev/null; then
-        sed -i "s|^WEB_API_KEY=.*|WEB_API_KEY=\"${api_key}\"|" "$conf"
-    else
-        echo "WEB_API_KEY=\"${api_key}\"" >> "$conf"
-    fi
-    info "Web API key: $api_key"
-    echo "Save this key -- you will need it to log into the dashboard."
-    # Install systemd service (root only)
+enable_web="n"
+read -rp "Enable web dashboard (TUI in browser)? (y/n) [n]: " enable_web </dev/tty || true
+if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
     if [ "$MODE" = "root" ]; then
         "$INSTALL_DIR/bin/gniza" web install-service || warn "Failed to install web service"
     else
         warn "Systemd service installation requires root. Start manually: gniza web start"
     fi
-}
-
-enable_web="n"
-read -rp "Enable web dashboard? (y/n) [n]: " enable_web </dev/tty || true
-if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
-    setup_web_dashboard
 fi
 
 # -- Done -----------------------------------------------------

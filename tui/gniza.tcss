@@ -28,8 +28,10 @@ Screen {
 
 #menu-list {
     width: 1fr;
-    max-width: 35;
-    height: 20;
+    max-width: 40;
+    min-width: 25;
+    height: auto;
+    max-height: 22;
     margin: 1 2 0 2;
 }
 
@@ -39,7 +41,9 @@ Screen {
 
 /* Data tables */
 DataTable {
-    height: 12;
+    height: auto;
+    min-height: 5;
+    max-height: 16;
     margin: 1 0;
 }
 
@@ -125,6 +129,7 @@ SelectionList {
 #set-buttons {
     height: auto;
     margin: 1 0;
+    overflow: hidden;
 }
 
 #backup-buttons Button,
@@ -145,7 +150,8 @@ SelectionList {
 
 /* Dialogs */
 #confirm-dialog {
-    width: 60;
+    width: 80%;
+    max-width: 60;
     height: auto;
     padding: 2;
     background: $panel;
@@ -173,8 +179,10 @@ SelectionList {
 
 /* Folder picker */
 #folder-picker {
-    width: 70;
-    height: 30;
+    width: 90%;
+    max-width: 70;
+    height: 80%;
+    max-height: 30;
     padding: 1;
     background: $panel;
     border: thick $accent;
@@ -216,7 +224,8 @@ SelectionList {
 
 /* Operation log */
 #op-log {
-    width: 80%;
+    width: 90%;
+    max-width: 120;
     height: 80%;
     padding: 1;
     background: $panel;
@@ -254,7 +263,8 @@ SelectionList {
 
 /* Snapshot browser */
 #snapshot-browser {
-    width: 80%;
+    width: 90%;
+    max-width: 120;
     height: 80%;
     padding: 1;
     background: $panel;
@@ -302,7 +312,8 @@ SelectionList {
 
 /* Wizard */
 #wizard {
-    width: 60;
+    width: 90%;
+    max-width: 60;
     padding: 2;
 }
 
@@ -350,8 +361,10 @@ Switch {
 
 /* File picker */
 #file-picker {
-    width: 70;
-    height: 30;
+    width: 90%;
+    max-width: 70;
+    height: 80%;
+    max-height: 30;
     padding: 1;
     background: $panel;
     border: thick $accent;

@@ -57,7 +57,15 @@ class MainMenuScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
+        self._update_logo_visibility()
         self.query_one("#menu-list", OptionList).focus()
+
+    def on_resize(self) -> None:
+        self._update_logo_visibility()
+
+    def _update_logo_visibility(self) -> None:
+        logo = self.query_one("#logo")
+        logo.display = self.app.size.width >= 80
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         option_id = event.option.id

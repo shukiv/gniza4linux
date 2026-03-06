@@ -45,6 +45,7 @@ class Job:
     _pid: int | None = field(default=None, repr=False)
     _pgid: int | None = field(default=None, repr=False)
     _reconnected: bool = field(default=False, repr=False)
+    _log_file: str | None = field(default=None, repr=False)
 
 
 class JobManager:
@@ -75,7 +76,9 @@ class JobManager:
         asyncio.create_task(self.run_job(app, job, *cli_args))
 
     async def run_job(self, app, job: Job, *cli_args: str) -> int:
-        proc = await start_cli_process(*cli_args)
+        log_path = _work_dir() / f"gniza-job-{job.id}.log"
+        job._log_file = str(log_path)
+        proc = await start_cli_process(*cli_args, log_file=str(log_path))
         job._proc = proc
         job._pid = proc.pid
         try:
@@ -84,14 +87,22 @@ class JobManager:
             job._pgid = None
         self._save_registry()
         try:
-            while True:
-                line = await proc.stdout.readline()
-                if not line:
-                    break
-                text = line.decode().rstrip("\n")
-                if len(job.output) < MAX_OUTPUT_LINES:
-                    job.output.append(text)
-            await proc.wait()
+            # Wait for process and tail log file concurrently
+            wait_task = asyncio.create_task(proc.wait())
+            with open(log_path, "r") as f:
+                while not wait_task.done():
+                    line = f.readline()
+                    if line:
+                        text = line.rstrip("\n")
+                        if len(job.output) < MAX_OUTPUT_LINES:
+                            job.output.append(text)
+                    else:
+                        await asyncio.sleep(0.2)
+                # Read remaining lines after process exit
+                for line in f:
+                    text = line.rstrip("\n")
+                    if len(job.output) < MAX_OUTPUT_LINES:
+                        job.output.append(text)
             rc = proc.returncode if proc.returncode is not None else 1
             job.return_code = rc
             job.status = "success" if rc == 0 else "failed"
@@ -182,6 +193,7 @@ class JobManager:
                 "pid": pid,
                 "pgid": job._pgid,
                 "started_at": job.started_at.isoformat(),
+                "log_file": job._log_file,
             })
         try:
             REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -221,6 +233,14 @@ class JobManager:
             job._pid = pid
             job._pgid = entry.get("pgid")
             job._reconnected = alive
+            job._log_file = entry.get("log_file")
+            # Load output from log file
+            if job._log_file and Path(job._log_file).is_file():
+                try:
+                    lines = Path(job._log_file).read_text().splitlines()
+                    job.output = lines[:MAX_OUTPUT_LINES]
+                except OSError:
+                    pass
             self._jobs[job.id] = job
         # Clean up registry: only keep still-running entries
         self._save_registry()

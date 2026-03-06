@@ -24,8 +24,18 @@ async def run_cli(*args: str) -> tuple[int, str, str]:
     return proc.returncode or 0, stdout.decode(), stderr.decode()
 
 
-async def start_cli_process(*args: str) -> asyncio.subprocess.Process:
+async def start_cli_process(*args: str, log_file: str | None = None) -> asyncio.subprocess.Process:
     cmd = [_gniza_bin(), "--cli"] + list(args)
+    if log_file:
+        fh = open(log_file, "w")
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=fh,
+            stderr=asyncio.subprocess.STDOUT,
+            start_new_session=True,
+        )
+        fh.close()
+        return proc
     return await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,

@@ -153,12 +153,12 @@
         window.location.href = getStartUrl();
       }
 
-      // Auto-select font size for mobile to fit ~80 columns
+      // Auto-select font size for mobile to fit ~50 columns
       (function() {
         var url = new URL(window.location.href);
         if (!url.searchParams.has("fontsize") && window.innerWidth < 768) {
-          // xterm char width is ~0.6 * fontSize; target 80 cols
-          var fontSize = Math.max(6, Math.floor(window.innerWidth / (80 * 0.6)));
+          // xterm char width is ~0.6 * fontSize; target 50 cols for readability
+          var fontSize = Math.max(8, Math.floor(window.innerWidth / (50 * 0.6)));
           url.searchParams.set("fontsize", fontSize);
           window.location.replace(url.toString());
         }

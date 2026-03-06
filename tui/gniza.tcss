@@ -70,6 +70,13 @@ SelectionList {
     margin: 0 0 1 0;
 }
 
+/* MySQL restore toggle */
+#restore-mysql-row {
+    height: auto;
+    align: left middle;
+    margin: 0 0 1 0;
+}
+
 /* Browse row */
 #restore-dest-row {
     height: auto;

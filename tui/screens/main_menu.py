@@ -70,8 +70,12 @@ class MainMenuScreen(Screen):
         logo.display = width >= 48
         if width < 100:
             layout.styles.layout = "vertical"
+            layout.styles.align = ("center", "top")
+            layout.styles.overflow_y = "auto"
         else:
             layout.styles.layout = "horizontal"
+            layout.styles.align = ("center", "middle")
+            layout.styles.overflow_y = "hidden"
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         option_id = event.option.id

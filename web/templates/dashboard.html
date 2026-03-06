@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GNIZA Dashboard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+    padding: 1rem;
+}
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #00cc00;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+header h1 {
+    color: #00cc00;
+    font-size: 1.4rem;
+}
+header a {
+    color: #aaa;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+header a:hover { color: #00cc00; }
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+@media (max-width: 800px) {
+    .grid { grid-template-columns: 1fr; }
+}
+.card {
+    background: #16213e;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 1rem;
+}
+.card h2 {
+    color: #00cc00;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid #333;
+    padding-bottom: 0.4rem;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+th {
+    text-align: left;
+    color: #00cc00;
+    padding: 0.3rem 0.5rem;
+    border-bottom: 1px solid #333;
+}
+td {
+    padding: 0.3rem 0.5rem;
+    border-bottom: 1px solid #222;
+}
+.badge {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+.badge-yes { background: #00cc00; color: #1a1a2e; }
+.badge-no { background: #555; color: #ccc; }
+.badge-success { background: #00cc00; color: #1a1a2e; }
+.badge-error { background: #cc3333; color: #fff; }
+.badge-unknown { background: #666; color: #ccc; }
+.btn-backup {
+    background: #0f3460;
+    color: #00cc00;
+    border: 1px solid #00cc00;
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.75rem;
+}
+.btn-backup:hover { background: #00cc00; color: #1a1a2e; }
+.btn-backup:disabled { opacity: 0.5; cursor: not-allowed; }
+.log-tail {
+    background: #0a0a1a;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+    color: #aaa;
+}
+.empty { color: #666; font-style: italic; }
+.full-width { grid-column: 1 / -1; }
+.status-msg {
+    margin-top: 0.3rem;
+    font-size: 0.8rem;
+    color: #00cc00;
+}
+</style>
+</head>
+<body>
+<header>
+    <h1>GNIZA Backup Dashboard</h1>
+    <a href="/logout">Logout</a>
+</header>
+
+<div class="grid">
+    <div class="card">
+        <h2>Targets</h2>
+        {% if targets %}
+        <table>
+            <tr><th>Name</th><th>Remote</th><th>Status</th><th></th></tr>
+            {% for t in targets %}
+            <tr>
+                <td>{{ t.name }}</td>
+                <td>{{ t.remote or '-' }}</td>
+                <td>
+                    {% if t.enabled == 'yes' %}
+                    <span class="badge badge-yes">enabled</span>
+                    {% else %}
+                    <span class="badge badge-no">disabled</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if t.enabled == 'yes' %}
+                    <button class="btn-backup" onclick="triggerBackup(this, '{{ t.name }}')">Backup</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p class="empty">No targets configured.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Remotes</h2>
+        {% if remotes %}
+        <table>
+            <tr><th>Name</th><th>Type</th><th>Host</th></tr>
+            {% for r in remotes %}
+            <tr>
+                <td>{{ r.name }}</td>
+                <td>{{ r.type }}</td>
+                <td>{{ r.host or r.base }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p class="empty">No remotes configured.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Schedules</h2>
+        {% if schedules %}
+        <table>
+            <tr><th>Name</th><th>Schedule</th><th>Time</th><th>Status</th></tr>
+            {% for s in schedules %}
+            <tr>
+                <td>{{ s.name }}</td>
+                <td>{{ s.schedule }}</td>
+                <td>{{ s.time or '-' }}</td>
+                <td>
+                    {% if s.active == 'yes' %}
+                    <span class="badge badge-yes">active</span>
+                    {% else %}
+                    <span class="badge badge-no">inactive</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p class="empty">No schedules configured.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Last Backup</h2>
+        {% if last_log %}
+        <p>
+            <strong>{{ last_log.name }}</strong>
+            <span class="badge badge-{{ last_log.status }}">{{ last_log.status }}</span>
+        </p>
+        <div class="log-tail">{{ last_log.tail }}</div>
+        {% else %}
+        <p class="empty">No log files found.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function triggerBackup(btn, target) {
+    btn.disabled = true;
+    btn.textContent = '...';
+    var fd = new FormData();
+    fd.append('target', target);
+    fetch('/api/backup', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.error) {
+                btn.textContent = 'Error';
+                btn.style.borderColor = '#cc3333';
+                btn.style.color = '#cc3333';
+            } else {
+                btn.textContent = 'Started';
+            }
+            setTimeout(function() {
+                btn.disabled = false;
+                btn.textContent = 'Backup';
+                btn.style.borderColor = '';
+                btn.style.color = '';
+            }, 3000);
+        })
+        .catch(function() {
+            btn.textContent = 'Error';
+            setTimeout(function() {
+                btn.disabled = false;
+                btn.textContent = 'Backup';
+            }, 3000);
+        });
+}
+</script>
+</body>
+</html>

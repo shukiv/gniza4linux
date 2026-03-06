@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GNIZA - Login</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+.login-box {
+    background: #16213e;
+    border: 1px solid #00cc00;
+    border-radius: 8px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 400px;
+}
+h1 {
+    color: #00cc00;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+.flash {
+    background: #3a1a1a;
+    color: #ff6666;
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #aaa;
+}
+input[type="password"] {
+    width: 100%;
+    padding: 0.6rem;
+    background: #0f3460;
+    border: 1px solid #333;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-family: inherit;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+input[type="password"]:focus {
+    outline: none;
+    border-color: #00cc00;
+}
+button {
+    width: 100%;
+    padding: 0.6rem;
+    background: #00cc00;
+    color: #1a1a2e;
+    border: none;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+button:hover {
+    background: #00ff00;
+}
+</style>
+</head>
+<body>
+<div class="login-box">
+    <h1>GNIZA Backup</h1>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="flash">{{ msg }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <form method="POST">
+        <label for="token">API Key</label>
+        <input type="password" name="token" id="token" placeholder="Enter your API key" autofocus>
+        <button type="submit">Login</button>
+    </form>
+</div>
+</body>
+</html>

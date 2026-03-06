@@ -1,0 +1,15 @@
+[Unit]
+Description=GNIZA Web Dashboard
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m web
+WorkingDirectory=/usr/local/gniza
+Environment=GNIZA_DIR=/usr/local/gniza
+Environment=GNIZA_CONFIG_DIR=/usr/local/gniza/etc
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

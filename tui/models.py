@@ -203,6 +203,10 @@ class AppSettings:
     ssh_retries: str = "3"
     rsync_extra_opts: str = ""
     work_dir: str = "/usr/local/gniza/workdir"
+    web_enabled: str = "no"
+    web_port: str = "8080"
+    web_host: str = "0.0.0.0"
+    web_api_key: str = ""
 
     @classmethod
     def from_conf(cls, data: dict[str, str]) -> "AppSettings":
@@ -224,6 +228,10 @@ class AppSettings:
             ssh_retries=data.get("SSH_RETRIES", "3"),
             rsync_extra_opts=data.get("RSYNC_EXTRA_OPTS", ""),
             work_dir=data.get("WORK_DIR", "/usr/local/gniza/workdir"),
+            web_enabled=data.get("WEB_ENABLED", "no"),
+            web_port=data.get("WEB_PORT", "8080"),
+            web_host=data.get("WEB_HOST", "0.0.0.0"),
+            web_api_key=data.get("WEB_API_KEY", ""),
         )
 
     def to_conf(self) -> dict[str, str]:
@@ -245,4 +253,8 @@ class AppSettings:
             "SSH_RETRIES": self.ssh_retries,
             "RSYNC_EXTRA_OPTS": self.rsync_extra_opts,
             "WORK_DIR": self.work_dir,
+            "WEB_ENABLED": self.web_enabled,
+            "WEB_PORT": self.web_port,
+            "WEB_HOST": self.web_host,
+            "WEB_API_KEY": self.web_api_key,
         }

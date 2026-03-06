@@ -1,5 +1,6 @@
 import asyncio
 import os
+import subprocess
 from pathlib import Path
 
 
@@ -24,24 +25,22 @@ async def run_cli(*args: str) -> tuple[int, str, str]:
     return proc.returncode or 0, stdout.decode(), stderr.decode()
 
 
-async def start_cli_process(*args: str, log_file: str | None = None) -> asyncio.subprocess.Process:
+def start_cli_background(*args: str, log_file: str) -> subprocess.Popen:
+    """Start a CLI process that survives TUI exit.
+
+    Uses subprocess.Popen directly (not asyncio) so there is no
+    SubprocessTransport that would SIGKILL the child on event-loop cleanup.
+    """
     cmd = [_gniza_bin(), "--cli"] + list(args)
-    if log_file:
-        fh = open(log_file, "w")
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=fh,
-            stderr=asyncio.subprocess.STDOUT,
-            start_new_session=True,
-        )
-        fh.close()
-        return proc
-    return await asyncio.create_subprocess_exec(
-        *cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
+    fh = open(log_file, "w")
+    proc = subprocess.Popen(
+        cmd,
+        stdout=fh,
+        stderr=subprocess.STDOUT,
         start_new_session=True,
     )
+    fh.close()
+    return proc
 
 
 async def stream_cli(callback, *args: str) -> int:

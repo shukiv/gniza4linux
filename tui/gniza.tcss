@@ -29,8 +29,8 @@ Screen {
 #menu-list {
     width: 1fr;
     max-width: 35;
-    height: 21;
-    margin: 0 2;
+    height: 20;
+    margin: 1 2 0 2;
 }
 
 /* Data tables */

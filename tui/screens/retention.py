@@ -51,12 +51,12 @@ class RetentionScreen(Screen):
             target = str(target_sel.value)
             self.app.push_screen(
                 ConfirmDialog(f"Run retention cleanup for '{target}'?", "Confirm"),
-                callback=lambda ok: self._confirmed_cleanup(target) if ok else None,
+                callback=lambda ok: self._do_cleanup(target) if ok else None,
             )
         elif event.button.id == "btn-cleanup-all":
             self.app.push_screen(
                 ConfirmDialog("Run retention cleanup for ALL targets?", "Confirm"),
-                callback=lambda ok: self._confirmed_cleanup_all() if ok else None,
+                callback=lambda ok: self._do_cleanup_all() if ok else None,
             )
         elif event.button.id == "btn-save-count":
             val = self.query_one("#ret-count", Input).value.strip()
@@ -66,33 +66,25 @@ class RetentionScreen(Screen):
             update_conf_key(CONFIG_DIR / "gniza.conf", "RETENTION_COUNT", val)
             self.notify(f"Retention count set to {val}.")
 
-    def _confirmed_cleanup(self, target: str) -> None:
+    @work
+    async def _do_cleanup(self, target: str) -> None:
         log_screen = OperationLog(f"Retention: {target}")
         self.app.push_screen(log_screen)
-        self._run_cleanup(log_screen, target)
-
-    def _confirmed_cleanup_all(self) -> None:
-        log_screen = OperationLog("Retention: All Targets")
-        self.app.push_screen(log_screen)
-        self._run_cleanup_all(log_screen)
-
-    @work
-    async def _run_cleanup(self, log_screen: OperationLog, target: str) -> None:
         rc = await stream_cli(log_screen.write, "retention", f"--target={target}")
         if rc == 0:
             log_screen.write("\n[green]Cleanup completed.[/green]")
         else:
             log_screen.write(f"\n[red]Cleanup failed (exit code {rc}).[/red]")
-        log_screen.finish()
 
     @work
-    async def _run_cleanup_all(self, log_screen: OperationLog) -> None:
+    async def _do_cleanup_all(self) -> None:
+        log_screen = OperationLog("Retention: All Targets")
+        self.app.push_screen(log_screen)
         rc = await stream_cli(log_screen.write, "retention", "--all")
         if rc == 0:
             log_screen.write("\n[green]All cleanups completed.[/green]")
         else:
             log_screen.write(f"\n[red]Cleanup failed (exit code {rc}).[/red]")
-        log_screen.finish()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

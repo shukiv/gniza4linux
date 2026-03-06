@@ -46,7 +46,7 @@ def _get_local_ip() -> str:
 
 def _parse_web_args():
     """Parse --port and --host from sys.argv."""
-    port = 8080
+    port = 2323
     host = "0.0.0.0"
     for i, arg in enumerate(sys.argv):
         if arg.startswith("--port="):

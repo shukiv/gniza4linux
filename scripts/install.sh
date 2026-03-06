@@ -199,7 +199,7 @@ echo "  Work dir: $WORK_DIR"
 echo ""
 if [ "${WEB_INSTALLED:-}" = "yes" ]; then
     echo "${C_GREEN}Web Dashboard:${C_RESET}"
-    echo "  URL:      http://$(hostname -I 2>/dev/null | awk '{print $1}'):8080"
+    echo "  URL:      http://$(hostname -I 2>/dev/null | awk '{print $1}'):2323"
     echo "  User:     $WEB_USER"
     echo "  Password: $WEB_PASS"
     echo ""

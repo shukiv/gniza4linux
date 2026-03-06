@@ -203,7 +203,7 @@ class AppSettings:
     ssh_retries: str = "3"
     rsync_extra_opts: str = ""
     work_dir: str = "/usr/local/gniza/workdir"
-    web_port: str = "8080"
+    web_port: str = "2323"
     web_host: str = "0.0.0.0"
     web_api_key: str = ""
 

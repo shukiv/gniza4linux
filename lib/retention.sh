@@ -38,7 +38,8 @@ enforce_retention() {
                 fi
             else
                 local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-                local meta_content; meta_content=$(remote_exec "cat '$snap_dir/$snap/meta.json' 2>/dev/null" 2>/dev/null) || true
+                local sq_meta; sq_meta="$(shquote "$snap_dir/$snap/meta.json")"
+                local meta_content; meta_content=$(remote_exec "cat '${sq_meta}' 2>/dev/null" 2>/dev/null) || true
                 if [[ -n "$meta_content" ]] && echo "$meta_content" | grep -q '"pinned":\s*true'; then
                     is_pinned=true
                 fi
@@ -61,7 +62,8 @@ enforce_retention() {
                 }
             else
                 local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-                remote_exec "rm -rf '$snap_dir/$snap'" || {
+                local sq_snap_path; sq_snap_path="$(shquote "$snap_dir/$snap")"
+                remote_exec "rm -rf '${sq_snap_path}'" || {
                     log_warn "Failed to prune snapshot: $snap_dir/$snap"
                 }
             fi

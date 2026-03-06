@@ -247,7 +247,8 @@ list_snapshot_contents() {
         find "$snap_dir/$ts" -type f 2>/dev/null
     else
         local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-        remote_exec "find '$snap_dir/$ts' -type f 2>/dev/null" 2>/dev/null
+        local sq_path; sq_path="$(shquote "$snap_dir/$ts")"
+        remote_exec "find '${sq_path}' -type f 2>/dev/null" 2>/dev/null
     fi
 
     _restore_remote_globals
@@ -281,7 +282,8 @@ get_snapshot_meta() {
         cat "$snap_dir/$ts/meta.json" 2>/dev/null
     else
         local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-        remote_exec "cat '$snap_dir/$ts/meta.json'" 2>/dev/null
+        local sq_meta; sq_meta="$(shquote "$snap_dir/$ts/meta.json")"
+        remote_exec "cat '${sq_meta}'" 2>/dev/null
     fi
 
     _restore_remote_globals

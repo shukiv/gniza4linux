@@ -34,9 +34,10 @@ list_remote_snapshots() {
     fi
 
     local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
+    local sq_snap; sq_snap="$(shquote "$snap_dir")"
 
     # List completed snapshots (no .partial suffix), sorted newest first
-    local raw; raw=$(remote_exec "ls -1d '$snap_dir'/[0-9]* 2>/dev/null | grep -v '\\.partial$' | sort -r" 2>/dev/null) || true
+    local raw; raw=$(remote_exec "ls -1d '${sq_snap}'/[0-9]* 2>/dev/null | grep -v '\\.partial$' | sort -r" 2>/dev/null) || true
     if [[ -n "$raw" ]]; then
         echo "$raw" | xargs -I{} basename {} | sort -r
     fi
@@ -72,7 +73,8 @@ resolve_snapshot_timestamp() {
     else
         # Verify it exists on SSH remote
         local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-        if remote_exec "test -d '$snap_dir/$requested'" 2>/dev/null; then
+        local sq_path; sq_path="$(shquote "$snap_dir/$requested")"
+        if remote_exec "test -d '${sq_path}'" 2>/dev/null; then
             echo "$requested"
         else
             log_error "Snapshot not found for $target_name: $requested"
@@ -99,7 +101,9 @@ update_latest_symlink() {
             return 1
         }
     else
-        remote_exec "ln -sfn '$snap_dir/$timestamp' '$base/latest'" || {
+        local sq_snap_ts; sq_snap_ts="$(shquote "$snap_dir/$timestamp")"
+        local sq_latest; sq_latest="$(shquote "$base/latest")"
+        remote_exec "ln -sfn '${sq_snap_ts}' '${sq_latest}'" || {
             log_warn "Failed to update latest symlink for $target_name"
             return 1
         }
@@ -129,10 +133,11 @@ clean_partial_snapshots() {
         return
     fi
 
-    local partials; partials=$(remote_exec "ls -1d '$snap_dir'/*.partial 2>/dev/null" 2>/dev/null) || true
+    local sq_snap; sq_snap="$(shquote "$snap_dir")"
+    local partials; partials=$(remote_exec "ls -1d '${sq_snap}'/*.partial 2>/dev/null" 2>/dev/null) || true
     if [[ -n "$partials" ]]; then
         log_info "Cleaning partial snapshots for $target_name..."
-        remote_exec "rm -rf '$snap_dir'/*.partial" || {
+        remote_exec "rm -rf '${sq_snap}'/*.partial" || {
             log_warn "Failed to clean partial snapshots for $target_name"
         }
     fi
@@ -152,5 +157,6 @@ list_remote_targets() {
         return
     fi
 
-    remote_exec "ls -1 '$targets_dir' 2>/dev/null" 2>/dev/null || true
+    local sq_targets; sq_targets="$(shquote "$targets_dir")"
+    remote_exec "ls -1 '${sq_targets}' 2>/dev/null" 2>/dev/null || true
 }

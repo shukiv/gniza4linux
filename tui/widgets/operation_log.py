@@ -3,8 +3,8 @@ import asyncio
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
-from textual.widgets import RichLog, Button, Static
-from textual.containers import Vertical
+from textual.widgets import RichLog, Button, Static, LoadingIndicator
+from textual.containers import Vertical, Horizontal
 
 
 class OperationLog(ModalScreen[None]):
@@ -16,10 +16,13 @@ class OperationLog(ModalScreen[None]):
         self._title = title
         self._mounted_event = asyncio.Event()
         self._buffer: list[str] = []
+        self._running = True
 
     def compose(self) -> ComposeResult:
         with Vertical(id="op-log"):
-            yield Static(self._title, id="ol-title")
+            with Horizontal(id="ol-header"):
+                yield Static(self._title, id="ol-title")
+                yield LoadingIndicator(id="ol-spinner")
             yield RichLog(id="ol-log", wrap=True, highlight=True, markup=True)
             yield Button("Close", variant="primary", id="ol-close")
 
@@ -42,6 +45,13 @@ class OperationLog(ModalScreen[None]):
             log.write(Text.from_markup(text))
         else:
             log.write(text)
+
+    def finish(self) -> None:
+        self._running = False
+        try:
+            self.query_one("#ol-spinner", LoadingIndicator).display = False
+        except Exception:
+            pass
 
     def write(self, text: str) -> None:
         if not self._mounted_event.is_set():

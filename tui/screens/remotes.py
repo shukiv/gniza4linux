@@ -94,6 +94,7 @@ class RemotesScreen(Screen):
             log_screen.write("\n[green]Connection test passed.[/green]")
         else:
             log_screen.write(f"\n[red]Connection test failed (exit code {rc}).[/red]")
+        log_screen.finish()
 
     def _delete_remote(self, name: str) -> None:
         conf = CONFIG_DIR / "remotes.d" / f"{name}.conf"

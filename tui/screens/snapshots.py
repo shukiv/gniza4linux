@@ -1,3 +1,5 @@
+import re
+
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Select, DataTable
@@ -6,7 +8,7 @@ from textual import work
 
 from tui.config import list_conf_dir
 from tui.backend import run_cli
-from tui.widgets import OperationLog
+from tui.widgets import SnapshotBrowser
 
 
 class SnapshotsScreen(Screen):
@@ -91,17 +93,33 @@ class SnapshotsScreen(Screen):
             return
         target = str(target_sel.value)
         remote = str(remote_sel.value)
-        log_screen = OperationLog(f"Files: {target}/{snapshot}", show_spinner=False)
-        self.app.push_screen(log_screen)
+
+        self.notify("Loading files...")
         rc, stdout, stderr = await run_cli(
             "snapshots", "browse", f"--target={target}", f"--remote={remote}", f"--snapshot={snapshot}"
         )
-        if stdout:
-            log_screen.write(stdout)
-        if stderr:
-            log_screen.write(stderr)
-        if not stdout and not stderr:
-            log_screen.write("No files found.")
+
+        # Parse file list, strip remote prefix to get relative paths
+        # Paths look like: /remote/base/.../snapshots/<timestamp>/etc/foo.conf
+        # We want everything after the snapshot timestamp directory
+        files = []
+        pattern = re.compile(re.escape(snapshot) + r"/(.*)")
+        for line in (stdout or "").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            m = pattern.search(line)
+            if m:
+                files.append(m.group(1))
+            else:
+                files.append(line)
+
+        if not files:
+            self.notify("No files found in snapshot", severity="warning")
+            return
+
+        browser = SnapshotBrowser(f"{target} / {snapshot}", files)
+        self.app.push_screen(browser)
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

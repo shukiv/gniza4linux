@@ -8,6 +8,7 @@ from tui.screens.remote_edit import RemoteEditScreen
 from tui.screens.snapshots import SnapshotsScreen
 from tui.screens.retention import RetentionScreen
 from tui.screens.schedule import ScheduleScreen
+from tui.screens.schedule_edit import ScheduleEditScreen
 from tui.screens.logs import LogsScreen
 from tui.screens.settings import SettingsScreen
 from tui.screens.wizard import WizardScreen

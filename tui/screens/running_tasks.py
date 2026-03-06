@@ -6,7 +6,7 @@ from textual.widgets import Header, Footer, Static, Button, DataTable
 from textual.containers import Vertical, Horizontal
 
 from tui.jobs import job_manager
-from tui.widgets import OperationLog
+from tui.widgets import ConfirmDialog, OperationLog
 
 
 class RunningTasksScreen(Screen):
@@ -20,6 +20,7 @@ class RunningTasksScreen(Screen):
             yield DataTable(id="rt-table")
             with Horizontal(id="rt-buttons"):
                 yield Button("View Log", variant="primary", id="btn-rt-view")
+                yield Button("Kill Job", variant="error", id="btn-rt-kill")
                 yield Button("Clear Finished", variant="warning", id="btn-rt-clear")
                 yield Button("Back", id="btn-rt-back")
         yield Footer()
@@ -66,6 +67,8 @@ class RunningTasksScreen(Screen):
         elif event.button.id == "btn-rt-clear":
             job_manager.remove_finished()
             self._refresh_table()
+        elif event.button.id == "btn-rt-kill":
+            self._kill_selected()
         elif event.button.id == "btn-rt-view":
             table = self.query_one("#rt-table", DataTable)
             if table.row_count == 0:
@@ -81,6 +84,30 @@ class RunningTasksScreen(Screen):
                     job_id=job.id,
                 )
                 self.app.push_screen(log_screen)
+
+    def _kill_selected(self) -> None:
+        table = self.query_one("#rt-table", DataTable)
+        if table.row_count == 0:
+            self.notify("No jobs to kill", severity="warning")
+            return
+        row_key, _ = table.coordinate_to_cell_key(table.cursor_coordinate)
+        job_id = str(row_key)
+        job = job_manager.get_job(job_id)
+        if not job:
+            return
+        if job.status != "running":
+            self.notify("Job is not running", severity="warning")
+            return
+        self.app.push_screen(
+            ConfirmDialog(f"Kill job '{job.label}'?", "Confirm Kill"),
+            callback=lambda ok: self._do_kill(job_id) if ok else None,
+        )
+
+    def _do_kill(self, job_id: str) -> None:
+        if job_manager.kill_job(job_id):
+            self.notify("Job killed")
+        else:
+            self.notify("Could not kill job", severity="error")
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

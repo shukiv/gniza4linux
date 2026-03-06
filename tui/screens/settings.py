@@ -104,7 +104,7 @@ class SettingsScreen(Screen):
             rsync_extra_opts=self.query_one("#set-rsyncopts", Input).value.strip(),
             disk_usage_threshold=self.query_one("#set-diskthreshold", Input).value.strip() or "95",
             work_dir=self.query_one("#set-workdir", Input).value.strip() or "/usr/local/gniza/workdir",
-            web_port=self.query_one("#set-web-port", Input).value.strip() or "8080",
+            web_port=self.query_one("#set-web-port", Input).value.strip() or "2323",
             web_host=self.query_one("#set-web-host", Input).value.strip() or "0.0.0.0",
             web_api_key=self.query_one("#set-web-key", Input).value,
         )

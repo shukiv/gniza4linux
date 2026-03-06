@@ -64,7 +64,7 @@ load_config() {
 
     export BACKUP_MODE BWLIMIT RETENTION_COUNT
     export LOG_LEVEL LOG_RETAIN NOTIFY_EMAIL NOTIFY_ON
-    export SMTP_HOST SMTP_PORT SMTP_USER SMTP_FROM SMTP_SECURITY
+    export SMTP_HOST SMTP_PORT SMTP_USER SMTP_PASSWORD SMTP_FROM SMTP_SECURITY
     export SSH_TIMEOUT SSH_RETRIES RSYNC_EXTRA_OPTS DISK_USAGE_THRESHOLD
 }
 
@@ -125,6 +125,11 @@ validate_config() {
 
     if [[ -n "${RETENTION_COUNT:-}" ]] && [[ ! "$RETENTION_COUNT" =~ ^[0-9]+$ ]]; then
         log_error "RETENTION_COUNT must be a non-negative integer, got: $RETENTION_COUNT"
+        ((errors++)) || true
+    fi
+
+    if [[ -n "${DISK_USAGE_THRESHOLD:-}" ]] && [[ ! "$DISK_USAGE_THRESHOLD" =~ ^[0-9]+$ ]]; then
+        log_error "DISK_USAGE_THRESHOLD must be a non-negative integer (0-100), got: $DISK_USAGE_THRESHOLD"
         ((errors++)) || true
     fi
 

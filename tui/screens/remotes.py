@@ -92,7 +92,8 @@ class RemotesScreen(Screen):
             try:
                 table = self.query_one("#remotes-table", DataTable)
                 table.update_cell(name, self._disk_col_key, disk_text, update_width=True)
-            except Exception:
+            except (KeyError, LookupError):
+                # Row may have been removed if user navigated away and back
                 pass
 
     @work

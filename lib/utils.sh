@@ -10,6 +10,12 @@ die() {
     exit "$code"
 }
 
+# Escape a string for safe use inside single quotes in shell commands.
+# Usage: shquote "$var"  →  outputs the value with ' escaped to '\''
+shquote() {
+    printf '%s' "$1" | sed "s/'/'\\\\''/g"
+}
+
 timestamp() {
     date -u +"%Y-%m-%dT%H%M%S"
 }

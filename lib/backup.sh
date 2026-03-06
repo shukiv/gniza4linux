@@ -181,7 +181,8 @@ METAEOF
     elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
         echo "$meta_json" > "$snap_dir/${ts}.partial/meta.json" || log_warn "Failed to write meta.json"
     else
-        echo "$meta_json" | remote_exec "cat > '$snap_dir/${ts}.partial/meta.json'" || log_warn "Failed to write meta.json"
+        local sq_partial; sq_partial="$(shquote "$snap_dir/${ts}.partial")"
+        echo "$meta_json" | remote_exec "cat > '${sq_partial}/meta.json'" || log_warn "Failed to write meta.json"
     fi
 
     # 11. Generate manifest.txt
@@ -193,7 +194,8 @@ METAEOF
     elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
         find "$snap_dir/${ts}.partial" -type f 2>/dev/null > "$snap_dir/${ts}.partial/manifest.txt" || log_warn "Failed to write manifest.txt"
     else
-        remote_exec "find '$snap_dir/${ts}.partial' -type f > '$snap_dir/${ts}.partial/manifest.txt'" 2>/dev/null || log_warn "Failed to write manifest.txt"
+        local sq_partial; sq_partial="$(shquote "$snap_dir/${ts}.partial")"
+        remote_exec "find '${sq_partial}' -type f > '${sq_partial}/manifest.txt'" 2>/dev/null || log_warn "Failed to write manifest.txt"
     fi
 
     # 12. Finalize snapshot
@@ -211,7 +213,8 @@ METAEOF
     elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
         total_size=$(du -sb "$snap_dir/$ts" 2>/dev/null | cut -f1) || total_size=0
     else
-        total_size=$(remote_exec "du -sb '$snap_dir/$ts' 2>/dev/null | cut -f1" 2>/dev/null) || total_size=0
+        local sq_snap; sq_snap="$(shquote "$snap_dir/$ts")"
+        total_size=$(remote_exec "du -sb '$sq_snap' 2>/dev/null | cut -f1" 2>/dev/null) || total_size=0
     fi
 
     log_info "Backup completed for $target_name: $ts ($(human_size "${total_size:-0}") in $(human_duration "$duration"))"

@@ -227,7 +227,9 @@ finalize_snapshot() {
             return 1
         }
     else
-        remote_exec "mv '$snap_dir/${timestamp}.partial' '$snap_dir/$timestamp'" || {
+        local sq_partial; sq_partial="$(shquote "$snap_dir/${timestamp}.partial")"
+        local sq_final; sq_final="$(shquote "$snap_dir/$timestamp")"
+        remote_exec "mv '$sq_partial' '$sq_final'" || {
             log_error "Failed to finalize snapshot for $target_name: $timestamp"
             return 1
         }

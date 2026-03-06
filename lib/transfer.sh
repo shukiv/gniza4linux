@@ -15,7 +15,7 @@ rsync_to_remote() {
     local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
     local rsync_ssh; rsync_ssh=$(build_rsync_ssh_cmd)
 
-    local rsync_opts=(-aHAX --numeric-ids --delete --rsync-path="rsync --fake-super")
+    local rsync_opts=(-aHAX --numeric-ids --delete --sparse --rsync-path="rsync --fake-super")
 
     if [[ -n "$link_dest" ]]; then
         rsync_opts+=(--link-dest="$link_dest")
@@ -99,7 +99,7 @@ rsync_local() {
     local attempt=0
     local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
 
-    local rsync_opts=(-aHAX --numeric-ids --delete)
+    local rsync_opts=(-aHAX --numeric-ids --delete --sparse)
 
     if [[ -n "$link_dest" ]]; then
         rsync_opts+=(--link-dest="$link_dest")

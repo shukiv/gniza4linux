@@ -42,6 +42,8 @@ class BackupScreen(Screen):
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        with open("/tmp/gniza_debug.log", "a") as f:
+            f.write(f"on_button_pressed: {event.button.id}\n")
         if event.button.id == "btn-back":
             self.app.pop_screen()
         elif event.button.id == "btn-backup":
@@ -61,16 +63,21 @@ class BackupScreen(Screen):
             )
 
     def _confirmed_backup(self, target: str, remote: str) -> None:
-        self.notify("DEBUG: callback fired")
+        import traceback
+        dbg = open("/tmp/gniza_debug.log", "a")
+        dbg.write("=== _confirmed_backup called ===\n")
+        dbg.write(f"target={target} remote={remote}\n")
         try:
             log_screen = OperationLog(f"Backup: {target}")
-            self.notify("DEBUG: OperationLog created")
+            dbg.write("OperationLog created\n")
             self.app.push_screen(log_screen)
-            self.notify("DEBUG: push_screen called")
+            dbg.write("push_screen called\n")
             self._run_backup(log_screen, target, remote)
-            self.notify("DEBUG: _run_backup started")
+            dbg.write("_run_backup started\n")
         except Exception as e:
-            self.notify(f"DEBUG ERROR: {e}", severity="error")
+            dbg.write(f"ERROR: {e}\n")
+            dbg.write(traceback.format_exc())
+        dbg.close()
 
     def _confirmed_backup_all(self) -> None:
         log_screen = OperationLog("Backup All Targets")

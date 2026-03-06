@@ -146,12 +146,12 @@ class RestoreScreen(Screen):
     @work
     async def _do_restore(self, target: str, remote: str, snapshot: str, dest: str, skip_mysql: bool = False) -> None:
         job = job_manager.create_job("restore", f"Restore: {target}")
-        self.notify("Restore started -- view in Running Tasks")
         args = ["restore", f"--target={target}", f"--remote={remote}", f"--snapshot={snapshot}"]
         if dest:
             args.append(f"--dest={dest}")
         if skip_mysql:
             args.append("--skip-mysql")
+        self.app.switch_screen("running_tasks")
         await job_manager.run_job(self.app, job, *args)
 
     def action_go_back(self) -> None:

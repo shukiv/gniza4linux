@@ -30,6 +30,7 @@ async def start_cli_process(*args: str) -> asyncio.subprocess.Process:
         *cmd,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
+        start_new_session=True,
     )
 
 

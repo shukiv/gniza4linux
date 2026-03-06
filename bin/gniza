@@ -274,6 +274,11 @@ run_cli() {
                     validate_remote "$name"
                     echo "Remote '$name' is valid."
                     ;;
+                disk-info-short)
+                    [[ -z "$name" ]] && die "remotes disk-info-short requires --name=NAME"
+                    load_remote "$name"
+                    remote_disk_info_short
+                    ;;
                 disk-info)
                     [[ -z "$name" ]] && die "remotes disk-info requires --name=NAME"
                     load_remote "$name"

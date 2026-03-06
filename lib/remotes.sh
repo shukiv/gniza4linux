@@ -290,6 +290,31 @@ get_target_remotes() {
 
 # ── Disk info ────────────────────────────────────────────────
 
+# Compact one-line disk info: "USED/TOTAL (FREE free)"
+remote_disk_info_short() {
+    local base="${REMOTE_BASE:-/}"
+    local df_out=""
+    case "${REMOTE_TYPE:-ssh}" in
+        ssh)
+            df_out=$(remote_exec "df -h '$base' 2>/dev/null | tail -1") || return 1
+            ;;
+        local)
+            df_out=$(df -h "$base" 2>/dev/null | tail -1) || return 1
+            ;;
+        *)
+            echo "N/A"
+            return 0
+            ;;
+    esac
+    # df output: Filesystem Size Used Avail Use% Mount
+    local size used avail pct
+    size=$(echo "$df_out" | awk '{print $2}')
+    used=$(echo "$df_out" | awk '{print $3}')
+    avail=$(echo "$df_out" | awk '{print $4}')
+    pct=$(echo "$df_out" | awk '{print $5}')
+    echo "${used}/${size} (${avail} free) ${pct}"
+}
+
 remote_disk_info() {
     local base="${REMOTE_BASE:-/}"
     case "${REMOTE_TYPE:-ssh}" in

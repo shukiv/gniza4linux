@@ -34,7 +34,8 @@ class RemotesScreen(Screen):
     def _refresh_table(self) -> None:
         table = self.query_one("#remotes-table", DataTable)
         table.clear(columns=True)
-        table.add_columns("Name", "Type", "Host/Path")
+        cols = table.add_columns("Name", "Type", "Host/Path", "Disk")
+        self._disk_col_key = cols[3]
         remotes = list_conf_dir("remotes.d")
         for name in remotes:
             data = parse_conf(CONFIG_DIR / "remotes.d" / f"{name}.conf")
@@ -47,7 +48,8 @@ class RemotesScreen(Screen):
                 loc = f"s3://{data.get('S3_BUCKET', '')}{data.get('REMOTE_BASE', '')}"
             else:
                 loc = data.get("REMOTE_BASE", "")
-            table.add_row(name, rtype, loc, key=name)
+            table.add_row(name, rtype, loc, "loading...", key=name)
+        self._fetch_disk_info()
 
     def _selected_remote(self) -> str | None:
         table = self.query_one("#remotes-table", DataTable)
@@ -94,6 +96,18 @@ class RemotesScreen(Screen):
                 )
             else:
                 self.notify("Select a remote first", severity="warning")
+
+    @work
+    async def _fetch_disk_info(self) -> None:
+        remotes = list_conf_dir("remotes.d")
+        for name in remotes:
+            rc, stdout, stderr = await run_cli("remotes", "disk-info-short", f"--name={name}")
+            disk_text = stdout.strip() if rc == 0 and stdout.strip() else "N/A"
+            try:
+                table = self.query_one("#remotes-table", DataTable)
+                table.update_cell(name, self._disk_col_key, disk_text, update_width=True)
+            except Exception:
+                pass
 
     @work
     async def _test_remote(self, name: str) -> None:

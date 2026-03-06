@@ -93,12 +93,24 @@ class JobManager:
             except (ProcessLookupError, OSError):
                 pass
 
-    def kill_job(self, job_id: str) -> bool:
+    def kill_job(self, job_id: str) -> str:
+        """Kill a job. Returns a status message for debugging."""
         job = self._jobs.get(job_id)
-        if not job or job._proc is None:
-            return False
-        self._kill_process_group(job._proc)
-        return True
+        if not job:
+            return "job not found"
+        if job._proc is None:
+            return f"proc is None (status={job.status})"
+        pid = job._proc.pid
+        try:
+            pgid = os.getpgid(pid)
+            os.killpg(pgid, signal.SIGKILL)
+            return f"killed pgid={pgid} (pid={pid})"
+        except (ProcessLookupError, PermissionError, OSError) as e:
+            try:
+                job._proc.kill()
+                return f"fallback kill pid={pid} ({e})"
+            except (ProcessLookupError, OSError) as e2:
+                return f"failed: {e}, {e2}"
 
     def kill_running(self) -> None:
         for job in self._jobs.values():

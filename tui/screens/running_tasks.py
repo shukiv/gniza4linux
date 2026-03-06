@@ -104,10 +104,8 @@ class RunningTasksScreen(Screen):
         )
 
     def _do_kill(self, job_id: str) -> None:
-        if job_manager.kill_job(job_id):
-            self.notify("Job killed")
-        else:
-            self.notify("Could not kill job", severity="error")
+        result = job_manager.kill_job(job_id)
+        self.notify(f"Kill: {result}")
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

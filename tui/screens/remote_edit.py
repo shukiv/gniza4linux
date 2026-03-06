@@ -24,7 +24,7 @@ class RemoteEditScreen(Screen):
         self._is_new = not name
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Header(show_clock=True)
         title = "Add Remote" if self._is_new else f"Edit Remote: {self._edit_name}"
         remote = Remote()
         if not self._is_new:

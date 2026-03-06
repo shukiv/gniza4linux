@@ -17,7 +17,7 @@ class ScheduleScreen(Screen):
     BINDINGS = [("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Header(show_clock=True)
         with Vertical(id="schedule-screen"):
             yield Static("Schedules", id="screen-title")
             yield DataTable(id="sched-table")

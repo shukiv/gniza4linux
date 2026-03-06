@@ -12,7 +12,7 @@ class SettingsScreen(Screen):
     BINDINGS = [("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Header(show_clock=True)
         conf = parse_conf(CONFIG_DIR / "gniza.conf")
         settings = AppSettings.from_conf(conf)
         with Vertical(id="settings-screen"):

@@ -38,7 +38,7 @@ class ScheduleEditScreen(Screen):
         self._is_new = not name
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Header(show_clock=True)
         title = "Add Schedule" if self._is_new else f"Edit Schedule: {self._edit_name}"
         sched = Schedule()
         if not self._is_new:

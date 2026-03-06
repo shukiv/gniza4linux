@@ -120,7 +120,7 @@ class ScheduleScreen(Screen):
         for w in self.query(".sched-hourly-field"):
             w.display = stype == "hourly"
         for w in self.query(".sched-time-field"):
-            w.display = stype in ("hourly", "daily", "weekly", "monthly")
+            w.display = stype in ("daily", "weekly", "monthly")
         for w in self.query(".sched-daily-days-field"):
             w.display = stype == "daily"
         for w in self.query(".sched-weekly-day-field"):

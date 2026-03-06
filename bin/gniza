@@ -106,7 +106,10 @@ elif [[ -f "$CONFIG_DIR/gniza.conf" ]]; then
     load_config
 fi
 
-init_logging
+# Only create log files for operations that produce meaningful output
+case "${SUBCOMMAND:-}" in
+    backup|restore|retention) init_logging ;;
+esac
 
 # ── Parse subcommand flags helper ────────────────────────────
 _parse_flag() {

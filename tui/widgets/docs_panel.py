@@ -22,6 +22,29 @@ class DocsPanel(VerticalScroll):
         yield Static("[bold underline]Help[/]", id="docs-title")
         yield Static(self._content, id="docs-body")
 
+    def on_mount(self) -> None:
+        self.app.call_later(self._apply_layout)
+
+    def on_resize(self) -> None:
+        self._apply_layout()
+
+    def _apply_layout(self) -> None:
+        width = self.app.size.width
+        try:
+            container = self.screen.query_one(".screen-with-docs")
+        except Exception:
+            return
+        if width < 80:
+            container.styles.layout = "vertical"
+            self.styles.width = "100%"
+            self.styles.min_width = None
+            self.styles.max_height = "40%"
+        else:
+            container.styles.layout = "horizontal"
+            self.styles.width = "30%"
+            self.styles.min_width = 30
+            self.styles.max_height = None
+
     @classmethod
     def for_screen(cls, screen_id: str) -> "DocsPanel":
         text = SCREEN_DOCS.get(screen_id, "No documentation available for this screen.")

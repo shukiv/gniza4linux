@@ -55,6 +55,8 @@ class RunningTasksScreen(Screen):
                 icon = "... "
             elif job.status == "success":
                 icon = " ok "
+            elif job.status == "unknown":
+                icon = " ?  "
             else:
                 icon = " X  "
             started = job.started_at.strftime("%H:%M:%S")

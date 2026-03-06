@@ -47,6 +47,9 @@ class GnizaApp(App):
             self.push_screen("wizard")
         else:
             self.push_screen("main")
+        # Start tailing log files for any jobs that were running
+        # when the TUI was last closed
+        job_manager.start_tailing_reconnected(self)
 
     def on_job_finished(self, message: JobFinished) -> None:
         job = job_manager.get_job(message.job_id)

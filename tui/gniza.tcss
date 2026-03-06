@@ -72,9 +72,20 @@ SelectionList {
 
 /* MySQL restore toggle */
 #restore-mysql-row {
-    height: auto;
+    height: 3;
     align: left middle;
     margin: 0 0 1 0;
+}
+
+#restore-mysql-row Static {
+    width: auto;
+    height: 3;
+    content-align: left middle;
+}
+
+#restore-mysql-row Switch {
+    height: 3;
+    margin: 0 1;
 }
 
 /* Browse row */

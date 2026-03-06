@@ -200,25 +200,30 @@ class JobManager:
             pid = entry.get("pid")
             if pid is None:
                 continue
-            # Check if process is still alive
-            try:
-                os.kill(pid, 0)
-            except (ProcessLookupError, PermissionError):
-                continue
             job_id = entry["id"]
             if job_id in self._jobs:
                 continue
+            # Check if process is still alive
+            alive = False
+            try:
+                os.kill(pid, 0)
+                alive = True
+            except (ProcessLookupError, PermissionError):
+                pass
             job = Job(
                 id=job_id,
                 kind=entry.get("kind", "backup"),
                 label=entry.get("label", f"Job (PID {pid})"),
-                status="running",
+                status="running" if alive else "success",
                 started_at=datetime.fromisoformat(entry["started_at"]),
+                finished_at=None if alive else datetime.now(),
             )
             job._pid = pid
             job._pgid = entry.get("pgid")
-            job._reconnected = True
+            job._reconnected = alive
             self._jobs[job.id] = job
+        # Clean up registry: only keep still-running entries
+        self._save_registry()
 
     def check_reconnected(self) -> None:
         changed = False

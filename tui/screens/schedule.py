@@ -1,7 +1,7 @@
 import re
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, DataTable, Input, Select, SelectionList
+from textual.widgets import Header, Footer, Static, Button, DataTable, Input, Select, SelectionList, Switch
 from textual.containers import Vertical, Horizontal
 from textual import work
 
@@ -40,12 +40,13 @@ class ScheduleScreen(Screen):
         with Vertical(id="schedule-screen"):
             yield Static("Schedules", id="screen-title")
             yield DataTable(id="sched-table")
+            with Horizontal(id="sched-active-row"):
+                yield Static("Active (crontab):", id="sched-active-label")
+                yield Switch(id="sched-active")
             with Horizontal(id="sched-buttons"):
                 yield Button("Add", variant="primary", id="btn-add")
                 yield Button("Edit", id="btn-edit")
                 yield Button("Delete", variant="error", id="btn-delete")
-                yield Button("Install to crontab", id="btn-install")
-                yield Button("Remove from crontab", id="btn-remove")
                 yield Button("Show crontab", id="btn-show")
                 yield Button("Back", id="btn-back")
             yield Static("", id="sched-divider")
@@ -110,6 +111,20 @@ class ScheduleScreen(Screen):
     def on_mount(self) -> None:
         self._refresh_table()
         self._update_type_visibility()
+        self._check_crontab_status()
+
+    @work
+    async def _check_crontab_status(self) -> None:
+        rc, stdout, stderr = await run_cli("schedule", "show")
+        has_entries = bool(stdout.strip()) and "no gniza" not in stdout.lower()
+        self.query_one("#sched-active", Switch).value = has_entries
+
+    def on_switch_changed(self, event: Switch.Changed) -> None:
+        if event.switch.id == "sched-active":
+            if event.value:
+                self._install_schedules()
+            else:
+                self._remove_schedules()
 
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id == "sched-type":
@@ -167,10 +182,6 @@ class ScheduleScreen(Screen):
                 )
             else:
                 self.notify("Select a schedule first", severity="warning")
-        elif event.button.id == "btn-install":
-            self._install_schedules()
-        elif event.button.id == "btn-remove":
-            self._remove_schedules()
         elif event.button.id == "btn-show":
             self._show_crontab()
 
@@ -275,23 +286,19 @@ class ScheduleScreen(Screen):
 
     @work
     async def _install_schedules(self) -> None:
-        log_screen = OperationLog("Install Schedules")
-        self.app.push_screen(log_screen)
         rc, stdout, stderr = await run_cli("schedule", "install")
-        if stdout:
-            log_screen.write(stdout)
-        if stderr:
-            log_screen.write(stderr)
+        if rc == 0:
+            self.notify("Schedules installed to crontab")
+        else:
+            self.notify(f"Failed to install: {stderr or stdout}", severity="error")
 
     @work
     async def _remove_schedules(self) -> None:
-        log_screen = OperationLog("Remove Schedules")
-        self.app.push_screen(log_screen)
         rc, stdout, stderr = await run_cli("schedule", "remove")
-        if stdout:
-            log_screen.write(stdout)
-        if stderr:
-            log_screen.write(stderr)
+        if rc == 0:
+            self.notify("Schedules removed from crontab")
+        else:
+            self.notify(f"Failed to remove: {stderr or stdout}", severity="error")
 
     @work
     async def _show_crontab(self) -> None:

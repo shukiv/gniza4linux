@@ -140,6 +140,7 @@ class ScheduleScreen(Screen):
             log_screen.write(stdout)
         if stderr:
             log_screen.write(stderr)
+        log_screen.finish()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

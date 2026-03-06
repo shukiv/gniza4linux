@@ -82,9 +82,13 @@ class JobManager:
     @staticmethod
     def _kill_process_group(proc: asyncio.subprocess.Process) -> None:
         try:
-            os.killpg(proc.pid, signal.SIGTERM)
-        except (ProcessLookupError, PermissionError):
-            pass
+            pgid = os.getpgid(proc.pid)
+            os.killpg(pgid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError, OSError):
+            try:
+                proc.kill()
+            except (ProcessLookupError, OSError):
+                pass
 
     def kill_job(self, job_id: str) -> bool:
         job = self._jobs.get(job_id)

@@ -182,9 +182,40 @@ if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
     WEB_PASS="$api_key"
     # Install systemd service
     if [ "$MODE" = "root" ]; then
-        "$INSTALL_DIR/bin/gniza" web install-service 2>&1 | grep -v "^Access\|^GNIZA web" || warn "Failed to install web service"
+        if "$INSTALL_DIR/bin/gniza" web install-service 2>/dev/null; then
+            info "Web dashboard systemd service installed."
+        else
+            warn "Failed to install web service. Start manually: gniza web start"
+        fi
     else
-        warn "Systemd service installation requires root. Start manually: gniza web start"
+        # User-level systemd service
+        _user_service_dir="$HOME/.config/systemd/user"
+        mkdir -p "$_user_service_dir"
+        cat > "$_user_service_dir/gniza-web.service" <<SVCEOF
+[Unit]
+Description=GNIZA Web Dashboard
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=$(command -v python3) -m tui --web --host 0.0.0.0 --port 2323
+WorkingDirectory=$INSTALL_DIR
+Environment=GNIZA_DIR=$INSTALL_DIR
+Environment=PYTHONPATH=$INSTALL_DIR
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+SVCEOF
+        systemctl --user daemon-reload 2>/dev/null || true
+        systemctl --user enable gniza-web 2>/dev/null || true
+        systemctl --user restart gniza-web 2>/dev/null || true
+        if systemctl --user is-active gniza-web &>/dev/null; then
+            info "Web dashboard user service installed and started."
+        else
+            warn "Could not start user service. Start manually: gniza web start"
+        fi
     fi
 fi
 

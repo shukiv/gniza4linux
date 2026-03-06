@@ -164,11 +164,11 @@
         }
       })();
 
-      // Touch-to-scroll: translate swipe gestures into key events for Textual
+      // Touch-to-scroll: translate swipe into mouse wheel for Textual scrollable containers
       (function() {
         var touchStartY = null;
         var accumDY = 0;
-        var STEP = 20; // pixels per scroll step
+        var STEP = 10;
 
         document.addEventListener("touchstart", function(e) {
           if (e.touches.length === 1) {
@@ -185,14 +185,23 @@
           accumDY += touchStartY - currentY;
           touchStartY = currentY;
 
-          var textarea = document.querySelector(".xterm-helper-textarea");
-          if (!textarea) return;
+          // Find the xterm canvas to dispatch wheel events on
+          var canvas = document.querySelector(".xterm-screen canvas") ||
+                       document.querySelector(".xterm-screen") ||
+                       document.querySelector("#terminal");
+          if (!canvas) return;
 
           while (Math.abs(accumDY) >= STEP) {
-            var key = accumDY > 0 ? "ArrowDown" : "ArrowUp";
-            textarea.dispatchEvent(new KeyboardEvent("keydown", {
-              key: key, code: key, keyCode: key === "ArrowDown" ? 40 : 38,
-              bubbles: true, cancelable: true
+            var delta = accumDY > 0 ? 60 : -60;
+            canvas.dispatchEvent(new WheelEvent("wheel", {
+              deltaY: delta,
+              deltaX: 0,
+              deltaMode: 0,
+              clientX: canvas.getBoundingClientRect().width / 2,
+              clientY: canvas.getBoundingClientRect().height / 2,
+              bubbles: true,
+              cancelable: true,
+              composed: true
             }));
             accumDY -= (accumDY > 0 ? STEP : -STEP);
           }

@@ -1,4 +1,6 @@
 import asyncio
+import os
+import signal
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -77,23 +79,24 @@ class JobManager:
             app.post_message(JobFinished(job.id, rc))
         return job.return_code if job.return_code is not None else 1
 
+    @staticmethod
+    def _kill_process_group(proc: asyncio.subprocess.Process) -> None:
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except (ProcessLookupError, PermissionError):
+            pass
+
     def kill_job(self, job_id: str) -> bool:
         job = self._jobs.get(job_id)
         if not job or job._proc is None:
             return False
-        try:
-            job._proc.terminate()
-            return True
-        except ProcessLookupError:
-            return False
+        self._kill_process_group(job._proc)
+        return True
 
     def kill_running(self) -> None:
         for job in self._jobs.values():
             if job._proc is not None:
-                try:
-                    job._proc.terminate()
-                except ProcessLookupError:
-                    pass
+                self._kill_process_group(job._proc)
 
 
 job_manager = JobManager()

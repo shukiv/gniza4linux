@@ -35,6 +35,10 @@ rsync_to_remote() {
         rsync_opts+=("${extra_filter_opts[@]}")
     fi
 
+    if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+        rsync_opts+=(--verbose --stats)
+    fi
+
     rsync_opts+=(-e "$rsync_ssh")
 
     # Ensure source ends with /
@@ -51,7 +55,12 @@ rsync_to_remote() {
             rsync_cmd=(sshpass -e "${rsync_cmd[@]}")
         fi
         local rc=0
-        "${rsync_cmd[@]}" || rc=$?
+        if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+            echo "=== rsync: $source_dir -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
+            "${rsync_cmd[@]}" > >(tee -a "$_TRANSFER_LOG") 2>&1 || rc=$?
+        else
+            "${rsync_cmd[@]}" || rc=$?
+        fi
         if (( rc == 0 )); then
             log_debug "rsync succeeded on attempt $attempt"
             return 0
@@ -110,6 +119,10 @@ rsync_local() {
         rsync_opts+=("${extra_filter_opts[@]}")
     fi
 
+    if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+        rsync_opts+=(--verbose --stats)
+    fi
+
     # Ensure source ends with /
     [[ "$source_dir" != */ ]] && source_dir="$source_dir/"
 
@@ -118,7 +131,12 @@ rsync_local() {
         log_debug "rsync (local) attempt $attempt/$max_retries: $source_dir -> $local_dest"
 
         local rc=0
-        rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" || rc=$?
+        if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+            echo "=== rsync (local): $source_dir -> $local_dest ===" >> "$_TRANSFER_LOG"
+            rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" > >(tee -a "$_TRANSFER_LOG") 2>&1 || rc=$?
+        else
+            rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" || rc=$?
+        fi
         if (( rc == 0 )); then
             log_debug "rsync (local) succeeded on attempt $attempt"
             return 0

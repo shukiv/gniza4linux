@@ -4,6 +4,16 @@
 [[ -n "${_GNIZA4LINUX_SNAPLOG_LOADED:-}" ]] && return 0
 _GNIZA4LINUX_SNAPLOG_LOADED=1
 
+# Tee helper: writes each line to the transfer log, app log, and stderr (TUI).
+# Used as process substitution target: cmd > >(_snaplog_tee) 2>&1
+_snaplog_tee() {
+    while IFS= read -r line; do
+        echo "$line" >> "${_TRANSFER_LOG}"
+        [[ -n "${LOG_FILE:-}" ]] && echo "$line" >> "${LOG_FILE}"
+        echo "$line" >&2
+    done
+}
+
 # Initialize snapshot log directory and transfer log file.
 snaplog_init() {
     _SNAP_LOG_DIR=$(mktemp -d "${WORK_DIR}/gniza-snaplog-XXXXXX")

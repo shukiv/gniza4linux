@@ -57,7 +57,7 @@ rsync_to_remote() {
         local rc=0
         if [[ -n "${_TRANSFER_LOG:-}" ]]; then
             echo "=== rsync: $source_dir -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
-            "${rsync_cmd[@]}" > >(tee -a "$_TRANSFER_LOG") 2>&1 || rc=$?
+            "${rsync_cmd[@]}" > >(_snaplog_tee) 2>&1 || rc=$?
         else
             "${rsync_cmd[@]}" || rc=$?
         fi
@@ -133,7 +133,7 @@ rsync_local() {
         local rc=0
         if [[ -n "${_TRANSFER_LOG:-}" ]]; then
             echo "=== rsync (local): $source_dir -> $local_dest ===" >> "$_TRANSFER_LOG"
-            rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" > >(tee -a "$_TRANSFER_LOG") 2>&1 || rc=$?
+            rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" > >(_snaplog_tee) 2>&1 || rc=$?
         else
             rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" || rc=$?
         fi

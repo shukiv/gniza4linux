@@ -331,23 +331,37 @@ check_remote_disk_space() {
 }
 
 # Compact one-line disk info: "USED/TOTAL (FREE free) PCT"
-# Parsing is done on the remote/local side to avoid SSH output issues.
 remote_disk_info_short() {
     local base="${REMOTE_BASE:-/}"
-    local cmd="df -h '$base' 2>/dev/null | awk 'NR>1{printf \"%s/%s (%s free) %s\", \$3, \$2, \$4, \$5}'"
-    local result=""
+    local df_out=""
     case "${REMOTE_TYPE:-ssh}" in
         ssh)
-            result=$(remote_exec "$cmd") || return 1
+            df_out=$(remote_exec "df -h '$base' 2>/dev/null") || return 1
             ;;
         local)
-            result=$(eval "$cmd") || return 1
+            df_out=$(df -h "$base" 2>/dev/null) || return 1
             ;;
         *)
             echo "N/A"
             return 0
             ;;
     esac
-    echo "${result:-N/A}"
+    # Strip carriage returns, squeeze whitespace, find line with %
+    local data_line
+    data_line=$(echo "$df_out" | tr '\r' ' ' | tr -s ' ' | grep '%' | tail -1)
+    if [[ -z "$data_line" ]]; then
+        echo "N/A"
+        return 0
+    fi
+    # Find the % field and extract Size/Used/Avail from the 3 fields before it
+    local size used avail pct
+    read -r size used avail pct < <(
+        echo "$data_line" | awk '{for(i=1;i<=NF;i++){if($i~/%/){print $(i-3),$(i-2),$(i-1),$i;exit}}}'
+    )
+    if [[ -n "$size" ]]; then
+        echo "${used}/${size} (${avail} free) ${pct}"
+    else
+        echo "N/A"
+    fi
 }
 

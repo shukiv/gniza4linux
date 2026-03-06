@@ -74,24 +74,38 @@ class GnizaApp(App):
         except NoMatches:
             pass
 
+    # Width threshold for switching docs panel to bottom
+    DOCS_VERTICAL_WIDTH = 80
+
     def on_resize(self, event: Resize) -> None:
-        try:
-            panel = self.screen.query_one("#docs-panel")
-        except NoMatches:
-            return
-        if getattr(panel, "_user_toggled", False):
-            return
-        panel.display = event.size.width >= self.DOCS_AUTO_HIDE_WIDTH
+        self._update_docs_layout(event.size.width)
 
     def on_screen_resume(self) -> None:
-        """Re-evaluate docs panel visibility when switching screens."""
+        """Re-evaluate docs panel layout when switching screens."""
+        self._update_docs_layout(self.size.width)
+
+    def _update_docs_layout(self, width: int) -> None:
         try:
             panel = self.screen.query_one("#docs-panel")
         except NoMatches:
             return
-        if getattr(panel, "_user_toggled", False):
+        if not getattr(panel, "_user_toggled", False):
+            panel.display = width >= self.DOCS_AUTO_HIDE_WIDTH
+        # Switch layout direction based on width
+        try:
+            container = self.screen.query_one(".screen-with-docs")
+        except NoMatches:
             return
-        panel.display = self.size.width >= self.DOCS_AUTO_HIDE_WIDTH
+        if width < self.DOCS_VERTICAL_WIDTH:
+            container.styles.layout = "vertical"
+            panel.styles.width = "100%"
+            panel.styles.min_width = None
+            panel.styles.max_height = "40%"
+        else:
+            container.styles.layout = "horizontal"
+            panel.styles.width = "30%"
+            panel.styles.min_width = 30
+            panel.styles.max_height = None
 
     async def action_quit(self) -> None:
         if job_manager.running_count() > 0:

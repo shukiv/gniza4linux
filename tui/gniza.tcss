@@ -235,3 +235,9 @@ Select {
 Switch {
     margin: 0 1;
 }
+
+.section-label {
+    text-style: bold;
+    color: #00cc00;
+    margin: 1 0 0 0;
+}

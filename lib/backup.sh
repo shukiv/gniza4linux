@@ -101,6 +101,19 @@ _backup_target_impl() {
         fi
     fi
 
+    # 8.5. Dump MySQL databases (if enabled)
+    local mysql_dump_dir=""
+    if [[ "${TARGET_MYSQL_ENABLED:-no}" == "yes" ]]; then
+        log_info "Dumping MySQL databases for $target_name..."
+        if mysql_dump_databases; then
+            mysql_dump_dir="${MYSQL_DUMP_DIR:-}"
+        else
+            log_error "MySQL dump failed for $target_name"
+            mysql_cleanup_dump
+            return 1
+        fi
+    fi
+
     # 9. Transfer each folder
     local folder
     local transfer_failed=false
@@ -111,6 +124,18 @@ _backup_target_impl() {
             transfer_failed=true
         fi
     done < <(get_target_folders)
+
+    # 9.5. Transfer MySQL dumps
+    if [[ -n "$mysql_dump_dir" && -d "$mysql_dump_dir/_mysql" ]]; then
+        log_info "Transferring MySQL dumps for $target_name..."
+        if ! transfer_folder "$target_name" "$mysql_dump_dir/_mysql" "$ts" "$prev"; then
+            log_error "Transfer failed for MySQL dumps"
+            transfer_failed=true
+        fi
+    fi
+
+    # Cleanup MySQL temp dir
+    mysql_cleanup_dump
 
     if [[ "$transfer_failed" == "true" ]]; then
         log_error "One or more folder transfers failed for $target_name"
@@ -132,6 +157,7 @@ _backup_target_impl() {
   "timestamp": "$ts",
   "duration": $duration,
   "folders": "$(echo "$TARGET_FOLDERS" | sed 's/"/\\"/g')",
+  "mysql_dumps": $([ "${TARGET_MYSQL_ENABLED:-no}" = "yes" ] && echo "true" || echo "false"),
   "total_size": $total_size,
   "mode": "${BACKUP_MODE:-$DEFAULT_BACKUP_MODE}",
   "pinned": false

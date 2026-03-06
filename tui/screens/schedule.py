@@ -138,7 +138,7 @@ class ScheduleScreen(Screen):
 
     @work
     async def _show_crontab(self) -> None:
-        log_screen = OperationLog("Current Crontab")
+        log_screen = OperationLog("Current Crontab", show_spinner=False)
         self.app.push_screen(log_screen)
         rc, stdout, stderr = await run_cli("schedule", "show")
         if stdout:

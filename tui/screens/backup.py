@@ -69,6 +69,7 @@ class BackupScreen(Screen):
     async def _do_backup(self, target: str, remote: str) -> None:
         log_screen = OperationLog(f"Backup: {target}")
         self.app.push_screen(log_screen)
+        await log_screen.wait_ready()
         args = ["backup", f"--target={target}"]
         if remote:
             args.append(f"--remote={remote}")
@@ -83,6 +84,7 @@ class BackupScreen(Screen):
     async def _do_backup_all(self) -> None:
         log_screen = OperationLog("Backup All Targets")
         self.app.push_screen(log_screen)
+        await log_screen.wait_ready()
         rc = await stream_cli(log_screen.write, "backup", "--all")
         if rc == 0:
             log_screen.write("\n[green]All backups completed.[/green]")

@@ -114,6 +114,7 @@ class RestoreScreen(Screen):
     async def _do_restore(self, target: str, remote: str, snapshot: str, dest: str) -> None:
         log_screen = OperationLog(f"Restore: {target}")
         self.app.push_screen(log_screen)
+        await log_screen.wait_ready()
         args = ["restore", f"--target={target}", f"--remote={remote}", f"--snapshot={snapshot}"]
         if dest:
             args.append(f"--dest={dest}")

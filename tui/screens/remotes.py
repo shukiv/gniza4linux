@@ -85,6 +85,7 @@ class RemotesScreen(Screen):
     async def _test_remote(self, name: str) -> None:
         log_screen = OperationLog(f"Testing Remote: {name}")
         self.app.push_screen(log_screen)
+        await log_screen.wait_ready()
         rc, stdout, stderr = await run_cli("remotes", "test", f"--name={name}")
         if stdout:
             log_screen.write(stdout)

@@ -29,6 +29,8 @@ class SettingsScreen(Screen):
             yield Input(value=settings.retention_count, id="set-retention")
             yield Static("Default Bandwidth Limit (KB/s, 0=unlimited):")
             yield Input(value=settings.bwlimit, id="set-bwlimit")
+            yield Static("Disk Usage Threshold (%, 0=disable):")
+            yield Input(value=settings.disk_usage_threshold, id="set-diskthreshold")
             yield Static("Notification Email:")
             yield Input(value=settings.notify_email, id="set-email")
             yield Static("Notify On:")
@@ -100,6 +102,7 @@ class SettingsScreen(Screen):
             ssh_timeout=self.query_one("#set-sshtimeout", Input).value.strip() or "30",
             ssh_retries=self.query_one("#set-sshretries", Input).value.strip() or "3",
             rsync_extra_opts=self.query_one("#set-rsyncopts", Input).value.strip(),
+            disk_usage_threshold=self.query_one("#set-diskthreshold", Input).value.strip() or "95",
             work_dir=self.query_one("#set-workdir", Input).value.strip() or "/usr/local/gniza/workdir",
             web_port=self.query_one("#set-web-port", Input).value.strip() or "8080",
             web_host=self.query_one("#set-web-host", Input).value.strip() or "0.0.0.0",

@@ -22,6 +22,7 @@ class ConfirmDialog(ModalScreen[bool]):
                 yield Button("No", variant="default", id="cd-no")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.notify(f"DEBUG CD: button={event.button.id}, dismissing with {event.button.id == 'cd-yes'}")
         self.dismiss(event.button.id == "cd-yes")
 
     def action_cancel(self) -> None:

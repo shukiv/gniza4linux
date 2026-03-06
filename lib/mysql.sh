@@ -190,6 +190,164 @@ mysql_dump_databases() {
     return 0
 }
 
+# Dump MySQL user grants to grants.sql in the dump directory.
+# Must be called after mysql_dump_databases() sets MYSQL_DUMP_DIR.
+mysql_dump_grants() {
+    local client_cmd
+    client_cmd=$(_mysql_find_client_cmd) || {
+        log_error "MySQL/MariaDB client not found — cannot dump grants"
+        return 1
+    }
+
+    mysql_build_conn_args
+
+    local grants_file="$MYSQL_DUMP_DIR/_mysql/grants.sql"
+
+    # System users to skip
+    local -a skip_users=(
+        "'root'@'localhost'"
+        "'mysql.sys'@'localhost'"
+        "'mysql.infoschema'@'localhost'"
+        "'mysql.session'@'localhost'"
+        "'debian-sys-maint'@'localhost'"
+        "'mariadb.sys'@'localhost'"
+    )
+
+    # Get all users
+    local users_output
+    users_output=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e \
+        "SELECT CONCAT(\"'\", user, \"'@'\", host, \"'\") FROM mysql.user" 2>&1) || {
+        log_error "Failed to list MySQL users: $users_output"
+        return 1
+    }
+
+    local count=0
+    {
+        echo "-- MySQL grants dump"
+        echo "-- Generated: $(date -Iseconds)"
+        echo ""
+
+        while IFS= read -r user_host; do
+            user_host="${user_host#"${user_host%%[![:space:]]*}"}"
+            user_host="${user_host%"${user_host##*[![:space:]]}"}"
+            [[ -z "$user_host" ]] && continue
+
+            # Skip system users
+            local skip=false
+            local su
+            for su in "${skip_users[@]}"; do
+                if [[ "$user_host" == "$su" ]]; then
+                    skip=true
+                    break
+                fi
+            done
+            [[ "$skip" == "true" ]] && continue
+
+            # Try SHOW CREATE USER (MySQL 5.7+/MariaDB 10.2+)
+            local create_user
+            create_user=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e \
+                "SHOW CREATE USER $user_host" 2>/dev/null) || true
+            if [[ -n "$create_user" ]]; then
+                echo "$create_user;"
+            fi
+
+            # SHOW GRANTS
+            local grants
+            grants=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e \
+                "SHOW GRANTS FOR $user_host" 2>/dev/null) || continue
+            while IFS= read -r grant_line; do
+                [[ -n "$grant_line" ]] && echo "$grant_line;"
+            done <<< "$grants"
+            echo ""
+            ((count++)) || true
+        done <<< "$users_output"
+    } > "$grants_file"
+
+    log_info "MySQL grants dumped: $count user(s) -> grants.sql"
+    return 0
+}
+
+# Restore MySQL databases from a directory of .sql.gz files.
+# Usage: mysql_restore_databases <dir_path>
+# The directory should contain *.sql.gz files and optionally grants.sql.
+mysql_restore_databases() {
+    local mysql_dir="$1"
+
+    if [[ ! -d "$mysql_dir" ]]; then
+        log_error "MySQL restore dir not found: $mysql_dir"
+        return 1
+    fi
+
+    local client_cmd
+    client_cmd=$(_mysql_find_client_cmd) || {
+        log_error "MySQL/MariaDB client not found — cannot restore databases"
+        return 1
+    }
+
+    mysql_build_conn_args
+
+    local errors=0
+
+    # Restore database dumps
+    local f
+    for f in "$mysql_dir"/*.sql.gz; do
+        [[ -f "$f" ]] || continue
+        local db_name
+        db_name=$(basename "$f" .sql.gz)
+
+        # Skip system databases
+        local skip=false
+        local sdb
+        for sdb in $_MYSQL_SYSTEM_DBS; do
+            if [[ "$db_name" == "$sdb" ]]; then
+                skip=true
+                break
+            fi
+        done
+        [[ "$skip" == "true" ]] && continue
+
+        log_info "Restoring MySQL database: $db_name"
+
+        # Create database if not exists
+        "$client_cmd" "${MYSQL_CONN_ARGS[@]}" -e \
+            "CREATE DATABASE IF NOT EXISTS \`$db_name\`" 2>/dev/null || {
+            log_error "Failed to create database: $db_name"
+            ((errors++)) || true
+            continue
+        }
+
+        # Import dump
+        if gunzip -c "$f" | "$client_cmd" "${MYSQL_CONN_ARGS[@]}" "$db_name" 2>/dev/null; then
+            log_info "Restored database: $db_name"
+        else
+            log_error "Failed to restore database: $db_name"
+            ((errors++)) || true
+        fi
+    done
+
+    # Restore grants
+    if [[ -f "$mysql_dir/grants.sql" ]]; then
+        log_info "Restoring MySQL grants..."
+        if "$client_cmd" "${MYSQL_CONN_ARGS[@]}" < "$mysql_dir/grants.sql" 2>/dev/null; then
+            log_info "MySQL grants restored"
+            "$client_cmd" "${MYSQL_CONN_ARGS[@]}" -e "FLUSH PRIVILEGES" 2>/dev/null || true
+        else
+            log_error "Failed to restore some MySQL grants (partial restore may have occurred)"
+            ((errors++)) || true
+        fi
+    fi
+
+    unset MYSQL_PWD 2>/dev/null || true
+
+    if (( errors > 0 )); then
+        log_error "MySQL restore completed with $errors error(s)"
+        return 1
+    fi
+
+    log_info "MySQL restore completed successfully"
+    return 0
+}
+
 # Clean up the temporary MySQL dump directory and env vars.
 mysql_cleanup_dump() {
     if [[ -n "${MYSQL_DUMP_DIR:-}" && -d "$MYSQL_DUMP_DIR" ]]; then

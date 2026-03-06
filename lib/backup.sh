@@ -106,6 +106,7 @@ _backup_target_impl() {
     if [[ "${TARGET_MYSQL_ENABLED:-no}" == "yes" ]]; then
         log_info "Dumping MySQL databases for $target_name..."
         if mysql_dump_databases; then
+            mysql_dump_grants || log_warn "Grants dump failed, continuing with database dumps"
             mysql_dump_dir="${MYSQL_DUMP_DIR:-}"
         else
             log_error "MySQL dump failed for $target_name"

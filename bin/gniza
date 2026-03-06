@@ -158,6 +158,14 @@ run_cli() {
             dest=$(_parse_flag "--dest" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             folder=$(_parse_flag "--folder" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
 
+            # Check for --skip-mysql flag
+            local skip_mysql=""
+            local arg
+            for arg in "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}"; do
+                [[ "$arg" == "--skip-mysql" ]] && skip_mysql="yes"
+            done
+            [[ -n "$skip_mysql" ]] && export SKIP_MYSQL_RESTORE="yes"
+
             [[ -z "$target" ]] && die "restore requires --target=NAME"
 
             if [[ -z "$remote" ]]; then

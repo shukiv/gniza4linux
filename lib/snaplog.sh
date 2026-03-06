@@ -4,14 +4,15 @@
 [[ -n "${_GNIZA4LINUX_SNAPLOG_LOADED:-}" ]] && return 0
 _GNIZA4LINUX_SNAPLOG_LOADED=1
 
-# Tee helper: writes each line to the transfer log, app log, and stderr (TUI).
+# Tee helper: copies stdin to the transfer log, app log, and stderr (TUI).
 # Used as process substitution target: cmd > >(_snaplog_tee) 2>&1
+# Uses tee(1) to preserve \r from rsync --info=progress2 in real-time.
 _snaplog_tee() {
-    while IFS= read -r line; do
-        echo "$line" >> "${_TRANSFER_LOG}"
-        [[ -n "${LOG_FILE:-}" ]] && echo "$line" >> "${LOG_FILE}"
-        echo "$line" >&2
-    done
+    if [[ -n "${LOG_FILE:-}" ]]; then
+        tee -a "${_TRANSFER_LOG}" "${LOG_FILE}" >&2
+    else
+        tee -a "${_TRANSFER_LOG}" >&2
+    fi
 }
 
 # Initialize snapshot log directory and transfer log file.

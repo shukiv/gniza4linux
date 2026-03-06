@@ -1,10 +1,10 @@
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, Select, Input, RadioSet, RadioButton
+from textual.widgets import Header, Footer, Static, Button, Select, Input, RadioSet, RadioButton, Switch
 from textual.containers import Vertical, Horizontal
 from textual import work, on
 
-from tui.config import list_conf_dir
+from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
 from tui.backend import run_cli, stream_cli
 from tui.widgets import ConfirmDialog, OperationLog, FolderPicker
 
@@ -35,15 +35,40 @@ class RestoreScreen(Screen):
                 with Horizontal(id="restore-dest-row"):
                     yield Input(placeholder="Destination directory (e.g. /tmp/restore)", id="restore-dest")
                     yield Button("Browse...", id="btn-browse-dest")
+                with Horizontal(id="restore-mysql-row"):
+                    yield Static("Restore MySQL databases:")
+                    yield Switch(value=True, id="restore-mysql-switch")
                 with Horizontal(id="restore-buttons"):
                     yield Button("Restore", variant="primary", id="btn-restore")
                     yield Button("Back", id="btn-back")
         yield Footer()
 
+    def on_mount(self) -> None:
+        try:
+            self.query_one("#restore-mysql-row").display = False
+        except Exception:
+            pass
+
     @on(Select.Changed, "#restore-target")
-    @on(Select.Changed, "#restore-remote")
-    def _on_selection_changed(self, event: Select.Changed) -> None:
+    def _on_target_changed(self, event: Select.Changed) -> None:
         self._try_load_snapshots()
+        self._update_mysql_visibility()
+
+    @on(Select.Changed, "#restore-remote")
+    def _on_remote_changed(self, event: Select.Changed) -> None:
+        self._try_load_snapshots()
+
+    def _update_mysql_visibility(self) -> None:
+        try:
+            target_sel = self.query_one("#restore-target", Select)
+            mysql_row = self.query_one("#restore-mysql-row")
+            if isinstance(target_sel.value, str):
+                data = parse_conf(CONFIG_DIR / "targets.d" / f"{target_sel.value}.conf")
+                mysql_row.display = data.get("TARGET_MYSQL_ENABLED", "no") == "yes"
+            else:
+                mysql_row.display = False
+        except Exception:
+            pass
 
     @work
     async def _try_load_snapshots(self) -> None:
@@ -100,23 +125,32 @@ class RestoreScreen(Screen):
         radio = self.query_one("#restore-location", RadioSet)
         dest_input = self.query_one("#restore-dest", Input)
         dest = "" if radio.pressed_index == 0 else dest_input.value
+        try:
+            restore_mysql = self.query_one("#restore-mysql-switch", Switch).value
+        except Exception:
+            restore_mysql = True
+        skip_mysql = not restore_mysql
         msg = f"Restore snapshot?\n\nTarget: {target}\nRemote: {remote}\nSnapshot: {snapshot}"
         if dest:
             msg += f"\nDestination: {dest}"
         else:
             msg += "\nLocation: In-place"
+        if skip_mysql:
+            msg += "\nMySQL: Skip"
         self.app.push_screen(
             ConfirmDialog(msg, "Confirm Restore"),
-            callback=lambda ok: self._do_restore(target, remote, snapshot, dest) if ok else None,
+            callback=lambda ok: self._do_restore(target, remote, snapshot, dest, skip_mysql) if ok else None,
         )
 
     @work
-    async def _do_restore(self, target: str, remote: str, snapshot: str, dest: str) -> None:
+    async def _do_restore(self, target: str, remote: str, snapshot: str, dest: str, skip_mysql: bool = False) -> None:
         log_screen = OperationLog(f"Restore: {target}")
         self.app.push_screen(log_screen)
         args = ["restore", f"--target={target}", f"--remote={remote}", f"--snapshot={snapshot}"]
         if dest:
             args.append(f"--dest={dest}")
+        if skip_mysql:
+            args.append("--skip-mysql")
         rc = await stream_cli(log_screen.write, *args)
         if rc == 0:
             log_screen.write("\n[green]Restore completed successfully.[/green]")

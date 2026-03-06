@@ -42,8 +42,6 @@ class BackupScreen(Screen):
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        with open("/tmp/gniza_debug.log", "a") as f:
-            f.write(f"on_button_pressed: {event.button.id}\n")
         if event.button.id == "btn-back":
             self.app.pop_screen()
         elif event.button.id == "btn-backup":
@@ -54,38 +52,23 @@ class BackupScreen(Screen):
             target = str(target_sel.value)
             remote_sel = self.query_one("#backup-remote", Select)
             remote = str(remote_sel.value) if isinstance(remote_sel.value, str) else ""
-            # Skip ConfirmDialog — go straight to OperationLog for debugging
-            self._confirmed_backup(target, remote)
+            msg = f"Run backup for target '{target}'?"
+            if remote:
+                msg += f"\nRemote: {remote}"
+            self.app.push_screen(
+                ConfirmDialog(msg, "Confirm Backup"),
+                callback=lambda ok: self._do_backup(target, remote) if ok else None,
+            )
         elif event.button.id == "btn-backup-all":
             self.app.push_screen(
                 ConfirmDialog("Backup ALL targets now?", "Confirm Backup"),
-                callback=lambda ok: self._confirmed_backup_all() if ok else None,
+                callback=lambda ok: self._do_backup_all() if ok else None,
             )
 
-    def _confirmed_backup(self, target: str, remote: str) -> None:
-        import traceback
-        dbg = open("/tmp/gniza_debug.log", "a")
-        dbg.write("=== _confirmed_backup called ===\n")
-        dbg.write(f"target={target} remote={remote}\n")
-        try:
-            log_screen = OperationLog(f"Backup: {target}")
-            dbg.write("OperationLog created\n")
-            self.app.push_screen(log_screen)
-            dbg.write("push_screen called\n")
-            self._run_backup(log_screen, target, remote)
-            dbg.write("_run_backup started\n")
-        except Exception as e:
-            dbg.write(f"ERROR: {e}\n")
-            dbg.write(traceback.format_exc())
-        dbg.close()
-
-    def _confirmed_backup_all(self) -> None:
-        log_screen = OperationLog("Backup All Targets")
-        self.app.push_screen(log_screen)
-        self._run_backup_all(log_screen)
-
     @work
-    async def _run_backup(self, log_screen: OperationLog, target: str, remote: str) -> None:
+    async def _do_backup(self, target: str, remote: str) -> None:
+        log_screen = OperationLog(f"Backup: {target}")
+        self.app.push_screen(log_screen)
         args = ["backup", f"--target={target}"]
         if remote:
             args.append(f"--remote={remote}")
@@ -94,16 +77,16 @@ class BackupScreen(Screen):
             log_screen.write("\n[green]Backup completed successfully.[/green]")
         else:
             log_screen.write(f"\n[red]Backup failed (exit code {rc}).[/red]")
-        log_screen.finish()
 
     @work
-    async def _run_backup_all(self, log_screen: OperationLog) -> None:
+    async def _do_backup_all(self) -> None:
+        log_screen = OperationLog("Backup All Targets")
+        self.app.push_screen(log_screen)
         rc = await stream_cli(log_screen.write, "backup", "--all")
         if rc == 0:
             log_screen.write("\n[green]All backups completed.[/green]")
         else:
             log_screen.write(f"\n[red]Backup failed (exit code {rc}).[/red]")
-        log_screen.finish()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

@@ -164,22 +164,22 @@ enable_web="n"
 read -rp "Enable web dashboard (TUI in browser)? (y/n) [n]: " enable_web </dev/tty || true
 if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
     # Set up web credentials
-    if ! grep -q "^WEB_USER=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
-        echo 'WEB_USER="admin"' >> "$CONFIG_DIR/gniza.conf"
-    fi
-    if ! grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null || \
-       [ -z "$(grep '^WEB_API_KEY=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_API_KEY="//' | sed 's/"$//')" ]; then
-        api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
-        if grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
-            sed -i "s|^WEB_API_KEY=.*|WEB_API_KEY=\"${api_key}\"|" "$CONFIG_DIR/gniza.conf"
-        else
-            echo "WEB_API_KEY=\"${api_key}\"" >> "$CONFIG_DIR/gniza.conf"
-        fi
-        info "Web credentials:  user=admin  password=$api_key"
-        echo "Save these -- you will need them to access the dashboard."
+    web_user="admin"
+    read -rp "Web username [admin]: " web_user </dev/tty || true
+    web_user="${web_user:-admin}"
+    api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+    if grep -q "^WEB_USER=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
+        sed -i "s|^WEB_USER=.*|WEB_USER=\"${web_user}\"|" "$CONFIG_DIR/gniza.conf"
     else
-        info "Web credentials already configured."
+        echo "WEB_USER=\"${web_user}\"" >> "$CONFIG_DIR/gniza.conf"
     fi
+    if grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
+        sed -i "s|^WEB_API_KEY=.*|WEB_API_KEY=\"${api_key}\"|" "$CONFIG_DIR/gniza.conf"
+    else
+        echo "WEB_API_KEY=\"${api_key}\"" >> "$CONFIG_DIR/gniza.conf"
+    fi
+    info "Web credentials:  user=$web_user  password=$api_key"
+    echo "Save these -- you will need them to access the dashboard."
     # Install systemd service
     if [ "$MODE" = "root" ]; then
         "$INSTALL_DIR/bin/gniza" web install-service || warn "Failed to install web service"

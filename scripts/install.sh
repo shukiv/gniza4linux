@@ -187,9 +187,7 @@ setup_web_dashboard() {
 }
 
 enable_web="n"
-if [ -t 0 ]; then
-    read -rp "Enable web dashboard? (y/n) [n]: " enable_web </dev/tty || true
-fi
+read -rp "Enable web dashboard? (y/n) [n]: " enable_web </dev/tty || true
 if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
     setup_web_dashboard
 fi

@@ -143,16 +143,15 @@ class RestoreScreen(Screen):
             callback=lambda ok: self._do_restore(target, remote, snapshot, dest, skip_mysql) if ok else None,
         )
 
-    @work
-    async def _do_restore(self, target: str, remote: str, snapshot: str, dest: str, skip_mysql: bool = False) -> None:
+    def _do_restore(self, target: str, remote: str, snapshot: str, dest: str, skip_mysql: bool = False) -> None:
         job = job_manager.create_job("restore", f"Restore: {target}")
         args = ["restore", f"--target={target}", f"--remote={remote}", f"--snapshot={snapshot}"]
         if dest:
             args.append(f"--dest={dest}")
         if skip_mysql:
             args.append("--skip-mysql")
+        job_manager.start_job(self.app, job, *args)
         self.app.switch_screen("running_tasks")
-        await job_manager.run_job(self.app, job, *args)
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

@@ -54,6 +54,9 @@ class JobManager:
     def remove_finished(self) -> None:
         self._jobs = {k: v for k, v in self._jobs.items() if v.status == "running"}
 
+    def start_job(self, app, job: Job, *cli_args: str) -> None:
+        asyncio.create_task(self.run_job(app, job, *cli_args))
+
     async def run_job(self, app, job: Job, *cli_args: str) -> int:
         proc = await start_cli_process(*cli_args)
         job._proc = proc

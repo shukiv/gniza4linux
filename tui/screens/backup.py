@@ -2,8 +2,6 @@ from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Select
 from textual.containers import Vertical, Horizontal
-from textual import work
-
 from tui.config import list_conf_dir, has_targets, has_remotes
 from tui.jobs import job_manager
 from tui.widgets import ConfirmDialog
@@ -65,20 +63,18 @@ class BackupScreen(Screen):
                 callback=lambda ok: self._do_backup_all() if ok else None,
             )
 
-    @work
-    async def _do_backup(self, target: str, remote: str) -> None:
+    def _do_backup(self, target: str, remote: str) -> None:
         job = job_manager.create_job("backup", f"Backup: {target}")
         args = ["backup", f"--target={target}"]
         if remote:
             args.append(f"--remote={remote}")
+        job_manager.start_job(self.app, job, *args)
         self.app.switch_screen("running_tasks")
-        await job_manager.run_job(self.app, job, *args)
 
-    @work
-    async def _do_backup_all(self) -> None:
+    def _do_backup_all(self) -> None:
         job = job_manager.create_job("backup", "Backup All Targets")
+        job_manager.start_job(self.app, job, "backup", "--all")
         self.app.switch_screen("running_tasks")
-        await job_manager.run_job(self.app, job, "backup", "--all")
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

@@ -10,7 +10,7 @@ from flask import (
     session, jsonify, flash,
 )
 
-CONFIG_DIR = Path(os.environ.get("GNIZA_CONFIG_DIR", "/usr/local/gniza/etc"))
+CONFIG_DIR = Path(os.environ.get("GNIZA_CONFIG_DIR", "/etc/gniza"))
 LOG_DIR = Path(os.environ.get("LOG_DIR", "/var/log/gniza"))
 
 

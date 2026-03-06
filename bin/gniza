@@ -418,7 +418,7 @@ if [[ "$SUBCOMMAND" == "web" ]]; then
             systemctl enable gniza-web
             systemctl restart gniza-web
             echo "GNIZA web service installed and started."
-            echo "Access the dashboard at http://$(hostname -I | awk '{print $1}'):8080"
+            echo "Access the dashboard at http://$(hostname -I | awk '{print $1}'):2323"
             ;;
         remove-service)
             systemctl stop gniza-web 2>/dev/null || true

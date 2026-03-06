@@ -297,10 +297,10 @@ remote_disk_usage_pct() {
     local df_line=""
     case "${REMOTE_TYPE:-ssh}" in
         ssh)
-            df_line=$(remote_exec "df '$base' 2>/dev/null | tail -1") || return 1
+            df_line=$(remote_exec "(df '$base' 2>/dev/null || df / 2>/dev/null) | tail -1") || return 1
             ;;
         local)
-            df_line=$(df "$base" 2>/dev/null | tail -1) || return 1
+            df_line=$({ df "$base" 2>/dev/null || df / 2>/dev/null; } | tail -1) || return 1
             ;;
         *)
             echo "0"
@@ -336,10 +336,11 @@ remote_disk_info_short() {
     local df_out=""
     case "${REMOTE_TYPE:-ssh}" in
         ssh)
-            df_out=$(remote_exec "df -h '$base' 2>/dev/null") || return 1
+            # Fall back to / if the base path doesn't exist yet
+            df_out=$(remote_exec "df -h '$base' 2>/dev/null || df -h / 2>/dev/null") || return 1
             ;;
         local)
-            df_out=$(df -h "$base" 2>/dev/null) || return 1
+            df_out=$(df -h "$base" 2>/dev/null || df -h / 2>/dev/null) || return 1
             ;;
         *)
             echo "N/A"

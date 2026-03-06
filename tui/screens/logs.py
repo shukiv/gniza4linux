@@ -1,10 +1,24 @@
+import re
+from datetime import datetime
 from pathlib import Path
+
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, DataTable, RichLog
 from textual.containers import Vertical, Horizontal
 
 from tui.config import LOG_DIR
+
+
+_LOG_NAME_RE = re.compile(r"gniza-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})\.log")
+
+
+def _format_log_name(name: str) -> tuple[str, str]:
+    """Format 'gniza-20260306-144516.log' as ('2026-03-06', '14:45:16')."""
+    m = _LOG_NAME_RE.match(name)
+    if m:
+        return f"{m[1]}-{m[2]}-{m[3]}", f"{m[4]}:{m[5]}:{m[6]}"
+    return name, ""
 
 
 class LogsScreen(Screen):
@@ -29,7 +43,7 @@ class LogsScreen(Screen):
     def _refresh_table(self) -> None:
         table = self.query_one("#logs-table", DataTable)
         table.clear(columns=True)
-        table.add_columns("File", "Size")
+        table.add_columns("Date", "Time", "Size")
         log_dir = Path(LOG_DIR)
         if not log_dir.is_dir():
             return
@@ -42,7 +56,8 @@ class LogsScreen(Screen):
                 size_str = f"{size / 1024:.1f} KB"
             else:
                 size_str = f"{size} B"
-            table.add_row(f.name, size_str, key=f.name)
+            date_str, time_str = _format_log_name(f.name)
+            table.add_row(date_str, time_str, size_str, key=f.name)
 
     def _selected_log(self) -> str | None:
         table = self.query_one("#logs-table", DataTable)

@@ -53,12 +53,12 @@ class ScheduleScreen(Screen):
             self.app.pop_screen()
         elif event.button.id == "btn-add":
             from tui.screens.schedule_edit import ScheduleEditScreen
-            self.app.push_screen(ScheduleEditScreen(), callback=lambda _: self._refresh_table())
+            self.app.push_screen(ScheduleEditScreen(), callback=self._on_schedule_saved)
         elif event.button.id == "btn-edit":
             name = self._selected_schedule()
             if name:
                 from tui.screens.schedule_edit import ScheduleEditScreen
-                self.app.push_screen(ScheduleEditScreen(name), callback=lambda _: self._refresh_table())
+                self.app.push_screen(ScheduleEditScreen(name), callback=self._on_schedule_saved)
             else:
                 self.notify("Select a schedule first", severity="warning")
         elif event.button.id == "btn-delete":
@@ -78,6 +78,11 @@ class ScheduleScreen(Screen):
                 self.notify("Select a schedule first", severity="warning")
         elif event.button.id == "btn-show":
             self._show_crontab()
+
+    def _on_schedule_saved(self, result: str | None) -> None:
+        self._refresh_table()
+        if result is not None:
+            self._sync_crontab()
 
     def _toggle_active(self, name: str) -> None:
         conf = CONFIG_DIR / "schedules.d" / f"{name}.conf"

@@ -57,8 +57,35 @@ class ScheduleScreen(Screen):
             yield Select(HOURLY_INTERVALS, id="sched-interval", value="1", classes="sched-hourly-field")
             yield Static("Time (HH:MM):", classes="sched-time-field")
             yield Input(id="sched-time", value="02:00", placeholder="02:00", classes="sched-time-field")
-            yield Static("Day (0=Sun for weekly, 1-28 for monthly):", classes="sched-day-field")
-            yield Input(id="sched-day", placeholder="Leave empty if not needed", classes="sched-day-field")
+            yield Static("Schedule Days:", classes="sched-daily-days-field")
+            yield SelectionList[str](
+                ("Sunday", "0"),
+                ("Monday", "1"),
+                ("Tuesday", "2"),
+                ("Wednesday", "3"),
+                ("Thursday", "4"),
+                ("Friday", "5"),
+                ("Saturday", "6"),
+                id="sched-daily-days",
+                classes="sched-daily-days-field",
+            )
+            yield Static("Schedule Day:", classes="sched-weekly-day-field")
+            yield Select(
+                [("Sunday", "0"), ("Monday", "1"), ("Tuesday", "2"), ("Wednesday", "3"),
+                 ("Thursday", "4"), ("Friday", "5"), ("Saturday", "6")],
+                id="sched-weekly-day",
+                value="0",
+                classes="sched-weekly-day-field",
+            )
+            yield Static("Schedule Day:", classes="sched-monthly-field")
+            yield Select(
+                [("1st of the month", "1"), ("7th of the month", "7"),
+                 ("14th of the month", "14"), ("21st of the month", "21"),
+                 ("28th of the month", "28")],
+                id="sched-monthly-day",
+                value="1",
+                classes="sched-monthly-field",
+            )
             yield Static("Custom cron (5 fields):", classes="sched-cron-field")
             yield Input(id="sched-cron", placeholder="0 2 * * *", classes="sched-cron-field")
             yield Static("Targets (empty=all):")
@@ -94,8 +121,12 @@ class ScheduleScreen(Screen):
             w.display = stype == "hourly"
         for w in self.query(".sched-time-field"):
             w.display = stype in ("hourly", "daily", "weekly", "monthly")
-        for w in self.query(".sched-day-field"):
-            w.display = stype in ("weekly", "monthly")
+        for w in self.query(".sched-daily-days-field"):
+            w.display = stype == "daily"
+        for w in self.query(".sched-weekly-day-field"):
+            w.display = stype == "weekly"
+        for w in self.query(".sched-monthly-field"):
+            w.display = stype == "monthly"
         for w in self.query(".sched-cron-field"):
             w.display = stype == "custom"
 
@@ -153,8 +184,17 @@ class ScheduleScreen(Screen):
         if stype == "hourly":
             interval_sel = self.query_one("#sched-interval", Select)
             day_val = str(interval_sel.value) if isinstance(interval_sel.value, str) else "1"
+        elif stype == "daily":
+            selected_days = sorted(self.query_one("#sched-daily-days", SelectionList).selected)
+            day_val = ",".join(selected_days)
+        elif stype == "weekly":
+            wday_sel = self.query_one("#sched-weekly-day", Select)
+            day_val = str(wday_sel.value) if isinstance(wday_sel.value, str) else "0"
+        elif stype == "monthly":
+            mday_sel = self.query_one("#sched-monthly-day", Select)
+            day_val = str(mday_sel.value) if isinstance(mday_sel.value, str) else "1"
         else:
-            day_val = self.query_one("#sched-day", Input).value.strip()
+            day_val = ""
         sched = Schedule(
             name=name,
             schedule=stype,

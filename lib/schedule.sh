@@ -102,7 +102,11 @@ schedule_to_cron() {
             fi
             ;;
         daily)
-            echo "$minute $hour * * *"
+            if [[ -n "$sday" ]]; then
+                echo "$minute $hour * * $sday"
+            else
+                echo "$minute $hour * * *"
+            fi
             ;;
         weekly)
             if [[ -z "$sday" ]]; then

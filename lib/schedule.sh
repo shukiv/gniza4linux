@@ -56,6 +56,7 @@ load_schedule() {
     SCHEDULE_TIME=""
     SCHEDULE_DAY=""
     SCHEDULE_CRON=""
+    SCHEDULE_ACTIVE="yes"
     SCHEDULE_REMOTES=""
     SCHEDULE_TARGETS=""
 
@@ -188,6 +189,11 @@ install_schedules() {
 
         if [[ -z "${SCHEDULE:-}" ]]; then
             log_debug "Schedule '$sname' has no SCHEDULE type, skipping"
+            continue
+        fi
+
+        if [[ "${SCHEDULE_ACTIVE:-yes}" != "yes" ]]; then
+            log_debug "Schedule '$sname' is inactive, skipping"
             continue
         fi
 

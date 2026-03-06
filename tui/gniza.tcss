@@ -256,17 +256,6 @@ Switch {
     margin: 0 1;
 }
 
-#sched-active-row {
-    height: auto;
-    align: left middle;
-    margin: 1 0;
-}
-
-#sched-active-label {
-    width: auto;
-    margin: 0 1 0 0;
-}
-
 .section-label {
     text-style: bold;
     color: #00cc00;

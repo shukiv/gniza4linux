@@ -1,11 +1,11 @@
 import re
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, DataTable, Input, Select, SelectionList, Switch
+from textual.widgets import Header, Footer, Static, Button, DataTable, Input, Select, SelectionList
 from textual.containers import Vertical, Horizontal
 from textual import work
 
-from tui.config import list_conf_dir, parse_conf, write_conf, CONFIG_DIR
+from tui.config import list_conf_dir, parse_conf, write_conf, update_conf_key, CONFIG_DIR
 from tui.models import Schedule
 from tui.backend import run_cli
 from tui.widgets import ConfirmDialog, OperationLog
@@ -40,12 +40,10 @@ class ScheduleScreen(Screen):
         with Vertical(id="schedule-screen"):
             yield Static("Schedules", id="screen-title")
             yield DataTable(id="sched-table")
-            with Horizontal(id="sched-active-row"):
-                yield Static("Active (crontab):", id="sched-active-label")
-                yield Switch(id="sched-active")
             with Horizontal(id="sched-buttons"):
                 yield Button("Add", variant="primary", id="btn-add")
                 yield Button("Edit", id="btn-edit")
+                yield Button("Toggle Active", variant="warning", id="btn-toggle")
                 yield Button("Delete", variant="error", id="btn-delete")
                 yield Button("Show crontab", id="btn-show")
                 yield Button("Back", id="btn-back")
@@ -111,20 +109,6 @@ class ScheduleScreen(Screen):
     def on_mount(self) -> None:
         self._refresh_table()
         self._update_type_visibility()
-        self._check_crontab_status()
-
-    @work
-    async def _check_crontab_status(self) -> None:
-        rc, stdout, stderr = await run_cli("schedule", "show")
-        has_entries = bool(stdout.strip()) and "no gniza" not in stdout.lower()
-        self.query_one("#sched-active", Switch).value = has_entries
-
-    def on_switch_changed(self, event: Switch.Changed) -> None:
-        if event.switch.id == "sched-active":
-            if event.value:
-                self._install_schedules()
-            else:
-                self._remove_schedules()
 
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id == "sched-type":
@@ -149,12 +133,13 @@ class ScheduleScreen(Screen):
     def _refresh_table(self) -> None:
         table = self.query_one("#sched-table", DataTable)
         table.clear(columns=True)
-        table.add_columns("Name", "Type", "Time", "Targets", "Remotes")
+        table.add_columns("Name", "Active", "Type", "Time", "Targets", "Remotes")
         schedules = list_conf_dir("schedules.d")
         for name in schedules:
             data = parse_conf(CONFIG_DIR / "schedules.d" / f"{name}.conf")
             s = Schedule.from_conf(name, data)
-            table.add_row(name, s.schedule, s.time, s.targets or "all", s.remotes or "all", key=name)
+            active = "✅" if s.active == "yes" else "❌"
+            table.add_row(name, active, s.schedule, s.time, s.targets or "all", s.remotes or "all", key=name)
 
     def _selected_schedule(self) -> str | None:
         table = self.query_one("#sched-table", DataTable)
@@ -180,6 +165,12 @@ class ScheduleScreen(Screen):
                     ConfirmDialog(f"Delete schedule '{name}'?", "Delete Schedule"),
                     callback=lambda ok: self._delete_schedule(name) if ok else None,
                 )
+            else:
+                self.notify("Select a schedule first", severity="warning")
+        elif event.button.id == "btn-toggle":
+            name = self._selected_schedule()
+            if name:
+                self._toggle_active(name)
             else:
                 self.notify("Select a schedule first", severity="warning")
         elif event.button.id == "btn-show":
@@ -276,6 +267,22 @@ class ScheduleScreen(Screen):
         self._refresh_table()
         self.query_one("#sched-name", Input).value = ""
         self.query_one("#sched-form-title", Static).update("Add Schedule")
+
+    def _toggle_active(self, name: str) -> None:
+        conf = CONFIG_DIR / "schedules.d" / f"{name}.conf"
+        data = parse_conf(conf)
+        current = data.get("SCHEDULE_ACTIVE", "yes")
+        new_val = "no" if current == "yes" else "yes"
+        update_conf_key(conf, "SCHEDULE_ACTIVE", new_val)
+        state = "activated" if new_val == "yes" else "deactivated"
+        self.notify(f"Schedule '{name}' {state}")
+        self._refresh_table()
+        self._sync_crontab()
+
+    @work
+    async def _sync_crontab(self) -> None:
+        """Reinstall crontab with only active schedules."""
+        await run_cli("schedule", "install")
 
     def _delete_schedule(self, name: str) -> None:
         conf = CONFIG_DIR / "schedules.d" / f"{name}.conf"

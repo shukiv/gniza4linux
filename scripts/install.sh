@@ -3,7 +3,7 @@ set -eo pipefail
 
 REPO_URL="https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git"
 
-# Colors — force enable when piped (curl | bash), since output still goes to terminal
+# Colors - force enable when piped (curl | bash), since output still goes to terminal
 C_GREEN=$'\033[0;32m'
 C_RED=$'\033[0;31m'
 C_YELLOW=$'\033[0;33m'
@@ -15,7 +15,7 @@ warn()  { echo "${C_YELLOW}[WARN]${C_RESET} $*" >&2; }
 error() { echo "${C_RED}[ERROR]${C_RESET} $*" >&2; }
 die()   { error "$1"; exit 1; }
 
-# ── Determine install mode ───────────────────────────────────
+# -- Determine install mode -----------------------------------
 if [[ $EUID -eq 0 ]]; then
     MODE="root"
     INSTALL_DIR="/usr/local/gniza"
@@ -38,7 +38,7 @@ info "Config dir:   $CONFIG_DIR"
 info "Log dir:      $LOG_DIR"
 echo ""
 
-# ── Determine source ────────────────────────────────────────
+# -- Determine source ----------------------------------------
 SOURCE_DIR=""
 
 # Check if running from a local clone (won't work when piped via curl)
@@ -62,7 +62,7 @@ if [[ -z "$SOURCE_DIR" ]]; then
     SOURCE_DIR="$TMPDIR/gniza4linux"
 fi
 
-# ── Check dependencies ──────────────────────────────────────
+# -- Check dependencies --------------------------------------
 info "Checking dependencies..."
 for cmd in bash rsync; do
     if ! command -v "$cmd" &>/dev/null; then
@@ -76,7 +76,7 @@ for cmd in ssh curl; do
     fi
 done
 
-# ── Install files ────────────────────────────────────────────
+# -- Install files --------------------------------------------
 info "Installing to $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"
 
@@ -104,7 +104,7 @@ fi
 # Make entrypoint executable
 chmod +x "$INSTALL_DIR/bin/gniza"
 
-# ── Install Python TUI dependencies ─────────────────────────
+# -- Install Python TUI dependencies -------------------------
 if command -v python3 &>/dev/null; then
     info "Installing Python TUI dependencies (textual, textual-serve, flask)..."
     if python3 -m pip install --break-system-packages textual textual-serve flask 2>/dev/null; then
@@ -119,12 +119,12 @@ else
     warn "python3 not found. TUI mode will not be available."
 fi
 
-# ── Create symlink ───────────────────────────────────────────
+# -- Create symlink -------------------------------------------
 info "Creating symlink: $BIN_LINK -> $INSTALL_DIR/bin/gniza"
 mkdir -p "$(dirname "$BIN_LINK")"
 ln -sf "$INSTALL_DIR/bin/gniza" "$BIN_LINK"
 
-# ── Create config directories ───────────────────────────────
+# -- Create config directories -------------------------------
 info "Setting up config directory: $CONFIG_DIR"
 mkdir -p "$CONFIG_DIR/targets.d"
 mkdir -p "$CONFIG_DIR/remotes.d"
@@ -137,15 +137,15 @@ if [[ "$MODE" == "root" ]]; then
     chmod 700 "$CONFIG_DIR/schedules.d"
 fi
 
-# ── Create log directory ─────────────────────────────────────
+# -- Create log directory -------------------------------------
 info "Setting up log directory: $LOG_DIR"
 mkdir -p "$LOG_DIR"
 
-# ── Create work directory ───────────────────────────────────
+# -- Create work directory -----------------------------------
 info "Setting up work directory: $WORK_DIR"
 mkdir -p "$WORK_DIR"
 
-# ── Copy example configs (if not already present) ────────────
+# -- Copy example configs (if not already present) ------------
 if [[ ! -f "$CONFIG_DIR/gniza.conf" ]]; then
     cp "$INSTALL_DIR/etc/gniza.conf.example" "$CONFIG_DIR/gniza.conf"
     info "Created default config: $CONFIG_DIR/gniza.conf"
@@ -159,24 +159,24 @@ for example in target.conf.example remote.conf.example schedule.conf.example; do
     fi
 done
 
-# ── Web dashboard setup ─────────────────────────────────────
-enable_web="n"
-read -rp "Enable web dashboard? (y/n) [n]: " enable_web || true
-if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
-    # Update config
-    if grep -q "^WEB_ENABLED=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
-        sed -i 's|^WEB_ENABLED=.*|WEB_ENABLED="yes"|' "$CONFIG_DIR/gniza.conf"
+# -- Web dashboard setup --
+setup_web_dashboard() {
+    local conf="$CONFIG_DIR/gniza.conf"
+    # Update config: WEB_ENABLED
+    if grep -q "^WEB_ENABLED=" "$conf" 2>/dev/null; then
+        sed -i 's|^WEB_ENABLED=.*|WEB_ENABLED="yes"|' "$conf"
     else
-        echo 'WEB_ENABLED="yes"' >> "$CONFIG_DIR/gniza.conf"
+        echo 'WEB_ENABLED="yes"' >> "$conf"
     fi
     # Generate random API key
+    local api_key
     api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
-    if grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
-        sed -i "s|^WEB_API_KEY=.*|WEB_API_KEY=\"${api_key}\"|" "$CONFIG_DIR/gniza.conf"
+    if grep -q "^WEB_API_KEY=" "$conf" 2>/dev/null; then
+        sed -i "s|^WEB_API_KEY=.*|WEB_API_KEY=\"${api_key}\"|" "$conf"
     else
-        echo "WEB_API_KEY=\"${api_key}\"" >> "$CONFIG_DIR/gniza.conf"
+        echo "WEB_API_KEY=\"${api_key}\"" >> "$conf"
     fi
-    echo "Web API key: $api_key"
+    info "Web API key: $api_key"
     echo "Save this key -- you will need it to log into the dashboard."
     # Install systemd service (root only)
     if [ "$MODE" = "root" ]; then
@@ -184,9 +184,17 @@ if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
     else
         warn "Systemd service installation requires root. Start manually: gniza web start"
     fi
+}
+
+enable_web="n"
+if [ -t 0 ]; then
+    read -rp "Enable web dashboard? (y/n) [n]: " enable_web </dev/tty || true
+fi
+if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
+    setup_web_dashboard
 fi
 
-# ── Done ─────────────────────────────────────────────────────
+# -- Done -----------------------------------------------------
 echo ""
 echo "${C_GREEN}${C_BOLD}Installation complete!${C_RESET}"
 echo ""

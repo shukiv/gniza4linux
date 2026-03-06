@@ -4,7 +4,7 @@ from pathlib import Path
 
 from web.app import create_app, parse_conf
 
-CONFIG_DIR = Path(os.environ.get("GNIZA_CONFIG_DIR", "/usr/local/gniza/etc"))
+CONFIG_DIR = Path(os.environ.get("GNIZA_CONFIG_DIR", "/etc/gniza"))
 
 
 def main():

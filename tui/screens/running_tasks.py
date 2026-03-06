@@ -86,7 +86,7 @@ class RunningTasksScreen(Screen):
             self.notify("No jobs to view", severity="warning")
             return
         row_key, _ = table.coordinate_to_cell_key(table.cursor_coordinate)
-        job_id = str(row_key)
+        job_id = str(row_key.value if hasattr(row_key, 'value') else row_key)
         job = job_manager.get_job(job_id)
         if not job:
             self.notify("Job not found", severity="warning")

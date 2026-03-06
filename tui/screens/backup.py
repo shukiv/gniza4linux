@@ -77,6 +77,7 @@ class BackupScreen(Screen):
             log_screen.write("\n[green]Backup completed successfully.[/green]")
         else:
             log_screen.write(f"\n[red]Backup failed (exit code {rc}).[/red]")
+        log_screen.finish()
 
     @work
     async def _do_backup_all(self) -> None:
@@ -87,6 +88,7 @@ class BackupScreen(Screen):
             log_screen.write("\n[green]All backups completed.[/green]")
         else:
             log_screen.write(f"\n[red]Backup failed (exit code {rc}).[/red]")
+        log_screen.finish()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

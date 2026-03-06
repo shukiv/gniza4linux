@@ -122,6 +122,7 @@ class RestoreScreen(Screen):
             log_screen.write("\n[green]Restore completed successfully.[/green]")
         else:
             log_screen.write(f"\n[red]Restore failed (exit code {rc}).[/red]")
+        log_screen.finish()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

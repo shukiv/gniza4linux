@@ -75,6 +75,7 @@ class RetentionScreen(Screen):
             log_screen.write("\n[green]Cleanup completed.[/green]")
         else:
             log_screen.write(f"\n[red]Cleanup failed (exit code {rc}).[/red]")
+        log_screen.finish()
 
     @work
     async def _do_cleanup_all(self) -> None:
@@ -85,6 +86,7 @@ class RetentionScreen(Screen):
             log_screen.write("\n[green]All cleanups completed.[/green]")
         else:
             log_screen.write(f"\n[red]Cleanup failed (exit code {rc}).[/red]")
+        log_screen.finish()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

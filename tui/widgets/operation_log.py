@@ -1,10 +1,32 @@
 import asyncio
 
+from rich.spinner import Spinner as RichSpinner
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.widgets import RichLog, Button, Static
-from textual.containers import Vertical
+from textual.containers import Vertical, Horizontal
+from textual.timer import Timer
+
+
+class SpinnerWidget(Static):
+    """Animated spinner using Rich's Spinner renderable."""
+
+    def __init__(self, style: str = "dots", **kwargs):
+        super().__init__("", **kwargs)
+        self._spinner = RichSpinner(style)
+        self._timer: Timer | None = None
+
+    def on_mount(self) -> None:
+        self._timer = self.set_interval(1 / 12, self._tick)
+
+    def _tick(self) -> None:
+        self.update(self._spinner)
+
+    def stop(self) -> None:
+        if self._timer:
+            self._timer.stop()
+        self.update("✅")
 
 
 class OperationLog(ModalScreen[None]):
@@ -19,7 +41,9 @@ class OperationLog(ModalScreen[None]):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="op-log"):
-            yield Static(self._title, id="ol-title")
+            with Horizontal(id="ol-header"):
+                yield Static(self._title, id="ol-title")
+                yield SpinnerWidget(id="ol-spinner")
             yield RichLog(id="ol-log", wrap=True, highlight=True, markup=True)
             yield Button("Close", variant="primary", id="ol-close")
 
@@ -42,6 +66,12 @@ class OperationLog(ModalScreen[None]):
             log.write(Text.from_markup(text))
         else:
             log.write(text)
+
+    def finish(self) -> None:
+        try:
+            self.query_one("#ol-spinner", SpinnerWidget).stop()
+        except Exception:
+            pass
 
     def write(self, text: str) -> None:
         if not self._mounted_event.is_set():

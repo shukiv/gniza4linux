@@ -274,8 +274,18 @@ run_cli() {
                     validate_remote "$name"
                     echo "Remote '$name' is valid."
                     ;;
+                disk-info)
+                    [[ -z "$name" ]] && die "remotes disk-info requires --name=NAME"
+                    load_remote "$name"
+                    remote_disk_info
+                    ;;
+                speed-test)
+                    [[ -z "$name" ]] && die "remotes speed-test requires --name=NAME"
+                    load_remote "$name"
+                    remote_speed_test
+                    ;;
                 *)
-                    die "Unknown remotes action: $action (expected list|add|delete|show|test)"
+                    die "Unknown remotes action: $action (expected list|add|delete|show|test|disk-info|speed-test)"
                     ;;
             esac
             ;;

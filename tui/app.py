@@ -1,5 +1,6 @@
 from textual.app import App
 from textual.css.query import NoMatches
+from textual.events import Resize
 
 from tui.config import has_remotes, has_targets
 from tui.screens.main_menu import MainMenuScreen
@@ -62,12 +63,35 @@ class GnizaApp(App):
         else:
             self.notify(f"{job.label} failed (exit code {message.return_code})", severity="error")
 
+    # Width threshold for auto-hiding the docs panel
+    DOCS_AUTO_HIDE_WIDTH = 100
+
     def action_toggle_docs(self) -> None:
         try:
             panel = self.screen.query_one("#docs-panel")
             panel.display = not panel.display
+            panel._user_toggled = True
         except NoMatches:
             pass
+
+    def on_resize(self, event: Resize) -> None:
+        try:
+            panel = self.screen.query_one("#docs-panel")
+        except NoMatches:
+            return
+        if getattr(panel, "_user_toggled", False):
+            return
+        panel.display = event.size.width >= self.DOCS_AUTO_HIDE_WIDTH
+
+    def on_screen_resume(self) -> None:
+        """Re-evaluate docs panel visibility when switching screens."""
+        try:
+            panel = self.screen.query_one("#docs-panel")
+        except NoMatches:
+            return
+        if getattr(panel, "_user_toggled", False):
+            return
+        panel.display = self.size.width >= self.DOCS_AUTO_HIDE_WIDTH
 
     async def action_quit(self) -> None:
         if job_manager.running_count() > 0:

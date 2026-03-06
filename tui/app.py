@@ -63,8 +63,9 @@ class GnizaApp(App):
         else:
             self.notify(f"{job.label} failed (exit code {message.return_code})", severity="error")
 
-    # Width threshold for auto-hiding the docs panel
-    DOCS_AUTO_HIDE_WIDTH = 100
+    # Width thresholds for docs panel
+    DOCS_VERTICAL_WIDTH = 80   # Below: panel moves to bottom
+    DOCS_HIDE_WIDTH = 45       # Below: panel hidden entirely
 
     def action_toggle_docs(self) -> None:
         try:
@@ -73,9 +74,6 @@ class GnizaApp(App):
             panel._user_toggled = True
         except NoMatches:
             pass
-
-    # Width threshold for switching docs panel to bottom
-    DOCS_VERTICAL_WIDTH = 80
 
     def on_resize(self, event: Resize) -> None:
         self._update_docs_layout(event.size.width)
@@ -87,15 +85,13 @@ class GnizaApp(App):
     def _update_docs_layout(self, width: int) -> None:
         try:
             panel = self.screen.query_one("#docs-panel")
-        except NoMatches:
-            return
-        if not getattr(panel, "_user_toggled", False):
-            panel.display = width >= self.DOCS_AUTO_HIDE_WIDTH
-        # Switch layout direction based on width
-        try:
             container = self.screen.query_one(".screen-with-docs")
         except NoMatches:
             return
+        # Auto-hide only on very narrow screens (unless user toggled)
+        if not getattr(panel, "_user_toggled", False):
+            panel.display = width >= self.DOCS_HIDE_WIDTH
+        # Switch layout direction
         if width < self.DOCS_VERTICAL_WIDTH:
             container.styles.layout = "vertical"
             panel.styles.width = "100%"

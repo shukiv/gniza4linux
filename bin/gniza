@@ -50,6 +50,7 @@ Commands:
   schedule          install|show|remove
   logs              [--last] [--tail=N]
   web               start|install-service|remove-service|status [--port=PORT] [--host=HOST]
+  uninstall         Run the uninstall script
   version
 
 If no command is given, the TUI is launched.
@@ -150,6 +151,19 @@ run_cli() {
 
             if [[ "$all" == "true" || -z "$target" ]]; then
                 backup_all_targets "$remote"
+            elif [[ "$target" == *,* ]]; then
+                # Comma-separated targets (e.g. from schedule --target=web,db)
+                local IFS=','
+                local names
+                read -ra names <<< "$target"
+                local rc=0
+                for t in "${names[@]}"; do
+                    t="${t#"${t%%[![:space:]]*}"}"
+                    t="${t%"${t##*[![:space:]]}"}"
+                    [[ -z "$t" ]] && continue
+                    backup_target "$t" "$remote" || rc=$?
+                done
+                exit "$rc"
             else
                 backup_target "$target" "$remote"
             fi
@@ -417,30 +431,73 @@ if [[ "$SUBCOMMAND" == "web" ]]; then
             PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m tui "${_web_args[@]}"
             ;;
         install-service)
-            _service_src="$GNIZA_DIR/etc/gniza-web.service"
-            _service_dst="/etc/systemd/system/gniza-web.service"
-            if [[ ! -f "$_service_src" ]]; then
-                die "Service file not found: $_service_src"
+            if [[ $EUID -eq 0 ]]; then
+                _service_src="$GNIZA_DIR/etc/gniza-web.service"
+                _service_dst="/etc/systemd/system/gniza-web.service"
+                if [[ ! -f "$_service_src" ]]; then
+                    die "Service file not found: $_service_src"
+                fi
+                cp "$_service_src" "$_service_dst"
+                systemctl daemon-reload
+                systemctl enable gniza-web
+                systemctl restart gniza-web
+            else
+                _user_service_dir="$HOME/.config/systemd/user"
+                mkdir -p "$_user_service_dir"
+                cat > "$_user_service_dir/gniza-web.service" <<SVCEOF
+[Unit]
+Description=GNIZA Web Dashboard
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=$(command -v python3) -m tui --web --host 0.0.0.0 --port 2323
+WorkingDirectory=$GNIZA_DIR
+Environment=GNIZA_DIR=$GNIZA_DIR
+Environment=PYTHONPATH=$GNIZA_DIR
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+SVCEOF
+                systemctl --user daemon-reload
+                systemctl --user enable gniza-web
+                systemctl --user restart gniza-web
             fi
-            cp "$_service_src" "$_service_dst"
-            systemctl daemon-reload
-            systemctl enable gniza-web
-            systemctl restart gniza-web
             echo "GNIZA web service installed and started."
             echo "Access the dashboard at http://$(hostname -I | awk '{print $1}'):2323"
             ;;
         remove-service)
-            systemctl stop gniza-web 2>/dev/null || true
-            systemctl disable gniza-web 2>/dev/null || true
-            rm -f /etc/systemd/system/gniza-web.service
-            systemctl daemon-reload
+            if [[ $EUID -eq 0 ]]; then
+                systemctl stop gniza-web 2>/dev/null || true
+                systemctl disable gniza-web 2>/dev/null || true
+                rm -f /etc/systemd/system/gniza-web.service
+                systemctl daemon-reload
+            else
+                systemctl --user stop gniza-web 2>/dev/null || true
+                systemctl --user disable gniza-web 2>/dev/null || true
+                rm -f "$HOME/.config/systemd/user/gniza-web.service"
+                systemctl --user daemon-reload 2>/dev/null || true
+            fi
             echo "GNIZA web service removed."
             ;;
         status)
-            systemctl status gniza-web 2>/dev/null || echo "GNIZA web service is not installed."
+            if [[ $EUID -eq 0 ]]; then
+                systemctl status gniza-web 2>/dev/null || echo "GNIZA web service is not installed."
+            else
+                systemctl --user status gniza-web 2>/dev/null || echo "GNIZA web service is not installed."
+            fi
             ;;
         *) die "Unknown web action: $_web_action (expected start|install-service|remove-service|status)" ;;
     esac
+elif [[ "$SUBCOMMAND" == "uninstall" ]]; then
+    _uninstall_script="$GNIZA_DIR/scripts/uninstall.sh"
+    if [[ -f "$_uninstall_script" ]]; then
+        exec bash "$_uninstall_script"
+    else
+        die "Uninstall script not found: $_uninstall_script"
+    fi
 elif [[ -n "$SUBCOMMAND" ]]; then
     # Explicit subcommand: always CLI
     run_cli

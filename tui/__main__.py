@@ -112,12 +112,14 @@ def main():
         if web_key:
             print(f"GNIZA web: login with user={web_user!r}")
 
+        _templates_dir = str(Path(__file__).resolve().parent / "web_templates")
         server = Server(
             "python3 -m tui",
             host=host,
             port=port,
             title="GNIZA Backup",
             public_url=public_url,
+            templates_path=_templates_dir,
         )
 
         # Add HTTP Basic Auth if API key is configured

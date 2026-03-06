@@ -163,7 +163,10 @@ done
 enable_web="n"
 read -rp "Enable web dashboard (TUI in browser)? (y/n) [n]: " enable_web </dev/tty || true
 if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
-    # Generate API key if not already set
+    # Set up web credentials
+    if ! grep -q "^WEB_USER=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
+        echo 'WEB_USER="admin"' >> "$CONFIG_DIR/gniza.conf"
+    fi
     if ! grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null || \
        [ -z "$(grep '^WEB_API_KEY=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_API_KEY="//' | sed 's/"$//')" ]; then
         api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
@@ -172,10 +175,10 @@ if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
         else
             echo "WEB_API_KEY=\"${api_key}\"" >> "$CONFIG_DIR/gniza.conf"
         fi
-        info "Generated Web API key: $api_key"
-        echo "Save this key -- you will need it to access the dashboard."
+        info "Web credentials:  user=admin  password=$api_key"
+        echo "Save these -- you will need them to access the dashboard."
     else
-        info "Web API key already configured."
+        info "Web credentials already configured."
     fi
     # Install systemd service
     if [ "$MODE" = "root" ]; then

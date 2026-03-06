@@ -305,8 +305,19 @@ run_cli() {
                     fi
                     _restore_remote_globals
                     ;;
+                browse)
+                    [[ -z "$target" ]] && die "browse requires --target=NAME"
+                    local snapshot=""
+                    snapshot=$(_parse_flag "--snapshot" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+                    [[ -z "$snapshot" ]] && die "browse requires --snapshot=TS"
+                    if [[ -z "$remote" ]]; then
+                        remote=$(list_remotes | head -1)
+                        [[ -z "$remote" ]] && die "No remotes configured"
+                    fi
+                    list_snapshot_contents "$target" "$snapshot" "$remote"
+                    ;;
                 *)
-                    die "Unknown snapshots action: $action (expected list)"
+                    die "Unknown snapshots action: $action (expected list|browse)"
                     ;;
             esac
             ;;

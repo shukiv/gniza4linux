@@ -21,6 +21,26 @@ def _format_log_name(name: str) -> tuple[str, str]:
     return name, ""
 
 
+def _detect_log_status(filepath: Path) -> str:
+    """Determine backup status from log file content."""
+    try:
+        text = filepath.read_text()
+    except OSError:
+        return "?"
+    if not text.strip():
+        return "Empty"
+    has_error = "[ERROR]" in text or "[FATAL]" in text
+    has_completed = "Backup completed" in text or "Restore completed" in text
+    has_lock_released = "Lock released" in text
+    if has_completed and not has_error:
+        return "Success"
+    if has_error:
+        return "Failed"
+    if has_lock_released:
+        return "OK"
+    return "Interrupted"
+
+
 class LogsScreen(Screen):
 
     BINDINGS = [("escape", "go_back", "Back")]
@@ -43,7 +63,7 @@ class LogsScreen(Screen):
     def _refresh_table(self) -> None:
         table = self.query_one("#logs-table", DataTable)
         table.clear(columns=True)
-        table.add_columns("Date", "Time", "Size")
+        table.add_columns("Status", "Date", "Time", "Size")
         log_dir = Path(LOG_DIR)
         if not log_dir.is_dir():
             return
@@ -57,7 +77,8 @@ class LogsScreen(Screen):
             else:
                 size_str = f"{size} B"
             date_str, time_str = _format_log_name(f.name)
-            table.add_row(date_str, time_str, size_str, key=f.name)
+            status = _detect_log_status(f)
+            table.add_row(status, date_str, time_str, size_str, key=f.name)
 
     def _selected_log(self) -> str | None:
         table = self.query_one("#logs-table", DataTable)

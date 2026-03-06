@@ -157,6 +157,7 @@ class Schedule:
     cron: str = ""
     targets: str = ""
     remotes: str = ""
+    active: str = "yes"
 
     def to_conf(self) -> dict[str, str]:
         return {
@@ -164,6 +165,7 @@ class Schedule:
             "SCHEDULE_TIME": self.time,
             "SCHEDULE_DAY": self.day,
             "SCHEDULE_CRON": self.cron,
+            "SCHEDULE_ACTIVE": self.active,
             "TARGETS": self.targets,
             "REMOTES": self.remotes,
         }
@@ -178,6 +180,7 @@ class Schedule:
             cron=data.get("SCHEDULE_CRON", ""),
             targets=data.get("TARGETS", ""),
             remotes=data.get("REMOTES", ""),
+            active=data.get("SCHEDULE_ACTIVE", "yes"),
         )
 
 

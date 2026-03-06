@@ -294,22 +294,23 @@ get_target_remotes() {
 # Returns 0 (unknown) on unsupported remote types.
 remote_disk_usage_pct() {
     local base="${REMOTE_BASE:-/}"
-    local df_out=""
+    local df_line=""
     case "${REMOTE_TYPE:-ssh}" in
         ssh)
-            df_out=$(remote_exec "df --output=pcent '$base' 2>/dev/null | tail -1" 2>/dev/null) || return 1
+            df_line=$(remote_exec "df '$base' 2>/dev/null | tail -1") || return 1
             ;;
         local)
-            df_out=$(df --output=pcent "$base" 2>/dev/null | tail -1) || return 1
+            df_line=$(df "$base" 2>/dev/null | tail -1) || return 1
             ;;
         *)
             echo "0"
             return 0
             ;;
     esac
-    # Strip whitespace and % sign
-    df_out="${df_out// /}"
-    echo "${df_out%%%}"
+    # Extract the percentage field (e.g. "73%") — grep for number followed by %
+    local pct_raw
+    pct_raw=$(echo "$df_line" | grep -oP '[0-9]+%' | head -1) || return 1
+    echo "${pct_raw%%%}"
 }
 
 # Check remote disk space. Fail if usage >= threshold (default 95%).

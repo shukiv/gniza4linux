@@ -42,13 +42,14 @@ class ScheduleScreen(Screen):
             yield DataTable(id="sched-table")
             with Horizontal(id="sched-buttons"):
                 yield Button("Add", variant="primary", id="btn-add")
+                yield Button("Edit", id="btn-edit")
                 yield Button("Delete", variant="error", id="btn-delete")
                 yield Button("Install to crontab", id="btn-install")
                 yield Button("Remove from crontab", id="btn-remove")
                 yield Button("Show crontab", id="btn-show")
                 yield Button("Back", id="btn-back")
             yield Static("", id="sched-divider")
-            yield Static("Add Schedule", id="sched-add-title")
+            yield Static("Add Schedule", id="sched-form-title")
             yield Static("Name:")
             yield Input(id="sched-name", placeholder="Schedule name")
             yield Static("Type:")
@@ -150,7 +151,13 @@ class ScheduleScreen(Screen):
         if event.button.id == "btn-back":
             self.app.pop_screen()
         elif event.button.id == "btn-add":
-            self._add_schedule()
+            self._save_schedule()
+        elif event.button.id == "btn-edit":
+            name = self._selected_schedule()
+            if name:
+                self._load_schedule(name)
+            else:
+                self.notify("Select a schedule first", severity="warning")
         elif event.button.id == "btn-delete":
             name = self._selected_schedule()
             if name:
@@ -167,7 +174,58 @@ class ScheduleScreen(Screen):
         elif event.button.id == "btn-show":
             self._show_crontab()
 
-    def _add_schedule(self) -> None:
+    def _load_schedule(self, name: str) -> None:
+        """Load a schedule's config into the form for editing."""
+        data = parse_conf(CONFIG_DIR / "schedules.d" / f"{name}.conf")
+        s = Schedule.from_conf(name, data)
+        self.query_one("#sched-name", Input).value = name
+        self.query_one("#sched-type", Select).value = s.schedule
+        self.query_one("#sched-time", Input).value = s.time
+        self.query_one("#sched-cron", Input).value = s.cron
+        # Hourly interval
+        if s.schedule == "hourly" and s.day:
+            self.query_one("#sched-interval", Select).value = s.day
+        # Daily days
+        if s.schedule == "daily" and s.day:
+            days_list = self.query_one("#sched-daily-days", SelectionList)
+            day_vals = set(s.day.split(","))
+            for idx in range(days_list.option_count):
+                opt = days_list.get_option_at_index(idx)
+                if opt.value in day_vals:
+                    days_list.select(opt.value)
+                else:
+                    days_list.deselect(opt.value)
+        # Weekly day
+        if s.schedule == "weekly" and s.day:
+            self.query_one("#sched-weekly-day", Select).value = s.day
+        # Monthly day
+        if s.schedule == "monthly" and s.day:
+            self.query_one("#sched-monthly-day", Select).value = s.day
+        # Targets
+        if s.targets:
+            target_vals = set(s.targets.split(","))
+            tlist = self.query_one("#sched-targets", SelectionList)
+            for idx in range(tlist.option_count):
+                opt = tlist.get_option_at_index(idx)
+                if opt.value in target_vals:
+                    tlist.select(opt.value)
+                else:
+                    tlist.deselect(opt.value)
+        # Remotes
+        if s.remotes:
+            remote_vals = set(s.remotes.split(","))
+            rlist = self.query_one("#sched-remotes", SelectionList)
+            for idx in range(rlist.option_count):
+                opt = rlist.get_option_at_index(idx)
+                if opt.value in remote_vals:
+                    rlist.select(opt.value)
+                else:
+                    rlist.deselect(opt.value)
+        self._update_type_visibility()
+        self.query_one("#sched-form-title", Static).update("Edit Schedule")
+        self.notify(f"Editing schedule '{name}'")
+
+    def _save_schedule(self) -> None:
         name = self.query_one("#sched-name", Input).value.strip()
         if not name:
             self.notify("Name is required", severity="error")
@@ -176,9 +234,6 @@ class ScheduleScreen(Screen):
             self.notify("Invalid name.", severity="error")
             return
         conf = CONFIG_DIR / "schedules.d" / f"{name}.conf"
-        if conf.exists():
-            self.notify(f"Schedule '{name}' already exists.", severity="error")
-            return
         type_sel = self.query_one("#sched-type", Select)
         stype = str(type_sel.value) if isinstance(type_sel.value, str) else "daily"
         if stype == "hourly":
@@ -204,10 +259,12 @@ class ScheduleScreen(Screen):
             targets=",".join(self.query_one("#sched-targets", SelectionList).selected),
             remotes=",".join(self.query_one("#sched-remotes", SelectionList).selected),
         )
+        is_new = not conf.exists()
         write_conf(conf, sched.to_conf())
-        self.notify(f"Schedule '{name}' created.")
+        self.notify(f"Schedule '{name}' {'created' if is_new else 'updated'}.")
         self._refresh_table()
         self.query_one("#sched-name", Input).value = ""
+        self.query_one("#sched-form-title", Static).update("Add Schedule")
 
     def _delete_schedule(self, name: str) -> None:
         conf = CONFIG_DIR / "schedules.d" / f"{name}.conf"

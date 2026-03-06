@@ -99,6 +99,46 @@ restore_target() {
         fi
     done < <(get_target_folders)
 
+    # Restore MySQL databases if snapshot contains _mysql/ and target has MySQL enabled
+    if [[ "${TARGET_MYSQL_ENABLED:-no}" == "yes" && "${SKIP_MYSQL_RESTORE:-}" != "yes" ]]; then
+        log_info "Checking for MySQL dumps in snapshot..."
+        local mysql_restore_dir
+        mysql_restore_dir=$(mktemp -d "${WORK_DIR:-/tmp}/gniza-mysql-restore-XXXXXX")
+        mkdir -p "$mysql_restore_dir/_mysql"
+
+        local mysql_found=false
+        if _is_rclone_mode; then
+            local mysql_subpath="targets/${target_name}/snapshots/${ts}/_mysql"
+            if rclone_from_remote "$mysql_subpath" "$mysql_restore_dir/_mysql" 2>/dev/null; then
+                mysql_found=true
+            fi
+        elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+            local mysql_source="$snap_dir/$ts/_mysql/"
+            if [[ -d "$mysql_source" ]]; then
+                rsync -aHAX "$mysql_source" "$mysql_restore_dir/_mysql/" && mysql_found=true
+            fi
+        else
+            local mysql_source="$snap_dir/$ts/_mysql/"
+            if _rsync_download "$mysql_source" "$mysql_restore_dir/_mysql/" 2>/dev/null; then
+                mysql_found=true
+            fi
+        fi
+
+        if [[ "$mysql_found" == "true" ]] && ls "$mysql_restore_dir/_mysql/"*.sql.gz &>/dev/null || \
+           [[ -f "$mysql_restore_dir/_mysql/grants.sql" ]]; then
+            log_info "Found MySQL dumps in snapshot, restoring..."
+            if ! mysql_restore_databases "$mysql_restore_dir/_mysql"; then
+                log_error "MySQL restore had errors"
+                ((errors++)) || true
+            fi
+        else
+            log_debug "No MySQL dumps found in snapshot"
+        fi
+        rm -rf "$mysql_restore_dir"
+    elif [[ "${SKIP_MYSQL_RESTORE:-}" == "yes" ]]; then
+        log_info "Skipping MySQL restore (--skip-mysql)"
+    fi
+
     _restore_remote_globals
 
     if (( errors > 0 )); then

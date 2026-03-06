@@ -95,7 +95,7 @@ class RemoteEditScreen(Screen):
 
     def _update_field_visibility(self) -> None:
         type_sel = self.query_one("#re-type", Select)
-        rtype = str(type_sel.value) if type_sel.value is not Select.BLANK else "ssh"
+        rtype = str(type_sel.value) if isinstance(type_sel.value, str) else "ssh"
         for w in self.query(".ssh-field"):
             w.display = rtype == "ssh"
         for w in self.query(".s3-field"):
@@ -125,7 +125,7 @@ class RemoteEditScreen(Screen):
             name = self._edit_name
 
         type_sel = self.query_one("#re-type", Select)
-        rtype = str(type_sel.value) if type_sel.value is not Select.BLANK else "ssh"
+        rtype = str(type_sel.value) if isinstance(type_sel.value, str) else "ssh"
 
         remote = Remote(
             name=name,
@@ -133,7 +133,7 @@ class RemoteEditScreen(Screen):
             host=self.query_one("#re-host", Input).value.strip(),
             port=self.query_one("#re-port", Input).value.strip() or "22",
             user=self.query_one("#re-user", Input).value.strip() or "root",
-            auth_method=str(self.query_one("#re-auth", Select).value) if self.query_one("#re-auth", Select).value is not Select.BLANK else "key",
+            auth_method=str(self.query_one("#re-auth", Select).value) if isinstance(self.query_one("#re-auth", Select).value, str) else "key",
             key=self.query_one("#re-key", Input).value.strip(),
             password=self.query_one("#re-password", Input).value,
             base=self.query_one("#re-base", Input).value.strip() or "/backups",

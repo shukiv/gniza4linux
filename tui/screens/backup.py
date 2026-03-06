@@ -46,12 +46,12 @@ class BackupScreen(Screen):
             self.app.pop_screen()
         elif event.button.id == "btn-backup":
             target_sel = self.query_one("#backup-target", Select)
-            if target_sel.value is Select.BLANK:
+            if not isinstance(target_sel.value, str):
                 self.notify("Please select a target", severity="error")
                 return
             target = str(target_sel.value)
             remote_sel = self.query_one("#backup-remote", Select)
-            remote = str(remote_sel.value) if remote_sel.value != Select.BLANK else ""
+            remote = str(remote_sel.value) if isinstance(remote_sel.value, str) else ""
             msg = f"Run backup for target '{target}'?"
             if remote:
                 msg += f"\nRemote: {remote}"

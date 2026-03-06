@@ -72,7 +72,7 @@ class SettingsScreen(Screen):
 
     def _get_select_val(self, sel_id: str, default: str) -> str:
         sel = self.query_one(sel_id, Select)
-        return str(sel.value) if sel.value is not Select.BLANK else default
+        return str(sel.value) if isinstance(sel.value, str) else default
 
     def _save(self) -> None:
         settings = AppSettings(

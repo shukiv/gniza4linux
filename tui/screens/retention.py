@@ -45,7 +45,7 @@ class RetentionScreen(Screen):
             self.app.pop_screen()
         elif event.button.id == "btn-cleanup":
             target_sel = self.query_one("#ret-target", Select)
-            if target_sel.value is Select.BLANK:
+            if not isinstance(target_sel.value, str):
                 self.notify("Select a target first", severity="error")
                 return
             target = str(target_sel.value)

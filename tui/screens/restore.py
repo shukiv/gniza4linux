@@ -52,7 +52,7 @@ class RestoreScreen(Screen):
             remote_sel = self.query_one("#restore-remote", Select)
         except Exception:
             return
-        if target_sel.value is Select.BLANK or remote_sel.value is Select.BLANK:
+        if not isinstance(target_sel.value, str) or not isinstance(remote_sel.value, str):
             return
         target = str(target_sel.value)
         remote = str(remote_sel.value)
@@ -85,13 +85,13 @@ class RestoreScreen(Screen):
         target_sel = self.query_one("#restore-target", Select)
         remote_sel = self.query_one("#restore-remote", Select)
         snap_sel = self.query_one("#restore-snapshot", Select)
-        if target_sel.value is Select.BLANK:
+        if not isinstance(target_sel.value, str):
             self.notify("Select a target", severity="error")
             return
-        if remote_sel.value is Select.BLANK:
+        if not isinstance(remote_sel.value, str):
             self.notify("Select a remote", severity="error")
             return
-        if snap_sel.value is Select.BLANK:
+        if not isinstance(snap_sel.value, str):
             self.notify("Select a snapshot", severity="error")
             return
         target = str(target_sel.value)

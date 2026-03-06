@@ -108,7 +108,7 @@ class ScheduleScreen(Screen):
             self.notify(f"Schedule '{name}' already exists.", severity="error")
             return
         type_sel = self.query_one("#sched-type", Select)
-        stype = str(type_sel.value) if type_sel.value is not Select.BLANK else "daily"
+        stype = str(type_sel.value) if isinstance(type_sel.value, str) else "daily"
         sched = Schedule(
             name=name,
             schedule=stype,

@@ -47,7 +47,7 @@ class SnapshotsScreen(Screen):
     async def _load_snapshots(self) -> None:
         target_sel = self.query_one("#snap-target", Select)
         remote_sel = self.query_one("#snap-remote", Select)
-        if target_sel.value is Select.BLANK or remote_sel.value is Select.BLANK:
+        if not isinstance(target_sel.value, str) or not isinstance(remote_sel.value, str):
             self.notify("Select target and remote first", severity="error")
             return
         target = str(target_sel.value)

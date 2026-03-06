@@ -32,7 +32,7 @@ MENU_ITEMS = [
     ("targets", "Targets"),
     ("remotes", "Remotes"),
     ("schedule", "Schedules"),
-    ("snapshots", "Snapshots"),
+    ("snapshots", "Snapshots Browser"),
     ("logs", "Logs"),
     ("settings", "Settings"),
     ("quit", "Quit"),

@@ -114,12 +114,14 @@ rsync_local() {
 }
 
 # Transfer a single folder to a remote snapshot.
-# Usage: transfer_folder <target_name> <folder_path> <timestamp> [prev_snapshot]
+# Usage: transfer_folder <target_name> <folder_path> <timestamp> [prev_snapshot] [dest_name]
+# If dest_name is given, use it as the remote subpath instead of deriving from folder_path.
 transfer_folder() {
     local target_name="$1"
     local folder_path="$2"
     local timestamp="$3"
     local prev_snapshot="${4:-}"
+    local dest_name="${5:-}"
 
     if [[ ! -d "$folder_path" ]]; then
         log_warn "Folder not found, skipping: $folder_path"
@@ -127,7 +129,7 @@ transfer_folder() {
     fi
 
     # Strip leading / to create relative subpath in snapshot
-    local rel_path="${folder_path#/}"
+    local rel_path="${dest_name:-${folder_path#/}}"
 
     if _is_rclone_mode; then
         local snap_subpath="targets/${target_name}/snapshots/${timestamp}/${rel_path}"

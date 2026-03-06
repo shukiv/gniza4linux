@@ -164,35 +164,43 @@
         }
       })();
 
-      // Touch-to-scroll: translate swipe gestures into wheel events for xterm
+      // Touch-to-scroll: translate swipe gestures into key events for Textual
       (function() {
         var touchStartY = null;
-        var THRESHOLD = 5;
+        var accumDY = 0;
+        var STEP = 20; // pixels per scroll step
 
         document.addEventListener("touchstart", function(e) {
           if (e.touches.length === 1) {
             touchStartY = e.touches[0].clientY;
+            accumDY = 0;
           }
         }, { passive: true });
 
         document.addEventListener("touchmove", function(e) {
           if (touchStartY === null || e.touches.length !== 1) return;
-          var dy = touchStartY - e.touches[0].clientY;
-          if (Math.abs(dy) < THRESHOLD) return;
-          touchStartY = e.touches[0].clientY;
+          e.preventDefault();
 
-          var target = document.querySelector(".xterm-screen") || document.querySelector("#terminal");
-          if (!target) return;
-          target.dispatchEvent(new WheelEvent("wheel", {
-            deltaY: dy > 0 ? 3 : -3,
-            deltaMode: 0,
-            bubbles: true,
-            cancelable: true
-          }));
+          var currentY = e.touches[0].clientY;
+          accumDY += touchStartY - currentY;
+          touchStartY = currentY;
+
+          var textarea = document.querySelector(".xterm-helper-textarea");
+          if (!textarea) return;
+
+          while (Math.abs(accumDY) >= STEP) {
+            var key = accumDY > 0 ? "ArrowDown" : "ArrowUp";
+            textarea.dispatchEvent(new KeyboardEvent("keydown", {
+              key: key, code: key, keyCode: key === "ArrowDown" ? 40 : 38,
+              bubbles: true, cancelable: true
+            }));
+            accumDY -= (accumDY > 0 ? STEP : -STEP);
+          }
         }, { passive: false });
 
         document.addEventListener("touchend", function() {
           touchStartY = null;
+          accumDY = 0;
         }, { passive: true });
       })();
     </script>

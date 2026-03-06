@@ -94,9 +94,10 @@ class RunningTasksScreen(Screen):
         job_id = str(row_key)
         job = job_manager.get_job(job_id)
         if not job:
+            self.notify("Job not found", severity="warning")
             return
         if job.status != "running":
-            self.notify("Job is not running", severity="warning")
+            self.notify(f"Job already finished ({job.status})", severity="warning")
             return
         self.app.push_screen(
             ConfirmDialog(f"Kill job '{job.label}'?", "Confirm Kill"),

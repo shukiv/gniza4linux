@@ -31,7 +31,6 @@ MENU_ITEMS = [
     ("restore", "Restore"),
     ("targets", "Targets"),
     ("remotes", "Remotes"),
-    ("retention", "Retention"),
     ("schedule", "Schedules"),
     ("snapshots", "Snapshots"),
     ("logs", "Logs"),

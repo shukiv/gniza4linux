@@ -66,20 +66,22 @@ def create_app():
         template_folder=str(Path(__file__).resolve().parent / "templates"),
     )
 
-    api_key = _get_api_key()
-    if not api_key:
-        api_key = secrets.token_urlsafe(32)
-        print(f"WARNING: No WEB_API_KEY configured. Generated temporary key: {api_key}")
-        print("Set WEB_API_KEY in gniza.conf to persist this key.")
+    stored_key = _get_api_key()
+    if not stored_key:
+        stored_key = secrets.token_urlsafe(32)
+        print(f"\n{'='*60}")
+        print(f"  No WEB_API_KEY configured.")
+        print(f"  Generated temporary key: {stored_key}")
+        print(f"  Set WEB_API_KEY in gniza.conf to persist this key.")
+        print(f"{'='*60}\n")
 
-    app.secret_key = api_key
+    app.secret_key = stored_key
 
     @app.route("/login", methods=["GET", "POST"])
     def login():
         if request.method == "POST":
             token = request.form.get("token", "")
-            current_key = _get_api_key() or api_key
-            if secrets.compare_digest(token, current_key):
+            if token and secrets.compare_digest(token, stored_key):
                 session["authenticated"] = True
                 return redirect(url_for("dashboard"))
             flash("Invalid API key.")

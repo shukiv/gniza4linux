@@ -1,7 +1,7 @@
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, OptionList
-from textual.widgets.option_list import Option, Separator
+from textual.widgets.option_list import Option
 from textual.containers import Horizontal, Vertical
 
 LOGO = """\
@@ -52,7 +52,7 @@ class MainMenuScreen(Screen):
             for mid, label in MENU_ITEMS:
                 menu_items.append(Option(label, id=mid))
                 if mid == "restore":
-                    menu_items.append(Separator())
+                    menu_items.append(None)
             yield OptionList(*menu_items, id="menu-list")
         yield Footer()
 

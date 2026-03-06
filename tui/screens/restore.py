@@ -152,11 +152,7 @@ class RestoreScreen(Screen):
             args.append(f"--dest={dest}")
         if skip_mysql:
             args.append("--skip-mysql")
-        rc = await job_manager.run_job(self.app, job, *args)
-        if rc == 0:
-            self.notify("Restore completed successfully", severity="information")
-        else:
-            self.notify(f"Restore failed (exit code {rc})", severity="error")
+        await job_manager.run_job(self.app, job, *args)
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

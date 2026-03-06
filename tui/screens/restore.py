@@ -5,8 +5,9 @@ from textual.containers import Vertical, Horizontal
 from textual import work, on
 
 from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
-from tui.backend import run_cli, stream_cli
-from tui.widgets import ConfirmDialog, OperationLog, FolderPicker
+from tui.backend import run_cli
+from tui.jobs import job_manager
+from tui.widgets import ConfirmDialog, FolderPicker
 
 
 class RestoreScreen(Screen):
@@ -144,19 +145,18 @@ class RestoreScreen(Screen):
 
     @work
     async def _do_restore(self, target: str, remote: str, snapshot: str, dest: str, skip_mysql: bool = False) -> None:
-        log_screen = OperationLog(f"Restore: {target}")
-        self.app.push_screen(log_screen)
+        job = job_manager.create_job("restore", f"Restore: {target}")
+        self.notify("Restore started -- view in Running Tasks")
         args = ["restore", f"--target={target}", f"--remote={remote}", f"--snapshot={snapshot}"]
         if dest:
             args.append(f"--dest={dest}")
         if skip_mysql:
             args.append("--skip-mysql")
-        rc = await stream_cli(log_screen.write, *args)
+        rc = await job_manager.run_job(self.app, job, *args)
         if rc == 0:
-            log_screen.write("\n[green]Restore completed successfully.[/green]")
+            self.notify("Restore completed successfully", severity="information")
         else:
-            log_screen.write(f"\n[red]Restore failed (exit code {rc}).[/red]")
-        log_screen.finish()
+            self.notify(f"Restore failed (exit code {rc})", severity="error")
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

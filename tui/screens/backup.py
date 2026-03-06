@@ -5,8 +5,8 @@ from textual.containers import Vertical, Horizontal
 from textual import work
 
 from tui.config import list_conf_dir, has_targets, has_remotes
-from tui.backend import stream_cli
-from tui.widgets import ConfirmDialog, OperationLog
+from tui.jobs import job_manager
+from tui.widgets import ConfirmDialog
 
 
 class BackupScreen(Screen):
@@ -67,28 +67,26 @@ class BackupScreen(Screen):
 
     @work
     async def _do_backup(self, target: str, remote: str) -> None:
-        log_screen = OperationLog(f"Backup: {target}")
-        self.app.push_screen(log_screen)
+        job = job_manager.create_job("backup", f"Backup: {target}")
+        self.notify("Backup started -- view in Running Tasks")
         args = ["backup", f"--target={target}"]
         if remote:
             args.append(f"--remote={remote}")
-        rc = await stream_cli(log_screen.write, *args)
+        rc = await job_manager.run_job(self.app, job, *args)
         if rc == 0:
-            log_screen.write("\n[green]Backup completed successfully.[/green]")
+            self.notify("Backup completed successfully", severity="information")
         else:
-            log_screen.write(f"\n[red]Backup failed (exit code {rc}).[/red]")
-        log_screen.finish()
+            self.notify(f"Backup failed (exit code {rc})", severity="error")
 
     @work
     async def _do_backup_all(self) -> None:
-        log_screen = OperationLog("Backup All Targets")
-        self.app.push_screen(log_screen)
-        rc = await stream_cli(log_screen.write, "backup", "--all")
+        job = job_manager.create_job("backup", "Backup All Targets")
+        self.notify("Backup All started -- view in Running Tasks")
+        rc = await job_manager.run_job(self.app, job, "backup", "--all")
         if rc == 0:
-            log_screen.write("\n[green]All backups completed.[/green]")
+            self.notify("All backups completed", severity="information")
         else:
-            log_screen.write(f"\n[red]Backup failed (exit code {rc}).[/red]")
-        log_screen.finish()
+            self.notify(f"Backup failed (exit code {rc})", severity="error")
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

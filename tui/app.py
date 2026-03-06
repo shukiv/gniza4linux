@@ -15,6 +15,8 @@ from tui.screens.schedule_edit import ScheduleEditScreen
 from tui.screens.logs import LogsScreen
 from tui.screens.settings import SettingsScreen
 from tui.screens.wizard import WizardScreen
+from tui.screens.running_tasks import RunningTasksScreen
+from tui.jobs import job_manager, JobFinished
 
 
 class GnizaApp(App):
@@ -26,6 +28,7 @@ class GnizaApp(App):
         "main": MainMenuScreen,
         "backup": BackupScreen,
         "restore": RestoreScreen,
+        "running_tasks": RunningTasksScreen,
         "targets": TargetsScreen,
         "target_edit": TargetEditScreen,
         "remotes": RemotesScreen,
@@ -44,3 +47,16 @@ class GnizaApp(App):
             self.push_screen("wizard")
         else:
             self.push_screen("main")
+
+    def on_job_finished(self, message: JobFinished) -> None:
+        job = job_manager.get_job(message.job_id)
+        if not job:
+            return
+        if message.return_code == 0:
+            self.notify(f"{job.label} completed successfully")
+        else:
+            self.notify(f"{job.label} failed (exit code {message.return_code})", severity="error")
+
+    async def action_quit(self) -> None:
+        job_manager.kill_running()
+        self.exit()

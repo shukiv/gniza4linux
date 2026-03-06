@@ -24,6 +24,15 @@ async def run_cli(*args: str) -> tuple[int, str, str]:
     return proc.returncode or 0, stdout.decode(), stderr.decode()
 
 
+async def start_cli_process(*args: str) -> asyncio.subprocess.Process:
+    cmd = [_gniza_bin(), "--cli"] + list(args)
+    return await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+
+
 async def stream_cli(callback, *args: str) -> int:
     cmd = [_gniza_bin(), "--cli"] + list(args)
     proc = await asyncio.create_subprocess_exec(

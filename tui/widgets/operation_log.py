@@ -33,12 +33,15 @@ class OperationLog(ModalScreen[None]):
 
     BINDINGS = [("escape", "close", "Close")]
 
-    def __init__(self, title: str = "Operation Output", show_spinner: bool = True):
+    def __init__(self, title: str = "Operation Output", show_spinner: bool = True, job_id: str | None = None):
         super().__init__()
         self._title = title
         self._show_spinner = show_spinner
+        self._job_id = job_id
         self._mounted_event = asyncio.Event()
         self._buffer: list[str] = []
+        self._poll_timer: Timer | None = None
+        self._last_line_count: int = 0
 
     def compose(self) -> ComposeResult:
         with Vertical(id="op-log"):
@@ -50,8 +53,20 @@ class OperationLog(ModalScreen[None]):
                     yield SpinnerWidget("arrow3", id="ol-spinner")
 
     def on_mount(self) -> None:
-        # Flush any buffered writes
         log = self.query_one("#ol-log", RichLog)
+        # If attached to a job, load existing output and start polling
+        if self._job_id:
+            from tui.jobs import job_manager
+            job = job_manager.get_job(self._job_id)
+            if job:
+                for line in job.output:
+                    self._write_to_log(log, line)
+                self._last_line_count = len(job.output)
+                if job.status != "running":
+                    self.finish()
+                else:
+                    self._poll_timer = self.set_interval(0.2, self._poll_job)
+        # Flush any buffered writes
         for text in self._buffer:
             self._write_to_log(log, text)
         self._buffer.clear()
@@ -84,3 +99,21 @@ class OperationLog(ModalScreen[None]):
             self._write_to_log(log, text)
         except Exception:
             self._buffer.append(text)
+
+    def _poll_job(self) -> None:
+        from tui.jobs import job_manager
+        job = job_manager.get_job(self._job_id)
+        if not job:
+            return
+        new_lines = job.output[self._last_line_count:]
+        self._last_line_count = len(job.output)
+        for line in new_lines:
+            self.write(line)
+        if job.status != "running":
+            if job.return_code == 0:
+                self.write("\n[green]Operation completed successfully.[/green]")
+            else:
+                self.write(f"\n[red]Operation failed (exit code {job.return_code}).[/red]")
+            self.finish()
+            if self._poll_timer:
+                self._poll_timer.stop()

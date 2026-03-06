@@ -51,6 +51,7 @@ DataTable {
 #snapshots-screen,
 #targets-screen,
 #remotes-screen,
+#running-tasks-screen,
 #logs-screen {
     padding: 1 2;
     overflow-y: auto;
@@ -110,6 +111,7 @@ SelectionList {
 #ret-buttons,
 #targets-buttons,
 #remotes-buttons,
+#rt-buttons,
 #logs-buttons,
 #snapshots-buttons,
 #sched-buttons,
@@ -126,6 +128,7 @@ SelectionList {
 #ret-buttons Button,
 #targets-buttons Button,
 #remotes-buttons Button,
+#rt-buttons Button,
 #logs-buttons Button,
 #snapshots-buttons Button,
 #sched-buttons Button,

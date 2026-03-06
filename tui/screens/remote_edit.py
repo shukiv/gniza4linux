@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Input, Select, RadioSet, RadioButton
@@ -6,6 +7,7 @@ from textual.containers import Vertical, Horizontal
 
 from tui.config import parse_conf, write_conf, CONFIG_DIR
 from tui.models import Remote
+from tui.widgets import FilePicker
 
 _NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')
 
@@ -54,10 +56,12 @@ class RemoteEditScreen(Screen):
                 value=remote.auth_method,
                 classes="ssh-field",
             )
-            yield Static("SSH Key path:", id="lbl-key", classes="ssh-field")
-            yield Input(value=remote.key, placeholder="~/.ssh/id_rsa", id="re-key", classes="ssh-field")
-            yield Static("Password:", id="lbl-password", classes="ssh-field")
-            yield Input(value=remote.password, placeholder="SSH password", password=True, id="re-password", classes="ssh-field")
+            yield Static("SSH Key path:", id="lbl-key", classes="ssh-field ssh-key-field")
+            with Horizontal(id="re-key-row", classes="ssh-field ssh-key-field"):
+                yield Input(value=remote.key, placeholder="~/.ssh/id_rsa", id="re-key")
+                yield Button("Browse...", id="btn-browse-key")
+            yield Static("Password:", id="lbl-password", classes="ssh-field ssh-password-field")
+            yield Input(value=remote.password, placeholder="SSH password", password=True, id="re-password", classes="ssh-field ssh-password-field")
             # Common fields
             yield Static("Base path:")
             yield Input(value=remote.base, placeholder="/backups", id="re-base")
@@ -90,24 +94,42 @@ class RemoteEditScreen(Screen):
         self._update_field_visibility()
 
     def on_select_changed(self, event: Select.Changed) -> None:
-        if event.select.id == "re-type":
+        if event.select.id in ("re-type", "re-auth"):
             self._update_field_visibility()
 
     def _update_field_visibility(self) -> None:
         type_sel = self.query_one("#re-type", Select)
         rtype = str(type_sel.value) if isinstance(type_sel.value, str) else "ssh"
+        is_ssh = rtype == "ssh"
         for w in self.query(".ssh-field"):
-            w.display = rtype == "ssh"
+            w.display = is_ssh
         for w in self.query(".s3-field"):
             w.display = rtype == "s3"
         for w in self.query(".gdrive-field"):
             w.display = rtype == "gdrive"
+        # Toggle key vs password fields based on auth method
+        if is_ssh:
+            auth_sel = self.query_one("#re-auth", Select)
+            auth = str(auth_sel.value) if isinstance(auth_sel.value, str) else "key"
+            for w in self.query(".ssh-key-field"):
+                w.display = auth == "key"
+            for w in self.query(".ssh-password-field"):
+                w.display = auth == "password"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-cancel":
             self.dismiss(None)
+        elif event.button.id == "btn-browse-key":
+            self.app.push_screen(
+                FilePicker("Select SSH key file", start=str(Path.home() / ".ssh")),
+                callback=self._key_file_selected,
+            )
         elif event.button.id == "btn-save":
             self._save()
+
+    def _key_file_selected(self, path: str | None) -> None:
+        if path:
+            self.query_one("#re-key", Input).value = path
 
     def _save(self) -> None:
         if self._is_new:

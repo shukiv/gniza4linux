@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 
 from rich.spinner import Spinner as RichSpinner
 from rich.text import Text
@@ -41,7 +42,7 @@ class OperationLog(ModalScreen[None]):
         self._mounted_event = asyncio.Event()
         self._buffer: list[str] = []
         self._poll_timer: Timer | None = None
-        self._last_line_count: int = 0
+        self._file_pos: int = 0
 
     def compose(self) -> ComposeResult:
         with Vertical(id="op-log"):
@@ -54,18 +55,26 @@ class OperationLog(ModalScreen[None]):
 
     def on_mount(self) -> None:
         log = self.query_one("#ol-log", RichLog)
-        # If attached to a job, load existing output and start polling
         if self._job_id:
             from tui.jobs import job_manager
             job = job_manager.get_job(self._job_id)
             if job:
-                for line in job.output:
-                    self._write_to_log(log, line)
-                self._last_line_count = len(job.output)
+                # Load existing content from log file
+                if job._log_file and Path(job._log_file).is_file():
+                    try:
+                        content = Path(job._log_file).read_text()
+                        self._file_pos = len(content.encode())
+                        for line in content.splitlines():
+                            self._write_to_log(log, line)
+                    except OSError:
+                        pass
+                elif job.output:
+                    for line in job.output:
+                        self._write_to_log(log, line)
                 if job.status != "running":
                     self.finish()
                 else:
-                    self._poll_timer = self.set_interval(0.2, self._poll_job)
+                    self._poll_timer = self.set_interval(0.3, self._poll_job)
         # Flush any buffered writes
         for text in self._buffer:
             self._write_to_log(log, text)
@@ -105,15 +114,27 @@ class OperationLog(ModalScreen[None]):
         job = job_manager.get_job(self._job_id)
         if not job:
             return
-        new_lines = job.output[self._last_line_count:]
-        self._last_line_count = len(job.output)
-        for line in new_lines:
-            self.write(line)
+        try:
+            log = self.query_one("#ol-log", RichLog)
+        except Exception:
+            return
+        # Read new content directly from log file
+        if job._log_file and Path(job._log_file).is_file():
+            try:
+                with open(job._log_file, "r") as f:
+                    f.seek(self._file_pos)
+                    new_data = f.read()
+                    if new_data:
+                        self._file_pos += len(new_data.encode())
+                        for line in new_data.splitlines():
+                            self._write_to_log(log, line)
+            except OSError:
+                pass
         if job.status != "running":
             if job.return_code == 0:
-                self.write("\n[green]Operation completed successfully.[/green]")
+                self._write_to_log(log, "\n[green]Operation completed successfully.[/green]")
             else:
-                self.write(f"\n[red]Operation failed (exit code {job.return_code}).[/red]")
+                self._write_to_log(log, f"\n[red]Operation failed (exit code {job.return_code}).[/red]")
             self.finish()
             if self._poll_timer:
                 self._poll_timer.stop()

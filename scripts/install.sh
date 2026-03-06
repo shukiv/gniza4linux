@@ -160,32 +160,27 @@ for example in target.conf.example remote.conf.example schedule.conf.example; do
 done
 
 # ── Web dashboard setup ─────────────────────────────────────
-read -rp "Enable web dashboard? (y/n) [n]: " enable_web
-case "${enable_web}" in
-    y|Y)
-        # Update config
-        if grep -q "^WEB_ENABLED=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
-            sed -i "s|^WEB_ENABLED=.*|WEB_ENABLED=\"yes\"|" "$CONFIG_DIR/gniza.conf"
-        else
-            echo 'WEB_ENABLED="yes"' >> "$CONFIG_DIR/gniza.conf"
-        fi
-        # Generate random API key
-        api_key=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
-        if grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
-            sed -i "s|^WEB_API_KEY=.*|WEB_API_KEY=\"${api_key}\"|" "$CONFIG_DIR/gniza.conf"
-        else
-            echo "WEB_API_KEY=\"${api_key}\"" >> "$CONFIG_DIR/gniza.conf"
-        fi
-        echo "Web API key: $api_key"
-        echo "Save this key — you'll need it to log into the dashboard."
-        # Install systemd service (root only)
-        if [[ "$MODE" == "root" ]]; then
-            "$INSTALL_DIR/bin/gniza" web install-service || warn "Failed to install web service"
-        else
-            warn "Systemd service installation requires root. Start manually: gniza web start"
-        fi
-        ;;
-esac
+enable_web="n"
+read -rp "Enable web dashboard? (y/n) [n]: " enable_web || true
+if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
+    # Update config
+    grep -q "^WEB_ENABLED=" "$CONFIG_DIR/gniza.conf" 2>/dev/null \
+        && sed -i 's|^WEB_ENABLED=.*|WEB_ENABLED="yes"|' "$CONFIG_DIR/gniza.conf" \
+        || echo 'WEB_ENABLED="yes"' >> "$CONFIG_DIR/gniza.conf"
+    # Generate random API key
+    api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+    grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null \
+        && sed -i "s|^WEB_API_KEY=.*|WEB_API_KEY=\"${api_key}\"|" "$CONFIG_DIR/gniza.conf" \
+        || echo "WEB_API_KEY=\"${api_key}\"" >> "$CONFIG_DIR/gniza.conf"
+    echo "Web API key: $api_key"
+    echo "Save this key -- you will need it to log into the dashboard."
+    # Install systemd service (root only)
+    if [ "$MODE" = "root" ]; then
+        "$INSTALL_DIR/bin/gniza" web install-service || warn "Failed to install web service"
+    else
+        warn "Systemd service installation requires root. Start manually: gniza web start"
+    fi
+fi
 
 # ── Done ─────────────────────────────────────────────────────
 echo ""

@@ -72,21 +72,13 @@ class BackupScreen(Screen):
         args = ["backup", f"--target={target}"]
         if remote:
             args.append(f"--remote={remote}")
-        rc = await job_manager.run_job(self.app, job, *args)
-        if rc == 0:
-            self.notify("Backup completed successfully", severity="information")
-        else:
-            self.notify(f"Backup failed (exit code {rc})", severity="error")
+        await job_manager.run_job(self.app, job, *args)
 
     @work
     async def _do_backup_all(self) -> None:
         job = job_manager.create_job("backup", "Backup All Targets")
         self.notify("Backup All started -- view in Running Tasks")
-        rc = await job_manager.run_job(self.app, job, "backup", "--all")
-        if rc == 0:
-            self.notify("All backups completed", severity="information")
-        else:
-            self.notify(f"Backup failed (exit code {rc})", severity="error")
+        await job_manager.run_job(self.app, job, "backup", "--all")
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

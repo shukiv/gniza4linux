@@ -57,6 +57,14 @@ rsync_to_remote() {
             return 0
         fi
 
+        # Exit 23 = partial transfer (permission denied on some files)
+        # Exit 24 = vanished source files (deleted during transfer)
+        # Both are expected in non-root backups — treat as success with warning
+        if (( rc == 23 || rc == 24 )); then
+            log_warn "rsync completed with warnings (exit $rc): some files could not be transferred"
+            return 0
+        fi
+
         log_warn "rsync failed (exit $rc), attempt $attempt/$max_retries"
 
         if (( attempt < max_retries )); then
@@ -113,6 +121,11 @@ rsync_local() {
         rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" || rc=$?
         if (( rc == 0 )); then
             log_debug "rsync (local) succeeded on attempt $attempt"
+            return 0
+        fi
+
+        if (( rc == 23 || rc == 24 )); then
+            log_warn "rsync (local) completed with warnings (exit $rc): some files could not be transferred"
             return 0
         fi
 

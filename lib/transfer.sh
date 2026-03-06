@@ -188,7 +188,12 @@ transfer_folder() {
         for pat in "${inc_patterns[@]}"; do
             pat="${pat#"${pat%%[![:space:]]*}"}"
             pat="${pat%"${pat##*[![:space:]]}"}"
-            [[ -n "$pat" ]] && filter_opts+=(--include="$pat")
+            [[ -z "$pat" ]] && continue
+            filter_opts+=(--include="$pat")
+            # For directory patterns, also include their contents
+            if [[ "$pat" == */ ]]; then
+                filter_opts+=(--include="${pat}**")
+            fi
         done
         filter_opts+=(--exclude="*")
         # Prune empty dirs left by directory traversal

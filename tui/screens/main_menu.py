@@ -23,7 +23,7 @@ LOGO = """\
               ▓▓▓▓▓▓
                 ▓▓
 [/green]
-GNIZA - Linux Backup Manager
+  GNIZA - Linux Backup Manager
 """
 
 MENU_ITEMS = [

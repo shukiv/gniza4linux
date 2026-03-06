@@ -164,8 +164,7 @@ enable_web="n"
 read -rp "Enable web dashboard (TUI in browser)? (y/n) [n]: " enable_web </dev/tty || true
 if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
     # Set up web credentials
-    web_user="admin"
-    read -rp "Web username [admin]: " web_user </dev/tty || true
+    web_user="$(grep '^WEB_USER=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_USER="//' | sed 's/"$//')"
     web_user="${web_user:-admin}"
     api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
     if grep -q "^WEB_USER=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then

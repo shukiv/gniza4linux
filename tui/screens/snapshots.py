@@ -52,9 +52,7 @@ class SnapshotsScreen(Screen):
         try:
             table = self.query_one("#snap-table", DataTable)
             if table.cursor_row is not None and table.row_count > 0:
-                row_key = table.coordinate_to_cell_key((table.cursor_row, 0)).row_key.value
-                # The snapshot name is in the first (only) column
-                return str(table.get_cell(row_key, "Snapshot"))
+                return str(table.coordinate_to_cell_key((table.cursor_row, 0)).row_key.value)
             return None
         except Exception:
             return None

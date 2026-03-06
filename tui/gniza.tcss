@@ -193,10 +193,21 @@ SelectionList {
     border: thick $accent;
 }
 
+#ol-header {
+    height: auto;
+    margin: 0 0 1 0;
+}
+
 #ol-title {
     text-style: bold;
     color: #00cc00;
-    margin: 0 0 1 0;
+    width: 1fr;
+}
+
+#ol-spinner {
+    width: auto;
+    min-width: 3;
+    height: 1;
 }
 
 #ol-log {

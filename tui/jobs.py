@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import signal
+import subprocess
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -9,7 +10,7 @@ from pathlib import Path
 
 from textual.message import Message
 
-from tui.backend import start_cli_process
+from tui.backend import start_cli_background
 
 MAX_OUTPUT_LINES = 10_000
 FINISHED_JOB_TTL_HOURS = 24
@@ -42,7 +43,7 @@ class Job:
     finished_at: datetime | None = None
     return_code: int | None = None
     output: list[str] = field(default_factory=list)
-    _proc: asyncio.subprocess.Process | None = field(default=None, repr=False)
+    _proc: subprocess.Popen | None = field(default=None, repr=False)
     _pid: int | None = field(default=None, repr=False)
     _pgid: int | None = field(default=None, repr=False)
     _reconnected: bool = field(default=False, repr=False)
@@ -80,7 +81,7 @@ class JobManager:
     async def run_job(self, app, job: Job, *cli_args: str) -> int:
         log_path = _work_dir() / f"gniza-job-{job.id}.log"
         job._log_file = str(log_path)
-        proc = await start_cli_process(*cli_args, log_file=str(log_path))
+        proc = start_cli_background(*cli_args, log_file=str(log_path))
         job._proc = proc
         job._pid = proc.pid
         try:
@@ -89,10 +90,9 @@ class JobManager:
             job._pgid = None
         self._save_registry()
         try:
-            # Wait for process and tail log file concurrently
-            wait_task = asyncio.create_task(proc.wait())
+            # Poll process and tail log file
             with open(log_path, "r") as f:
-                while not wait_task.done():
+                while proc.poll() is None:
                     line = f.readline()
                     if line:
                         text = line.rstrip("\n")
@@ -130,7 +130,7 @@ class JobManager:
         return job.return_code if job.return_code is not None else 1
 
     @staticmethod
-    def _kill_process_group(proc: asyncio.subprocess.Process) -> None:
+    def _kill_process_group(proc: subprocess.Popen) -> None:
         try:
             pgid = os.getpgid(proc.pid)
             os.killpg(pgid, signal.SIGKILL)

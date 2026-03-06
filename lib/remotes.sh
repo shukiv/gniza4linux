@@ -330,28 +330,24 @@ check_remote_disk_space() {
     return 0
 }
 
-# Compact one-line disk info: "USED/TOTAL (FREE free)"
+# Compact one-line disk info: "USED/TOTAL (FREE free) PCT"
+# Parsing is done on the remote/local side to avoid SSH output issues.
 remote_disk_info_short() {
     local base="${REMOTE_BASE:-/}"
-    local df_out=""
+    local cmd="df -h '$base' 2>/dev/null | awk 'NR>1{printf \"%s/%s (%s free) %s\", \$3, \$2, \$4, \$5}'"
+    local result=""
     case "${REMOTE_TYPE:-ssh}" in
         ssh)
-            df_out=$(remote_exec "df -h '$base' 2>/dev/null | tail -1") || return 1
+            result=$(remote_exec "$cmd") || return 1
             ;;
         local)
-            df_out=$(df -h "$base" 2>/dev/null | tail -1) || return 1
+            result=$(eval "$cmd") || return 1
             ;;
         *)
             echo "N/A"
             return 0
             ;;
     esac
-    # df output: Filesystem Size Used Avail Use% Mount
-    local size used avail pct
-    size=$(echo "$df_out" | awk '{print $2}')
-    used=$(echo "$df_out" | awk '{print $3}')
-    avail=$(echo "$df_out" | awk '{print $4}')
-    pct=$(echo "$df_out" | awk '{print $5}')
-    echo "${used}/${size} (${avail} free) ${pct}"
+    echo "${result:-N/A}"
 }
 

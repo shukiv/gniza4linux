@@ -52,13 +52,8 @@ class BackupScreen(Screen):
             target = str(target_sel.value)
             remote_sel = self.query_one("#backup-remote", Select)
             remote = str(remote_sel.value) if isinstance(remote_sel.value, str) else ""
-            msg = f"Run backup for target '{target}'?"
-            if remote:
-                msg += f"\nRemote: {remote}"
-            self.app.push_screen(
-                ConfirmDialog(msg, "Confirm Backup"),
-                callback=lambda ok: self._confirmed_backup(target, remote) if ok else None,
-            )
+            # Skip ConfirmDialog — go straight to OperationLog for debugging
+            self._confirmed_backup(target, remote)
         elif event.button.id == "btn-backup-all":
             self.app.push_screen(
                 ConfirmDialog("Backup ALL targets now?", "Confirm Backup"),

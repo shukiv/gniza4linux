@@ -11,6 +11,15 @@ class Target:
     pre_hook: str = ""
     post_hook: str = ""
     enabled: str = "yes"
+    mysql_enabled: str = "no"
+    mysql_mode: str = "all"
+    mysql_databases: str = ""
+    mysql_exclude: str = ""
+    mysql_user: str = ""
+    mysql_password: str = ""
+    mysql_host: str = "localhost"
+    mysql_port: str = "3306"
+    mysql_extra_opts: str = "--single-transaction --routines --triggers"
 
     def to_conf(self) -> dict[str, str]:
         return {
@@ -22,6 +31,15 @@ class Target:
             "TARGET_PRE_HOOK": self.pre_hook,
             "TARGET_POST_HOOK": self.post_hook,
             "TARGET_ENABLED": self.enabled,
+            "TARGET_MYSQL_ENABLED": self.mysql_enabled,
+            "TARGET_MYSQL_MODE": self.mysql_mode,
+            "TARGET_MYSQL_DATABASES": self.mysql_databases,
+            "TARGET_MYSQL_EXCLUDE": self.mysql_exclude,
+            "TARGET_MYSQL_USER": self.mysql_user,
+            "TARGET_MYSQL_PASSWORD": self.mysql_password,
+            "TARGET_MYSQL_HOST": self.mysql_host,
+            "TARGET_MYSQL_PORT": self.mysql_port,
+            "TARGET_MYSQL_EXTRA_OPTS": self.mysql_extra_opts,
         }
 
     @classmethod
@@ -35,6 +53,15 @@ class Target:
             pre_hook=data.get("TARGET_PRE_HOOK", ""),
             post_hook=data.get("TARGET_POST_HOOK", ""),
             enabled=data.get("TARGET_ENABLED", "yes"),
+            mysql_enabled=data.get("TARGET_MYSQL_ENABLED", "no"),
+            mysql_mode=data.get("TARGET_MYSQL_MODE", "all"),
+            mysql_databases=data.get("TARGET_MYSQL_DATABASES", ""),
+            mysql_exclude=data.get("TARGET_MYSQL_EXCLUDE", ""),
+            mysql_user=data.get("TARGET_MYSQL_USER", ""),
+            mysql_password=data.get("TARGET_MYSQL_PASSWORD", ""),
+            mysql_host=data.get("TARGET_MYSQL_HOST", "localhost"),
+            mysql_port=data.get("TARGET_MYSQL_PORT", "3306"),
+            mysql_extra_opts=data.get("TARGET_MYSQL_EXTRA_OPTS", "--single-transaction --routines --triggers"),
         )
 
 

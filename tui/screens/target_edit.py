@@ -52,6 +52,33 @@ class TargetEditScreen(Screen):
                 value="yes" if target.enabled == "yes" else "no",
                 id="te-enabled",
             )
+            yield Static("--- MySQL Backup ---", classes="section-label")
+            yield Static("MySQL Enabled:")
+            yield Select(
+                [("No", "no"), ("Yes", "yes")],
+                value=target.mysql_enabled,
+                id="te-mysql-enabled",
+            )
+            yield Static("MySQL Mode:")
+            yield Select(
+                [("All databases", "all"), ("Select databases", "select")],
+                value=target.mysql_mode,
+                id="te-mysql-mode",
+            )
+            yield Static("Databases (comma-separated, when mode=select):")
+            yield Input(value=target.mysql_databases, placeholder="db1,db2", id="te-mysql-databases")
+            yield Static("Exclude databases (comma-separated, when mode=all):")
+            yield Input(value=target.mysql_exclude, placeholder="test_db,dev_db", id="te-mysql-exclude")
+            yield Static("MySQL User:")
+            yield Input(value=target.mysql_user, placeholder="Leave empty for socket/~/.my.cnf auth", id="te-mysql-user")
+            yield Static("MySQL Password:")
+            yield Input(value=target.mysql_password, placeholder="Leave empty for socket/~/.my.cnf auth", password=True, id="te-mysql-password")
+            yield Static("MySQL Host:")
+            yield Input(value=target.mysql_host, placeholder="localhost", id="te-mysql-host")
+            yield Static("MySQL Port:")
+            yield Input(value=target.mysql_port, placeholder="3306", id="te-mysql-port")
+            yield Static("MySQL Extra Options:")
+            yield Input(value=target.mysql_extra_opts, placeholder="--single-transaction --routines --triggers", id="te-mysql-extra-opts")
             with Horizontal(id="te-buttons"):
                 yield Button("Save", variant="primary", id="btn-save")
                 yield Button("Cancel", id="btn-cancel")
@@ -96,8 +123,9 @@ class TargetEditScreen(Screen):
             name = self._edit_name
 
         folders = self.query_one("#te-folders", Input).value.strip()
-        if not folders:
-            self.notify("At least one folder is required", severity="error")
+        mysql_enabled = str(self.query_one("#te-mysql-enabled", Select).value)
+        if not folders and mysql_enabled != "yes":
+            self.notify("At least one folder or MySQL backup is required", severity="error")
             return
 
         target = Target(
@@ -109,6 +137,15 @@ class TargetEditScreen(Screen):
             pre_hook=self.query_one("#te-prehook", Input).value.strip(),
             post_hook=self.query_one("#te-posthook", Input).value.strip(),
             enabled=str(self.query_one("#te-enabled", Select).value),
+            mysql_enabled=mysql_enabled,
+            mysql_mode=str(self.query_one("#te-mysql-mode", Select).value),
+            mysql_databases=self.query_one("#te-mysql-databases", Input).value.strip(),
+            mysql_exclude=self.query_one("#te-mysql-exclude", Input).value.strip(),
+            mysql_user=self.query_one("#te-mysql-user", Input).value.strip(),
+            mysql_password=self.query_one("#te-mysql-password", Input).value.strip(),
+            mysql_host=self.query_one("#te-mysql-host", Input).value.strip(),
+            mysql_port=self.query_one("#te-mysql-port", Input).value.strip(),
+            mysql_extra_opts=self.query_one("#te-mysql-extra-opts", Input).value.strip(),
         )
         conf = CONFIG_DIR / "targets.d" / f"{name}.conf"
         write_conf(conf, target.to_conf())

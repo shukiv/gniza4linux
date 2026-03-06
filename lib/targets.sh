@@ -53,6 +53,15 @@ load_target() {
     TARGET_PRE_HOOK="${TARGET_PRE_HOOK:-}"
     TARGET_POST_HOOK="${TARGET_POST_HOOK:-}"
     TARGET_ENABLED="${TARGET_ENABLED:-yes}"
+    TARGET_MYSQL_ENABLED="${TARGET_MYSQL_ENABLED:-no}"
+    TARGET_MYSQL_MODE="${TARGET_MYSQL_MODE:-all}"
+    TARGET_MYSQL_DATABASES="${TARGET_MYSQL_DATABASES:-}"
+    TARGET_MYSQL_EXCLUDE="${TARGET_MYSQL_EXCLUDE:-}"
+    TARGET_MYSQL_USER="${TARGET_MYSQL_USER:-}"
+    TARGET_MYSQL_PASSWORD="${TARGET_MYSQL_PASSWORD:-}"
+    TARGET_MYSQL_HOST="${TARGET_MYSQL_HOST:-localhost}"
+    TARGET_MYSQL_PORT="${TARGET_MYSQL_PORT:-3306}"
+    TARGET_MYSQL_EXTRA_OPTS="${TARGET_MYSQL_EXTRA_OPTS:---single-transaction --routines --triggers}"
 
     log_debug "Loaded target '$name': folders=${TARGET_FOLDERS} enabled=${TARGET_ENABLED}"
 }
@@ -72,10 +81,10 @@ validate_target() {
         ((errors++)) || true
     fi
 
-    if [[ -z "$TARGET_FOLDERS" ]]; then
-        log_error "Target '$name': TARGET_FOLDERS is required"
+    if [[ -z "$TARGET_FOLDERS" && "${TARGET_MYSQL_ENABLED:-no}" != "yes" ]]; then
+        log_error "Target '$name': TARGET_FOLDERS is required (or enable MySQL backup)"
         ((errors++)) || true
-    else
+    elif [[ -n "$TARGET_FOLDERS" ]]; then
         # Validate each folder exists
         local -a folders
         IFS=',' read -ra folders <<< "$TARGET_FOLDERS"

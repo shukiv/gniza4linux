@@ -402,10 +402,10 @@ if [[ "$SUBCOMMAND" == "web" ]]; then
             _web_port="" _web_host=""
             _web_port=$(_parse_flag "--port" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _web_host=$(_parse_flag "--host" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
-            _web_args=()
+            _web_args=(--web)
             [[ -n "$_web_port" ]] && _web_args+=(--port="$_web_port")
             [[ -n "$_web_host" ]] && _web_args+=(--host="$_web_host")
-            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m web "${_web_args[@]}"
+            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m tui "${_web_args[@]}"
             ;;
         install-service)
             _service_src="$GNIZA_DIR/etc/gniza-web.service"

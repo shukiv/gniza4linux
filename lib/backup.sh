@@ -78,6 +78,12 @@ _backup_target_impl() {
             ;;
     esac
 
+    # 4.5. Check remote disk space (fail if >= 95%)
+    check_remote_disk_space 95 || {
+        log_error "Remote '$remote_name' has insufficient disk space"
+        return 1
+    }
+
     local start_time; start_time=$(date +%s)
 
     # 5. Get timestamp

@@ -36,6 +36,8 @@ class TargetEditScreen(Screen):
             yield Static("Folders (comma-separated):")
             yield Input(value=target.folders, placeholder="/path1,/path2", id="te-folders")
             yield Button("Browse...", id="btn-browse")
+            yield Static("Include patterns:")
+            yield Input(value=target.include, placeholder="*.conf,docs/", id="te-include")
             yield Static("Exclude patterns:")
             yield Input(value=target.exclude, placeholder="*.tmp,*.log", id="te-exclude")
             yield Static("Remote override:")
@@ -152,6 +154,7 @@ class TargetEditScreen(Screen):
             name=name,
             folders=folders,
             exclude=self.query_one("#te-exclude", Input).value.strip(),
+            include=self.query_one("#te-include", Input).value.strip(),
             remote=self.query_one("#te-remote", Input).value.strip(),
             retention=self.query_one("#te-retention", Input).value.strip(),
             pre_hook=self.query_one("#te-prehook", Input).value.strip(),

@@ -6,6 +6,7 @@ class Target:
     name: str = ""
     folders: str = ""
     exclude: str = ""
+    include: str = ""
     remote: str = ""
     retention: str = ""
     pre_hook: str = ""
@@ -26,6 +27,7 @@ class Target:
             "TARGET_NAME": self.name,
             "TARGET_FOLDERS": self.folders,
             "TARGET_EXCLUDE": self.exclude,
+            "TARGET_INCLUDE": self.include,
             "TARGET_REMOTE": self.remote,
             "TARGET_RETENTION": self.retention,
             "TARGET_PRE_HOOK": self.pre_hook,
@@ -48,6 +50,7 @@ class Target:
             name=data.get("TARGET_NAME", name),
             folders=data.get("TARGET_FOLDERS", ""),
             exclude=data.get("TARGET_EXCLUDE", ""),
+            include=data.get("TARGET_INCLUDE", ""),
             remote=data.get("TARGET_REMOTE", ""),
             retention=data.get("TARGET_RETENTION", ""),
             pre_hook=data.get("TARGET_PRE_HOOK", ""),

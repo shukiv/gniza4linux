@@ -278,7 +278,8 @@ SelectionList {
 }
 
 /* Log viewer */
-#log-viewer {
+#log-viewer,
+#rt-log-viewer {
     height: 1fr;
     min-height: 8;
     border: round $accent;

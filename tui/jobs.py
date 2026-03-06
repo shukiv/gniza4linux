@@ -77,6 +77,16 @@ class JobManager:
             app.post_message(JobFinished(job.id, rc))
         return job.return_code if job.return_code is not None else 1
 
+    def kill_job(self, job_id: str) -> bool:
+        job = self._jobs.get(job_id)
+        if not job or job._proc is None:
+            return False
+        try:
+            job._proc.terminate()
+            return True
+        except ProcessLookupError:
+            return False
+
     def kill_running(self) -> None:
         for job in self._jobs.values():
             if job._proc is not None:

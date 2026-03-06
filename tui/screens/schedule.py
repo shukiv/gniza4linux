@@ -20,6 +20,16 @@ SCHEDULE_TYPES = [
     ("Custom cron", "custom"),
 ]
 
+HOURLY_INTERVALS = [
+    ("Every Hour", "1"),
+    ("Every 2 Hours", "2"),
+    ("Every 3 Hours", "3"),
+    ("Every 4 Hours", "4"),
+    ("Every 6 Hours", "6"),
+    ("Every 8 Hours", "8"),
+    ("Every 12 Hours", "12"),
+]
+
 
 class ScheduleScreen(Screen):
 
@@ -43,12 +53,14 @@ class ScheduleScreen(Screen):
             yield Input(id="sched-name", placeholder="Schedule name")
             yield Static("Type:")
             yield Select(SCHEDULE_TYPES, id="sched-type", value="daily")
-            yield Static("Time (HH:MM):")
-            yield Input(id="sched-time", value="02:00", placeholder="02:00")
-            yield Static("Day (0=Sun for weekly, 1-28 for monthly):")
-            yield Input(id="sched-day", placeholder="Leave empty if not needed")
-            yield Static("Custom cron (5 fields):")
-            yield Input(id="sched-cron", placeholder="0 2 * * *")
+            yield Static("Schedule Hours:", classes="sched-hourly-field")
+            yield Select(HOURLY_INTERVALS, id="sched-interval", value="1", classes="sched-hourly-field")
+            yield Static("Time (HH:MM):", classes="sched-time-field")
+            yield Input(id="sched-time", value="02:00", placeholder="02:00", classes="sched-time-field")
+            yield Static("Day (0=Sun for weekly, 1-28 for monthly):", classes="sched-day-field")
+            yield Input(id="sched-day", placeholder="Leave empty if not needed", classes="sched-day-field")
+            yield Static("Custom cron (5 fields):", classes="sched-cron-field")
+            yield Input(id="sched-cron", placeholder="0 2 * * *", classes="sched-cron-field")
             yield Static("Targets (empty=all):")
             yield SelectionList[str](
                 *self._build_target_choices(),
@@ -69,6 +81,23 @@ class ScheduleScreen(Screen):
 
     def on_mount(self) -> None:
         self._refresh_table()
+        self._update_type_visibility()
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id == "sched-type":
+            self._update_type_visibility()
+
+    def _update_type_visibility(self) -> None:
+        type_sel = self.query_one("#sched-type", Select)
+        stype = str(type_sel.value) if isinstance(type_sel.value, str) else "daily"
+        for w in self.query(".sched-hourly-field"):
+            w.display = stype == "hourly"
+        for w in self.query(".sched-time-field"):
+            w.display = stype in ("hourly", "daily", "weekly", "monthly")
+        for w in self.query(".sched-day-field"):
+            w.display = stype in ("weekly", "monthly")
+        for w in self.query(".sched-cron-field"):
+            w.display = stype == "custom"
 
     def _refresh_table(self) -> None:
         table = self.query_one("#sched-table", DataTable)
@@ -121,11 +150,16 @@ class ScheduleScreen(Screen):
             return
         type_sel = self.query_one("#sched-type", Select)
         stype = str(type_sel.value) if isinstance(type_sel.value, str) else "daily"
+        if stype == "hourly":
+            interval_sel = self.query_one("#sched-interval", Select)
+            day_val = str(interval_sel.value) if isinstance(interval_sel.value, str) else "1"
+        else:
+            day_val = self.query_one("#sched-day", Input).value.strip()
         sched = Schedule(
             name=name,
             schedule=stype,
             time=self.query_one("#sched-time", Input).value.strip() or "02:00",
-            day=self.query_one("#sched-day", Input).value.strip(),
+            day=day_val,
             cron=self.query_one("#sched-cron", Input).value.strip(),
             targets=",".join(self.query_one("#sched-targets", SelectionList).selected),
             remotes=",".join(self.query_one("#sched-remotes", SelectionList).selected),

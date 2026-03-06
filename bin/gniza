@@ -5,9 +5,6 @@ set -euo pipefail
 GNIZA_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 export GNIZA_DIR
 
-# Add bundled binaries (gum) to PATH if present
-[[ -d "$GNIZA_DIR/bin" ]] && export PATH="$GNIZA_DIR/bin:$PATH"
-
 # ── Source libraries in dependency order ─────────────────────
 source "$GNIZA_DIR/lib/constants.sh"
 source "$GNIZA_DIR/lib/utils.sh"
@@ -26,45 +23,6 @@ source "$GNIZA_DIR/lib/ssh.sh"
 source "$GNIZA_DIR/lib/rclone.sh"
 source "$GNIZA_DIR/lib/snapshot.sh"
 source "$GNIZA_DIR/lib/transfer.sh"
-source "$GNIZA_DIR/lib/ui_common.sh"
-source "$GNIZA_DIR/lib/ui_main.sh"
-source "$GNIZA_DIR/lib/ui_targets.sh"
-source "$GNIZA_DIR/lib/ui_remotes.sh"
-source "$GNIZA_DIR/lib/ui_backup.sh"
-source "$GNIZA_DIR/lib/ui_restore.sh"
-source "$GNIZA_DIR/lib/ui_snapshots.sh"
-source "$GNIZA_DIR/lib/ui_retention.sh"
-source "$GNIZA_DIR/lib/ui_logs.sh"
-source "$GNIZA_DIR/lib/ui_schedule.sh"
-source "$GNIZA_DIR/lib/ui_settings.sh"
-source "$GNIZA_DIR/lib/ui_wizard.sh"
-
-# ── ASCII Logo ───────────────────────────────────────────────
-show_logo() {
-    echo "${C_GREEN}"
-    cat <<'LOGO'
-  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  ▓▓▓▓▓▓▓▓▓▓▓▓          ▓▓▓▓▓▓▓▓▓▓▓
-  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-
-  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  ▓▓▓▓▓▓▓▓▓▓▓▓          ▓▓▓▓▓▓▓▓▓▓▓
-  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-
-  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  ▓▓▓▓▓▓▓▓▓▓▓▓          ▓▓▓▓▓▓▓▓▓▓▓
-  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-              ▓▓▓▓▓▓▓▓▓▓
-                ▓▓▓▓▓▓
-                  ▓▓
-LOGO
-    echo "${C_RESET}"
-    echo "  gniza v${GNIZA4LINUX_VERSION} - Linux Backup Manager"
-    echo ""
-}
 
 # ── Help ─────────────────────────────────────────────────────
 show_help() {
@@ -91,7 +49,7 @@ Commands:
   logs              [--last] [--tail=N]
   version
 
-If no command is given and gum is available, the TUI is launched.
+If no command is given, the TUI is launched.
 EOF
 }
 
@@ -418,13 +376,6 @@ elif [[ "$FORCE_CLI" == "true" ]]; then
 elif python3 -c "import textual" 2>/dev/null && [[ -t 1 ]]; then
     # Python Textual TUI mode
     PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m tui "$@"
-elif command -v gum &>/dev/null && [[ -t 1 ]]; then
-    # Legacy gum TUI mode
-    show_logo
-    if ! has_remotes || ! has_targets; then
-        ui_first_run_wizard
-    fi
-    ui_main_menu
 else
     # Fallback to CLI help
     run_cli

@@ -74,55 +74,6 @@ for cmd in ssh curl; do
     fi
 done
 
-# ── Install bundled gum binary ───────────────────────────────
-GUM_VERSION="0.17.0"
-
-_detect_arch() {
-    local arch; arch=$(uname -m)
-    case "$arch" in
-        x86_64)  echo "x86_64" ;;
-        aarch64) echo "arm64" ;;
-        armv7*)  echo "armv7" ;;
-        i386|i686) echo "i386" ;;
-        *)       echo "" ;;
-    esac
-}
-
-if command -v gum &>/dev/null; then
-    info "gum already installed: $(command -v gum)"
-else
-    GUM_ARCH=$(_detect_arch)
-    if [[ -n "$GUM_ARCH" ]] && command -v curl &>/dev/null; then
-        GUM_URL="https://github.com/charmbracelet/gum/releases/download/v${GUM_VERSION}/gum_${GUM_VERSION}_Linux_${GUM_ARCH}.tar.gz"
-        info "Downloading gum v${GUM_VERSION} (${GUM_ARCH})..."
-        GUM_TMP=$(mktemp -d)
-        if curl -fsSL "$GUM_URL" | tar xz -C "$GUM_TMP" 2>/dev/null; then
-            mkdir -p "$INSTALL_DIR/bin"
-            # The tarball extracts to a subdirectory
-            if [[ -f "$GUM_TMP/gum_${GUM_VERSION}_Linux_${GUM_ARCH}/gum" ]]; then
-                cp "$GUM_TMP/gum_${GUM_VERSION}_Linux_${GUM_ARCH}/gum" "$INSTALL_DIR/bin/gum"
-            elif [[ -f "$GUM_TMP/gum" ]]; then
-                cp "$GUM_TMP/gum" "$INSTALL_DIR/bin/gum"
-            fi
-            if [[ -f "$INSTALL_DIR/bin/gum" ]]; then
-                chmod +x "$INSTALL_DIR/bin/gum"
-                info "Installed gum to $INSTALL_DIR/bin/gum"
-            else
-                warn "Failed to locate gum binary in archive"
-            fi
-        else
-            warn "Failed to download gum (TUI will not be available)"
-        fi
-        rm -rf "$GUM_TMP"
-    else
-        if [[ -z "${GUM_ARCH:-}" ]]; then
-            warn "Unsupported architecture for gum: $(uname -m)"
-        else
-            warn "curl not found, cannot download gum (TUI will not be available)"
-        fi
-    fi
-fi
-
 # ── Install files ────────────────────────────────────────────
 info "Installing to $INSTALL_DIR..."
 mkdir -p "$INSTALL_DIR"

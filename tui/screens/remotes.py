@@ -6,7 +6,7 @@ from textual import work
 
 from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
 from tui.backend import run_cli
-from tui.widgets import ConfirmDialog, OperationLog
+from tui.widgets import ConfirmDialog, OperationLog, DocsPanel
 
 
 class RemotesScreen(Screen):
@@ -15,15 +15,17 @@ class RemotesScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with Vertical(id="remotes-screen"):
-            yield Static("Remotes", id="screen-title")
-            yield DataTable(id="remotes-table")
-            with Horizontal(id="remotes-buttons"):
-                yield Button("Add", variant="primary", id="btn-add")
-                yield Button("Edit", id="btn-edit")
-                yield Button("Test", variant="warning", id="btn-test")
-                yield Button("Delete", variant="error", id="btn-delete")
-                yield Button("Back", id="btn-back")
+        with Horizontal(classes="screen-with-docs"):
+            with Vertical(id="remotes-screen"):
+                yield Static("Remotes", id="screen-title")
+                yield DataTable(id="remotes-table")
+                with Horizontal(id="remotes-buttons"):
+                    yield Button("Add", variant="primary", id="btn-add")
+                    yield Button("Edit", id="btn-edit")
+                    yield Button("Test", variant="warning", id="btn-test")
+                    yield Button("Delete", variant="error", id="btn-delete")
+                    yield Button("Back", id="btn-back")
+            yield DocsPanel.for_screen("remotes-screen")
         yield Footer()
 
     def on_mount(self) -> None:

@@ -9,7 +9,7 @@ from textual import work
 from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR, LOG_DIR
 from tui.models import Schedule
 from tui.backend import run_cli
-from tui.widgets import ConfirmDialog, OperationLog
+from tui.widgets import ConfirmDialog, OperationLog, DocsPanel
 
 
 class ScheduleScreen(Screen):
@@ -18,16 +18,18 @@ class ScheduleScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with Vertical(id="schedule-screen"):
-            yield Static("Schedules", id="screen-title")
-            yield DataTable(id="sched-table")
-            with Horizontal(id="sched-buttons"):
-                yield Button("Add", variant="primary", id="btn-add")
-                yield Button("Edit", id="btn-edit")
-                yield Button("Toggle Active", variant="warning", id="btn-toggle")
-                yield Button("Delete", variant="error", id="btn-delete")
-                yield Button("Show crontab", id="btn-show")
-                yield Button("Back", id="btn-back")
+        with Horizontal(classes="screen-with-docs"):
+            with Vertical(id="schedule-screen"):
+                yield Static("Schedules", id="screen-title")
+                yield DataTable(id="sched-table")
+                with Horizontal(id="sched-buttons"):
+                    yield Button("Add", variant="primary", id="btn-add")
+                    yield Button("Edit", id="btn-edit")
+                    yield Button("Toggle Active", variant="warning", id="btn-toggle")
+                    yield Button("Delete", variant="error", id="btn-delete")
+                    yield Button("Show crontab", id="btn-show")
+                    yield Button("Back", id="btn-back")
+            yield DocsPanel.for_screen("schedule-screen")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -169,6 +171,36 @@ class ScheduleScreen(Screen):
             rc, stdout, stderr = await run_cli("schedule", "remove")
         if rc != 0:
             self.notify(f"Crontab sync failed: {stderr or stdout}", severity="error")
+        # Warn if cron daemon is not running
+        if has_active and not await self._is_cron_running():
+            self.notify(
+                "Cron daemon is not running — schedules won't execute. "
+                "Start it with: sudo systemctl start cron",
+                severity="warning",
+                timeout=10,
+            )
+
+    @staticmethod
+    async def _is_cron_running() -> bool:
+        """Check if the cron daemon is active."""
+        import asyncio
+        for svc in ("cron", "crond"):
+            proc = await asyncio.create_subprocess_exec(
+                "systemctl", "is-active", svc,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            await proc.wait()
+            if proc.returncode == 0:
+                return True
+        # Fallback: check for a running process
+        proc = await asyncio.create_subprocess_exec(
+            "pgrep", "-x", "cron",
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        await proc.wait()
+        return proc.returncode == 0
 
     def _delete_schedule(self, name: str) -> None:
         conf = CONFIG_DIR / "schedules.d" / f"{name}.conf"

@@ -7,7 +7,7 @@ from textual import work, on
 from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
 from tui.backend import run_cli
 from tui.jobs import job_manager
-from tui.widgets import ConfirmDialog, FolderPicker
+from tui.widgets import ConfirmDialog, FolderPicker, DocsPanel
 
 
 class RestoreScreen(Screen):
@@ -18,30 +18,32 @@ class RestoreScreen(Screen):
         yield Header(show_clock=True)
         targets = list_conf_dir("targets.d")
         remotes = list_conf_dir("remotes.d")
-        with Vertical(id="restore-screen"):
-            yield Static("Restore", id="screen-title")
-            if not targets or not remotes:
-                yield Static("Both targets and remotes must be configured for restore.")
-            else:
-                yield Static("Target:")
-                yield Select([(t, t) for t in targets], id="restore-target", prompt="Select target")
-                yield Static("Remote:")
-                yield Select([(r, r) for r in remotes], id="restore-remote", prompt="Select remote")
-                yield Static("Snapshot:")
-                yield Select([], id="restore-snapshot", prompt="Select target and remote first")
-                yield Static("Restore location:")
-                with RadioSet(id="restore-location"):
-                    yield RadioButton("In-place (original)", value=True)
-                    yield RadioButton("Custom directory")
-                with Horizontal(id="restore-dest-row"):
-                    yield Input(placeholder="Destination directory (e.g. /tmp/restore)", id="restore-dest")
-                    yield Button("Browse...", id="btn-browse-dest")
-                with Horizontal(id="restore-mysql-row"):
-                    yield Static("Restore MySQL databases:")
-                    yield Switch(value=True, id="restore-mysql-switch")
-                with Horizontal(id="restore-buttons"):
-                    yield Button("Restore", variant="primary", id="btn-restore")
-                    yield Button("Back", id="btn-back")
+        with Horizontal(classes="screen-with-docs"):
+            with Vertical(id="restore-screen"):
+                yield Static("Restore", id="screen-title")
+                if not targets or not remotes:
+                    yield Static("Both targets and remotes must be configured for restore.")
+                else:
+                    yield Static("Target:")
+                    yield Select([(t, t) for t in targets], id="restore-target", prompt="Select target")
+                    yield Static("Remote:")
+                    yield Select([(r, r) for r in remotes], id="restore-remote", prompt="Select remote")
+                    yield Static("Snapshot:")
+                    yield Select([], id="restore-snapshot", prompt="Select target and remote first")
+                    yield Static("Restore location:")
+                    with RadioSet(id="restore-location"):
+                        yield RadioButton("In-place (original)", value=True)
+                        yield RadioButton("Custom directory")
+                    with Horizontal(id="restore-dest-row"):
+                        yield Input(placeholder="Destination directory (e.g. /tmp/restore)", id="restore-dest")
+                        yield Button("Browse...", id="btn-browse-dest")
+                    with Horizontal(id="restore-mysql-row"):
+                        yield Static("Restore MySQL databases:")
+                        yield Switch(value=True, id="restore-mysql-switch")
+                    with Horizontal(id="restore-buttons"):
+                        yield Button("Restore", variant="primary", id="btn-restore")
+                        yield Button("Back", id="btn-back")
+            yield DocsPanel.for_screen("restore-screen")
         yield Footer()
 
     def on_mount(self) -> None:

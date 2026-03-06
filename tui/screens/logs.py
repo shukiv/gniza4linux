@@ -8,6 +8,7 @@ from textual.widgets import Header, Footer, Static, Button, DataTable, RichLog
 from textual.containers import Vertical, Horizontal
 
 from tui.config import LOG_DIR
+from tui.widgets import DocsPanel
 
 
 _LOG_NAME_RE = re.compile(r"gniza-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})\.log")
@@ -47,14 +48,16 @@ class LogsScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with Vertical(id="logs-screen"):
-            yield Static("Logs", id="screen-title")
-            yield DataTable(id="logs-table")
-            with Horizontal(id="logs-buttons"):
-                yield Button("View", variant="primary", id="btn-view")
-                yield Button("Status", id="btn-status")
-                yield Button("Back", id="btn-back")
-            yield RichLog(id="log-viewer", wrap=True, highlight=True)
+        with Horizontal(classes="screen-with-docs"):
+            with Vertical(id="logs-screen"):
+                yield Static("Logs", id="screen-title")
+                yield DataTable(id="logs-table")
+                with Horizontal(id="logs-buttons"):
+                    yield Button("View", variant="primary", id="btn-view")
+                    yield Button("Status", id="btn-status")
+                    yield Button("Back", id="btn-back")
+                yield RichLog(id="log-viewer", wrap=True, highlight=True)
+            yield DocsPanel.for_screen("logs-screen")
         yield Footer()
 
     def on_mount(self) -> None:

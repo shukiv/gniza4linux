@@ -6,7 +6,7 @@ from textual import work
 
 from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR
 from tui.backend import stream_cli
-from tui.widgets import ConfirmDialog, OperationLog
+from tui.widgets import ConfirmDialog, OperationLog, DocsPanel
 
 
 class RetentionScreen(Screen):
@@ -18,26 +18,28 @@ class RetentionScreen(Screen):
         targets = list_conf_dir("targets.d")
         conf = parse_conf(CONFIG_DIR / "gniza.conf")
         current_count = conf.get("RETENTION_COUNT", "30")
-        with Vertical(id="retention-screen"):
-            yield Static("Retention Cleanup", id="screen-title")
-            if not targets:
-                yield Static("No targets configured.")
-            else:
-                yield Static("Target:")
-                yield Select(
-                    [(t, t) for t in targets],
-                    id="ret-target",
-                    prompt="Select target",
-                )
-                with Horizontal(id="ret-buttons"):
-                    yield Button("Run Cleanup", variant="primary", id="btn-cleanup")
-                    yield Button("Cleanup All", variant="warning", id="btn-cleanup-all")
-            yield Static("")
-            yield Static("Default retention count:")
-            with Horizontal():
-                yield Input(value=current_count, id="ret-count", placeholder="30")
-                yield Button("Save", id="btn-save-count")
-            yield Button("Back", id="btn-back")
+        with Horizontal(classes="screen-with-docs"):
+            with Vertical(id="retention-screen"):
+                yield Static("Retention Cleanup", id="screen-title")
+                if not targets:
+                    yield Static("No targets configured.")
+                else:
+                    yield Static("Target:")
+                    yield Select(
+                        [(t, t) for t in targets],
+                        id="ret-target",
+                        prompt="Select target",
+                    )
+                    with Horizontal(id="ret-buttons"):
+                        yield Button("Run Cleanup", variant="primary", id="btn-cleanup")
+                        yield Button("Cleanup All", variant="warning", id="btn-cleanup-all")
+                yield Static("")
+                yield Static("Default retention count:")
+                with Horizontal():
+                    yield Input(value=current_count, id="ret-count", placeholder="30")
+                    yield Button("Save", id="btn-save-count")
+                yield Button("Back", id="btn-back")
+            yield DocsPanel.for_screen("retention-screen")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

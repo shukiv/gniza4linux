@@ -6,6 +6,7 @@ from textual.containers import Vertical, Horizontal
 
 from tui.config import list_conf_dir, parse_conf, write_conf, CONFIG_DIR
 from tui.models import Schedule
+from tui.widgets import DocsPanel
 
 _NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')
 
@@ -45,76 +46,78 @@ class ScheduleEditScreen(Screen):
             data = parse_conf(CONFIG_DIR / "schedules.d" / f"{self._edit_name}.conf")
             sched = Schedule.from_conf(self._edit_name, data)
 
-        with Vertical(id="schedule-edit"):
-            yield Static(title, id="screen-title")
-            if self._is_new:
-                yield Static("Name:")
-                yield Input(value="", placeholder="Schedule name", id="sched-name")
-            yield Static("Type:")
-            yield Select(SCHEDULE_TYPES, id="sched-type", value=sched.schedule)
-            yield Static("Schedule Hours:", classes="sched-hourly-field")
-            yield Select(
-                HOURLY_INTERVALS,
-                id="sched-interval",
-                value=sched.day if sched.schedule == "hourly" and sched.day else "1",
-                classes="sched-hourly-field",
-            )
-            yield Static("Time (HH:MM):", classes="sched-time-field")
-            yield Input(
-                id="sched-time",
-                value=sched.time,
-                placeholder="02:00",
-                classes="sched-time-field",
-            )
-            yield Static("Schedule Days:", classes="sched-daily-days-field")
-            yield SelectionList[str](
-                ("Sunday", "0"),
-                ("Monday", "1"),
-                ("Tuesday", "2"),
-                ("Wednesday", "3"),
-                ("Thursday", "4"),
-                ("Friday", "5"),
-                ("Saturday", "6"),
-                id="sched-daily-days",
-                classes="sched-daily-days-field",
-            )
-            yield Static("Schedule Day:", classes="sched-weekly-day-field")
-            yield Select(
-                [("Sunday", "0"), ("Monday", "1"), ("Tuesday", "2"), ("Wednesday", "3"),
-                 ("Thursday", "4"), ("Friday", "5"), ("Saturday", "6")],
-                id="sched-weekly-day",
-                value=sched.day if sched.schedule == "weekly" and sched.day else "0",
-                classes="sched-weekly-day-field",
-            )
-            yield Static("Schedule Day:", classes="sched-monthly-field")
-            yield Select(
-                [("1st of the month", "1"), ("7th of the month", "7"),
-                 ("14th of the month", "14"), ("21st of the month", "21"),
-                 ("28th of the month", "28")],
-                id="sched-monthly-day",
-                value=sched.day if sched.schedule == "monthly" and sched.day else "1",
-                classes="sched-monthly-field",
-            )
-            yield Static("Custom cron (5 fields):", classes="sched-cron-field")
-            yield Input(
-                id="sched-cron",
-                value=sched.cron,
-                placeholder="0 2 * * *",
-                classes="sched-cron-field",
-            )
-            yield Static("Targets (empty=all):")
-            yield SelectionList[str](
-                *self._build_target_choices(),
-                id="sched-targets",
-            )
-            yield Static("Remotes (empty=all):")
-            yield SelectionList[str](
-                *self._build_remote_choices(),
-                id="sched-remotes",
-            )
-            with Horizontal(id="sched-edit-buttons"):
-                yield Button("Save", variant="primary", id="btn-save")
-                yield Button("Cancel", id="btn-cancel")
+        with Horizontal(classes="screen-with-docs"):
+            with Vertical(id="schedule-edit"):
+                yield Static(title, id="screen-title")
+                if self._is_new:
+                    yield Static("Name:")
+                    yield Input(value="", placeholder="Schedule name", id="sched-name")
+                yield Static("Type:")
+                yield Select(SCHEDULE_TYPES, id="sched-type", value=sched.schedule)
+                yield Static("Schedule Hours:", classes="sched-hourly-field")
+                yield Select(
+                    HOURLY_INTERVALS,
+                    id="sched-interval",
+                    value=sched.day if sched.schedule == "hourly" and sched.day else "1",
+                    classes="sched-hourly-field",
+                )
+                yield Static("Time (HH:MM):", classes="sched-time-field")
+                yield Input(
+                    id="sched-time",
+                    value=sched.time,
+                    placeholder="02:00",
+                    classes="sched-time-field",
+                )
+                yield Static("Schedule Days:", classes="sched-daily-days-field")
+                yield SelectionList[str](
+                    ("Sunday", "0"),
+                    ("Monday", "1"),
+                    ("Tuesday", "2"),
+                    ("Wednesday", "3"),
+                    ("Thursday", "4"),
+                    ("Friday", "5"),
+                    ("Saturday", "6"),
+                    id="sched-daily-days",
+                    classes="sched-daily-days-field",
+                )
+                yield Static("Schedule Day:", classes="sched-weekly-day-field")
+                yield Select(
+                    [("Sunday", "0"), ("Monday", "1"), ("Tuesday", "2"), ("Wednesday", "3"),
+                     ("Thursday", "4"), ("Friday", "5"), ("Saturday", "6")],
+                    id="sched-weekly-day",
+                    value=sched.day if sched.schedule == "weekly" and sched.day else "0",
+                    classes="sched-weekly-day-field",
+                )
+                yield Static("Schedule Day:", classes="sched-monthly-field")
+                yield Select(
+                    [("1st of the month", "1"), ("7th of the month", "7"),
+                     ("14th of the month", "14"), ("21st of the month", "21"),
+                     ("28th of the month", "28")],
+                    id="sched-monthly-day",
+                    value=sched.day if sched.schedule == "monthly" and sched.day else "1",
+                    classes="sched-monthly-field",
+                )
+                yield Static("Custom cron (5 fields):", classes="sched-cron-field")
+                yield Input(
+                    id="sched-cron",
+                    value=sched.cron,
+                    placeholder="0 2 * * *",
+                    classes="sched-cron-field",
+                )
+                yield Static("Targets (empty=all):")
+                yield SelectionList[str](
+                    *self._build_target_choices(),
+                    id="sched-targets",
+                )
+                yield Static("Remotes (empty=all):")
+                yield SelectionList[str](
+                    *self._build_remote_choices(),
+                    id="sched-remotes",
+                )
+                with Horizontal(id="sched-edit-buttons"):
+                    yield Button("Save", variant="primary", id="btn-save")
+                    yield Button("Cancel", id="btn-cancel")
+            yield DocsPanel.for_screen("schedule-edit")
         yield Footer()
 
     def _build_target_choices(self) -> list[tuple[str, str]]:

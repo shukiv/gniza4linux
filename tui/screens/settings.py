@@ -61,8 +61,6 @@ class SettingsScreen(Screen):
             yield Input(value=settings.ssh_retries, id="set-sshretries")
             yield Static("Extra rsync options:")
             yield Input(value=settings.rsync_extra_opts, id="set-rsyncopts")
-            yield Static("Work Directory:")
-            yield Input(value=settings.work_dir, placeholder="/usr/local/gniza/workdir", id="set-workdir")
             yield Static("Web Dashboard", classes="section-label")
             yield Static("Port:")
             yield Input(value=settings.web_port, id="set-web-port")
@@ -103,7 +101,6 @@ class SettingsScreen(Screen):
             ssh_retries=self.query_one("#set-sshretries", Input).value.strip() or "3",
             rsync_extra_opts=self.query_one("#set-rsyncopts", Input).value.strip(),
             disk_usage_threshold=self.query_one("#set-diskthreshold", Input).value.strip() or "95",
-            work_dir=self.query_one("#set-workdir", Input).value.strip() or "/usr/local/gniza/workdir",
             web_port=self.query_one("#set-web-port", Input).value.strip() or "2323",
             web_host=self.query_one("#set-web-host", Input).value.strip() or "0.0.0.0",
             web_api_key=self.query_one("#set-web-key", Input).value,

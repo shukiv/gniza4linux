@@ -19,7 +19,7 @@ from tui.screens.wizard import WizardScreen
 
 class GnizaApp(App):
 
-    TITLE = "gniza - Linux Backup Manager"
+    TITLE = "GNIZA - Linux Backup Manager"
     CSS_PATH = "gniza.tcss"
 
     SCREENS = {

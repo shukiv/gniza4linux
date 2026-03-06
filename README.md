@@ -25,10 +25,13 @@ A generic Linux backup tool with a Python Textual TUI, web GUI, and CLI interfac
 ## Features
 
 - **Target-based backups** - Define named profiles with sets of directories to back up
+- **Include/exclude filters** - Rsync include or exclude patterns per target (comma-separated)
+- **MySQL backup** - Dump all or selected databases alongside directory backups
 - **Multiple remote types** - SSH, local (USB/NFS), S3, Google Drive
 - **Incremental snapshots** - rsync `--link-dest` for space-efficient deduplication
+- **Disk space safety** - Abort backup if remote disk usage exceeds configurable threshold (default 95%)
 - **Textual TUI** - Beautiful terminal UI powered by [Textual](https://textual.textualize.io/)
-- **Web GUI** - Access the TUI from any browser via `gniza web`
+- **Web dashboard** - Access the full TUI from any browser with HTTP Basic Auth
 - **CLI interface** - Scriptable commands for automation and cron
 - **Atomic snapshots** - `.partial` directory during backup, renamed on success
 - **Retention policies** - Automatic pruning of old snapshots
@@ -98,7 +101,7 @@ Commands:
   backup            [--target=NAME] [--remote=NAME] [--all]
   restore           --target=NAME [--snapshot=TS] [--remote=NAME] [--dest=DIR]
   targets           list|add|delete|show [--name=NAME] [--folders=PATHS]
-  remotes           list|add|delete|show|test [--name=NAME]
+  remotes           list|add|delete|show|test|disk-info-short [--name=NAME]
   snapshots         list [--target=NAME] [--remote=NAME]
   retention         [--target=NAME] [--remote=NAME] [--all]
   schedule          install|show|remove
@@ -119,13 +122,27 @@ Config subdirectories: `targets.d/*.conf`, `remotes.d/*.conf`, `schedules.d/*.co
 ```ini
 TARGET_NAME="mysite"
 TARGET_FOLDERS="/var/www,/etc/nginx"
-TARGET_EXCLUDE="*.log,*.tmp"
+TARGET_EXCLUDE="*.log,*.tmp,.cache"
+TARGET_INCLUDE=""
 TARGET_REMOTE=""
 TARGET_RETENTION=""
 TARGET_PRE_HOOK=""
 TARGET_POST_HOOK=""
 TARGET_ENABLED="yes"
+
+# MySQL backup (optional)
+TARGET_MYSQL_ENABLED="no"
+TARGET_MYSQL_MODE="all"
+TARGET_MYSQL_DATABASES=""
+TARGET_MYSQL_EXCLUDE=""
+TARGET_MYSQL_USER=""
+TARGET_MYSQL_PASSWORD=""
+TARGET_MYSQL_HOST="localhost"
+TARGET_MYSQL_PORT="3306"
+TARGET_MYSQL_EXTRA_OPTS="--single-transaction --routines --triggers"
 ```
+
+**Include vs Exclude**: Set `TARGET_INCLUDE` to back up only matching files (e.g. `*.conf,*.sh`). When include is set, everything else is excluded. If only `TARGET_EXCLUDE` is set, matching files are skipped. Patterns are comma-separated and support rsync glob syntax.
 
 ### Remote Config (`remotes.d/backup-server.conf`)
 
@@ -155,8 +172,28 @@ $BASE/<hostname>/targets/<target>/snapshots/<YYYY-MM-DDTHHMMSS>/
 ├── meta.json
 ├── manifest.txt
 ├── var/www/
-└── etc/nginx/
+├── etc/nginx/
+└── _mysql/              # MySQL dumps (if enabled)
+    ├── dbname.sql.gz
+    └── _grants.sql.gz
 ```
+
+## Web Dashboard
+
+The TUI can be served in a browser via textual-serve with HTTP Basic Auth:
+
+```bash
+# Enable during install (generates admin password)
+curl -sSL .../install.sh | sudo bash
+# Answer "y" to "Enable web dashboard?"
+
+# Or manually
+gniza web install-service   # Install systemd service (port 2323)
+gniza web start             # Start the service
+gniza web stop              # Stop the service
+```
+
+Access at `http://<server-ip>:2323`. Credentials are stored in `gniza.conf` as `WEB_USER` and `WEB_API_KEY`.
 
 ## Testing
 

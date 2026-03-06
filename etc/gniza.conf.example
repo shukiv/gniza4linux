@@ -33,6 +33,16 @@ SSH_RETRIES=3
 # Extra rsync options (careful: validated for safe characters)
 RSYNC_EXTRA_OPTS=""
 
+# Disk usage threshold (%). Backups abort if remote disk usage >= this value.
+# Set to 0 to disable the check.
+DISK_USAGE_THRESHOLD=95
+
 # Work directory for temporary files (MySQL dumps, rclone configs, etc.)
 # Default: /usr/local/gniza/workdir (root) or ~/.local/state/gniza/workdir (user)
 #WORK_DIR="/usr/local/gniza/workdir"
+
+# Web dashboard (textual-serve)
+#WEB_PORT=2323
+#WEB_HOST="0.0.0.0"
+#WEB_USER="admin"
+#WEB_API_KEY=""

@@ -20,7 +20,7 @@ class SnapshotsScreen(Screen):
         targets = list_conf_dir("targets.d")
         remotes = list_conf_dir("remotes.d")
         with Vertical(id="snapshots-screen"):
-            yield Static("Snapshots", id="screen-title")
+            yield Static("Snapshots Browser", id="screen-title")
             if not targets or not remotes:
                 yield Static("Targets and remotes must be configured to browse snapshots.")
             else:

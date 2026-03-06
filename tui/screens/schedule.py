@@ -1,10 +1,12 @@
+from datetime import datetime, timedelta
+
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, DataTable
 from textual.containers import Vertical, Horizontal
 from textual import work
 
-from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR
+from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR, LOG_DIR
 from tui.models import Schedule
 from tui.backend import run_cli
 from tui.widgets import ConfirmDialog, OperationLog
@@ -34,13 +36,69 @@ class ScheduleScreen(Screen):
     def _refresh_table(self) -> None:
         table = self.query_one("#sched-table", DataTable)
         table.clear(columns=True)
-        table.add_columns("Name", "Active", "Type", "Time", "Targets", "Remotes")
+        table.add_columns("Name", "Active", "Type", "Time", "Last Run", "Next Run", "Targets", "Remotes")
+        last_run = self._get_last_run()
         schedules = list_conf_dir("schedules.d")
         for name in schedules:
             data = parse_conf(CONFIG_DIR / "schedules.d" / f"{name}.conf")
             s = Schedule.from_conf(name, data)
             active = "✅" if s.active == "yes" else "❌"
-            table.add_row(name, active, s.schedule, s.time, s.targets or "all", s.remotes or "all", key=name)
+            next_run = self._calc_next_run(s) if s.active == "yes" else "--"
+            table.add_row(name, active, s.schedule, s.time, last_run, next_run, s.targets or "all", s.remotes or "all", key=name)
+
+    def _get_last_run(self) -> str:
+        """Get the timestamp of the most recent backup log."""
+        from pathlib import Path
+        log_dir = Path(str(LOG_DIR))
+        if not log_dir.is_dir():
+            return "--"
+        logs = sorted(log_dir.glob("gniza-*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if not logs:
+            return "--"
+        mtime = logs[0].stat().st_mtime
+        dt = datetime.fromtimestamp(mtime)
+        return dt.strftime("%Y-%m-%d %H:%M")
+
+    def _calc_next_run(self, s: Schedule) -> str:
+        """Calculate the next run time from schedule config."""
+        now = datetime.now()
+        try:
+            hour, minute = (int(x) for x in s.time.split(":")) if s.time else (2, 0)
+        except (ValueError, IndexError):
+            hour, minute = 2, 0
+
+        if s.schedule == "hourly":
+            next_dt = now.replace(minute=minute, second=0, microsecond=0)
+            if next_dt <= now:
+                next_dt += timedelta(hours=1)
+        elif s.schedule == "daily":
+            next_dt = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            if next_dt <= now:
+                next_dt += timedelta(days=1)
+        elif s.schedule == "weekly":
+            try:
+                target_dow = int(s.day) if s.day else 0
+            except ValueError:
+                target_dow = 0
+            next_dt = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            days_ahead = (target_dow - now.weekday()) % 7
+            if days_ahead == 0 and next_dt <= now:
+                days_ahead = 7
+            next_dt += timedelta(days=days_ahead)
+        elif s.schedule == "monthly":
+            try:
+                target_dom = int(s.day) if s.day else 1
+            except ValueError:
+                target_dom = 1
+            next_dt = now.replace(day=target_dom, hour=hour, minute=minute, second=0, microsecond=0)
+            if next_dt <= now:
+                if now.month == 12:
+                    next_dt = next_dt.replace(year=now.year + 1, month=1)
+                else:
+                    next_dt = next_dt.replace(month=now.month + 1)
+        else:
+            return "--"
+        return next_dt.strftime("%Y-%m-%d %H:%M")
 
     def _selected_schedule(self) -> str | None:
         table = self.query_one("#sched-table", DataTable)

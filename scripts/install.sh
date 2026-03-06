@@ -178,11 +178,12 @@ if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
     else
         echo "WEB_API_KEY=\"${api_key}\"" >> "$CONFIG_DIR/gniza.conf"
     fi
-    info "Web credentials:  user=$web_user  password=$api_key"
-    echo "Save these -- you will need them to access the dashboard."
+    WEB_INSTALLED="yes"
+    WEB_USER="$web_user"
+    WEB_PASS="$api_key"
     # Install systemd service
     if [ "$MODE" = "root" ]; then
-        "$INSTALL_DIR/bin/gniza" web install-service || warn "Failed to install web service"
+        "$INSTALL_DIR/bin/gniza" web install-service 2>&1 | grep -v "^Access\|^GNIZA web" || warn "Failed to install web service"
     else
         warn "Systemd service installation requires root. Start manually: gniza web start"
     fi
@@ -197,6 +198,13 @@ echo "  Config:   $CONFIG_DIR/gniza.conf"
 echo "  Logs:     $LOG_DIR"
 echo "  Work dir: $WORK_DIR"
 echo ""
+if [ "${WEB_INSTALLED:-}" = "yes" ]; then
+    echo "${C_GREEN}Web Dashboard:${C_RESET}"
+    echo "  URL:      http://$(hostname -I 2>/dev/null | awk '{print $1}'):8080"
+    echo "  User:     $WEB_USER"
+    echo "  Password: $WEB_PASS"
+    echo ""
+fi
 echo "Get started:"
 echo "  gniza --help        Show CLI help"
 echo "  gniza               Launch TUI"

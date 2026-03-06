@@ -33,9 +33,10 @@ class OperationLog(ModalScreen[None]):
 
     BINDINGS = [("escape", "close", "Close")]
 
-    def __init__(self, title: str = "Operation Output"):
+    def __init__(self, title: str = "Operation Output", show_spinner: bool = True):
         super().__init__()
         self._title = title
+        self._show_spinner = show_spinner
         self._mounted_event = asyncio.Event()
         self._buffer: list[str] = []
 
@@ -45,7 +46,8 @@ class OperationLog(ModalScreen[None]):
             yield RichLog(id="ol-log", wrap=True, highlight=True, markup=True)
             with Horizontal(id="ol-footer"):
                 yield Button("Close", variant="primary", id="ol-close")
-                yield SpinnerWidget("arrow3", id="ol-spinner")
+                if self._show_spinner:
+                    yield SpinnerWidget("arrow3", id="ol-spinner")
 
     def on_mount(self) -> None:
         # Flush any buffered writes

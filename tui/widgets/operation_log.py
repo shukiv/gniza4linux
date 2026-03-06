@@ -41,11 +41,11 @@ class OperationLog(ModalScreen[None]):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="op-log"):
-            with Horizontal(id="ol-header"):
-                yield Static(self._title, id="ol-title")
-                yield SpinnerWidget(id="ol-spinner")
+            yield Static(self._title, id="ol-title")
             yield RichLog(id="ol-log", wrap=True, highlight=True, markup=True)
-            yield Button("Close", variant="primary", id="ol-close")
+            with Horizontal(id="ol-footer"):
+                yield Button("Close", variant="primary", id="ol-close")
+                yield SpinnerWidget(id="ol-spinner")
 
     def on_mount(self) -> None:
         # Flush any buffered writes

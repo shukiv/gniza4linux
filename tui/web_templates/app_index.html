@@ -163,6 +163,38 @@
           window.location.replace(url.toString());
         }
       })();
+
+      // Touch-to-scroll: translate swipe gestures into wheel events for xterm
+      (function() {
+        var touchStartY = null;
+        var THRESHOLD = 5;
+
+        document.addEventListener("touchstart", function(e) {
+          if (e.touches.length === 1) {
+            touchStartY = e.touches[0].clientY;
+          }
+        }, { passive: true });
+
+        document.addEventListener("touchmove", function(e) {
+          if (touchStartY === null || e.touches.length !== 1) return;
+          var dy = touchStartY - e.touches[0].clientY;
+          if (Math.abs(dy) < THRESHOLD) return;
+          touchStartY = e.touches[0].clientY;
+
+          var target = document.querySelector(".xterm-screen") || document.querySelector("#terminal");
+          if (!target) return;
+          target.dispatchEvent(new WheelEvent("wheel", {
+            deltaY: dy > 0 ? 3 : -3,
+            deltaMode: 0,
+            bubbles: true,
+            cancelable: true
+          }));
+        }, { passive: false });
+
+        document.addEventListener("touchend", function() {
+          touchStartY = null;
+        }, { passive: true });
+      })();
     </script>
   </head>
   <body data-pingurl="{{ ping_url }}">

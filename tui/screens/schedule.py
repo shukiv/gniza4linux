@@ -220,6 +220,7 @@ class ScheduleScreen(Screen):
     async def _install_schedules(self) -> None:
         log_screen = OperationLog("Install Schedules")
         self.app.push_screen(log_screen)
+        await log_screen.wait_ready()
         rc, stdout, stderr = await run_cli("schedule", "install")
         if stdout:
             log_screen.write(stdout)
@@ -231,6 +232,7 @@ class ScheduleScreen(Screen):
     async def _remove_schedules(self) -> None:
         log_screen = OperationLog("Remove Schedules")
         self.app.push_screen(log_screen)
+        await log_screen.wait_ready()
         rc, stdout, stderr = await run_cli("schedule", "remove")
         if stdout:
             log_screen.write(stdout)
@@ -242,6 +244,7 @@ class ScheduleScreen(Screen):
     async def _show_crontab(self) -> None:
         log_screen = OperationLog("Current Crontab")
         self.app.push_screen(log_screen)
+        await log_screen.wait_ready()
         rc, stdout, stderr = await run_cli("schedule", "show")
         if stdout:
             log_screen.write(stdout)

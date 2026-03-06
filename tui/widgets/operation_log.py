@@ -46,6 +46,9 @@ class OperationLog(ModalScreen[None]):
         else:
             log.write(text)
 
+    async def wait_ready(self) -> None:
+        await self._mounted_event.wait()
+
     def finish(self) -> None:
         self._running = False
         try:

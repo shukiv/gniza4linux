@@ -70,6 +70,7 @@ class RetentionScreen(Screen):
     async def _do_cleanup(self, target: str) -> None:
         log_screen = OperationLog(f"Retention: {target}")
         self.app.push_screen(log_screen)
+        await log_screen.wait_ready()
         rc = await stream_cli(log_screen.write, "retention", f"--target={target}")
         if rc == 0:
             log_screen.write("\n[green]Cleanup completed.[/green]")
@@ -81,6 +82,7 @@ class RetentionScreen(Screen):
     async def _do_cleanup_all(self) -> None:
         log_screen = OperationLog("Retention: All Targets")
         self.app.push_screen(log_screen)
+        await log_screen.wait_ready()
         rc = await stream_cli(log_screen.write, "retention", "--all")
         if rc == 0:
             log_screen.write("\n[green]All cleanups completed.[/green]")

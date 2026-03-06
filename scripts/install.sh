@@ -163,17 +163,20 @@ done
 enable_web="n"
 read -rp "Enable web dashboard (TUI in browser)? (y/n) [n]: " enable_web </dev/tty || true
 if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
-    # Set up web credentials
+    # Set up web credentials (preserve existing values)
     web_user="$(grep '^WEB_USER=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_USER="//' | sed 's/"$//' || true)"
     web_user="${web_user:-admin}"
-    api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+    api_key="$(grep '^WEB_API_KEY=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_API_KEY="//' | sed 's/"$//' || true)"
+    if [[ -z "$api_key" ]]; then
+        api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+    fi
     if grep -q "^WEB_USER=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
         sed -i "s|^WEB_USER=.*|WEB_USER=\"${web_user}\"|" "$CONFIG_DIR/gniza.conf"
     else
         echo "WEB_USER=\"${web_user}\"" >> "$CONFIG_DIR/gniza.conf"
     fi
     if grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
-        sed -i "s|^WEB_API_KEY=.*|WEB_API_KEY=\"${api_key}\"|" "$CONFIG_DIR/gniza.conf"
+        : # Keep existing key
     else
         echo "WEB_API_KEY=\"${api_key}\"" >> "$CONFIG_DIR/gniza.conf"
     fi

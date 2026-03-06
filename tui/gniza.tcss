@@ -154,6 +154,21 @@ Select {
     height: 1fr;
 }
 
+#fp-new-row {
+    height: auto;
+    margin: 1 0 0 0;
+}
+
+#fp-new-row Input {
+    width: 1fr;
+}
+
+#fp-new-row Button {
+    width: auto;
+    min-width: 16;
+    margin: 0 0 0 1;
+}
+
 #fp-buttons {
     height: auto;
     margin: 1 0 0 0;

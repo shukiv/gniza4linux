@@ -64,7 +64,7 @@ test_ssh_connection() {
 }
 
 ensure_remote_dir() {
-    local dir="$1"
+    local dir; dir="$(shquote "$1")"
     remote_exec "mkdir -p '$dir'" || {
         log_error "Failed to create remote directory: $dir"
         return 1
@@ -75,6 +75,6 @@ build_rsync_ssh_cmd() {
     if _is_password_mode; then
         echo "ssh -p $REMOTE_PORT -o StrictHostKeyChecking=yes -o ConnectTimeout=$SSH_TIMEOUT"
     else
-        echo "ssh -i $REMOTE_KEY -p $REMOTE_PORT -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=$SSH_TIMEOUT"
+        echo "ssh -i \"$REMOTE_KEY\" -p $REMOTE_PORT -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=$SSH_TIMEOUT"
     fi
 }

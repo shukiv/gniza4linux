@@ -232,7 +232,7 @@ class AppSettings:
             rsync_extra_opts=data.get("RSYNC_EXTRA_OPTS", ""),
             disk_usage_threshold=data.get("DISK_USAGE_THRESHOLD", "95"),
             work_dir=data.get("WORK_DIR", "/usr/local/gniza/workdir"),
-            web_port=data.get("WEB_PORT", "8080"),
+            web_port=data.get("WEB_PORT", "2323"),
             web_host=data.get("WEB_HOST", "0.0.0.0"),
             web_api_key=data.get("WEB_API_KEY", ""),
         )

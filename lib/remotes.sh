@@ -293,7 +293,7 @@ get_target_remotes() {
 # Return the disk usage percentage (integer, no %) for REMOTE_BASE.
 # Returns 0 (unknown) on unsupported remote types.
 remote_disk_usage_pct() {
-    local base="${REMOTE_BASE:-/}"
+    local base; base="$(shquote "${REMOTE_BASE:-/}")"
     local df_line=""
     case "${REMOTE_TYPE:-ssh}" in
         ssh)
@@ -332,7 +332,7 @@ check_remote_disk_space() {
 
 # Compact one-line disk info: "USED/TOTAL (FREE free) PCT"
 remote_disk_info_short() {
-    local base="${REMOTE_BASE:-/}"
+    local base; base="$(shquote "${REMOTE_BASE:-/}")"
     local df_out=""
     case "${REMOTE_TYPE:-ssh}" in
         ssh)

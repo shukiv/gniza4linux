@@ -131,23 +131,17 @@ class RunningTasksScreen(Screen):
 
     def _process_log_content(self, content: str, log_viewer: RichLog) -> None:
         """Process log content, extracting rsync progress and writing log lines."""
-        for line in content.split("\n"):
-            if not line:
+        # Split on both \n and \r to handle rsync --info=progress2 output
+        parts = re.split(r"[\r\n]+", content)
+        for part in parts:
+            part = part.strip()
+            if not part:
                 continue
-            # rsync --info=progress2 uses \r to update in place
-            if "\r" in line:
-                parts = line.split("\r")
-                # Extract progress from the last \r segment
-                last = parts[-1].strip()
-                if last:
-                    self._update_progress(last)
-                # Write non-progress parts as log lines
-                for part in parts:
-                    part = part.strip()
-                    if part and not _PROGRESS_RE.search(part):
-                        log_viewer.write(part)
+            m = _PROGRESS_RE.search(part)
+            if m and ("xfr#" in part or "to-chk=" in part or "MB/s" in part or "kB/s" in part or "GB/s" in part):
+                self._update_progress(part)
             else:
-                log_viewer.write(line)
+                log_viewer.write(part)
 
     def _update_progress(self, text: str) -> None:
         """Parse rsync progress2 line and update progress bar."""

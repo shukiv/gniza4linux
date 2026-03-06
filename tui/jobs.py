@@ -76,7 +76,8 @@ class JobManager:
         self._save_registry()
 
     def start_job(self, app, job: Job, *cli_args: str) -> None:
-        asyncio.create_task(self.run_job(app, job, *cli_args))
+        task = asyncio.create_task(self.run_job(app, job, *cli_args))
+        job._tail_task = task  # prevent GC of the asyncio task
 
     async def run_job(self, app, job: Job, *cli_args: str) -> int:
         log_path = _work_dir() / f"gniza-job-{job.id}.log"

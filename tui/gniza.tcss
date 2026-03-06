@@ -245,6 +245,35 @@ SelectionList {
     margin: 0;
 }
 
+/* Snapshot browser */
+#snapshot-browser {
+    width: 80%;
+    height: 80%;
+    padding: 1;
+    background: $panel;
+    border: thick $accent;
+}
+
+#sb-title {
+    text-style: bold;
+    color: #00cc00;
+    margin: 0 0 1 0;
+}
+
+#sb-tree {
+    height: 1fr;
+    border: round $accent;
+}
+
+#sb-buttons {
+    height: auto;
+    margin: 1 0 0 0;
+}
+
+#sb-buttons Button {
+    margin: 0 1 0 0;
+}
+
 /* Log viewer */
 #log-viewer {
     height: 1fr;

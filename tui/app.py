@@ -58,5 +58,19 @@ class GnizaApp(App):
             self.notify(f"{job.label} failed (exit code {message.return_code})", severity="error")
 
     async def action_quit(self) -> None:
-        job_manager.kill_running()
+        if job_manager.running_count() > 0:
+            from tui.widgets import ConfirmDialog
+            self.push_screen(
+                ConfirmDialog(
+                    f"{job_manager.running_count()} job(s) still running.\nQuit and let them continue in background?",
+                    "Confirm Quit",
+                ),
+                callback=lambda ok: self._do_quit(kill=False) if ok else None,
+            )
+        else:
+            self.exit()
+
+    def _do_quit(self, kill: bool = False) -> None:
+        if kill:
+            job_manager.kill_running()
         self.exit()

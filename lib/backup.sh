@@ -128,7 +128,7 @@ _backup_target_impl() {
     # 9.5. Transfer MySQL dumps
     if [[ -n "$mysql_dump_dir" && -d "$mysql_dump_dir/_mysql" ]]; then
         log_info "Transferring MySQL dumps for $target_name..."
-        if ! transfer_folder "$target_name" "$mysql_dump_dir/_mysql" "$ts" "$prev"; then
+        if ! transfer_folder "$target_name" "$mysql_dump_dir/_mysql" "$ts" "$prev" "_mysql"; then
             log_error "Transfer failed for MySQL dumps"
             transfer_failed=true
         fi

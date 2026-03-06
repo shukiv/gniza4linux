@@ -205,6 +205,7 @@ class AppSettings:
     ssh_timeout: str = "30"
     ssh_retries: str = "3"
     rsync_extra_opts: str = ""
+    disk_usage_threshold: str = "95"
     work_dir: str = "/usr/local/gniza/workdir"
     web_port: str = "2323"
     web_host: str = "0.0.0.0"
@@ -229,6 +230,7 @@ class AppSettings:
             ssh_timeout=data.get("SSH_TIMEOUT", "30"),
             ssh_retries=data.get("SSH_RETRIES", "3"),
             rsync_extra_opts=data.get("RSYNC_EXTRA_OPTS", ""),
+            disk_usage_threshold=data.get("DISK_USAGE_THRESHOLD", "95"),
             work_dir=data.get("WORK_DIR", "/usr/local/gniza/workdir"),
             web_port=data.get("WEB_PORT", "8080"),
             web_host=data.get("WEB_HOST", "0.0.0.0"),
@@ -253,6 +255,7 @@ class AppSettings:
             "SSH_TIMEOUT": self.ssh_timeout,
             "SSH_RETRIES": self.ssh_retries,
             "RSYNC_EXTRA_OPTS": self.rsync_extra_opts,
+            "DISK_USAGE_THRESHOLD": self.disk_usage_threshold,
             "WORK_DIR": self.work_dir,
             "WEB_PORT": self.web_port,
             "WEB_HOST": self.web_host,

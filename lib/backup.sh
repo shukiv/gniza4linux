@@ -78,11 +78,14 @@ _backup_target_impl() {
             ;;
     esac
 
-    # 4.5. Check remote disk space (fail if >= 95%)
-    check_remote_disk_space 95 || {
-        log_error "Remote '$remote_name' has insufficient disk space"
-        return 1
-    }
+    # 4.5. Check remote disk space
+    local threshold="${DISK_USAGE_THRESHOLD:-$DEFAULT_DISK_USAGE_THRESHOLD}"
+    if [[ "$threshold" -gt 0 ]]; then
+        check_remote_disk_space "$threshold" || {
+            log_error "Remote '$remote_name' has insufficient disk space"
+            return 1
+        }
+    fi
 
     local start_time; start_time=$(date +%s)
 

@@ -45,6 +45,7 @@ class RunningTasksScreen(Screen):
         return f"{hours}h {m}m"
 
     def _refresh_table(self) -> None:
+        job_manager.check_reconnected()
         table = self.query_one("#rt-table", DataTable)
         # Preserve cursor position
         old_row = table.cursor_coordinate.row if table.row_count > 0 else 0

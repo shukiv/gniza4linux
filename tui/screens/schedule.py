@@ -225,6 +225,7 @@ class ScheduleScreen(Screen):
             log_screen.write(stdout)
         if stderr:
             log_screen.write(stderr)
+        log_screen.finish()
 
     @work
     async def _remove_schedules(self) -> None:
@@ -235,6 +236,7 @@ class ScheduleScreen(Screen):
             log_screen.write(stdout)
         if stderr:
             log_screen.write(stderr)
+        log_screen.finish()
 
     @work
     async def _show_crontab(self) -> None:
@@ -245,6 +247,7 @@ class ScheduleScreen(Screen):
             log_screen.write(stdout)
         if stderr:
             log_screen.write(stderr)
+        log_screen.finish()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

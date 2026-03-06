@@ -57,15 +57,21 @@ class MainMenuScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        self._update_logo_visibility()
+        self._update_layout()
         self.query_one("#menu-list", OptionList).focus()
 
     def on_resize(self) -> None:
-        self._update_logo_visibility()
+        self._update_layout()
 
-    def _update_logo_visibility(self) -> None:
+    def _update_layout(self) -> None:
+        width = self.app.size.width
         logo = self.query_one("#logo")
-        logo.display = self.app.size.width >= 80
+        layout = self.query_one("#main-layout")
+        logo.display = width >= 48
+        if width < 100:
+            layout.styles.layout = "vertical"
+        else:
+            layout.styles.layout = "horizontal"
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         option_id = event.option.id

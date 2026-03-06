@@ -66,9 +66,16 @@ class BackupScreen(Screen):
             )
 
     def _confirmed_backup(self, target: str, remote: str) -> None:
-        log_screen = OperationLog(f"Backup: {target}")
-        self.app.push_screen(log_screen)
-        self._run_backup(log_screen, target, remote)
+        self.notify("DEBUG: callback fired")
+        try:
+            log_screen = OperationLog(f"Backup: {target}")
+            self.notify("DEBUG: OperationLog created")
+            self.app.push_screen(log_screen)
+            self.notify("DEBUG: push_screen called")
+            self._run_backup(log_screen, target, remote)
+            self.notify("DEBUG: _run_backup started")
+        except Exception as e:
+            self.notify(f"DEBUG ERROR: {e}", severity="error")
 
     def _confirmed_backup_all(self) -> None:
         log_screen = OperationLog("Backup All Targets")

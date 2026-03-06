@@ -8,6 +8,9 @@ rsync_to_remote() {
     local source_dir="$1"
     local remote_dest="$2"
     local link_dest="${3:-}"
+    shift 3 || true
+    # Remaining args are extra rsync options (e.g. --exclude, --include)
+    local -a extra_filter_opts=("$@")
     local attempt=0
     local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
     local rsync_ssh; rsync_ssh=$(build_rsync_ssh_cmd)
@@ -25,6 +28,11 @@ rsync_to_remote() {
     if [[ -n "${RSYNC_EXTRA_OPTS:-}" ]]; then
         # shellcheck disable=SC2206
         rsync_opts+=($RSYNC_EXTRA_OPTS)
+    fi
+
+    # Append include/exclude filters
+    if [[ ${#extra_filter_opts[@]} -gt 0 ]]; then
+        rsync_opts+=("${extra_filter_opts[@]}")
     fi
 
     rsync_opts+=(-e "$rsync_ssh")
@@ -68,6 +76,9 @@ rsync_local() {
     local source_dir="$1"
     local local_dest="$2"
     local link_dest="${3:-}"
+    shift 3 || true
+    # Remaining args are extra rsync options (e.g. --exclude, --include)
+    local -a extra_filter_opts=("$@")
     local attempt=0
     local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
 
@@ -84,6 +95,11 @@ rsync_local() {
     if [[ -n "${RSYNC_EXTRA_OPTS:-}" ]]; then
         # shellcheck disable=SC2206
         rsync_opts+=($RSYNC_EXTRA_OPTS)
+    fi
+
+    # Append include/exclude filters
+    if [[ ${#extra_filter_opts[@]} -gt 0 ]]; then
+        rsync_opts+=("${extra_filter_opts[@]}")
     fi
 
     # Ensure source ends with /
@@ -131,6 +147,31 @@ transfer_folder() {
     # Strip leading / to create relative subpath in snapshot
     local rel_path="${dest_name:-${folder_path#/}}"
 
+    # Build include/exclude filter args for rsync
+    local -a filter_opts=()
+    if [[ -n "${TARGET_INCLUDE:-}" ]]; then
+        # Include mode: allow directory traversal, include matched patterns, exclude rest
+        filter_opts+=(--include="*/")
+        local -a inc_patterns
+        IFS=',' read -ra inc_patterns <<< "$TARGET_INCLUDE"
+        for pat in "${inc_patterns[@]}"; do
+            pat="${pat#"${pat%%[![:space:]]*}"}"
+            pat="${pat%"${pat##*[![:space:]]}"}"
+            [[ -n "$pat" ]] && filter_opts+=(--include="$pat")
+        done
+        filter_opts+=(--exclude="*")
+        # Prune empty dirs left by directory traversal
+        filter_opts+=(--prune-empty-dirs)
+    elif [[ -n "${TARGET_EXCLUDE:-}" ]]; then
+        local -a exc_patterns
+        IFS=',' read -ra exc_patterns <<< "$TARGET_EXCLUDE"
+        for pat in "${exc_patterns[@]}"; do
+            pat="${pat#"${pat%%[![:space:]]*}"}"
+            pat="${pat%"${pat##*[![:space:]]}"}"
+            [[ -n "$pat" ]] && filter_opts+=(--exclude="$pat")
+        done
+    fi
+
     if _is_rclone_mode; then
         local snap_subpath="targets/${target_name}/snapshots/${timestamp}/${rel_path}"
         log_info "Transferring $folder_path for $target_name (rclone)..."
@@ -153,7 +194,7 @@ transfer_folder() {
         }
 
         log_info "Transferring $folder_path for $target_name (local)..."
-        rsync_local "$folder_path" "$dest" "$link_dest"
+        rsync_local "$folder_path" "$dest" "$link_dest" "${filter_opts[@]}"
         return
     fi
 
@@ -161,7 +202,7 @@ transfer_folder() {
     ensure_remote_dir "$dest" || return 1
 
     log_info "Transferring $folder_path for $target_name..."
-    rsync_to_remote "$folder_path" "$dest" "$link_dest"
+    rsync_to_remote "$folder_path" "$dest" "$link_dest" "${filter_opts[@]}"
 }
 
 # Finalize a snapshot: rename .partial -> final, update latest symlink.

@@ -42,6 +42,7 @@ DataTable {
 /* Form screens */
 #target-edit,
 #remote-edit,
+#schedule-edit,
 #settings-screen,
 #schedule-screen,
 #backup-screen,
@@ -93,6 +94,7 @@ SelectionList {
 #remotes-buttons,
 #logs-buttons,
 #sched-buttons,
+#sched-edit-buttons,
 #te-buttons,
 #re-buttons,
 #set-buttons {
@@ -107,6 +109,7 @@ SelectionList {
 #remotes-buttons Button,
 #logs-buttons Button,
 #sched-buttons Button,
+#sched-edit-buttons Button,
 #te-buttons Button,
 #re-buttons Button,
 #set-buttons Button {

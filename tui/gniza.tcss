@@ -33,6 +33,10 @@ Screen {
     margin: 1 2 0 2;
 }
 
+.screen-with-docs {
+    height: 1fr;
+}
+
 /* Data tables */
 DataTable {
     height: 12;

@@ -1,4 +1,5 @@
 from textual.app import App
+from textual.css.query import NoMatches
 
 from tui.config import has_remotes, has_targets
 from tui.screens.main_menu import MainMenuScreen
@@ -23,6 +24,7 @@ class GnizaApp(App):
 
     TITLE = "GNIZA - Linux Backup Manager"
     CSS_PATH = "gniza.tcss"
+    BINDINGS = [("f1", "toggle_docs", "Help")]
 
     SCREENS = {
         "main": MainMenuScreen,
@@ -59,6 +61,13 @@ class GnizaApp(App):
             self.notify(f"{job.label} completed successfully")
         else:
             self.notify(f"{job.label} failed (exit code {message.return_code})", severity="error")
+
+    def action_toggle_docs(self) -> None:
+        try:
+            panel = self.screen.query_one("#docs-panel")
+            panel.display = not panel.display
+        except NoMatches:
+            pass
 
     async def action_quit(self) -> None:
         if job_manager.running_count() > 0:

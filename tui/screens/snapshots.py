@@ -9,7 +9,7 @@ from textual import work
 
 from tui.config import list_conf_dir
 from tui.backend import run_cli
-from tui.widgets import SnapshotBrowser
+from tui.widgets import SnapshotBrowser, DocsPanel
 
 
 def _format_snapshot_ts(ts: str) -> str:
@@ -29,20 +29,22 @@ class SnapshotsScreen(Screen):
         yield Header(show_clock=True)
         targets = list_conf_dir("targets.d")
         remotes = list_conf_dir("remotes.d")
-        with Vertical(id="snapshots-screen"):
-            yield Static("Snapshots Browser", id="screen-title")
-            if not targets or not remotes:
-                yield Static("Targets and remotes must be configured to browse snapshots.")
-            else:
-                yield Static("Target:")
-                yield Select([(t, t) for t in targets], id="snap-target", prompt="Select target")
-                yield Static("Remote:")
-                yield Select([(r, r) for r in remotes], id="snap-remote", prompt="Select remote")
-                yield Button("Load Snapshots", id="btn-load", variant="primary")
-                yield DataTable(id="snap-table")
-                with Horizontal(id="snapshots-buttons"):
-                    yield Button("Browse Files", id="btn-browse")
-                    yield Button("Back", id="btn-back")
+        with Horizontal(classes="screen-with-docs"):
+            with Vertical(id="snapshots-screen"):
+                yield Static("Snapshots Browser", id="screen-title")
+                if not targets or not remotes:
+                    yield Static("Targets and remotes must be configured to browse snapshots.")
+                else:
+                    yield Static("Target:")
+                    yield Select([(t, t) for t in targets], id="snap-target", prompt="Select target")
+                    yield Static("Remote:")
+                    yield Select([(r, r) for r in remotes], id="snap-remote", prompt="Select remote")
+                    yield Button("Load Snapshots", id="btn-load", variant="primary")
+                    yield DataTable(id="snap-table")
+                    with Horizontal(id="snapshots-buttons"):
+                        yield Button("Browse Files", id="btn-browse")
+                        yield Button("Back", id="btn-back")
+            yield DocsPanel.for_screen("snapshots-screen")
         yield Footer()
 
     def on_mount(self) -> None:

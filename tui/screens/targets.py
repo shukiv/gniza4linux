@@ -4,7 +4,7 @@ from textual.widgets import Header, Footer, Static, Button, DataTable
 from textual.containers import Vertical, Horizontal
 
 from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
-from tui.widgets import ConfirmDialog
+from tui.widgets import ConfirmDialog, DocsPanel
 
 
 class TargetsScreen(Screen):
@@ -13,14 +13,16 @@ class TargetsScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with Vertical(id="targets-screen"):
-            yield Static("Targets", id="screen-title")
-            yield DataTable(id="targets-table")
-            with Horizontal(id="targets-buttons"):
-                yield Button("Add", variant="primary", id="btn-add")
-                yield Button("Edit", id="btn-edit")
-                yield Button("Delete", variant="error", id="btn-delete")
-                yield Button("Back", id="btn-back")
+        with Horizontal(classes="screen-with-docs"):
+            with Vertical(id="targets-screen"):
+                yield Static("Targets", id="screen-title")
+                yield DataTable(id="targets-table")
+                with Horizontal(id="targets-buttons"):
+                    yield Button("Add", variant="primary", id="btn-add")
+                    yield Button("Edit", id="btn-edit")
+                    yield Button("Delete", variant="error", id="btn-delete")
+                    yield Button("Back", id="btn-back")
+            yield DocsPanel.for_screen("targets-screen")
         yield Footer()
 
     def on_mount(self) -> None:

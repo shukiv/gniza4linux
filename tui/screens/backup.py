@@ -4,7 +4,7 @@ from textual.widgets import Header, Footer, Static, Button, Select
 from textual.containers import Vertical, Horizontal
 from tui.config import list_conf_dir, has_targets, has_remotes
 from tui.jobs import job_manager
-from tui.widgets import ConfirmDialog
+from tui.widgets import ConfirmDialog, DocsPanel
 
 
 class BackupScreen(Screen):
@@ -15,28 +15,30 @@ class BackupScreen(Screen):
         yield Header(show_clock=True)
         targets = list_conf_dir("targets.d")
         remotes = list_conf_dir("remotes.d")
-        with Vertical(id="backup-screen"):
-            yield Static("Backup", id="screen-title")
-            if not targets:
-                yield Static("No targets configured. Add a target first.")
-            else:
-                yield Static("Target:")
-                yield Select(
-                    [(t, t) for t in targets],
-                    id="backup-target",
-                    prompt="Select target",
-                )
-                yield Static("Remote (optional):")
-                yield Select(
-                    [("Default (all)", "")] + [(r, r) for r in remotes],
-                    id="backup-remote",
-                    prompt="Select remote",
-                    value="",
-                )
-                with Horizontal(id="backup-buttons"):
-                    yield Button("Run Backup", variant="primary", id="btn-backup")
-                    yield Button("Backup All", variant="warning", id="btn-backup-all")
-                    yield Button("Back", id="btn-back")
+        with Horizontal(classes="screen-with-docs"):
+            with Vertical(id="backup-screen"):
+                yield Static("Backup", id="screen-title")
+                if not targets:
+                    yield Static("No targets configured. Add a target first.")
+                else:
+                    yield Static("Target:")
+                    yield Select(
+                        [(t, t) for t in targets],
+                        id="backup-target",
+                        prompt="Select target",
+                    )
+                    yield Static("Remote (optional):")
+                    yield Select(
+                        [("Default (all)", "")] + [(r, r) for r in remotes],
+                        id="backup-remote",
+                        prompt="Select remote",
+                        value="",
+                    )
+                    with Horizontal(id="backup-buttons"):
+                        yield Button("Run Backup", variant="primary", id="btn-backup")
+                        yield Button("Backup All", variant="warning", id="btn-backup-all")
+                        yield Button("Back", id="btn-back")
+            yield DocsPanel.for_screen("backup-screen")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

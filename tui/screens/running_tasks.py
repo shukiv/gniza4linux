@@ -9,7 +9,7 @@ from textual.containers import Vertical, Horizontal
 from textual.timer import Timer
 
 from tui.jobs import job_manager
-from tui.widgets import ConfirmDialog
+from tui.widgets import ConfirmDialog, DocsPanel
 
 _PROGRESS_RE = re.compile(r"(\d+)%")
 
@@ -20,17 +20,19 @@ class RunningTasksScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with Vertical(id="running-tasks-screen"):
-            yield Static("Running Tasks", id="screen-title")
-            yield DataTable(id="rt-table")
-            with Horizontal(id="rt-buttons"):
-                yield Button("View Log", variant="primary", id="btn-rt-view")
-                yield Button("Kill Job", variant="error", id="btn-rt-kill")
-                yield Button("Clear Finished", variant="warning", id="btn-rt-clear")
-                yield Button("Back", id="btn-rt-back")
-            yield Static("", id="rt-progress-label")
-            yield ProgressBar(id="rt-progress", total=100, show_eta=False)
-            yield RichLog(id="rt-log-viewer", wrap=True, highlight=True)
+        with Horizontal(classes="screen-with-docs"):
+            with Vertical(id="running-tasks-screen"):
+                yield Static("Running Tasks", id="screen-title")
+                yield DataTable(id="rt-table")
+                with Horizontal(id="rt-buttons"):
+                    yield Button("View Log", variant="primary", id="btn-rt-view")
+                    yield Button("Kill Job", variant="error", id="btn-rt-kill")
+                    yield Button("Clear Finished", variant="warning", id="btn-rt-clear")
+                    yield Button("Back", id="btn-rt-back")
+                yield Static("", id="rt-progress-label")
+                yield ProgressBar(id="rt-progress", total=100, show_eta=False)
+                yield RichLog(id="rt-log-viewer", wrap=True, highlight=True)
+            yield DocsPanel.for_screen("running-tasks-screen")
         yield Footer()
 
     def on_mount(self) -> None:

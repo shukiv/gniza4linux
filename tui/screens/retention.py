@@ -14,7 +14,7 @@ class RetentionScreen(Screen):
     BINDINGS = [("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Header(show_clock=True)
         targets = list_conf_dir("targets.d")
         conf = parse_conf(CONFIG_DIR / "gniza.conf")
         current_count = conf.get("RETENTION_COUNT", "30")

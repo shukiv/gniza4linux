@@ -14,7 +14,7 @@ class RemotesScreen(Screen):
     BINDINGS = [("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Header(show_clock=True)
         with Vertical(id="remotes-screen"):
             yield Static("Remotes", id="screen-title")
             yield DataTable(id="remotes-table")

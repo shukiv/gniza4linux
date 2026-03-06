@@ -12,7 +12,7 @@ class TargetsScreen(Screen):
     BINDINGS = [("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Header(show_clock=True)
         with Vertical(id="targets-screen"):
             yield Static("Targets", id="screen-title")
             yield DataTable(id="targets-table")

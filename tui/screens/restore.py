@@ -14,7 +14,7 @@ class RestoreScreen(Screen):
     BINDINGS = [("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Header(show_clock=True)
         targets = list_conf_dir("targets.d")
         remotes = list_conf_dir("remotes.d")
         with Vertical(id="restore-screen"):

@@ -44,7 +44,7 @@ class MainMenuScreen(Screen):
     BINDINGS = [("q", "quit_app", "Quit")]
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Header(show_clock=True)
         with Horizontal(id="main-layout"):
             yield Static(LOGO, id="logo", markup=True)
             menu_items = []

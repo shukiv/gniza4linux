@@ -9,7 +9,7 @@ from tui.config import has_remotes, has_targets
 class WizardScreen(Screen):
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Header(show_clock=True)
         with Center():
             with Vertical(id="wizard"):
                 yield Static(

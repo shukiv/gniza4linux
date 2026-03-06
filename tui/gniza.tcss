@@ -286,6 +286,16 @@ SelectionList {
     margin: 1 0;
 }
 
+/* Progress bar */
+#rt-progress {
+    margin: 0 0;
+}
+
+#rt-progress-label {
+    height: 1;
+    color: #00cc00;
+}
+
 /* Wizard */
 #wizard {
     width: 60;

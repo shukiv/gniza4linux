@@ -39,6 +39,9 @@ rsync_to_remote() {
         rsync_opts+=(--verbose --stats)
     fi
 
+    # Overall progress for TUI progress bar
+    rsync_opts+=(--info=progress2 --no-inc-recursive)
+
     rsync_opts+=(-e "$rsync_ssh")
 
     # Ensure source ends with /
@@ -122,6 +125,9 @@ rsync_local() {
     if [[ -n "${_TRANSFER_LOG:-}" ]]; then
         rsync_opts+=(--verbose --stats)
     fi
+
+    # Overall progress for TUI progress bar
+    rsync_opts+=(--info=progress2 --no-inc-recursive)
 
     # Ensure source ends with /
     [[ "$source_dir" != */ ]] && source_dir="$source_dir/"

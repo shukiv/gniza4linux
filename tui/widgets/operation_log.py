@@ -14,7 +14,7 @@ class SpinnerWidget(Static):
 
     def __init__(self, style: str = "dots", **kwargs):
         super().__init__("", **kwargs)
-        self._spinner = RichSpinner(style)
+        self._spinner = RichSpinner(style, text=" Running...")
         self._timer: Timer | None = None
 
     def on_mount(self) -> None:
@@ -45,7 +45,7 @@ class OperationLog(ModalScreen[None]):
             yield RichLog(id="ol-log", wrap=True, highlight=True, markup=True)
             with Horizontal(id="ol-footer"):
                 yield Button("Close", variant="primary", id="ol-close")
-                yield SpinnerWidget(id="ol-spinner")
+                yield SpinnerWidget("arrow3", id="ol-spinner")
 
     def on_mount(self) -> None:
         # Flush any buffered writes

@@ -63,6 +63,12 @@ Select {
     margin: 0 0 1 0;
 }
 
+SelectionList {
+    height: auto;
+    max-height: 8;
+    margin: 0 0 1 0;
+}
+
 /* Browse row */
 #restore-dest-row {
     height: auto;

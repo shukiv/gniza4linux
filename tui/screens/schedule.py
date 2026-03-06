@@ -1,7 +1,7 @@
 import re
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, DataTable, Input, Select
+from textual.widgets import Header, Footer, Static, Button, DataTable, Input, Select, SelectionList
 from textual.containers import Vertical, Horizontal
 from textual import work
 
@@ -49,11 +49,23 @@ class ScheduleScreen(Screen):
             yield Input(id="sched-day", placeholder="Leave empty if not needed")
             yield Static("Custom cron (5 fields):")
             yield Input(id="sched-cron", placeholder="0 2 * * *")
-            yield Static("Targets (comma-separated, empty=all):")
-            yield Input(id="sched-targets", placeholder="")
-            yield Static("Remotes (comma-separated, empty=all):")
-            yield Input(id="sched-remotes", placeholder="")
+            yield Static("Targets (empty=all):")
+            yield SelectionList[str](
+                *self._build_target_choices(),
+                id="sched-targets",
+            )
+            yield Static("Remotes (empty=all):")
+            yield SelectionList[str](
+                *self._build_remote_choices(),
+                id="sched-remotes",
+            )
         yield Footer()
+
+    def _build_target_choices(self) -> list[tuple[str, str]]:
+        return [(name, name) for name in list_conf_dir("targets.d")]
+
+    def _build_remote_choices(self) -> list[tuple[str, str]]:
+        return [(name, name) for name in list_conf_dir("remotes.d")]
 
     def on_mount(self) -> None:
         self._refresh_table()
@@ -115,8 +127,8 @@ class ScheduleScreen(Screen):
             time=self.query_one("#sched-time", Input).value.strip() or "02:00",
             day=self.query_one("#sched-day", Input).value.strip(),
             cron=self.query_one("#sched-cron", Input).value.strip(),
-            targets=self.query_one("#sched-targets", Input).value.strip(),
-            remotes=self.query_one("#sched-remotes", Input).value.strip(),
+            targets=",".join(self.query_one("#sched-targets", SelectionList).selected),
+            remotes=",".join(self.query_one("#sched-remotes", SelectionList).selected),
         )
         write_conf(conf, sched.to_conf())
         self.notify(f"Schedule '{name}' created.")

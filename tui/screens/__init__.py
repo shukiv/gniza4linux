@@ -12,3 +12,4 @@ from tui.screens.schedule_edit import ScheduleEditScreen
 from tui.screens.logs import LogsScreen
 from tui.screens.settings import SettingsScreen
 from tui.screens.wizard import WizardScreen
+from tui.screens.running_tasks import RunningTasksScreen

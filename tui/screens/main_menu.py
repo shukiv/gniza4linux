@@ -29,6 +29,7 @@ LOGO = """\
 MENU_ITEMS = [
     ("backup", "Backup"),
     ("restore", "Restore"),
+    ("running_tasks", "Running Tasks"),
     ("targets", "Targets"),
     ("remotes", "Remotes"),
     ("schedule", "Schedules"),
@@ -50,7 +51,7 @@ class MainMenuScreen(Screen):
             menu_items = []
             for mid, label in MENU_ITEMS:
                 menu_items.append(Option(label, id=mid))
-                if mid == "restore":
+                if mid == "running_tasks":
                     menu_items.append(None)
             yield OptionList(*menu_items, id="menu-list")
         yield Footer()

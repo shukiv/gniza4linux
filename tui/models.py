@@ -199,6 +199,7 @@ class AppSettings:
     ssh_timeout: str = "30"
     ssh_retries: str = "3"
     rsync_extra_opts: str = ""
+    work_dir: str = "/usr/local/gniza/workdir"
 
     @classmethod
     def from_conf(cls, data: dict[str, str]) -> "AppSettings":
@@ -219,6 +220,7 @@ class AppSettings:
             ssh_timeout=data.get("SSH_TIMEOUT", "30"),
             ssh_retries=data.get("SSH_RETRIES", "3"),
             rsync_extra_opts=data.get("RSYNC_EXTRA_OPTS", ""),
+            work_dir=data.get("WORK_DIR", "/usr/local/gniza/workdir"),
         )
 
     def to_conf(self) -> dict[str, str]:
@@ -239,4 +241,5 @@ class AppSettings:
             "SSH_TIMEOUT": self.ssh_timeout,
             "SSH_RETRIES": self.ssh_retries,
             "RSYNC_EXTRA_OPTS": self.rsync_extra_opts,
+            "WORK_DIR": self.work_dir,
         }

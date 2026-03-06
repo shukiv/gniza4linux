@@ -22,12 +22,14 @@ if [[ $EUID -eq 0 ]]; then
     BIN_LINK="/usr/local/bin/gniza"
     CONFIG_DIR="/etc/gniza"
     LOG_DIR="/var/log/gniza"
+    WORK_DIR="/usr/local/gniza/workdir"
 else
     MODE="user"
     INSTALL_DIR="$HOME/.local/share/gniza"
     BIN_LINK="$HOME/.local/bin/gniza"
     CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gniza"
     LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gniza/log"
+    WORK_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gniza/workdir"
 fi
 
 info "Install mode: ${C_BOLD}${MODE}${C_RESET}"
@@ -135,6 +137,10 @@ fi
 info "Setting up log directory: $LOG_DIR"
 mkdir -p "$LOG_DIR"
 
+# ── Create work directory ───────────────────────────────────
+info "Setting up work directory: $WORK_DIR"
+mkdir -p "$WORK_DIR"
+
 # ── Copy example configs (if not already present) ────────────
 if [[ ! -f "$CONFIG_DIR/gniza.conf" ]]; then
     cp "$INSTALL_DIR/etc/gniza.conf.example" "$CONFIG_DIR/gniza.conf"
@@ -153,9 +159,10 @@ done
 echo ""
 echo "${C_GREEN}${C_BOLD}Installation complete!${C_RESET}"
 echo ""
-echo "  Binary:  $BIN_LINK"
-echo "  Config:  $CONFIG_DIR/gniza.conf"
-echo "  Logs:    $LOG_DIR"
+echo "  Binary:   $BIN_LINK"
+echo "  Config:   $CONFIG_DIR/gniza.conf"
+echo "  Logs:     $LOG_DIR"
+echo "  Work dir: $WORK_DIR"
 echo ""
 echo "Get started:"
 echo "  gniza --help        Show CLI help"

@@ -59,6 +59,8 @@ class SettingsScreen(Screen):
             yield Input(value=settings.ssh_retries, id="set-sshretries")
             yield Static("Extra rsync options:")
             yield Input(value=settings.rsync_extra_opts, id="set-rsyncopts")
+            yield Static("Work Directory:")
+            yield Input(value=settings.work_dir, placeholder="/usr/local/gniza/workdir", id="set-workdir")
             with Horizontal(id="set-buttons"):
                 yield Button("Save", variant="primary", id="btn-save")
                 yield Button("Back", id="btn-back")
@@ -91,6 +93,7 @@ class SettingsScreen(Screen):
             ssh_timeout=self.query_one("#set-sshtimeout", Input).value.strip() or "30",
             ssh_retries=self.query_one("#set-sshretries", Input).value.strip() or "3",
             rsync_extra_opts=self.query_one("#set-rsyncopts", Input).value.strip(),
+            work_dir=self.query_one("#set-workdir", Input).value.strip() or "/usr/local/gniza/workdir",
         )
         conf_path = CONFIG_DIR / "gniza.conf"
         write_conf(conf_path, settings.to_conf())

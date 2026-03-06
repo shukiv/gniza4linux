@@ -20,8 +20,16 @@ def _get_log_dir() -> Path:
     return Path(xdg) / "gniza" / "log"
 
 
+def _get_work_dir() -> Path:
+    if os.geteuid() == 0:
+        return Path("/usr/local/gniza/workdir")
+    xdg = os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state"))
+    return Path(xdg) / "gniza" / "workdir"
+
+
 CONFIG_DIR = _get_config_dir()
 LOG_DIR = _get_log_dir()
+WORK_DIR = _get_work_dir()
 
 
 def parse_conf(filepath: Path) -> dict[str, str]:

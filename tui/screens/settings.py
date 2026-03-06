@@ -62,18 +62,10 @@ class SettingsScreen(Screen):
             yield Static("Work Directory:")
             yield Input(value=settings.work_dir, placeholder="/usr/local/gniza/workdir", id="set-workdir")
             yield Static("Web Dashboard", classes="section-label")
-            yield Static("Enabled:")
-            yield Select(
-                [("Yes", "yes"), ("No", "no")],
-                id="set-web-enabled",
-                value=settings.web_enabled,
-            )
             yield Static("Port:")
             yield Input(value=settings.web_port, id="set-web-port")
             yield Static("Host:")
             yield Input(value=settings.web_host, id="set-web-host")
-            yield Static("API Key:")
-            yield Input(value=settings.web_api_key, password=True, id="set-web-key")
             with Horizontal(id="set-buttons"):
                 yield Button("Save", variant="primary", id="btn-save")
                 yield Button("Back", id="btn-back")
@@ -107,10 +99,8 @@ class SettingsScreen(Screen):
             ssh_retries=self.query_one("#set-sshretries", Input).value.strip() or "3",
             rsync_extra_opts=self.query_one("#set-rsyncopts", Input).value.strip(),
             work_dir=self.query_one("#set-workdir", Input).value.strip() or "/usr/local/gniza/workdir",
-            web_enabled=self._get_select_val("#set-web-enabled", "no"),
             web_port=self.query_one("#set-web-port", Input).value.strip() or "8080",
             web_host=self.query_one("#set-web-host", Input).value.strip() or "0.0.0.0",
-            web_api_key=self.query_one("#set-web-key", Input).value,
         )
         conf_path = CONFIG_DIR / "gniza.conf"
         write_conf(conf_path, settings.to_conf())

@@ -4,11 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -m web
+ExecStart=/usr/bin/python3 -m tui --web --host 0.0.0.0 --port 8080
 WorkingDirectory=/usr/local/gniza
 Environment=GNIZA_DIR=/usr/local/gniza
-Environment=GNIZA_CONFIG_DIR=/etc/gniza
-Environment=LOG_DIR=/var/log/gniza
 Environment=PYTHONPATH=/usr/local/gniza
 Restart=on-failure
 RestartSec=5

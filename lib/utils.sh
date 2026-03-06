@@ -85,14 +85,16 @@ detect_mode() {
         GNIZA_MODE="root"
         CONFIG_DIR="/etc/gniza"
         LOG_DIR="/var/log/gniza"
+        WORK_DIR="/usr/local/gniza/workdir"
         LOCK_FILE="/var/run/gniza.lock"
     else
         GNIZA_MODE="user"
         CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gniza"
         LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gniza/log"
+        WORK_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gniza/workdir"
         LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/gniza-${EUID}.lock"
     fi
-    export GNIZA_MODE CONFIG_DIR LOG_DIR LOCK_FILE
+    export GNIZA_MODE CONFIG_DIR LOG_DIR WORK_DIR LOCK_FILE
 }
 
 ensure_dirs() {
@@ -101,4 +103,5 @@ ensure_dirs() {
     mkdir -p "$CONFIG_DIR/remotes.d"   || die "Cannot create remotes.d directory"
     mkdir -p "$CONFIG_DIR/schedules.d" || die "Cannot create schedules.d directory"
     mkdir -p "$LOG_DIR"             || die "Cannot create log directory: $LOG_DIR"
+    mkdir -p "$WORK_DIR"            || die "Cannot create work directory: $WORK_DIR"
 }

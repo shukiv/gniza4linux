@@ -147,7 +147,7 @@ mysql_dump_databases() {
     fi
 
     # Create temp directory
-    MYSQL_DUMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/gniza-mysql-XXXXXX")
+    MYSQL_DUMP_DIR=$(mktemp -d "${WORK_DIR}/gniza-mysql-XXXXXX")
     mkdir -p "$MYSQL_DUMP_DIR/_mysql"
 
     # Parse extra opts into array

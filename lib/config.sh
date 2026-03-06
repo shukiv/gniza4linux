@@ -55,6 +55,9 @@ load_config() {
     SSH_RETRIES="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
     RSYNC_EXTRA_OPTS="${RSYNC_EXTRA_OPTS:-}"
 
+    # WORK_DIR can be overridden in config; re-export if changed
+    export WORK_DIR
+
     # --debug flag overrides config
     [[ "${GNIZA4LINUX_DEBUG:-false}" == "true" ]] && LOG_LEVEL="debug"
 

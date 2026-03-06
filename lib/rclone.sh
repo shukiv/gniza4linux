@@ -17,7 +17,7 @@ _build_rclone_config() {
     local old_umask
     old_umask=$(umask)
     umask 077
-    tmpfile=$(mktemp /tmp/gniza-rclone-XXXXXX.conf) || {
+    tmpfile=$(mktemp "${WORK_DIR}/gniza-rclone-XXXXXX.conf") || {
         umask "$old_umask"
         log_error "Failed to create temp rclone config"
         return 1

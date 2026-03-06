@@ -81,11 +81,13 @@ class RemotesScreen(Screen):
             else:
                 self.notify("Select a remote first", severity="warning")
 
-    @work
-    async def _test_remote(self, name: str) -> None:
+    def _test_remote(self, name: str) -> None:
         log_screen = OperationLog(f"Testing Remote: {name}")
         self.app.push_screen(log_screen)
-        await log_screen.wait_ready()
+        self._run_test_remote(log_screen, name)
+
+    @work
+    async def _run_test_remote(self, log_screen: OperationLog, name: str) -> None:
         rc, stdout, stderr = await run_cli("remotes", "test", f"--name={name}")
         if stdout:
             log_screen.write(stdout)

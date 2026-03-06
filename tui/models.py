@@ -205,6 +205,7 @@ class AppSettings:
     work_dir: str = "/usr/local/gniza/workdir"
     web_port: str = "8080"
     web_host: str = "0.0.0.0"
+    web_api_key: str = ""
 
     @classmethod
     def from_conf(cls, data: dict[str, str]) -> "AppSettings":
@@ -228,6 +229,7 @@ class AppSettings:
             work_dir=data.get("WORK_DIR", "/usr/local/gniza/workdir"),
             web_port=data.get("WEB_PORT", "8080"),
             web_host=data.get("WEB_HOST", "0.0.0.0"),
+            web_api_key=data.get("WEB_API_KEY", ""),
         )
 
     def to_conf(self) -> dict[str, str]:
@@ -251,4 +253,5 @@ class AppSettings:
             "WORK_DIR": self.work_dir,
             "WEB_PORT": self.web_port,
             "WEB_HOST": self.web_host,
+            "WEB_API_KEY": self.web_api_key,
         }

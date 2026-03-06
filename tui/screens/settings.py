@@ -66,6 +66,8 @@ class SettingsScreen(Screen):
             yield Input(value=settings.web_port, id="set-web-port")
             yield Static("Host:")
             yield Input(value=settings.web_host, id="set-web-host")
+            yield Static("API Key:")
+            yield Input(value=settings.web_api_key, password=True, id="set-web-key")
             with Horizontal(id="set-buttons"):
                 yield Button("Save", variant="primary", id="btn-save")
                 yield Button("Back", id="btn-back")
@@ -101,6 +103,7 @@ class SettingsScreen(Screen):
             work_dir=self.query_one("#set-workdir", Input).value.strip() or "/usr/local/gniza/workdir",
             web_port=self.query_one("#set-web-port", Input).value.strip() or "8080",
             web_host=self.query_one("#set-web-host", Input).value.strip() or "0.0.0.0",
+            web_api_key=self.query_one("#set-web-key", Input).value,
         )
         conf_path = CONFIG_DIR / "gniza.conf"
         write_conf(conf_path, settings.to_conf())

@@ -5,78 +5,137 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GNIZA - Login</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    --bg-primary: #0f1117;
+    --bg-card: #1a1d27;
+    --bg-input: #13151d;
+    --border: #2a2d3a;
+    --text-primary: #e4e4e7;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --accent: #10b981;
+    --danger: #ef4444;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
 body {
-    background: #1a1a2e;
-    color: #e0e0e0;
-    font-family: 'Courier New', monospace;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
 }
-.login-box {
-    background: #16213e;
-    border: 1px solid #00cc00;
-    border-radius: 8px;
-    padding: 2rem;
+
+.login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2.5rem;
     width: 100%;
-    max-width: 400px;
+    max-width: 380px;
 }
-h1 {
-    color: #00cc00;
-    text-align: center;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
+
+.login-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
 }
+
+.login-logo {
+    width: 40px;
+    height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: var(--bg-primary);
+}
+
+.login-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
 .flash {
-    background: #3a1a1a;
-    color: #ff6666;
-    padding: 0.5rem;
-    border-radius: 4px;
-    margin-bottom: 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
     text-align: center;
+    font-size: 0.85rem;
 }
+
 label {
     display: block;
-    margin-bottom: 0.5rem;
-    color: #aaa;
+    margin-bottom: 0.4rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
 }
+
 input[type="password"] {
     width: 100%;
-    padding: 0.6rem;
-    background: #0f3460;
-    border: 1px solid #333;
-    border-radius: 4px;
-    color: #e0e0e0;
-    font-family: inherit;
-    font-size: 1rem;
-    margin-bottom: 1rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+    transition: border-color 0.15s;
 }
+
 input[type="password"]:focus {
     outline: none;
-    border-color: #00cc00;
+    border-color: var(--accent);
 }
+
 button {
     width: 100%;
-    padding: 0.6rem;
-    background: #00cc00;
-    color: #1a1a2e;
+    padding: 0.7rem;
+    background: var(--accent);
+    color: var(--bg-primary);
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     font-family: inherit;
-    font-size: 1rem;
-    font-weight: bold;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: filter 0.15s;
 }
+
 button:hover {
-    background: #00ff00;
+    filter: brightness(1.1);
+}
+
+.login-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
 }
 </style>
 </head>
 <body>
-<div class="login-box">
-    <h1>GNIZA Backup</h1>
+<div class="login-card">
+    <div class="login-brand">
+        <div class="login-logo">G</div>
+        <div class="login-title">GNIZA</div>
+    </div>
     {% with messages = get_flashed_messages() %}
     {% if messages %}
     {% for msg in messages %}
@@ -87,8 +146,9 @@ button:hover {
     <form method="POST">
         <label for="token">API Key</label>
         <input type="password" name="token" id="token" placeholder="Enter your API key" autofocus>
-        <button type="submit">Login</button>
+        <button type="submit">Sign In</button>
     </form>
+    <div class="login-footer">GNIZA Backup Manager</div>
 </div>
 </body>
 </html>

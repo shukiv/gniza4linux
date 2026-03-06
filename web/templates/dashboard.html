@@ -5,235 +5,591 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GNIZA Dashboard</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-    background: #1a1a2e;
-    color: #e0e0e0;
-    font-family: 'Courier New', monospace;
-    padding: 1rem;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    --bg-primary: #0f1117;
+    --bg-card: #1a1d27;
+    --bg-card-hover: #1e2130;
+    --bg-input: #13151d;
+    --border: #2a2d3a;
+    --border-light: #353849;
+    --text-primary: #e4e4e7;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --accent: #10b981;
+    --accent-dim: rgba(16, 185, 129, 0.12);
+    --danger: #ef4444;
+    --danger-dim: rgba(239, 68, 68, 0.12);
+    --warning: #f59e0b;
+    --warning-dim: rgba(245, 158, 11, 0.12);
+    --info: #3b82f6;
+    --info-dim: rgba(59, 130, 246, 0.12);
 }
-header {
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 64px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #00cc00;
-    padding-bottom: 0.75rem;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-logo {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--bg-primary);
+}
+
+.header-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.header-title span {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-actions a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+
+.header-actions a:hover {
+    background: var(--bg-input);
+    color: var(--text-primary);
+}
+
+/* Main content */
+.main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+}
+
+/* Stats row */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
     margin-bottom: 1.5rem;
 }
-header h1 {
-    color: #00cc00;
-    font-size: 1.4rem;
+
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
 }
-header a {
-    color: #aaa;
-    text-decoration: none;
-    font-size: 0.9rem;
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
 }
-header a:hover { color: #00cc00; }
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-value.accent { color: var(--accent); }
+.stat-value.info { color: var(--info); }
+.stat-value.warning { color: var(--warning); }
+
+.stat-detail {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+/* Grid layout */
 .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
 }
-@media (max-width: 800px) {
-    .grid { grid-template-columns: 1fr; }
+
+.grid-full {
+    grid-column: 1 / -1;
 }
+
+/* Cards */
 .card {
-    background: #16213e;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
 }
-.card h2 {
-    color: #00cc00;
-    font-size: 1rem;
-    margin-bottom: 0.75rem;
-    border-bottom: 1px solid #333;
-    padding-bottom: 0.4rem;
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
 }
+
+.card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.6;
+}
+
+.card-body {
+    padding: 0;
+}
+
+/* Tables */
 table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.85rem;
 }
-th {
+
+thead th {
     text-align: left;
-    color: #00cc00;
-    padding: 0.3rem 0.5rem;
-    border-bottom: 1px solid #333;
+    padding: 0.65rem 1.25rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--bg-input);
+    border-bottom: 1px solid var(--border);
 }
-td {
-    padding: 0.3rem 0.5rem;
-    border-bottom: 1px solid #222;
+
+tbody td {
+    padding: 0.65rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
 }
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    background: var(--bg-card-hover);
+}
+
+td.name {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+}
+
+/* Badges */
 .badge {
-    display: inline-block;
-    padding: 0.1rem 0.4rem;
-    border-radius: 3px;
-    font-size: 0.75rem;
-    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
 }
-.badge-yes { background: #00cc00; color: #1a1a2e; }
-.badge-no { background: #555; color: #ccc; }
-.badge-success { background: #00cc00; color: #1a1a2e; }
-.badge-error { background: #cc3333; color: #fff; }
-.badge-unknown { background: #666; color: #ccc; }
-.btn-backup {
-    background: #0f3460;
-    color: #00cc00;
-    border: 1px solid #00cc00;
-    padding: 0.2rem 0.6rem;
-    border-radius: 3px;
-    cursor: pointer;
+
+.badge-enabled {
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+
+.badge-disabled {
+    background: rgba(107, 114, 128, 0.15);
+    color: var(--text-muted);
+}
+
+.badge-active {
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+
+.badge-inactive {
+    background: rgba(107, 114, 128, 0.15);
+    color: var(--text-muted);
+}
+
+.badge-success {
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+
+.badge-error {
+    background: var(--danger-dim);
+    color: var(--danger);
+}
+
+.badge-unknown {
+    background: var(--warning-dim);
+    color: var(--warning);
+}
+
+.badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
     font-family: inherit;
-    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
 }
-.btn-backup:hover { background: #00cc00; color: #1a1a2e; }
-.btn-backup:disabled { opacity: 0.5; cursor: not-allowed; }
-.log-tail {
-    background: #0a0a1a;
-    padding: 0.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
+
+.btn-primary {
+    background: var(--accent);
+    color: var(--bg-primary);
+    border-color: var(--accent);
+}
+
+.btn-primary:hover {
+    filter: brightness(1.1);
+}
+
+.btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: var(--border-light);
+}
+
+.btn-outline:hover {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border-color: var(--text-muted);
+}
+
+/* Log viewer */
+.log-viewer {
+    background: var(--bg-input);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    padding: 1rem 1.25rem;
+    max-height: 220px;
+    overflow-y: auto;
+    color: var(--text-secondary);
     white-space: pre-wrap;
     word-break: break-all;
-    max-height: 200px;
-    overflow-y: auto;
-    color: #aaa;
 }
-.empty { color: #666; font-style: italic; }
-.full-width { grid-column: 1 / -1; }
-.status-msg {
-    margin-top: 0.3rem;
+
+.log-meta {
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.log-meta strong {
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.8rem;
-    color: #00cc00;
+    color: var(--text-primary);
+}
+
+/* Empty state */
+.empty {
+    padding: 2rem 1.25rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Status message */
+.status-msg {
+    font-size: 0.75rem;
+    margin-top: 0.3rem;
+    transition: opacity 0.3s;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: 1fr; }
+    .main { padding: 1rem; }
+    .header { padding: 0 1rem; }
+}
+
+@media (max-width: 500px) {
+    .stats { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
-<header>
-    <h1>GNIZA Backup Dashboard</h1>
-    <a href="/logout">Logout</a>
-</header>
 
-<div class="grid">
-    <div class="card">
-        <h2>Targets</h2>
-        {% if targets %}
-        <table>
-            <tr><th>Name</th><th>Remote</th><th>Status</th><th></th></tr>
-            {% for t in targets %}
-            <tr>
-                <td>{{ t.name }}</td>
-                <td>{{ t.remote or '-' }}</td>
-                <td>
-                    {% if t.enabled == 'yes' %}
-                    <span class="badge badge-yes">enabled</span>
-                    {% else %}
-                    <span class="badge badge-no">disabled</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if t.enabled == 'yes' %}
-                    <button class="btn-backup" onclick="triggerBackup(this, '{{ t.name }}')">Backup</button>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-        {% else %}
-        <p class="empty">No targets configured.</p>
-        {% endif %}
+<div class="header">
+    <div class="header-brand">
+        <div class="header-logo">G</div>
+        <div class="header-title">GNIZA <span>Backup Dashboard</span></div>
+    </div>
+    <div class="header-actions">
+        <a href="/logout">Logout</a>
+    </div>
+</div>
+
+<div class="main">
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-label">Targets</div>
+            <div class="stat-value accent">{{ targets|length }}</div>
+            <div class="stat-detail">{{ targets|selectattr('enabled', 'equalto', 'yes')|list|length }} enabled</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Remotes</div>
+            <div class="stat-value info">{{ remotes|length }}</div>
+            <div class="stat-detail">storage destinations</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Schedules</div>
+            <div class="stat-value warning">{{ schedules|length }}</div>
+            <div class="stat-detail">{{ schedules|selectattr('active', 'equalto', 'yes')|list|length }} active</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Last Backup</div>
+            {% if last_log %}
+            <div class="stat-value {% if last_log.status == 'success' %}accent{% elif last_log.status == 'error' %}danger{% else %}warning{% endif %}" style="font-size: 1.2rem;">{{ last_log.status|upper }}</div>
+            <div class="stat-detail">{{ last_log.name }}</div>
+            {% else %}
+            <div class="stat-value" style="color: var(--text-muted); font-size: 1.2rem;">N/A</div>
+            <div class="stat-detail">no logs found</div>
+            {% endif %}
+        </div>
     </div>
 
-    <div class="card">
-        <h2>Remotes</h2>
-        {% if remotes %}
-        <table>
-            <tr><th>Name</th><th>Type</th><th>Host</th></tr>
-            {% for r in remotes %}
-            <tr>
-                <td>{{ r.name }}</td>
-                <td>{{ r.type }}</td>
-                <td>{{ r.host or r.base }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-        {% else %}
-        <p class="empty">No remotes configured.</p>
-        {% endif %}
+    <div class="grid">
+
+        <!-- Targets -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                    Targets
+                </div>
+            </div>
+            <div class="card-body">
+                {% if targets %}
+                <table>
+                    <thead><tr><th>Name</th><th>Remote</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                    {% for t in targets %}
+                    <tr>
+                        <td class="name">{{ t.name }}</td>
+                        <td>{{ t.remote or '--' }}</td>
+                        <td>
+                            {% if t.enabled == 'yes' %}
+                            <span class="badge badge-enabled"><span class="badge-dot"></span> Enabled</span>
+                            {% else %}
+                            <span class="badge badge-disabled"><span class="badge-dot"></span> Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if t.enabled == 'yes' %}
+                            <button class="btn btn-primary" onclick="triggerBackup(this, '{{ t.name }}')">Backup Now</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty">No targets configured</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Remotes -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="6" cy="18" r="1" fill="currentColor"/></svg>
+                    Remotes
+                </div>
+            </div>
+            <div class="card-body">
+                {% if remotes %}
+                <table>
+                    <thead><tr><th>Name</th><th>Type</th><th>Host / Path</th></tr></thead>
+                    <tbody>
+                    {% for r in remotes %}
+                    <tr>
+                        <td class="name">{{ r.name }}</td>
+                        <td><span class="badge badge-enabled">{{ r.type }}</span></td>
+                        <td>{{ r.host or r.base }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty">No remotes configured</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Schedules -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Schedules
+                </div>
+            </div>
+            <div class="card-body">
+                {% if schedules %}
+                <table>
+                    <thead><tr><th>Name</th><th>Schedule</th><th>Time</th><th>Status</th></tr></thead>
+                    <tbody>
+                    {% for s in schedules %}
+                    <tr>
+                        <td class="name">{{ s.name }}</td>
+                        <td>{{ s.schedule }}</td>
+                        <td style="font-family: 'JetBrains Mono', monospace;">{{ s.time or '--' }}</td>
+                        <td>
+                            {% if s.active == 'yes' %}
+                            <span class="badge badge-active"><span class="badge-dot"></span> Active</span>
+                            {% else %}
+                            <span class="badge badge-inactive"><span class="badge-dot"></span> Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty">No schedules configured</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Last Backup Log -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    Last Backup Log
+                </div>
+            </div>
+            {% if last_log %}
+            <div class="log-meta">
+                <strong>{{ last_log.name }}</strong>
+                <span class="badge badge-{{ last_log.status }}"><span class="badge-dot"></span> {{ last_log.status|capitalize }}</span>
+            </div>
+            <div class="log-viewer">{{ last_log.tail }}</div>
+            {% else %}
+            <div class="empty">No log files found</div>
+            {% endif %}
+        </div>
+
     </div>
 
-    <div class="card">
-        <h2>Schedules</h2>
-        {% if schedules %}
-        <table>
-            <tr><th>Name</th><th>Schedule</th><th>Time</th><th>Status</th></tr>
-            {% for s in schedules %}
-            <tr>
-                <td>{{ s.name }}</td>
-                <td>{{ s.schedule }}</td>
-                <td>{{ s.time or '-' }}</td>
-                <td>
-                    {% if s.active == 'yes' %}
-                    <span class="badge badge-yes">active</span>
-                    {% else %}
-                    <span class="badge badge-no">inactive</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-        {% else %}
-        <p class="empty">No schedules configured.</p>
-        {% endif %}
-    </div>
-
-    <div class="card">
-        <h2>Last Backup</h2>
-        {% if last_log %}
-        <p>
-            <strong>{{ last_log.name }}</strong>
-            <span class="badge badge-{{ last_log.status }}">{{ last_log.status }}</span>
-        </p>
-        <div class="log-tail">{{ last_log.tail }}</div>
-        {% else %}
-        <p class="empty">No log files found.</p>
-        {% endif %}
-    </div>
 </div>
 
 <script>
 function triggerBackup(btn, target) {
     btn.disabled = true;
-    btn.textContent = '...';
-    var fd = new FormData();
-    fd.append('target', target);
-    fetch('/api/backup', { method: 'POST', body: fd })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.error) {
-                btn.textContent = 'Error';
-                btn.style.borderColor = '#cc3333';
-                btn.style.color = '#cc3333';
-            } else {
-                btn.textContent = 'Started';
-            }
-            setTimeout(function() {
-                btn.disabled = false;
-                btn.textContent = 'Backup';
-                btn.style.borderColor = '';
-                btn.style.color = '';
-            }, 3000);
-        })
-        .catch(function() {
+    var origText = btn.textContent;
+    btn.textContent = 'Starting...';
+    fetch('/api/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target: target })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.error) {
             btn.textContent = 'Error';
-            setTimeout(function() {
-                btn.disabled = false;
-                btn.textContent = 'Backup';
-            }, 3000);
-        });
+            btn.style.background = 'var(--danger)';
+        } else {
+            btn.textContent = 'Started!';
+        }
+        setTimeout(function() {
+            btn.disabled = false;
+            btn.textContent = origText;
+            btn.style.background = '';
+        }, 3000);
+    })
+    .catch(function() {
+        btn.textContent = 'Error';
+        btn.style.background = 'var(--danger)';
+        setTimeout(function() {
+            btn.disabled = false;
+            btn.textContent = origText;
+            btn.style.background = '';
+        }, 3000);
+    });
 }
 </script>
+
 </body>
 </html>

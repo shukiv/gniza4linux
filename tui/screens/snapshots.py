@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 from textual.app import ComposeResult
 from textual.screen import Screen
@@ -9,6 +10,15 @@ from textual import work
 from tui.config import list_conf_dir
 from tui.backend import run_cli
 from tui.widgets import SnapshotBrowser
+
+
+def _format_snapshot_ts(ts: str) -> str:
+    """Format '2026-03-06T140706' as '2026-03-06 14:07:06'."""
+    try:
+        dt = datetime.strptime(ts, "%Y-%m-%dT%H%M%S")
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return ts
 
 
 class SnapshotsScreen(Screen):
@@ -74,7 +84,7 @@ class SnapshotsScreen(Screen):
         lines = [l.strip() for l in stdout.splitlines() if l.strip() and not l.startswith("===")]
         if lines:
             for s in lines:
-                table.add_row(s, key=s)
+                table.add_row(_format_snapshot_ts(s), key=s)
         else:
             self.notify("No snapshots found", severity="warning")
             if stderr:

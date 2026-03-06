@@ -96,7 +96,12 @@ _rclone_cmd() {
 
     log_debug "rclone $subcmd ${rclone_opts[*]} $*"
     local rc=0
-    rclone "$subcmd" "${rclone_opts[@]}" "$@" || rc=$?
+    if [[ -n "${_TRANSFER_LOG:-}" && "$subcmd" == "copy" ]]; then
+        echo "=== rclone copy $* ===" >> "$_TRANSFER_LOG"
+        rclone "$subcmd" "${rclone_opts[@]}" --verbose "$@" > >(tee -a "$_TRANSFER_LOG") 2>&1 || rc=$?
+    else
+        rclone "$subcmd" "${rclone_opts[@]}" "$@" || rc=$?
+    fi
 
     _cleanup_rclone_config "$conf"
     return "$rc"

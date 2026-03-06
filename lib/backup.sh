@@ -92,6 +92,9 @@ _backup_target_impl() {
     # 5. Get timestamp
     local ts; ts=$(timestamp)
 
+    # 5.5. Initialize snapshot logging
+    snaplog_init
+
     # 6. Get previous snapshot for --link-dest
     local prev; prev=$(get_latest_snapshot "$target_name") || prev=""
     if [[ -n "$prev" ]]; then
@@ -106,6 +109,7 @@ _backup_target_impl() {
         log_info "Running pre-hook for $target_name..."
         if ! bash -c "$TARGET_PRE_HOOK"; then
             log_error "Pre-hook failed for $target_name"
+            snaplog_cleanup
             return 1
         fi
     fi
@@ -120,6 +124,7 @@ _backup_target_impl() {
         else
             log_error "MySQL dump failed for $target_name"
             mysql_cleanup_dump
+            snaplog_cleanup
             return 1
         fi
     fi
@@ -149,8 +154,14 @@ _backup_target_impl() {
 
     if [[ "$transfer_failed" == "true" ]]; then
         log_error "One or more folder transfers failed for $target_name"
+        snaplog_generate "$target_name" "$remote_name" "$ts" "$start_time" "Failed"
+        snaplog_upload "$target_name" "$ts"
+        snaplog_cleanup
         return 1
     fi
+
+    # 9.9. Generate snapshot logs
+    snaplog_generate "$target_name" "$remote_name" "$ts" "$start_time" "Success"
 
     # 10. Generate meta.json
     local end_time; end_time=$(date +%s)
@@ -198,9 +209,13 @@ METAEOF
         remote_exec "find '${sq_partial}' -type f > '${sq_partial}/manifest.txt'" 2>/dev/null || log_warn "Failed to write manifest.txt"
     fi
 
+    # 11.5. Upload snapshot logs
+    snaplog_upload "$target_name" "$ts"
+
     # 12. Finalize snapshot
     if ! finalize_snapshot "$target_name" "$ts"; then
         log_error "Failed to finalize snapshot for $target_name"
+        snaplog_cleanup
         return 1
     fi
 
@@ -228,6 +243,7 @@ METAEOF
     # 14. Enforce retention
     enforce_retention "$target_name"
 
+    snaplog_cleanup
     return 0
 }
 

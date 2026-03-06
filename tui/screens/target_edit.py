@@ -59,30 +59,50 @@ class TargetEditScreen(Screen):
                 value=target.mysql_enabled,
                 id="te-mysql-enabled",
             )
-            yield Static("MySQL Mode:")
+            yield Static("MySQL Mode:", classes="mysql-field")
             yield Select(
                 [("All databases", "all"), ("Select databases", "select")],
                 value=target.mysql_mode,
                 id="te-mysql-mode",
+                classes="mysql-field",
             )
-            yield Static("Databases (comma-separated, when mode=select):")
-            yield Input(value=target.mysql_databases, placeholder="db1,db2", id="te-mysql-databases")
-            yield Static("Exclude databases (comma-separated, when mode=all):")
-            yield Input(value=target.mysql_exclude, placeholder="test_db,dev_db", id="te-mysql-exclude")
-            yield Static("MySQL User:")
-            yield Input(value=target.mysql_user, placeholder="Leave empty for socket/~/.my.cnf auth", id="te-mysql-user")
-            yield Static("MySQL Password:")
-            yield Input(value=target.mysql_password, placeholder="Leave empty for socket/~/.my.cnf auth", password=True, id="te-mysql-password")
-            yield Static("MySQL Host:")
-            yield Input(value=target.mysql_host, placeholder="localhost", id="te-mysql-host")
-            yield Static("MySQL Port:")
-            yield Input(value=target.mysql_port, placeholder="3306", id="te-mysql-port")
-            yield Static("MySQL Extra Options:")
-            yield Input(value=target.mysql_extra_opts, placeholder="--single-transaction --routines --triggers", id="te-mysql-extra-opts")
+            yield Static("Databases (comma-separated):", classes="mysql-field mysql-select-field")
+            yield Input(value=target.mysql_databases, placeholder="db1,db2", id="te-mysql-databases", classes="mysql-field mysql-select-field")
+            yield Static("Exclude databases (comma-separated):", classes="mysql-field mysql-all-field")
+            yield Input(value=target.mysql_exclude, placeholder="test_db,dev_db", id="te-mysql-exclude", classes="mysql-field mysql-all-field")
+            yield Static("MySQL User:", classes="mysql-field")
+            yield Input(value=target.mysql_user, placeholder="Leave empty for socket/~/.my.cnf auth", id="te-mysql-user", classes="mysql-field")
+            yield Static("MySQL Password:", classes="mysql-field")
+            yield Input(value=target.mysql_password, placeholder="Leave empty for socket/~/.my.cnf auth", password=True, id="te-mysql-password", classes="mysql-field")
+            yield Static("MySQL Host:", classes="mysql-field")
+            yield Input(value=target.mysql_host, placeholder="localhost", id="te-mysql-host", classes="mysql-field")
+            yield Static("MySQL Port:", classes="mysql-field")
+            yield Input(value=target.mysql_port, placeholder="3306", id="te-mysql-port", classes="mysql-field")
+            yield Static("MySQL Extra Options:", classes="mysql-field")
+            yield Input(value=target.mysql_extra_opts, placeholder="--single-transaction --routines --triggers", id="te-mysql-extra-opts", classes="mysql-field")
             with Horizontal(id="te-buttons"):
                 yield Button("Save", variant="primary", id="btn-save")
                 yield Button("Cancel", id="btn-cancel")
         yield Footer()
+
+    def on_mount(self) -> None:
+        self._update_mysql_visibility()
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id in ("te-mysql-enabled", "te-mysql-mode"):
+            self._update_mysql_visibility()
+
+    def _update_mysql_visibility(self) -> None:
+        enabled = str(self.query_one("#te-mysql-enabled", Select).value)
+        is_enabled = enabled == "yes"
+        for w in self.query(".mysql-field"):
+            w.display = is_enabled
+        if is_enabled:
+            mode = str(self.query_one("#te-mysql-mode", Select).value)
+            for w in self.query(".mysql-select-field"):
+                w.display = mode == "select"
+            for w in self.query(".mysql-all-field"):
+                w.display = mode == "all"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-cancel":

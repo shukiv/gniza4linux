@@ -57,19 +57,26 @@ class BackupScreen(Screen):
                 msg += f"\nRemote: {remote}"
             self.app.push_screen(
                 ConfirmDialog(msg, "Confirm Backup"),
-                callback=lambda ok: self._do_backup(target, remote) if ok else None,
+                callback=lambda ok: self._confirmed_backup(target, remote) if ok else None,
             )
         elif event.button.id == "btn-backup-all":
             self.app.push_screen(
                 ConfirmDialog("Backup ALL targets now?", "Confirm Backup"),
-                callback=lambda ok: self._do_backup_all() if ok else None,
+                callback=lambda ok: self._confirmed_backup_all() if ok else None,
             )
 
-    @work
-    async def _do_backup(self, target: str, remote: str) -> None:
+    def _confirmed_backup(self, target: str, remote: str) -> None:
         log_screen = OperationLog(f"Backup: {target}")
         self.app.push_screen(log_screen)
-        await log_screen.wait_ready()
+        self._run_backup(log_screen, target, remote)
+
+    def _confirmed_backup_all(self) -> None:
+        log_screen = OperationLog("Backup All Targets")
+        self.app.push_screen(log_screen)
+        self._run_backup_all(log_screen)
+
+    @work
+    async def _run_backup(self, log_screen: OperationLog, target: str, remote: str) -> None:
         args = ["backup", f"--target={target}"]
         if remote:
             args.append(f"--remote={remote}")
@@ -81,10 +88,7 @@ class BackupScreen(Screen):
         log_screen.finish()
 
     @work
-    async def _do_backup_all(self) -> None:
-        log_screen = OperationLog("Backup All Targets")
-        self.app.push_screen(log_screen)
-        await log_screen.wait_ready()
+    async def _run_backup_all(self, log_screen: OperationLog) -> None:
         rc = await stream_cli(log_screen.write, "backup", "--all")
         if rc == 0:
             log_screen.write("\n[green]All backups completed.[/green]")

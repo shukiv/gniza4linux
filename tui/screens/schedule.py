@@ -216,11 +216,13 @@ class ScheduleScreen(Screen):
             self.notify(f"Schedule '{name}' deleted.")
         self._refresh_table()
 
-    @work
-    async def _install_schedules(self) -> None:
+    def _install_schedules(self) -> None:
         log_screen = OperationLog("Install Schedules")
         self.app.push_screen(log_screen)
-        await log_screen.wait_ready()
+        self._run_install(log_screen)
+
+    @work
+    async def _run_install(self, log_screen: OperationLog) -> None:
         rc, stdout, stderr = await run_cli("schedule", "install")
         if stdout:
             log_screen.write(stdout)
@@ -228,11 +230,13 @@ class ScheduleScreen(Screen):
             log_screen.write(stderr)
         log_screen.finish()
 
-    @work
-    async def _remove_schedules(self) -> None:
+    def _remove_schedules(self) -> None:
         log_screen = OperationLog("Remove Schedules")
         self.app.push_screen(log_screen)
-        await log_screen.wait_ready()
+        self._run_remove(log_screen)
+
+    @work
+    async def _run_remove(self, log_screen: OperationLog) -> None:
         rc, stdout, stderr = await run_cli("schedule", "remove")
         if stdout:
             log_screen.write(stdout)
@@ -240,11 +244,13 @@ class ScheduleScreen(Screen):
             log_screen.write(stderr)
         log_screen.finish()
 
-    @work
-    async def _show_crontab(self) -> None:
+    def _show_crontab(self) -> None:
         log_screen = OperationLog("Current Crontab")
         self.app.push_screen(log_screen)
-        await log_screen.wait_ready()
+        self._run_show(log_screen)
+
+    @work
+    async def _run_show(self, log_screen: OperationLog) -> None:
         rc, stdout, stderr = await run_cli("schedule", "show")
         if stdout:
             log_screen.write(stdout)

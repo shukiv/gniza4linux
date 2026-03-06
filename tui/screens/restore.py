@@ -107,14 +107,16 @@ class RestoreScreen(Screen):
             msg += "\nLocation: In-place"
         self.app.push_screen(
             ConfirmDialog(msg, "Confirm Restore"),
-            callback=lambda ok: self._do_restore(target, remote, snapshot, dest) if ok else None,
+            callback=lambda ok: self._confirmed_restore(target, remote, snapshot, dest) if ok else None,
         )
 
-    @work
-    async def _do_restore(self, target: str, remote: str, snapshot: str, dest: str) -> None:
+    def _confirmed_restore(self, target: str, remote: str, snapshot: str, dest: str) -> None:
         log_screen = OperationLog(f"Restore: {target}")
         self.app.push_screen(log_screen)
-        await log_screen.wait_ready()
+        self._run_restore(log_screen, target, remote, snapshot, dest)
+
+    @work
+    async def _run_restore(self, log_screen: OperationLog, target: str, remote: str, snapshot: str, dest: str) -> None:
         args = ["restore", f"--target={target}", f"--remote={remote}", f"--snapshot={snapshot}"]
         if dest:
             args.append(f"--dest={dest}")

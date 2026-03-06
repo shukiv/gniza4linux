@@ -43,7 +43,7 @@ class ScheduleScreen(Screen):
             data = parse_conf(CONFIG_DIR / "schedules.d" / f"{name}.conf")
             s = Schedule.from_conf(name, data)
             active = "✅" if s.active == "yes" else "❌"
-            next_run = self._calc_next_run(s) if s.active == "yes" else "--"
+            next_run = self._calc_next_run(s) if s.active == "yes" else "inactive"
             table.add_row(name, active, s.schedule, s.time, last_run, next_run, s.targets or "all", s.remotes or "all", key=name)
 
     def _get_last_run(self) -> str:
@@ -51,10 +51,10 @@ class ScheduleScreen(Screen):
         from pathlib import Path
         log_dir = Path(str(LOG_DIR))
         if not log_dir.is_dir():
-            return "--"
+            return "never"
         logs = sorted(log_dir.glob("gniza-*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
         if not logs:
-            return "--"
+            return "never"
         mtime = logs[0].stat().st_mtime
         dt = datetime.fromtimestamp(mtime)
         return dt.strftime("%Y-%m-%d %H:%M")
@@ -97,7 +97,7 @@ class ScheduleScreen(Screen):
                 else:
                     next_dt = next_dt.replace(month=now.month + 1)
         else:
-            return "--"
+            return "never"
         return next_dt.strftime("%Y-%m-%d %H:%M")
 
     def _selected_schedule(self) -> str | None:

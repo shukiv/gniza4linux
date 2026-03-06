@@ -1,6 +1,6 @@
 # gniza - Linux Backup Manager
 
-A generic Linux backup tool with a Gum TUI and CLI interface. Define named backup targets (sets of directories), configure remote destinations (SSH, local, S3, Google Drive), and run incremental backups with rsync `--link-dest` deduplication.
+A generic Linux backup tool with a Python Textual TUI, web GUI, and CLI interface. Define named backup targets (sets of directories), configure remote destinations (SSH, local, S3, Google Drive), and run incremental backups with rsync `--link-dest` deduplication.
 
 ```
   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -27,7 +27,8 @@ A generic Linux backup tool with a Gum TUI and CLI interface. Define named backu
 - **Target-based backups** - Define named profiles with sets of directories to back up
 - **Multiple remote types** - SSH, local (USB/NFS), S3, Google Drive
 - **Incremental snapshots** - rsync `--link-dest` for space-efficient deduplication
-- **Gum TUI** - Beautiful terminal UI powered by [gum](https://github.com/charmbracelet/gum)
+- **Textual TUI** - Beautiful terminal UI powered by [Textual](https://textual.textualize.io/)
+- **Web GUI** - Access the TUI from any browser via `gniza web`
 - **CLI interface** - Scriptable commands for automation and cron
 - **Atomic snapshots** - `.partial` directory during backup, renamed on success
 - **Retention policies** - Automatic pruning of old snapshots
@@ -66,8 +67,7 @@ Root mode installs to `/usr/local/gniza`. User mode installs to `~/.local/share/
 
 - **Required**: bash 4+, rsync
 - **Optional**: ssh, curl (SMTP notifications), rclone (S3/GDrive)
-
-> **Note**: [gum](https://github.com/charmbracelet/gum) (TUI engine) is automatically downloaded during installation.
+- **TUI/Web**: python3, textual, textual-serve (installed automatically)
 
 ## Quick Start
 

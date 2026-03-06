@@ -45,7 +45,6 @@ class SnapshotBrowser(ModalScreen[None]):
 
         # Add to tree widget recursively
         self._add_nodes(tree.root, root)
-        tree.root.expand_all()
 
     def _add_nodes(self, parent, structure: dict) -> None:
         # Sort: directories first, then files

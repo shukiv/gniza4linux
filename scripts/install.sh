@@ -89,6 +89,10 @@ if [[ -d "$SOURCE_DIR/tui" ]]; then
     cp -r "$SOURCE_DIR/tui" "$INSTALL_DIR/"
 fi
 
+if [[ -d "$SOURCE_DIR/web" ]]; then
+    cp -r "$SOURCE_DIR/web" "$INSTALL_DIR/"
+fi
+
 if [[ -d "$SOURCE_DIR/scripts" ]]; then
     cp -r "$SOURCE_DIR/scripts" "$INSTALL_DIR/"
 fi
@@ -102,14 +106,14 @@ chmod +x "$INSTALL_DIR/bin/gniza"
 
 # ── Install Python TUI dependencies ─────────────────────────
 if command -v python3 &>/dev/null; then
-    info "Installing Python TUI dependencies (textual, textual-serve)..."
-    if python3 -m pip install --break-system-packages textual textual-serve 2>/dev/null; then
+    info "Installing Python TUI dependencies (textual, textual-serve, flask)..."
+    if python3 -m pip install --break-system-packages textual textual-serve flask 2>/dev/null; then
         info "Python TUI dependencies installed."
-    elif python3 -m pip install textual textual-serve 2>/dev/null; then
+    elif python3 -m pip install textual textual-serve flask 2>/dev/null; then
         info "Python TUI dependencies installed."
     else
         warn "Could not install Python TUI dependencies. TUI/web mode may not work."
-        warn "Install manually: pip3 install textual textual-serve"
+        warn "Install manually: pip3 install textual textual-serve flask"
     fi
 else
     warn "python3 not found. TUI mode will not be available."
@@ -154,6 +158,32 @@ for example in target.conf.example remote.conf.example schedule.conf.example; do
         cp "$INSTALL_DIR/etc/$example" "$CONFIG_DIR/$example"
     fi
 done
+
+# ── Web dashboard setup ─────────────────────────────────────
+_update_conf_key() {
+    local file="$1" key="$2" val="$3"
+    if grep -q "^${key}=" "$file" 2>/dev/null; then
+        sed -i "s|^${key}=.*|${key}=\"${val}\"|" "$file"
+    else
+        echo "${key}=\"${val}\"" >> "$file"
+    fi
+}
+
+read -rp "Enable web dashboard? (y/n) [n]: " enable_web
+if [[ "${enable_web,,}" == "y" ]]; then
+    _update_conf_key "$CONFIG_DIR/gniza.conf" "WEB_ENABLED" "yes"
+    # Generate random API key
+    api_key=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+    _update_conf_key "$CONFIG_DIR/gniza.conf" "WEB_API_KEY" "$api_key"
+    echo "Web API key: $api_key"
+    echo "Save this key — you'll need it to log into the dashboard."
+    # Install systemd service
+    if [[ "$MODE" == "root" ]]; then
+        "$INSTALL_DIR/bin/gniza" web install-service
+    else
+        warn "Systemd service installation requires root. Start manually: gniza web start"
+    fi
+fi
 
 # ── Done ─────────────────────────────────────────────────────
 echo ""

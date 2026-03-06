@@ -48,6 +48,7 @@ Commands:
   retention         [--target=NAME] [--remote=NAME] [--all]
   schedule          install|show|remove
   logs              [--last] [--tail=N]
+  web               start|install-service|remove-service|status [--port=PORT] [--host=HOST]
   version
 
 If no command is given, the TUI is launched.
@@ -394,9 +395,43 @@ run_cli() {
 }
 
 # ── Mode selection ───────────────────────────────────────────
-if [[ "$SUBCOMMAND" == "web" || " $* " == *" --web "* ]]; then
-    # Web GUI mode
-    PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m tui --web "$@"
+if [[ "$SUBCOMMAND" == "web" ]]; then
+    _web_action="${SUBCMD_ARGS[0]:-start}"
+    case "$_web_action" in
+        start)
+            _web_port="" _web_host=""
+            _web_port=$(_parse_flag "--port" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            _web_host=$(_parse_flag "--host" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            _web_args=()
+            [[ -n "$_web_port" ]] && _web_args+=(--port="$_web_port")
+            [[ -n "$_web_host" ]] && _web_args+=(--host="$_web_host")
+            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m web "${_web_args[@]}"
+            ;;
+        install-service)
+            _service_src="$GNIZA_DIR/etc/gniza-web.service"
+            _service_dst="/etc/systemd/system/gniza-web.service"
+            if [[ ! -f "$_service_src" ]]; then
+                die "Service file not found: $_service_src"
+            fi
+            cp "$_service_src" "$_service_dst"
+            systemctl daemon-reload
+            systemctl enable gniza-web
+            systemctl start gniza-web
+            echo "GNIZA web service installed and started."
+            echo "Access the dashboard at http://$(hostname -I | awk '{print $1}'):8080"
+            ;;
+        remove-service)
+            systemctl stop gniza-web 2>/dev/null || true
+            systemctl disable gniza-web 2>/dev/null || true
+            rm -f /etc/systemd/system/gniza-web.service
+            systemctl daemon-reload
+            echo "GNIZA web service removed."
+            ;;
+        status)
+            systemctl status gniza-web 2>/dev/null || echo "GNIZA web service is not installed."
+            ;;
+        *) die "Unknown web action: $_web_action (expected start|install-service|remove-service|status)" ;;
+    esac
 elif [[ -n "$SUBCOMMAND" ]]; then
     # Explicit subcommand: always CLI
     run_cli

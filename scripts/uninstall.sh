@@ -66,6 +66,15 @@ else
     info "No crontab entries to check"
 fi
 
+# ── Remove web service ───────────────────────────────────────
+if systemctl is-active gniza-web &>/dev/null || [[ -f /etc/systemd/system/gniza-web.service ]]; then
+    echo "Removing GNIZA web service..."
+    systemctl stop gniza-web 2>/dev/null || true
+    systemctl disable gniza-web 2>/dev/null || true
+    rm -f /etc/systemd/system/gniza-web.service
+    systemctl daemon-reload
+fi
+
 # ── Remove symlink ───────────────────────────────────────────
 if [[ -L "$BIN_LINK" ]]; then
     rm -f "$BIN_LINK"

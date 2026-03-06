@@ -22,8 +22,6 @@ class RemotesScreen(Screen):
                 yield Button("Add", variant="primary", id="btn-add")
                 yield Button("Edit", id="btn-edit")
                 yield Button("Test", variant="warning", id="btn-test")
-                yield Button("Disk Info", id="btn-disk")
-                yield Button("Speed Test", id="btn-speed")
                 yield Button("Delete", variant="error", id="btn-delete")
                 yield Button("Back", id="btn-back")
         yield Footer()
@@ -75,18 +73,6 @@ class RemotesScreen(Screen):
                 self._test_remote(name)
             else:
                 self.notify("Select a remote first", severity="warning")
-        elif event.button.id == "btn-disk":
-            name = self._selected_remote()
-            if name:
-                self._disk_info(name)
-            else:
-                self.notify("Select a remote first", severity="warning")
-        elif event.button.id == "btn-speed":
-            name = self._selected_remote()
-            if name:
-                self._speed_test(name)
-            else:
-                self.notify("Select a remote first", severity="warning")
         elif event.button.id == "btn-delete":
             name = self._selected_remote()
             if name:
@@ -122,32 +108,6 @@ class RemotesScreen(Screen):
             log_screen.write("\n[green]Connection test passed.[/green]")
         else:
             log_screen.write(f"\n[red]Connection test failed (exit code {rc}).[/red]")
-        log_screen.finish()
-
-    @work
-    async def _disk_info(self, name: str) -> None:
-        log_screen = OperationLog(f"Disk Info: {name}", show_spinner=False)
-        self.app.push_screen(log_screen)
-        rc, stdout, stderr = await run_cli("remotes", "disk-info", f"--name={name}")
-        if stdout:
-            log_screen.write(stdout)
-        if stderr:
-            log_screen.write(stderr)
-        if rc != 0:
-            log_screen.write(f"\n[red]Failed to get disk info (exit code {rc}).[/red]")
-        log_screen.finish()
-
-    @work
-    async def _speed_test(self, name: str) -> None:
-        log_screen = OperationLog(f"Speed Test: {name}")
-        self.app.push_screen(log_screen)
-        rc, stdout, stderr = await run_cli("remotes", "speed-test", f"--name={name}")
-        if stdout:
-            log_screen.write(stdout)
-        if stderr:
-            log_screen.write(stderr)
-        if rc != 0:
-            log_screen.write(f"\n[red]Speed test failed (exit code {rc}).[/red]")
         log_screen.finish()
 
     def _delete_remote(self, name: str) -> None:

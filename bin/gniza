@@ -279,18 +279,8 @@ run_cli() {
                     load_remote "$name"
                     remote_disk_info_short
                     ;;
-                disk-info)
-                    [[ -z "$name" ]] && die "remotes disk-info requires --name=NAME"
-                    load_remote "$name"
-                    remote_disk_info
-                    ;;
-                speed-test)
-                    [[ -z "$name" ]] && die "remotes speed-test requires --name=NAME"
-                    load_remote "$name"
-                    remote_speed_test
-                    ;;
                 *)
-                    die "Unknown remotes action: $action (expected list|add|delete|show|test|disk-info|speed-test)"
+                    die "Unknown remotes action: $action (expected list|add|delete|show|test|disk-info-short)"
                     ;;
             esac
             ;;

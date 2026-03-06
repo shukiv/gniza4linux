@@ -68,16 +68,16 @@ class BackupScreen(Screen):
     @work
     async def _do_backup(self, target: str, remote: str) -> None:
         job = job_manager.create_job("backup", f"Backup: {target}")
-        self.notify("Backup started -- view in Running Tasks")
         args = ["backup", f"--target={target}"]
         if remote:
             args.append(f"--remote={remote}")
+        self.app.switch_screen("running_tasks")
         await job_manager.run_job(self.app, job, *args)
 
     @work
     async def _do_backup_all(self) -> None:
         job = job_manager.create_job("backup", "Backup All Targets")
-        self.notify("Backup All started -- view in Running Tasks")
+        self.app.switch_screen("running_tasks")
         await job_manager.run_job(self.app, job, "backup", "--all")
 
     def action_go_back(self) -> None:

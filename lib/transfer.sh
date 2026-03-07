@@ -223,8 +223,11 @@ transfer_folder() {
     local dest_name="${5:-}"
 
     if [[ ! -d "$folder_path" ]]; then
-        log_warn "Folder not found, skipping: $folder_path"
-        return 1
+        log_info "Folder not found, creating: $folder_path"
+        if ! mkdir -p "$folder_path" 2>/dev/null; then
+            log_warn "Cannot create folder, skipping: $folder_path"
+            return 1
+        fi
     fi
 
     # Strip leading / to create relative subpath in snapshot

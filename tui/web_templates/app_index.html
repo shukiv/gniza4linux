@@ -165,7 +165,7 @@
         }
       })();
 
-      // Mobile keyboard control: prevent keyboard on every tap, add toggle button
+      // Mobile keyboard control: toggle button to show/hide virtual keyboard
       (function() {
         if (!("ontouchstart" in window)) return;
 
@@ -178,52 +178,61 @@
         btn.style.cssText = "position:fixed;bottom:12px;right:12px;z-index:9999;" +
           "width:44px;height:44px;border-radius:50%;background:rgba(94,11,167,0.85);" +
           "color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;" +
-          "cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.4);user-select:none;";
+          "cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.4);user-select:none;" +
+          "-webkit-tap-highlight-color:transparent;";
         document.addEventListener("DOMContentLoaded", function() {
           document.body.appendChild(btn);
         });
 
-        function setKeyboard(open) {
-          kbOpen = open;
-          var ta = document.querySelector(".xterm-helper-textarea");
-          if (!ta) return;
-          if (open) {
-            ta.removeAttribute("readonly");
+        function getTA() {
+          return document.querySelector(".xterm-helper-textarea");
+        }
+
+        function openKeyboard() {
+          kbOpen = true;
+          var ta = getTA();
+          if (ta) {
             ta.setAttribute("inputmode", "text");
             ta.focus();
-            btn.style.background = "rgba(0,204,0,0.85)";
-          } else {
-            ta.setAttribute("inputmode", "none");
-            ta.setAttribute("readonly", "readonly");
-            ta.blur();
-            btn.style.background = "rgba(94,11,167,0.85)";
           }
+          btn.style.background = "rgba(0,204,0,0.85)";
+          btn.textContent = "✕";
+        }
+
+        function closeKeyboard() {
+          kbOpen = false;
+          var ta = getTA();
+          if (ta) {
+            ta.setAttribute("inputmode", "none");
+            ta.blur();
+          }
+          btn.style.background = "rgba(94,11,167,0.85)";
+          btn.textContent = "⌨";
         }
 
         btn.addEventListener("click", function(e) {
           e.preventDefault();
           e.stopPropagation();
-          setKeyboard(!kbOpen);
+          if (kbOpen) closeKeyboard(); else openKeyboard();
         });
 
-        // Block xterm from auto-focusing its textarea on touch
+        // Prevent keyboard from auto-opening on every tap
         document.addEventListener("touchend", function(e) {
           if (e.target === btn || btn.contains(e.target)) return;
-          if (kbOpen) return; // user wants keyboard open
+          if (kbOpen) return;
           setTimeout(function() {
             var active = document.activeElement;
             if (active && active.classList && active.classList.contains("xterm-helper-textarea")) {
               active.blur();
             }
-          }, 50);
+          }, 30);
         }, { passive: true });
 
-        // Disable keyboard on xterm textarea once it appears
+        // Set inputmode=none on xterm textarea once it appears (prevent initial keyboard)
         var checkReady = setInterval(function() {
-          var ta = document.querySelector(".xterm-helper-textarea");
+          var ta = getTA();
           if (ta) {
             clearInterval(checkReady);
-            ta.setAttribute("readonly", "readonly");
             ta.setAttribute("inputmode", "none");
           }
         }, 200);

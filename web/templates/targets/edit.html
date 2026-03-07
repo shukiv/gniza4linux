@@ -145,10 +145,12 @@
                             @click="
                                 let url;
                                 if (sourceType === 'ssh') {
+                                    let host = document.querySelector('[name=source_host]')?.value;
+                                    if (!host) { alert('Enter Source Host first'); return; }
                                     let params = new URLSearchParams({
                                         path: '/',
                                         target: 'folders',
-                                        host: document.querySelector('[name=source_host]').value,
+                                        host: host,
                                         port: document.querySelector('[name=source_port]').value || '22',
                                         user: document.querySelector('[name=source_user]').value || 'root',
                                         key: document.querySelector('[name=source_key]')?.value || '',
@@ -158,8 +160,14 @@
                                 } else {
                                     url = '{{ url_for('api.browse', path='/', target='folders') }}';
                                 }
-                                htmx.ajax('GET', url, '#folder-browser-box-folders');
-                                document.getElementById('folder_browser_modal_folders').showModal();
+                                htmx.ajax('GET', url, {target: '#folder-browser-box-folders', swap: 'innerHTML'}).then(() => {
+                                    let box = document.getElementById('folder-browser-box-folders');
+                                    if (box.querySelector('.alert-error')) {
+                                        alert(box.querySelector('.alert-error').textContent.trim());
+                                        return;
+                                    }
+                                    document.getElementById('folder_browser_modal_folders').showModal();
+                                });
                             ">
                         Browse
                     </button>

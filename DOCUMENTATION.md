@@ -879,15 +879,15 @@ The web dashboard has full feature parity with the TUI:
 | Screen | Description |
 |--------|-------------|
 | **Dashboard** | Overview with sources, destinations, schedules tables, and last backup log with status |
-| **Sources** | Create, edit, delete sources with toggle enable/disable. Supports all source types (local, SSH, S3, Google Drive), MySQL backup, hooks, include/exclude filters |
-| **Destinations** | Create, edit, delete destinations. Test connection, view disk usage inline. Supports SSH, local, S3, Google Drive |
+| **Sources** | Create, edit, delete sources with toggle enable/disable (shows "Enabled"/"Disabled" text next to the toggle). Supports all source types (local, SSH, S3, Google Drive), MySQL backup, hooks, include/exclude filters |
+| **Destinations** | Create, edit, delete destinations. Test connection (result shown as toast notification), view disk usage inline. Supports SSH, local, S3, Google Drive |
 | **Schedules** | Create, edit, delete schedules with toggle active/inactive. Supports hourly, daily (multi-day), weekly, monthly, and custom cron |
 | **Backup** | Select source and destination, or back up all. Starts a background job and redirects to Running Tasks |
 | **Restore** | Select source, destination, and snapshot. Options for custom restore path, specific folder, and skip MySQL |
-| **Running Tasks** | Live job list with status updates every 2 seconds. View log output, kill running jobs, clear finished jobs |
+| **Running Tasks** | Live job list with status updates every 2 seconds. View log output, kill running jobs, clear finished jobs. Shows "Skipped" (yellow/warning) when all targets in a backup are disabled |
 | **Snapshots** | Browse snapshots by source and destination. View file tree with HTMX-loaded directory expansion |
 | **Retention** | Run retention cleanup per source or all. Edit default retention count |
-| **Logs** | Paginated log viewer with status detection (success/error). View full log content |
+| **Logs** | Paginated log viewer with status detection (success/error/skipped). View full log content |
 | **Settings** | Edit all global settings organized in sections: General, Email, SSH, Web. Send test email |
 
 ### Authentication
@@ -904,7 +904,7 @@ The web dashboard supports dark and light themes. Toggle between them using the 
 
 ### Live Job Monitoring
 
-Running tasks are polled every 2 seconds via HTMX. When a backup or restore process finishes, the status automatically updates to Success, Failed, or Unknown. Job logs can be viewed inline with a single click.
+Running tasks are polled every 2 seconds via HTMX. When a backup or restore process finishes, the status automatically updates to Success, Failed, Skipped, or Unknown. Finished processes are properly detected via zombie reaping before status checks. A backup is marked as "Skipped" when all its targets are disabled. Log files with content but no error markers are detected as successful. Job logs can be viewed inline with a single click.
 
 ### Folder Browser
 
@@ -953,10 +953,10 @@ Launch with `gniza` (no arguments). Requires Python 3 and Textual.
 | **Destinations** | Configure SSH, local, S3, or Google Drive destinations |
 | **Backup** | Select sources and destinations, run backups |
 | **Restore** | Browse snapshots, restore to original or custom location |
-| **Running Tasks** | Monitor active jobs with live log output and progress |
+| **Running Tasks** | Monitor active jobs with live log output and progress. Shows "skip" status when all targets are disabled |
 | **Schedules** | Create and manage cron schedules, view last run time |
 | **Snapshots** | Browse stored snapshots |
-| **Logs** | View backup history with pagination |
+| **Logs** | View backup history with pagination. Shows "Skipped" status when all targets were disabled |
 | **Settings** | Configure global options in organized sections |
 
 ### Navigation

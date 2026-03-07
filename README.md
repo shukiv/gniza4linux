@@ -80,6 +80,11 @@ gniza --cli destinations add --name=backup-server
 # Run a backup
 gniza --cli backup --source=mysite
 gniza --cli backup --all
+
+# Start the web dashboard
+gniza web install-service
+gniza web start
+# Access at http://<server-ip>:2323
 ```
 
 ## Terminal UI
@@ -98,6 +103,75 @@ Launch with `gniza` (no arguments). The TUI provides:
 - **Setup Wizard** — Guided first-run configuration
 
 The TUI adapts to terminal width, with an inline documentation panel on wide screens and a help modal on narrow ones.
+
+## Web Dashboard
+
+Serve the full TUI in a browser via textual-serve with HTTP Basic Auth.
+
+```bash
+gniza web install-service   # Install systemd service (port 2323)
+gniza web start             # Start the service
+gniza web status            # Check status
+```
+
+Access at `http://<server-ip>:2323`. Credentials are stored in `gniza.conf` as `WEB_USER` and `WEB_API_KEY`.
+
+Supports both root (system service) and user (user service) modes.
+
+## How Incremental Backups Work
+
+gniza uses rsync's `--link-dest` option to create space-efficient incremental backups using **hardlinks**.
+
+**The first backup** copies every file from source to destination. This takes the most time and disk space. Depending on data size and network speed, the initial backup may take a long time — this is normal.
+
+**Every subsequent backup** is significantly faster. Rsync compares each file against the previous snapshot. Unchanged files are not transferred — instead, rsync creates a **hardlink** to the same data block from the previous snapshot. Only new or modified files are copied.
+
+This means:
+
+- Each snapshot appears as a **complete directory tree** — browse or restore any snapshot independently
+- Unchanged files share disk space through hardlinks, so 10 snapshots of 50 GB with minor changes might use 55 GB total instead of 500 GB
+- Deleting an old snapshot only frees space for files not referenced by other snapshots
+- Subsequent backups typically finish in seconds or minutes rather than hours
+
+> **Example**: A first backup of 20 GB takes 45 minutes over SSH. The next day, only 200 MB changed — the second backup takes under 2 minutes and uses only 200 MB of additional disk space, while still appearing as a complete 20 GB snapshot.
+
+## Remote Sources
+
+gniza can pull files from remote machines **without installing anything on them**. This turns gniza into a centralized backup server.
+
+### SSH Source
+
+Back up a remote server by pulling files over SSH:
+
+1. Create a source with `TARGET_SOURCE_TYPE="ssh"`
+2. Set the SSH connection details (`TARGET_SOURCE_HOST`, etc.)
+3. Set `TARGET_FOLDERS` to the remote paths you want to back up (e.g. `/var/www,/etc`)
+
+gniza connects to the remote server, pulls the specified folders to a local staging area, then pushes the data to the configured destination using the standard snapshot pipeline.
+
+### S3 / Google Drive Source
+
+Pull files from cloud storage before backing them up:
+
+- **S3**: Set `TARGET_SOURCE_TYPE="s3"` with bucket, region, and credentials
+- **Google Drive**: Set `TARGET_SOURCE_TYPE="gdrive"` with a service account JSON file
+
+Requires `rclone` to be installed.
+
+## Snapshot Structure
+
+```
+<base>/<hostname>/sources/<name>/snapshots/<YYYY-MM-DDTHHMMSS>/
++-- meta.json           # Metadata (source, timestamp, duration, pinned)
++-- manifest.txt        # File listing
++-- var/www/            # Backed-up directories
++-- etc/nginx/
++-- _mysql/             # MySQL dumps (if enabled)
+    +-- dbname.sql.gz
+    +-- _grants.sql.gz
+```
+
+During transfer, snapshots are stored in a `.partial` directory. On success, the directory is renamed to the final timestamp. Interrupted backups leave no incomplete snapshots.
 
 ## CLI Reference
 
@@ -286,61 +360,6 @@ TARGETS=""                      # Comma-separated source names (empty = all)
 REMOTES=""                      # Comma-separated destination names (empty = all)
 ```
 
-## How Incremental Backups Work
-
-gniza uses rsync's `--link-dest` option to create space-efficient incremental backups using **hardlinks**.
-
-**The first backup** copies every file from source to destination. This takes the most time and disk space. Depending on data size and network speed, the initial backup may take a long time — this is normal.
-
-**Every subsequent backup** is significantly faster. Rsync compares each file against the previous snapshot. Unchanged files are not transferred — instead, rsync creates a **hardlink** to the same data block from the previous snapshot. Only new or modified files are copied.
-
-This means:
-
-- Each snapshot appears as a **complete directory tree** — browse or restore any snapshot independently
-- Unchanged files share disk space through hardlinks, so 10 snapshots of 50 GB with minor changes might use 55 GB total instead of 500 GB
-- Deleting an old snapshot only frees space for files not referenced by other snapshots
-- Subsequent backups typically finish in seconds or minutes rather than hours
-
-> **Example**: A first backup of 20 GB takes 45 minutes over SSH. The next day, only 200 MB changed — the second backup takes under 2 minutes and uses only 200 MB of additional disk space, while still appearing as a complete 20 GB snapshot.
-
-## Remote Sources
-
-gniza can pull files from remote machines **without installing anything on them**. This turns gniza into a centralized backup server.
-
-### SSH Source
-
-Back up a remote server by pulling files over SSH:
-
-1. Create a source with `TARGET_SOURCE_TYPE="ssh"`
-2. Set the SSH connection details (`TARGET_SOURCE_HOST`, etc.)
-3. Set `TARGET_FOLDERS` to the remote paths you want to back up (e.g. `/var/www,/etc`)
-
-gniza connects to the remote server, pulls the specified folders to a local staging area, then pushes the data to the configured destination using the standard snapshot pipeline.
-
-### S3 / Google Drive Source
-
-Pull files from cloud storage before backing them up:
-
-- **S3**: Set `TARGET_SOURCE_TYPE="s3"` with bucket, region, and credentials
-- **Google Drive**: Set `TARGET_SOURCE_TYPE="gdrive"` with a service account JSON file
-
-Requires `rclone` to be installed.
-
-## Snapshot Structure
-
-```
-<base>/<hostname>/sources/<name>/snapshots/<YYYY-MM-DDTHHMMSS>/
-+-- meta.json           # Metadata (source, timestamp, duration, pinned)
-+-- manifest.txt        # File listing
-+-- var/www/            # Backed-up directories
-+-- etc/nginx/
-+-- _mysql/             # MySQL dumps (if enabled)
-    +-- dbname.sql.gz
-    +-- _grants.sql.gz
-```
-
-During transfer, snapshots are stored in a `.partial` directory. On success, the directory is renamed to the final timestamp. Interrupted backups leave no incomplete snapshots.
-
 ## Retention
 
 Retention policies control how many snapshots to keep per source per destination.
@@ -390,20 +409,6 @@ Email notifications on backup success or failure.
 **System mail**: Falls back to `mail` or `sendmail` if SMTP is not configured.
 
 **Report includes**: Status, source count (total/succeeded/failed), duration, failed source list, log file path, hostname, and timestamp.
-
-## Web Dashboard
-
-Serve the full TUI in a browser via textual-serve with HTTP Basic Auth.
-
-```bash
-gniza web install-service   # Install systemd service (port 2323)
-gniza web start             # Start the service
-gniza web status            # Check status
-```
-
-Access at `http://<server-ip>:2323`. Credentials are stored in `gniza.conf` as `WEB_USER` and `WEB_API_KEY`.
-
-Supports both root (system service) and user (user service) modes.
 
 ## Disk Space Safety
 

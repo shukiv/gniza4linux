@@ -39,15 +39,15 @@ class RemoteEditScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="remote-edit"):
                 yield Static(title, id="screen-title")
-                if self._is_new:
-                    yield Static("Name:")
-                    yield Input(value="", placeholder="Remote name", id="re-name")
                 yield Static("Type:")
                 with RadioSet(id="re-type"):
                     yield RadioButton("SSH", value=remote.type == "ssh")
                     yield RadioButton("Local directory", value=remote.type == "local")
                     yield RadioButton("Amazon S3", value=remote.type == "s3")
                     yield RadioButton("Google Drive", value=remote.type == "gdrive")
+                if self._is_new:
+                    yield Static("Name:")
+                    yield Input(value="", placeholder="Remote name", id="re-name")
                 # SSH fields
                 yield Static("Host:", id="lbl-host", classes="ssh-field")
                 yield Input(value=remote.host, placeholder="hostname or IP", id="re-host", classes="ssh-field")

@@ -25,7 +25,7 @@
         <div class="stat-title">Last Backup</div>
         {% if log_files %}
         <div class="stat-value text-lg">{{ log_files[0].status|upper }}</div>
-        <div class="stat-desc">{{ log_files[0].name }}</div>
+        <div class="stat-desc">{% if errors_past_month %}{{ errors_past_month }} error{{ 's' if errors_past_month != 1 else '' }} in past month{% else %}no errors in past month{% endif %}</div>
         {% else %}
         <div class="stat-value text-lg">N/A</div>
         <div class="stat-desc">no logs found</div>

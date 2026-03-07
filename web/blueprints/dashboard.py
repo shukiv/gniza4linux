@@ -63,6 +63,32 @@ def _detect_status(filepath):
     return "Interrupted"
 
 
+def _count_errors_past_month():
+    log_path = Path(LOG_DIR)
+    if not log_path.is_dir():
+        return 0
+    from datetime import timedelta
+    cutoff = datetime.now() - timedelta(days=30)
+    count = 0
+    for f in log_path.iterdir():
+        if not f.is_file():
+            continue
+        m = _LOG_FILENAME_RE.match(f.name)
+        if not m:
+            continue
+        date_str = m.group(1)
+        try:
+            log_date = datetime(int(date_str[:4]), int(date_str[4:6]), int(date_str[6:8]))
+        except ValueError:
+            continue
+        if log_date < cutoff:
+            continue
+        status = _detect_status(f)
+        if status in ("Failed", "Interrupted"):
+            count += 1
+    return count
+
+
 def _load_logs(page=1):
     log_path = Path(LOG_DIR)
     log_files = []
@@ -113,6 +139,11 @@ def index():
         log_files, log_page, log_total_pages = _load_logs(page)
     except Exception:
         pass
+    errors_past_month = 0
+    try:
+        errors_past_month = _count_errors_past_month()
+    except Exception:
+        pass
     return render_template(
         "dashboard/index.html",
         targets=targets,
@@ -121,4 +152,5 @@ def index():
         log_files=log_files,
         log_page=log_page,
         log_total_pages=log_total_pages,
+        errors_past_month=errors_past_month,
     )

@@ -18,7 +18,17 @@ def index():
     jobs.sort(key=lambda j: (j.status != "running", j.started_at), reverse=True)
     # Re-sort so running jobs appear first (reverse of the tuple sort)
     jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
-    return render_template("jobs/index.html", jobs=jobs)
+    has_running = any(j.status == "running" for j in jobs)
+    return render_template("jobs/index.html", jobs=jobs, has_running=has_running)
+
+
+@bp.route("/table")
+@login_required
+def table():
+    jobs = web_job_manager.list_jobs()
+    jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
+    has_running = any(j.status == "running" for j in jobs)
+    return render_template("jobs/table_partial.html", jobs=jobs, has_running=has_running)
 
 
 @bp.route("/<job_id>/log")

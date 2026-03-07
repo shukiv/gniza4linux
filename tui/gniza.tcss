@@ -86,6 +86,23 @@ Select {
     margin: 0;
 }
 
+#settings-screen TabbedContent {
+    height: 1fr;
+}
+
+#settings-screen TabPane {
+    padding: 1 1;
+}
+
+#settings-screen TabPane Static {
+    margin: 0 0 0 0;
+}
+
+#settings-screen TabPane Input,
+#settings-screen TabPane Select {
+    margin: 0 0 1 0;
+}
+
 SelectionList {
     height: auto;
     max-height: 8;

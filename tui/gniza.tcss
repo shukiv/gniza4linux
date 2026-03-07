@@ -88,9 +88,32 @@ Select {
 
 .settings-section {
     height: auto;
-    border: round $accent;
     padding: 1 2;
     margin: 0 0 1 0;
+}
+
+#section-general {
+    border: round #6e54c9;
+    border-title-color: #ffffff;
+    border-title-background: #6e54c9;
+}
+
+#section-email {
+    border: round #00cc00;
+    border-title-color: #ffffff;
+    border-title-background: #00cc00;
+}
+
+#section-ssh {
+    border: round #e5c07b;
+    border-title-color: #1e1e2e;
+    border-title-background: #e5c07b;
+}
+
+#section-web {
+    border: round #61afef;
+    border-title-color: #ffffff;
+    border-title-background: #61afef;
 }
 
 .settings-section Static {

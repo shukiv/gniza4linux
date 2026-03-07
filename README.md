@@ -1,6 +1,6 @@
 # gniza - Linux Backup Manager
 
-A generic Linux backup tool with a Python Textual TUI, web GUI, and CLI interface. Define named backup targets (sets of directories), configure remote destinations (SSH, local, S3, Google Drive), and run incremental backups with rsync `--link-dest` deduplication.
+A generic Linux backup tool with a Python Textual TUI, web GUI, and CLI interface. Define named backup sources (sets of directories), configure backup destinations (SSH, local, S3, Google Drive), and run incremental backups with rsync `--link-dest` deduplication.
 
 ```
   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -24,12 +24,12 @@ A generic Linux backup tool with a Python Textual TUI, web GUI, and CLI interfac
 
 ## Features
 
-- **Target-based backups** - Define named profiles with sets of directories to back up
-- **Include/exclude filters** - Rsync include or exclude patterns per target (comma-separated)
+- **Source-based backups** - Define named profiles with sets of directories to back up
+- **Include/exclude filters** - Rsync include or exclude patterns per source (comma-separated)
 - **MySQL backup** - Dump all or selected databases alongside directory backups
-- **Multiple remote types** - SSH, local (USB/NFS), S3, Google Drive
+- **Multiple destination types** - SSH, local (USB/NFS), S3, Google Drive
 - **Incremental snapshots** - rsync `--link-dest` for space-efficient deduplication
-- **Disk space safety** - Abort backup if remote disk usage exceeds configurable threshold (default 95%)
+- **Disk space safety** - Abort backup if destination disk usage exceeds configurable threshold (default 95%)
 - **Textual TUI** - Beautiful terminal UI powered by [Textual](https://textual.textualize.io/)
 - **Web dashboard** - Access the full TUI from any browser with HTTP Basic Auth
 - **CLI interface** - Scriptable commands for automation and cron

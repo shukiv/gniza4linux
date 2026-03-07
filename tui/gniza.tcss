@@ -225,7 +225,7 @@ HelpModal {
     width: 90%;
     max-width: 70;
     height: 80%;
-    max-height: 30;
+    max-height: 35;
     padding: 1;
     background: $panel;
     border: thick $accent;
@@ -237,7 +237,22 @@ HelpModal {
     margin: 0 0 1 0;
 }
 
-#fp-tree {
+#fp-search-row {
+    height: auto;
+    margin: 0 0 1 0;
+}
+
+#fp-search-row Input {
+    width: 1fr;
+}
+
+#fp-search-row Button {
+    width: auto;
+    min-width: 6;
+    margin: 0 0 0 1;
+}
+
+#fp-tree, #fp-remote-tree {
     height: 1fr;
 }
 

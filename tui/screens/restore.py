@@ -23,14 +23,14 @@ class RestoreScreen(Screen):
             with Vertical(id="restore-screen"):
                 yield Static("Restore", id="screen-title")
                 if not targets or not remotes:
-                    yield Static("Both targets and remotes must be configured for restore.")
+                    yield Static("Both sources and destinations must be configured for restore.")
                 else:
                     yield Static("Source:")
                     yield Select([(t, t) for t in targets], id="restore-target", prompt="Select source")
                     yield Static("Destination:")
                     yield Select([(r, r) for r in remotes], id="restore-remote", prompt="Select destination")
                     yield Static("Snapshot:")
-                    yield Select([], id="restore-snapshot", prompt="Select target and remote first")
+                    yield Select([], id="restore-snapshot", prompt="Select source and destination first")
                     yield Static("Restore location:")
                     with RadioSet(id="restore-location"):
                         yield RadioButton("In-place (original)", value=True)
@@ -115,10 +115,10 @@ class RestoreScreen(Screen):
         remote_sel = self.query_one("#restore-remote", Select)
         snap_sel = self.query_one("#restore-snapshot", Select)
         if not isinstance(target_sel.value, str):
-            self.notify("Select a target", severity="error")
+            self.notify("Select a source", severity="error")
             return
         if not isinstance(remote_sel.value, str):
-            self.notify("Select a remote", severity="error")
+            self.notify("Select a destination", severity="error")
             return
         if not isinstance(snap_sel.value, str):
             self.notify("Select a snapshot", severity="error")
@@ -134,7 +134,7 @@ class RestoreScreen(Screen):
         except Exception:
             restore_mysql = True
         skip_mysql = not restore_mysql
-        msg = f"Restore snapshot?\n\nTarget: {target}\nRemote: {remote}\nSnapshot: {snapshot}"
+        msg = f"Restore snapshot?\n\nSource: {target}\nDestination: {remote}\nSnapshot: {snapshot}"
         if dest:
             msg += f"\nDestination: {dest}"
         else:

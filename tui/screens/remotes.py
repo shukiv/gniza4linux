@@ -69,22 +69,22 @@ class RemotesScreen(Screen):
                 from tui.screens.remote_edit import RemoteEditScreen
                 self.app.push_screen(RemoteEditScreen(name), callback=lambda _: self._refresh_table())
             else:
-                self.notify("Select a remote first", severity="warning")
+                self.notify("Select a destination first", severity="warning")
         elif event.button.id == "btn-test":
             name = self._selected_remote()
             if name:
                 self._test_remote(name)
             else:
-                self.notify("Select a remote first", severity="warning")
+                self.notify("Select a destination first", severity="warning")
         elif event.button.id == "btn-delete":
             name = self._selected_remote()
             if name:
                 self.app.push_screen(
-                    ConfirmDialog(f"Delete remote '{name}'? This cannot be undone.", "Delete Remote"),
+                    ConfirmDialog(f"Delete destination '{name}'? This cannot be undone.", "Delete Destination"),
                     callback=lambda ok: self._delete_remote(name) if ok else None,
                 )
             else:
-                self.notify("Select a remote first", severity="warning")
+                self.notify("Select a destination first", severity="warning")
 
     @work
     async def _fetch_disk_info(self) -> None:
@@ -101,7 +101,7 @@ class RemotesScreen(Screen):
 
     @work
     async def _test_remote(self, name: str) -> None:
-        log_screen = OperationLog(f"Testing Remote: {name}", show_spinner=False)
+        log_screen = OperationLog(f"Testing Destination: {name}", show_spinner=False)
         self.app.push_screen(log_screen)
         rc, stdout, stderr = await run_cli("remotes", "test", f"--name={name}")
         if stdout:
@@ -118,7 +118,7 @@ class RemotesScreen(Screen):
         conf = CONFIG_DIR / "remotes.d" / f"{name}.conf"
         if conf.is_file():
             conf.unlink()
-            self.notify(f"Remote '{name}' deleted.")
+            self.notify(f"Destination '{name}' deleted.")
         self._refresh_table()
 
     def action_go_back(self) -> None:

@@ -16,20 +16,20 @@ class WizardScreen(Screen):
                 yield Static(
                     "[bold]Welcome to gniza Backup Manager![/bold]\n\n"
                     "This wizard will help you set up your first backup:\n\n"
-                    "  1. Configure a backup destination (remote)\n"
-                    "  2. Define what to back up (target)\n"
+                    "  1. Configure a backup destination\n"
+                    "  2. Define what to back up (source)\n"
                     "  3. Optionally run your first backup\n",
                     id="wizard-welcome",
                     markup=True,
                 )
                 if not has_remotes():
-                    yield Button("Step 1: Add Remote", variant="primary", id="wiz-remote")
+                    yield Button("Step 1: Add Destination", variant="primary", id="wiz-remote")
                 else:
-                    yield Static("[green]Remote configured.[/green]", markup=True)
+                    yield Static("[green]Destination configured.[/green]", markup=True)
                 if not has_targets():
-                    yield Button("Step 2: Add Target", variant="primary", id="wiz-target")
+                    yield Button("Step 2: Add Source", variant="primary", id="wiz-target")
                 else:
-                    yield Static("[green]Target configured.[/green]", markup=True)
+                    yield Static("[green]Source configured.[/green]", markup=True)
                 yield Button("Continue to Main Menu", id="wiz-continue")
                 yield Button("Skip Setup", id="wiz-skip")
         yield Footer()

@@ -61,22 +61,22 @@ class TargetsScreen(Screen):
                 from tui.screens.target_edit import TargetEditScreen
                 self.app.push_screen(TargetEditScreen(name), callback=lambda _: self._refresh_table())
             else:
-                self.notify("Select a target first", severity="warning")
+                self.notify("Select a source first", severity="warning")
         elif event.button.id == "btn-delete":
             name = self._selected_target()
             if name:
                 self.app.push_screen(
-                    ConfirmDialog(f"Delete target '{name}'? This cannot be undone.", "Delete Target"),
+                    ConfirmDialog(f"Delete source '{name}'? This cannot be undone.", "Delete Source"),
                     callback=lambda ok: self._delete_target(name) if ok else None,
                 )
             else:
-                self.notify("Select a target first", severity="warning")
+                self.notify("Select a source first", severity="warning")
 
     def _delete_target(self, name: str) -> None:
         conf = CONFIG_DIR / "targets.d" / f"{name}.conf"
         if conf.is_file():
             conf.unlink()
-            self.notify(f"Target '{name}' deleted.")
+            self.notify(f"Source '{name}' deleted.")
         self._refresh_table()
 
     def action_go_back(self) -> None:

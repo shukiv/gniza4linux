@@ -1,7 +1,7 @@
-# gniza — Remote Configuration
+# gniza — Destination Configuration
 # Copy to remotes.d/<name>.conf
 
-# Remote type: ssh, local, s3, gdrive
+# Destination type: ssh, local, s3, gdrive
 REMOTE_TYPE="ssh"
 
 # SSH settings

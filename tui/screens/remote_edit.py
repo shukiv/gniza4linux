@@ -167,7 +167,7 @@ class RemoteEditScreen(Screen):
                 callback=self._base_path_selected,
             )
         else:
-            self.notify("Browse not available for this remote type", severity="warning")
+            self.notify("Browse not available for this destination type", severity="warning")
 
     def _base_path_selected(self, path: str | None) -> None:
         if path:
@@ -183,7 +183,7 @@ class RemoteEditScreen(Screen):
                 self.notify("Invalid name.", severity="error")
                 return
             if (CONFIG_DIR / "remotes.d" / f"{name}.conf").exists():
-                self.notify(f"Remote '{name}' already exists.", severity="error")
+                self.notify(f"Destination '{name}' already exists.", severity="error")
                 return
         else:
             name = self._edit_name
@@ -213,12 +213,12 @@ class RemoteEditScreen(Screen):
         )
 
         if rtype == "ssh" and not remote.host:
-            self.notify("Host is required for SSH remotes", severity="error")
+            self.notify("Host is required for SSH destinations", severity="error")
             return
 
         conf = CONFIG_DIR / "remotes.d" / f"{name}.conf"
         write_conf(conf, remote.to_conf())
-        self.notify(f"Remote '{name}' saved.")
+        self.notify(f"Destination '{name}' saved.")
         self.dismiss(name)
 
     def action_go_back(self) -> None:

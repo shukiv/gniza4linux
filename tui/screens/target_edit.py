@@ -81,7 +81,7 @@ class TargetEditScreen(Screen):
                 yield Input(value=target.include, placeholder="*.conf,docs/", id="te-include")
                 yield Static("Exclude patterns:")
                 yield Input(value=target.exclude, placeholder="*.tmp,*.log", id="te-exclude")
-                yield Static("Remote override:")
+                yield Static("Destination override:")
                 yield Input(value=target.remote, placeholder="Leave empty for default", id="te-remote")
                 yield Static("Retention override:")
                 yield Input(value=target.retention, placeholder="Leave empty for default", id="te-retention")

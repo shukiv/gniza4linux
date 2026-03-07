@@ -8,26 +8,26 @@
 <div class="stats shadow w-full mb-6">
     <div class="stat">
         <div class="stat-title">Sources</div>
-        <div class="stat-value text-primary">{{ targets|length }}</div>
+        <div class="stat-value">{{ targets|length }}</div>
         <div class="stat-desc">{{ targets|selectattr('enabled', 'equalto', 'yes')|list|length }} enabled</div>
     </div>
     <div class="stat">
         <div class="stat-title">Destinations</div>
-        <div class="stat-value text-info">{{ remotes|length }}</div>
+        <div class="stat-value">{{ remotes|length }}</div>
         <div class="stat-desc">backup destinations</div>
     </div>
     <div class="stat">
         <div class="stat-title">Schedules</div>
-        <div class="stat-value text-warning">{{ schedules|length }}</div>
+        <div class="stat-value">{{ schedules|length }}</div>
         <div class="stat-desc">{{ schedules|selectattr('active', 'equalto', 'yes')|list|length }} active</div>
     </div>
     <div class="stat">
         <div class="stat-title">Last Backup</div>
         {% if last_log %}
-        <div class="stat-value text-lg {{ 'text-success' if last_log.status == 'success' else 'text-error' if last_log.status == 'error' else 'text-warning' }}">{{ last_log.status|upper }}</div>
+        <div class="stat-value text-lg">{{ last_log.status|upper }}</div>
         <div class="stat-desc">{{ last_log.name }}</div>
         {% else %}
-        <div class="stat-value text-lg text-base-content/40">N/A</div>
+        <div class="stat-value text-lg">N/A</div>
         <div class="stat-desc">no logs found</div>
         {% endif %}
     </div>

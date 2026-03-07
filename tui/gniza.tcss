@@ -86,25 +86,19 @@ Select {
     margin: 0;
 }
 
-#settings-screen TabbedContent {
-    height: 1fr;
-}
-
-#settings-screen ContentSwitcher {
+.settings-section {
+    height: auto;
     border: round $accent;
-    padding: 1;
+    padding: 1 2;
+    margin: 0 0 1 0;
 }
 
-#settings-screen TabPane {
-    padding: 0 1;
+.settings-section Static {
+    margin: 0;
 }
 
-#settings-screen TabPane Static {
-    margin: 0 0 0 0;
-}
-
-#settings-screen TabPane Input,
-#settings-screen TabPane Select {
+.settings-section Input,
+.settings-section Select {
     margin: 0 0 1 0;
 }
 

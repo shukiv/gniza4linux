@@ -207,3 +207,27 @@
     </div>
 </form>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Destination Editor</h3>
+<p class="mb-3 text-base-content/70">Add or edit a backup destination.</p>
+<h4 class="font-semibold text-sm mb-1">Types</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>SSH</strong> — Remote server via SSH/rsync.</li>
+    <li><strong>Local</strong> — Local directory or mounted drive.</li>
+    <li><strong>S3</strong> — Amazon S3 or compatible storage.</li>
+    <li><strong>Google Drive</strong> — Google Drive via service account.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">SSH fields</h4>
+<p class="mb-3 text-base-content/70">Host, port, user, and either SSH key or password authentication.</p>
+<h4 class="font-semibold text-sm mb-1">Common fields</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Base path</strong> — Root directory for backups on the destination.</li>
+    <li><strong>Bandwidth limit</strong> — Throttle transfer speed in KB/s (0 = unlimited).</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>For SSH, ensure the destination user has write access to the base path.</li>
+    <li>Use key-based auth for unattended backups.</li>
+</ul>
+{% endblock %}

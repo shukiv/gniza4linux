@@ -62,3 +62,26 @@
     </div>
 </div>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Logs</h3>
+<p class="mb-3 text-base-content/70">View backup operation logs.</p>
+<h4 class="font-semibold text-sm mb-1">Table columns</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Status</strong> — Outcome (Success, Failed, Skipped, Interrupted, Empty).</li>
+    <li><strong>Date/Time</strong> — When the operation ran.</li>
+    <li><strong>Size</strong> — Log file size.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Status detection</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><span class="text-success">Success</span> — 'Backup completed' found, no errors.</li>
+    <li><span class="text-error">Failed</span> — ERROR or FATAL entries found.</li>
+    <li><span class="text-warning">Skipped</span> — All targets were disabled.</li>
+    <li><span class="text-warning">Interrupted</span> — Log exists but backup did not complete.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>The 20 most recent logs are shown.</li>
+    <li>Check logs after scheduled backups to verify they ran successfully.</li>
+</ul>
+{% endblock %}

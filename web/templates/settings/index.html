@@ -142,3 +142,29 @@
     </div>
 </form>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Settings</h3>
+<p class="mb-3 text-base-content/70">Global application settings.</p>
+<h4 class="font-semibold text-sm mb-1">General</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Log Level</strong> — Verbosity of log output.</li>
+    <li><strong>Log Retention</strong> — Days to keep log files.</li>
+    <li><strong>Retention Count</strong> — Default number of snapshots to keep.</li>
+    <li><strong>Bandwidth Limit</strong> — Default transfer speed limit in KB/s.</li>
+    <li><strong>Disk Threshold</strong> — Warn when destination disk usage exceeds this percentage.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Email Notifications</h4>
+<p class="mb-3 text-base-content/70">Configure SMTP to receive email alerts on backup success or failure.</p>
+<h4 class="font-semibold text-sm mb-1">SSH</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Timeout</strong> — Seconds before SSH gives up.</li>
+    <li><strong>Retries</strong> — Number of retry attempts.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Web Dashboard</h4>
+<p class="mb-3 text-base-content/70">Port, host, and API key for the web interface.</p>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>Per-schedule settings can override the default retention count.</li>
+</ul>
+{% endblock %}

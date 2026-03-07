@@ -82,3 +82,20 @@
 
 </div>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Destinations</h3>
+<p class="mb-3 text-base-content/70">List and manage backup destinations.</p>
+<h4 class="font-semibold text-sm mb-1">Table columns</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Name</strong> — Unique destination identifier.</li>
+    <li><strong>Type</strong> — Connection type (SSH, Local, S3, Google Drive).</li>
+    <li><strong>Host/Path</strong> — Connection details.</li>
+    <li><strong>Disk</strong> — Available space (loaded in background).</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>Always test a new destination before running backups.</li>
+    <li>The Disk column shows used/total space and may take a moment to load for SSH destinations.</li>
+</ul>
+{% endblock %}

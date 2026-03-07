@@ -76,3 +76,18 @@
     </div>
 </div>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Restore</h3>
+<p class="mb-3 text-base-content/70">Restore files and databases from a destination snapshot.</p>
+<h4 class="font-semibold text-sm mb-1">Fields</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Source</strong> — The backup source to restore.</li>
+    <li><strong>Destination</strong> — The destination that holds the snapshot.</li>
+    <li><strong>Snapshot</strong> — The specific point-in-time snapshot to restore from. Loaded after selecting source and destination.</li>
+    <li><strong>Restore location</strong> — Choose 'In-place' to overwrite original files, or 'Custom directory' to restore to a different path.</li>
+    <li><strong>Restore MySQL</strong> — Toggle whether to restore MySQL databases (only shown if the source has MySQL backup enabled).</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Warning</h4>
+<p class="text-base-content/70">In-place restore will overwrite existing files. Consider restoring to a custom directory first to verify the contents.</p>
+{% endblock %}

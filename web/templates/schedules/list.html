@@ -98,3 +98,22 @@
 
 </div>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Schedules</h3>
+<p class="mb-3 text-base-content/70">Manage scheduled backup jobs via cron.</p>
+<h4 class="font-semibold text-sm mb-1">Table columns</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Name</strong> — Schedule identifier.</li>
+    <li><strong>Active</strong> — Whether the schedule is enabled.</li>
+    <li><strong>Type</strong> — Frequency (hourly/daily/weekly/monthly/custom).</li>
+    <li><strong>Time</strong> — When the backup runs.</li>
+    <li><strong>Last/Next Run</strong> — Timing information.</li>
+    <li><strong>Sources/Destinations</strong> — Scope of the schedule.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>The cron daemon must be running for schedules to execute.</li>
+    <li>Changes are automatically synced to crontab.</li>
+</ul>
+{% endblock %}

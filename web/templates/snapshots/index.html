@@ -57,3 +57,19 @@
     </div>
 </div>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Snapshots Browser</h3>
+<p class="mb-3 text-base-content/70">Browse snapshots stored on backup destinations.</p>
+<h4 class="font-semibold text-sm mb-1">Fields</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Source</strong> — The backup source.</li>
+    <li><strong>Destination</strong> — The destination holding snapshots.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>Each snapshot is a timestamped directory on the destination containing the backed-up files.</li>
+    <li>Loading may take a moment for SSH destinations.</li>
+    <li>Use the Restore screen to actually restore files from a snapshot.</li>
+</ul>
+{% endblock %}

@@ -56,7 +56,7 @@ class DocsPanel(VerticalScroll):
         self._check_show()
 
     def _check_show(self) -> None:
-        self.display = self.app.size.width >= 80
+        self.display = self.app.size.width >= 90
 
     @classmethod
     def for_screen(cls, screen_id: str) -> "DocsPanel":

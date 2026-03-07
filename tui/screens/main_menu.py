@@ -32,12 +32,12 @@ LOGO = """\
 MENU_ITEMS = [
     ("targets", "Sources"),
     ("remotes", "Destinations"),
+    ("schedule", "Schedules"),
     None,
     ("backup", "Backup"),
     ("restore", "Restore"),
     ("running_tasks", "Running Tasks"),
     None,
-    ("schedule", "Schedules"),
     ("snapshots", "Snapshots"),
     ("logs", "Logs"),
     ("settings", "Settings"),

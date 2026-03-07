@@ -61,8 +61,7 @@ def running_badge():
 @bp.route("/<job_id>/log")
 @login_required
 def log(job_id):
-    offset = request.args.get("offset", 0, type=int)
-    lines, total = web_job_manager.get_log_lines(job_id, offset)
+    lines, total = web_job_manager.get_log_lines(job_id)
     job = web_job_manager.get_job(job_id)
     return render_template("jobs/log_partial.html", lines=lines, total=total, job=job)
 
@@ -71,12 +70,10 @@ def log(job_id):
 @login_required
 def stream(job_id):
     def generate():
-        offset = 0
         while True:
-            lines, total = web_job_manager.get_log_lines(job_id, offset)
+            lines, total = web_job_manager.get_log_lines(job_id)
             for line in lines:
                 yield f"data: {line}\n\n"
-            offset = total
             job = web_job_manager.get_job(job_id)
             if job and job.status != "running":
                 yield f"event: done\ndata: {job.status}\n\n"

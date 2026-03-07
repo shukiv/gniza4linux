@@ -16,13 +16,13 @@ class TargetsScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="targets-screen"):
+                yield Button("← Back", id="btn-back", classes="back-btn")
                 yield Static("Sources", id="screen-title")
                 yield DataTable(id="targets-table")
                 with Horizontal(id="targets-buttons"):
                     yield Button("Add", variant="primary", id="btn-add")
                     yield Button("Edit", id="btn-edit")
                     yield Button("Delete", variant="error", id="btn-delete")
-                    yield Button("Back", id="btn-back")
             yield DocsPanel.for_screen("targets-screen")
         yield Footer()
 

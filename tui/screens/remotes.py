@@ -18,6 +18,7 @@ class RemotesScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="remotes-screen"):
+                yield Button("← Back", id="btn-back", classes="back-btn")
                 yield Static("Destinations", id="screen-title")
                 yield DataTable(id="remotes-table")
                 with Horizontal(id="remotes-buttons"):
@@ -25,7 +26,6 @@ class RemotesScreen(Screen):
                     yield Button("Edit", id="btn-edit")
                     yield Button("Test", variant="warning", id="btn-test")
                     yield Button("Delete", variant="error", id="btn-delete")
-                    yield Button("Back", id="btn-back")
             yield DocsPanel.for_screen("remotes-screen")
         yield Footer()
 

@@ -18,6 +18,7 @@ class BackupScreen(Screen):
         remotes = list_conf_dir("remotes.d")
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="backup-screen"):
+                yield Button("← Back", id="btn-back", classes="back-btn")
                 yield Static("Backup", id="screen-title")
                 if not targets:
                     yield Static("No sources configured. Add a source first.")
@@ -38,7 +39,6 @@ class BackupScreen(Screen):
                     with Horizontal(id="backup-buttons"):
                         yield Button("Run Backup", variant="primary", id="btn-backup")
                         yield Button("Backup All", variant="warning", id="btn-backup-all")
-                        yield Button("Back", id="btn-back")
             yield DocsPanel.for_screen("backup-screen")
         yield Footer()
 

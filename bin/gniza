@@ -43,8 +43,8 @@ Options:
   --version         Show version
 
 Commands:
-  targets           Manage sources (list, add, delete, show)
-  remotes           Manage destinations (list, add, delete, show, test)
+  sources           Manage sources (list, add, delete, show)
+  destinations      Manage destinations (list, add, delete, show, test)
   backup            Run backup
   restore           Restore from a snapshot
   snapshots         List or browse snapshots
@@ -74,41 +74,41 @@ Options:
   --version         Show version
 
 Sources (what to back up):
-  targets list                          List all configured sources
-  targets add --name=NAME --folders=PATHS
+  sources list                          List all configured sources
+  sources add --name=NAME --folders=PATHS
                                         Create a new source
-  targets delete --name=NAME            Delete a source
-  targets show --name=NAME              Show full source configuration
+  sources delete --name=NAME            Delete a source
+  sources show --name=NAME              Show full source configuration
 
 Destinations (where to store backups):
-  remotes list                          List all configured destinations
-  remotes add --name=NAME               Create a new destination (edit config manually or via TUI)
-  remotes delete --name=NAME            Delete a destination
-  remotes show --name=NAME              Show full destination configuration
-  remotes test --name=NAME              Validate destination connectivity
-  remotes disk-info-short --name=NAME   Show destination disk usage (used/total/free)
+  destinations list                          List all configured destinations
+  destinations add --name=NAME               Create a new destination (edit config manually or via TUI)
+  destinations delete --name=NAME            Delete a destination
+  destinations show --name=NAME              Show full destination configuration
+  destinations test --name=NAME              Validate destination connectivity
+  destinations disk-info-short --name=NAME   Show destination disk usage (used/total/free)
 
 Operations:
-  backup [--target=NAME] [--remote=NAME] [--all]
+  backup [--source=NAME] [--destination=NAME] [--all]
       Run backup. If no source is specified, all sources are backed up.
-      Use --target=a,b,c to back up multiple sources.
-      Use --remote=NAME to target a specific destination.
+      Use --source=a,b,c to back up multiple sources.
+      Use --destination=NAME to target a specific destination.
 
-  restore --target=NAME --snapshot=TS [--remote=NAME] [--dest=DIR]
+  restore --source=NAME --snapshot=TS [--destination=NAME] [--dest=DIR]
           [--folder=PATH] [--skip-mysql]
       Restore from a snapshot. Use --dest for custom restore location.
       Use --folder to restore a single directory from the snapshot.
       Use --skip-mysql to skip MySQL database restore.
 
-  retention [--target=NAME] [--remote=NAME] [--all]
+  retention [--source=NAME] [--destination=NAME] [--all]
       Enforce snapshot retention policies. Deletes snapshots beyond
       the configured retention count (oldest first, pinned preserved).
 
 Snapshots:
-  snapshots list [--target=NAME] [--remote=NAME]
+  snapshots list [--source=NAME] [--destination=NAME]
       List available snapshots. Filter by source and/or destination.
 
-  snapshots browse --target=NAME --snapshot=TS [--remote=NAME]
+  snapshots browse --source=NAME --snapshot=TS [--destination=NAME]
       List all files in a specific snapshot.
 
 Scheduling:
@@ -236,8 +236,8 @@ run_cli() {
     case "${SUBCOMMAND:-}" in
         backup)
             local target="" remote="" all=false
-            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
-            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            target=$(_parse_flag "--source" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
 
             trap release_all_target_locks EXIT
@@ -264,9 +264,9 @@ run_cli() {
 
         restore)
             local target="" snapshot="" remote="" dest="" folder=""
-            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            target=$(_parse_flag "--source" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             snapshot=$(_parse_flag "--snapshot" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
-            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             dest=$(_parse_flag "--dest" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             folder=$(_parse_flag "--folder" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
 
@@ -278,7 +278,7 @@ run_cli() {
             done
             [[ -n "$skip_mysql" ]] && export SKIP_MYSQL_RESTORE="yes"
 
-            [[ -z "$target" ]] && die "restore requires --target=NAME"
+            [[ -z "$target" ]] && die "restore requires --source=NAME"
 
             if [[ -z "$remote" ]]; then
                 remote=$(list_remotes | head -1)
@@ -292,7 +292,7 @@ run_cli() {
             fi
             ;;
 
-        targets)
+        sources)
             local action="${SUBCMD_ARGS[0]:-list}"
             local name="" folders=""
             name=$(_parse_flag "--name" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
@@ -377,7 +377,7 @@ run_cli() {
             esac
             ;;
 
-        remotes)
+        destinations)
             local action="${SUBCMD_ARGS[0]:-list}"
             local name=""
             name=$(_parse_flag "--name" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
@@ -460,8 +460,8 @@ run_cli() {
         snapshots)
             local action="${SUBCMD_ARGS[0]:-list}"
             local target="" remote=""
-            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
-            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            target=$(_parse_flag "--source" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
 
             case "$action" in
                 list)
@@ -484,7 +484,7 @@ run_cli() {
                     _restore_remote_globals
                     ;;
                 browse)
-                    [[ -z "$target" ]] && die "browse requires --target=NAME"
+                    [[ -z "$target" ]] && die "browse requires --source=NAME"
                     local snapshot=""
                     snapshot=$(_parse_flag "--snapshot" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
                     [[ -z "$snapshot" ]] && die "browse requires --snapshot=TS"
@@ -502,8 +502,8 @@ run_cli() {
 
         retention)
             local target="" remote="" all=false
-            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
-            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            target=$(_parse_flag "--source" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
 
             if [[ -z "$remote" ]]; then
@@ -560,8 +560,8 @@ run_cli() {
         scheduled-run)
             local sched_name="" target="" remote=""
             sched_name=$(_parse_flag "--schedule" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
-            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
-            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            target=$(_parse_flag "--source" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             [[ -z "$sched_name" ]] && die "scheduled-run requires --schedule=NAME"
 
             trap release_all_target_locks EXIT

@@ -73,7 +73,7 @@ class RetentionScreen(Screen):
     async def _do_cleanup(self, target: str) -> None:
         log_screen = OperationLog(f"Retention: {target}", show_spinner=False)
         self.app.push_screen(log_screen)
-        rc = await stream_cli(log_screen.write, "retention", f"--target={target}")
+        rc = await stream_cli(log_screen.write, "retention", f"--source={target}")
         if rc == 0:
             log_screen.write("\n[green]Cleanup completed.[/green]")
         else:

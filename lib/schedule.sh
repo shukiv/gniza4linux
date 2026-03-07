@@ -6,8 +6,8 @@
 #   SCHEDULE_TIME="HH:MM"
 #   SCHEDULE_DAY=""        # dow (0-6) for weekly, dom (1-28) for monthly
 #   SCHEDULE_CRON=""       # full 5-field cron expr for custom
-#   REMOTES=""             # comma-separated remote names (empty = all)
-#   TARGETS=""             # comma-separated target names (empty = all)
+#   DESTINATIONS=""        # comma-separated remote names (empty = all)
+#   SOURCES=""             # comma-separated target names (empty = all)
 #
 # Cron lines are tagged with "# gniza4linux:<name>" for clean install/remove.
 
@@ -179,10 +179,10 @@ build_cron_line() {
     local bin_path; bin_path=$(_gniza4linux_bin)
     local extra_flags=""
     if [[ -n "$SCHEDULE_REMOTES" ]]; then
-        extra_flags+=" --remote=$SCHEDULE_REMOTES"
+        extra_flags+=" --destination=$SCHEDULE_REMOTES"
     fi
     if [[ -n "$SCHEDULE_TARGETS" ]]; then
-        extra_flags+=" --target=$SCHEDULE_TARGETS"
+        extra_flags+=" --source=$SCHEDULE_TARGETS"
     fi
 
     echo "${cron_expr} PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\" ${bin_path} scheduled-run --schedule=${name}${extra_flags} >>\"${LOG_DIR}/cron.log\" 2>&1"

@@ -88,7 +88,7 @@ class RestoreScreen(Screen):
         snap_sel = self.query_one("#restore-snapshot", Select)
         snap_sel.set_options([])
         self.notify(f"Loading snapshots for {target}/{remote}...")
-        rc, stdout, stderr = await run_cli("snapshots", "list", f"--target={target}", f"--remote={remote}")
+        rc, stdout, stderr = await run_cli("snapshots", "list", f"--source={target}", f"--destination={remote}")
         lines = [l.strip() for l in stdout.splitlines() if l.strip() and not l.startswith("===")]
         if lines:
             snap_sel.set_options([(s, s) for s in lines])
@@ -148,7 +148,7 @@ class RestoreScreen(Screen):
 
     def _do_restore(self, target: str, remote: str, snapshot: str, dest: str, skip_mysql: bool = False) -> None:
         job = job_manager.create_job("restore", f"Restore: {target}")
-        args = ["restore", f"--target={target}", f"--remote={remote}", f"--snapshot={snapshot}"]
+        args = ["restore", f"--source={target}", f"--destination={remote}", f"--snapshot={snapshot}"]
         if dest:
             args.append(f"--dest={dest}")
         if skip_mysql:

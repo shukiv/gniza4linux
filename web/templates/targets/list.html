@@ -35,11 +35,8 @@
                         <td>{{ t.remote or '--' }}</td>
                         <td>
                             <form method="POST" action="{{ url_for('targets.toggle', name=t.name) }}" class="inline">
-                                {% if t.enabled == 'yes' %}
-                                <button type="submit" class="badge badge-success badge-md gap-1 cursor-pointer">Enabled</button>
-                                {% else %}
-                                <button type="submit" class="badge badge-error badge-md gap-1 cursor-pointer">Disabled</button>
-                                {% endif %}
+                                <input type="checkbox" class="toggle toggle-success toggle-sm" {{ 'checked' if t.enabled == 'yes' else '' }}
+                                       onchange="this.form.submit()">
                             </form>
                         </td>
                         <td>

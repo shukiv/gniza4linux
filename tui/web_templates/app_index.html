@@ -165,46 +165,6 @@
         }
       })();
 
-      // Mobile: floating button to dismiss keyboard
-      (function() {
-        if (!("ontouchstart" in window)) return;
-
-        var btn = document.createElement("div");
-        btn.id = "kb-dismiss";
-        btn.textContent = "\u2328\u2193";
-        btn.style.cssText = "position:fixed;bottom:12px;right:12px;z-index:9999;" +
-          "width:48px;height:48px;border-radius:50%;background:rgba(94,11,167,0.9);" +
-          "color:#fff;font-size:20px;display:none;align-items:center;justify-content:center;" +
-          "cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.5);user-select:none;" +
-          "-webkit-tap-highlight-color:transparent;touch-action:manipulation;";
-        document.addEventListener("DOMContentLoaded", function() {
-          document.body.appendChild(btn);
-        });
-
-        // Show dismiss button when keyboard is likely open (textarea focused)
-        document.addEventListener("focusin", function(e) {
-          if (e.target && e.target.classList && e.target.classList.contains("xterm-helper-textarea")) {
-            btn.style.display = "flex";
-          }
-        }, true);
-
-        // Dismiss keyboard on tap
-        btn.addEventListener("touchstart", function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          var ta = document.querySelector(".xterm-helper-textarea");
-          if (ta) ta.blur();
-          btn.style.display = "none";
-        }, { passive: false });
-
-        // Hide button when keyboard closes
-        document.addEventListener("focusout", function(e) {
-          if (e.target && e.target.classList && e.target.classList.contains("xterm-helper-textarea")) {
-            setTimeout(function() { btn.style.display = "none"; }, 300);
-          }
-        }, true);
-      })();
-
       // Touch-to-scroll: translate swipe into mouse wheel for Textual scrollable containers
       (function() {
         var touchStartY = null;

@@ -50,7 +50,7 @@ def _last_log_info():
     status = "unknown"
     for line in reversed(list(lines)):
         lower = line.lower()
-        if "completed successfully" in lower or "backup done" in lower:
+        if "completed" in lower and ("backup" in lower or "successfully" in lower):
             status = "success"
             break
         if "error" in lower or "failed" in lower:

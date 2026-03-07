@@ -432,14 +432,6 @@ TARGET_POST_HOOK="systemctl start myapp"
 - **Pre-hook failure** aborts the backup
 - **Post-hook failure** is logged as a warning
 
-## Testing
-
-```bash
-bash tests/test_utils.sh
-bash tests/test_config.sh
-bash tests/test_targets.sh
-```
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.

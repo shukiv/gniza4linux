@@ -68,7 +68,23 @@ def _test_source(target):
                 pass
         return True, None
 
-    # s3, gdrive — skip testing
+    if target.source_type == "s3":
+        from tui.rclone_test import test_rclone_s3
+        return test_rclone_s3(
+            bucket=target.source_s3_bucket,
+            region=target.source_s3_region,
+            endpoint=target.source_s3_endpoint,
+            access_key_id=target.source_s3_access_key_id,
+            secret_access_key=target.source_s3_secret_access_key,
+        )
+
+    if target.source_type == "gdrive":
+        from tui.rclone_test import test_rclone_gdrive
+        return test_rclone_gdrive(
+            sa_file=target.source_gdrive_sa_file,
+            root_folder_id=target.source_gdrive_root_folder_id,
+        )
+
     return True, None
 
 

@@ -296,7 +296,33 @@ class RemoteEditScreen(Screen):
                 return False
             return True
 
-        # s3, gdrive — skip testing
+        if remote.type == "s3":
+            self.notify("Testing S3 connection...")
+            from tui.rclone_test import test_rclone_s3
+            ok, err = test_rclone_s3(
+                bucket=remote.s3_bucket,
+                region=remote.s3_region,
+                endpoint=remote.s3_endpoint,
+                access_key_id=remote.s3_access_key_id,
+                secret_access_key=remote.s3_secret_access_key,
+            )
+            if not ok:
+                self.notify(f"S3 test failed: {err}", severity="error")
+                return False
+            return True
+
+        if remote.type == "gdrive":
+            self.notify("Testing Google Drive connection...")
+            from tui.rclone_test import test_rclone_gdrive
+            ok, err = test_rclone_gdrive(
+                sa_file=remote.gdrive_sa_file,
+                root_folder_id=remote.gdrive_root_folder_id,
+            )
+            if not ok:
+                self.notify(f"Google Drive test failed: {err}", severity="error")
+                return False
+            return True
+
         return True
 
     def action_go_back(self) -> None:

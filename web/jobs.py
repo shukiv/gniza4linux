@@ -118,6 +118,7 @@ class WebJobManager:
         except Exception:
             return
         now = datetime.now()
+        changed = False
         refreshed = {}
         for entry in entries:
             job_id = entry["id"]
@@ -134,6 +135,7 @@ class WebJobManager:
                     entry["status"] = status
                     entry["return_code"] = rc
                     entry["finished_at"] = now.isoformat()
+                    changed = True
                 except PermissionError:
                     pass  # alive but can't signal
 
@@ -144,6 +146,7 @@ class WebJobManager:
                     try:
                         age = (now - datetime.fromisoformat(fin)).total_seconds() / 3600
                         if age > FINISHED_JOB_TTL_HOURS:
+                            changed = True
                             continue
                     except Exception:
                         pass
@@ -162,6 +165,8 @@ class WebJobManager:
             )
             refreshed[job_id] = job
         self._jobs = refreshed
+        if changed:
+            self._save_registry()
 
     def _save_registry(self):
         entries = []

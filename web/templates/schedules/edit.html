@@ -166,3 +166,28 @@
     </div>
 </form>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Schedule Editor</h3>
+<p class="mb-3 text-base-content/70">Add or edit a scheduled backup.</p>
+<h4 class="font-semibold text-sm mb-1">Schedule types</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Hourly</strong> — Run every N hours.</li>
+    <li><strong>Daily</strong> — Run at a set time on selected days.</li>
+    <li><strong>Weekly</strong> — Run once a week on a chosen day.</li>
+    <li><strong>Monthly</strong> — Run once a month on a chosen day.</li>
+    <li><strong>Custom cron</strong> — Use a raw 5-field cron expression for full control.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Fields</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Time</strong> — The time of day to run (HH:MM).</li>
+    <li><strong>Sources</strong> — Which sources to back up. Leave empty to back up all sources.</li>
+    <li><strong>Destinations</strong> — Which destinations to use. Leave empty to use all destinations.</li>
+    <li><strong>Retention count</strong> — Override global retention for this schedule. Leave empty for default.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>Daily schedules let you pick specific days of the week.</li>
+    <li>Custom cron format: minute hour day month weekday.</li>
+</ul>
+{% endblock %}

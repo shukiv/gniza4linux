@@ -42,3 +42,17 @@
     </div>
 </div>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Retention Cleanup</h3>
+<p class="mb-3 text-base-content/70">Remove old snapshots based on retention count.</p>
+<h4 class="font-semibold text-sm mb-1">Fields</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Source</strong> — Run cleanup for a specific source.</li>
+    <li><strong>Default retention count</strong> — Number of snapshots to keep per source/destination pair.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">How it works</h4>
+<p class="mb-3 text-base-content/70">Retention keeps the N most recent snapshots and deletes the rest. Per-schedule overrides take priority over the default count.</p>
+<h4 class="font-semibold text-sm mb-1">Warning</h4>
+<p class="text-base-content/70 text-warning">Deleted snapshots cannot be recovered.</p>
+{% endblock %}

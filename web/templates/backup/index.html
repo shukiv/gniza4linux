@@ -39,3 +39,19 @@
     </div>
 </div>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Backup</h3>
+<p class="mb-3 text-base-content/70">Run backups of configured sources to backup destinations.</p>
+<h4 class="font-semibold text-sm mb-1">Fields</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Source</strong> — The backup source to run. Each source defines which folders and databases to back up.</li>
+    <li><strong>Destination</strong> — Where to send the backup. Choose a specific destination or 'Default (all)' to back up to every configured destination.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>Backups run in the background. You can monitor progress on the Running Tasks screen.</li>
+    <li>Each backup creates a timestamped snapshot on the destination, so you can restore any point in time.</li>
+    <li>Use retention cleanup to remove old snapshots.</li>
+</ul>
+{% endblock %}

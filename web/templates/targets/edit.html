@@ -303,3 +303,25 @@
     </div>
 </form>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Source Editor</h3>
+<p class="mb-3 text-base-content/70">Add or edit a backup source configuration.</p>
+<h4 class="font-semibold text-sm mb-1">Fields</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Name</strong> — Unique identifier (letters, digits, dash, underscore; max 32 chars).</li>
+    <li><strong>Folders</strong> — Comma-separated paths to back up. Use Browse to pick folders interactively.</li>
+    <li><strong>Include/Exclude</strong> — Glob patterns to filter files (e.g. *.conf, *.log).</li>
+    <li><strong>Pre/Post hooks</strong> — Shell commands to run before/after the backup.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Source types</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Local</strong> — Default. Back up folders on this machine.</li>
+    <li><strong>SSH</strong> — Pull files from a source server via SSH/rsync.</li>
+    <li><strong>S3</strong> — Pull files from an S3-compatible bucket.</li>
+    <li><strong>Google Drive</strong> — Pull files via service account.</li>
+</ul>
+<p class="mb-3 text-base-content/70">When using a source server, specify remote paths in the Folders field instead of local paths.</p>
+<h4 class="font-semibold text-sm mb-1">MySQL</h4>
+<p class="text-base-content/70">Enable MySQL to dump databases alongside files. Choose 'All databases' or select specific ones. Leave user/password empty for socket auth.</p>
+{% endblock %}

@@ -9,7 +9,14 @@
 </div>
 
 <form method="POST" action="{{ url_for('targets.save') }}"
-      x-data="{ sourceType: '{{ target.source_type }}', mysqlEnabled: {{ 'true' if target.mysql_enabled == 'yes' else 'false' }}, sourceAuthMethod: '{{ target.source_auth_method or 'key' }}' }">
+      x-data="{
+          sourceType: '{{ target.source_type }}',
+          mysqlEnabled: {{ 'true' if target.mysql_enabled == 'yes' else 'false' }},
+          sourceAuthMethod: '{{ target.source_auth_method or 'key' }}',
+          folderList: {{ target.folders.split(',') | map('trim') | select | list | tojson }},
+          addFolder(path) { path = path.trim(); if (path && !this.folderList.includes(path)) this.folderList.push(path); },
+          removeFolder(i) { this.folderList.splice(i, 1); }
+      }">
     {% if not is_new %}
     <input type="hidden" name="original_name" value="{{ target.name }}">
     {% endif %}
@@ -137,10 +144,22 @@
                 </div>
             </div>
             <div class="form-control mt-2">
-                <label class="label"><span class="label-text">Folders (one per line)</span></label>
-                <div class="flex gap-2 items-start">
-                    <textarea name="folders" id="folders-textarea" class="textarea textarea-bordered h-24 font-mono flex-1" placeholder="/home&#10;/etc&#10;/var/www">{{ target.folders.replace(',', '\n') }}</textarea>
-                    <button type="button" class="btn btn-outline btn-sm mt-1"
+                <label class="label"><span class="label-text">Folders</span></label>
+                <input type="hidden" name="folders" :value="folderList.join('\n')">
+                <div class="flex flex-wrap gap-2 mb-2 min-h-[2rem]">
+                    <template x-for="(folder, i) in folderList" :key="i">
+                        <span class="badge badge-lg gap-1 font-mono">
+                            <span x-text="folder"></span>
+                            <button type="button" class="btn btn-ghost btn-xs btn-circle" @click="removeFolder(i)">&times;</button>
+                        </span>
+                    </template>
+                    <span x-show="folderList.length === 0" class="text-base-content/40 text-sm">No folders added</span>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" class="input input-bordered input-sm font-mono flex-1" placeholder="/path/to/folder" x-ref="folderInput"
+                           @keydown.enter.prevent="addFolder($refs.folderInput.value); $refs.folderInput.value = ''">
+                    <button type="button" class="btn btn-outline btn-sm" @click="addFolder($refs.folderInput.value); $refs.folderInput.value = ''">Add</button>
+                    <button type="button" class="btn btn-outline btn-sm"
                             x-show="sourceType === 'local' || sourceType === 'ssh'"
                             @click="
                                 let url;
@@ -178,13 +197,7 @@
             <dialog id="folder_browser_modal_folders" class="modal"
                     @folder-selected.window="
                         if ($event.detail.target === 'folders') {
-                            let ta = document.getElementById('folders-textarea');
-                            let val = ta.value.trim();
-                            let path = $event.detail.path;
-                            if (val && !val.endsWith('\n')) { val += '\n'; }
-                            if (!val.split('\n').map(s => s.trim()).includes(path)) {
-                                ta.value = val + path + '\n';
-                            }
+                            addFolder($event.detail.path);
                             document.getElementById('folder_browser_modal_folders').close();
                         }
                     ">

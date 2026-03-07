@@ -1,4 +1,6 @@
+import os
 import re
+import subprocess
 from pathlib import Path
 from textual.app import ComposeResult
 from textual.screen import Screen
@@ -92,7 +94,7 @@ class RemoteEditScreen(Screen):
                 yield Static("Root Folder ID:", id="lbl-gdfolder", classes="gdrive-field")
                 yield Input(value=remote.gdrive_root_folder_id, id="re-gdfolder", classes="gdrive-field")
                 with Horizontal(id="re-buttons"):
-                    yield Button("Save", variant="primary", id="btn-save")
+                    yield Button("Test & Save", variant="primary", id="btn-save")
                     yield Button("Cancel", id="btn-cancel")
             yield DocsPanel.for_screen("remote-edit")
         yield Footer()
@@ -222,10 +224,80 @@ class RemoteEditScreen(Screen):
             self.notify("Host is required for SSH destinations", severity="error")
             return
 
+        if not self._test_remote(remote):
+            return
+
         conf = CONFIG_DIR / "remotes.d" / f"{name}.conf"
         write_conf(conf, remote.to_conf())
         self.notify(f"Destination '{name}' saved.")
         self.dismiss(name)
+
+    def _ssh_cmd(self, host, port="22", user="root", key="", password=""):
+        ssh_opts = [
+            "ssh",
+            "-o", "BatchMode=yes",
+            "-o", "StrictHostKeyChecking=accept-new",
+            "-o", "ConnectTimeout=10",
+            "-p", port or "22",
+        ]
+        if key:
+            ssh_opts += ["-i", key]
+        ssh_opts.append(f"{user}@{host}")
+        if password:
+            return ["sshpass", "-p", password] + ssh_opts
+        return ssh_opts
+
+    def _test_remote(self, remote: Remote) -> bool:
+        if remote.type == "local":
+            base = remote.base or "/backups"
+            try:
+                os.makedirs(base, exist_ok=True)
+            except OSError as e:
+                self.notify(f"Cannot create base path '{base}': {e}", severity="error")
+                return False
+            return True
+
+        if remote.type == "ssh":
+            self.notify("Testing SSH connection...")
+            key = remote.key if remote.auth_method == "key" else ""
+            password = remote.password if remote.auth_method == "password" else ""
+            cmd = self._ssh_cmd(remote.host, remote.port, remote.user, key, password)
+            base = remote.base or "/backups"
+            try:
+                result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15)
+                if result.returncode != 0:
+                    self.notify(f"SSH connection failed: {result.stderr.strip() or 'unknown error'}", severity="error")
+                    return False
+            except subprocess.TimeoutExpired:
+                self.notify("SSH connection timed out", severity="error")
+                return False
+            except OSError as e:
+                self.notify(f"SSH connection failed: {e}", severity="error")
+                return False
+            try:
+                result = subprocess.run(cmd + ["mkdir", "-p", base], capture_output=True, text=True, timeout=15)
+                if result.returncode != 0:
+                    self.notify(f"Failed to create base path: {result.stderr.strip()}", severity="error")
+                    return False
+            except (subprocess.TimeoutExpired, OSError) as e:
+                self.notify(f"Failed to create base path: {e}", severity="error")
+                return False
+            try:
+                test_file = f"{base}/validation_success.txt"
+                result = subprocess.run(
+                    cmd + ["sh", "-c", f'echo "gniza validation" > {test_file}'],
+                    capture_output=True, text=True, timeout=15,
+                )
+                if result.returncode != 0:
+                    self.notify(f"Failed to write test file: {result.stderr.strip()}", severity="error")
+                    return False
+            except (subprocess.TimeoutExpired, OSError) as e:
+                self.notify(f"Failed to write test file: {e}", severity="error")
+                return False
+            return True
+
+        # s3, gdrive — skip testing
+        return True
 
     def action_go_back(self) -> None:
         self.dismiss(None)

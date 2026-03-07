@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
@@ -13,6 +14,66 @@ from web.backend import run_cli_sync
 bp = Blueprint("remotes", __name__, url_prefix="/destinations")
 
 _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
+
+
+def _ssh_cmd(host, port="22", user="root", key="", password=""):
+    ssh_opts = [
+        "ssh",
+        "-o", "BatchMode=yes",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", "ConnectTimeout=10",
+        "-p", port or "22",
+    ]
+    if key:
+        ssh_opts += ["-i", key]
+    ssh_opts.append(f"{user}@{host}")
+    if password:
+        return ["sshpass", "-p", password] + ssh_opts
+    return ssh_opts
+
+
+def _test_remote(remote):
+    if remote.type == "local":
+        base = remote.base or "/backups"
+        try:
+            os.makedirs(base, exist_ok=True)
+        except OSError as e:
+            return False, f"Cannot create base path '{base}': {e}"
+        return True, None
+
+    if remote.type == "ssh":
+        key = remote.key if remote.auth_method == "key" else ""
+        password = remote.password if remote.auth_method == "password" else ""
+        cmd = _ssh_cmd(remote.host, remote.port, remote.user, key, password)
+        base = remote.base or "/backups"
+        try:
+            result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15)
+            if result.returncode != 0:
+                return False, f"SSH connection failed: {result.stderr.strip() or 'unknown error'}"
+        except subprocess.TimeoutExpired:
+            return False, "SSH connection timed out"
+        except OSError as e:
+            return False, f"SSH connection failed: {e}"
+        try:
+            result = subprocess.run(cmd + ["mkdir", "-p", base], capture_output=True, text=True, timeout=15)
+            if result.returncode != 0:
+                return False, f"Failed to create base path: {result.stderr.strip()}"
+        except (subprocess.TimeoutExpired, OSError) as e:
+            return False, f"Failed to create base path: {e}"
+        try:
+            test_file = f"{base}/validation_success.txt"
+            result = subprocess.run(
+                cmd + ["sh", "-c", f'echo "gniza validation" > {test_file}'],
+                capture_output=True, text=True, timeout=15,
+            )
+            if result.returncode != 0:
+                return False, f"Failed to write test file: {result.stderr.strip()}"
+        except (subprocess.TimeoutExpired, OSError) as e:
+            return False, f"Failed to write test file: {e}"
+        return True, None
+
+    # s3, gdrive — skip testing
+    return True, None
 
 
 def _load_remotes():
@@ -94,6 +155,13 @@ def save():
         gdrive_sa_file=form.get("gdrive_sa_file", ""),
         gdrive_root_folder_id=form.get("gdrive_root_folder_id", ""),
     )
+
+    ok, msg = _test_remote(remote)
+    if ok is False:
+        flash(msg, "error")
+        if original_name:
+            return redirect(url_for("remotes.edit", name=original_name))
+        return redirect(url_for("remotes.new"))
 
     write_conf(CONFIG_DIR / "remotes.d" / f"{remote.name}.conf", remote.to_conf())
     flash(f"Destination '{remote.name}' saved.", "success")

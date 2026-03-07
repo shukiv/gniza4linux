@@ -8,7 +8,8 @@ Screen {
     text-style: bold;
     color: #00cc00;
     padding: 1 0;
-    text-align: center;
+    width: 1fr;
+    content-align: center middle;
 }
 
 /* Main menu */
@@ -173,6 +174,11 @@ SelectionList {
     min-width: 10;
     height: 3;
     margin: 0 0 0 0;
+}
+
+#title-bar {
+    height: auto;
+    align: left middle;
 }
 
 /* Button rows */

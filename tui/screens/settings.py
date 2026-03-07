@@ -21,8 +21,9 @@ class SettingsScreen(Screen):
         settings = AppSettings.from_conf(conf)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="settings-screen"):
-                yield Button("← Back", id="btn-back", classes="back-btn")
-                yield Static("Settings", id="screen-title")
+                with Horizontal(id="title-bar"):
+                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Static("Settings", id="screen-title")
                 with Vertical(classes="settings-section", id="section-general"):
                     yield Static("Log Level:")
                     yield Select(

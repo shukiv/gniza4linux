@@ -39,7 +39,7 @@ def snapshots(target_name, remote_name):
     snapshot_list = []
     try:
         rc, stdout, stderr = run_cli_sync(
-            "list-snapshots", "--target", target_name, "--remote", remote_name,
+            "snapshots", "list", f"--source={target_name}", f"--destination={remote_name}",
             timeout=30,
         )
         if rc == 0 and stdout.strip():
@@ -55,6 +55,8 @@ def run():
     target_name = request.form.get("target", "").strip()
     remote_name = request.form.get("remote", "").strip()
     snapshot = request.form.get("snapshot", "").strip()
+    dest = request.form.get("dest", "").strip()
+    skip_mysql = request.form.get("skip_mysql")
 
     if not target_name or not remote_name or not snapshot:
         flash("Please select a source, destination, and snapshot.", "error")
@@ -64,10 +66,13 @@ def run():
         flash("Invalid input.", "error")
         return redirect(url_for("restore.index"))
 
+    args = ["restore", f"--source={target_name}", f"--destination={remote_name}", f"--snapshot={snapshot}"]
+    if dest:
+        args.append(f"--dest={dest}")
+    if skip_mysql:
+        args.append("--skip-mysql")
+
     label = f"Restore {target_name} <- {remote_name} ({snapshot})"
-    web_job_manager.create_and_start(
-        "restore", label,
-        "restore", "--target", target_name, "--remote", remote_name, "--snapshot", snapshot,
-    )
+    web_job_manager.create_and_start("restore", label, *args)
     flash(f"Restore job started: {label}", "success")
     return redirect(url_for("jobs.index"))

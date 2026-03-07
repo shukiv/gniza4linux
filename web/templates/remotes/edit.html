@@ -9,7 +9,7 @@
 </div>
 
 <form method="POST" action="{{ url_for('remotes.save') }}"
-      x-data="{ remoteType: '{{ remote.type }}' }">
+      x-data="{ remoteType: '{{ remote.type }}', authMethod: '{{ remote.auth_method or 'key' }}' }">
     {% if not is_new %}
     <input type="hidden" name="original_name" value="{{ remote.name }}">
     {% endif %}
@@ -70,16 +70,16 @@
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text">Auth Method</span></label>
-                        <select name="auth_method" class="select select-bordered">
+                        <select name="auth_method" class="select select-bordered" x-model="authMethod">
                             <option value="key" {{ 'selected' if remote.auth_method == 'key' else '' }}>SSH Key</option>
                             <option value="password" {{ 'selected' if remote.auth_method == 'password' else '' }}>Password</option>
                         </select>
                     </div>
-                    <div class="form-control">
+                    <div class="form-control" x-show="authMethod === 'key'" x-cloak>
                         <label class="label"><span class="label-text">SSH Key Path</span></label>
                         <input type="text" name="key" value="{{ remote.key }}" class="input input-bordered" placeholder="~/.ssh/id_rsa">
                     </div>
-                    <div class="form-control">
+                    <div class="form-control" x-show="authMethod === 'password'" x-cloak>
                         <label class="label"><span class="label-text">Password</span></label>
                         <input type="password" name="password" value="{{ remote.password }}" class="input input-bordered">
                     </div>

@@ -27,18 +27,27 @@ def run():
     target_name = request.form.get("target", "").strip()
     remote_name = request.form.get("remote", "").strip()
 
-    if not target_name or not remote_name:
-        flash("Please select both a source and a destination.", "error")
+    if target_name and not _VALID_NAME_RE.match(target_name):
+        flash("Invalid source name.", "error")
+        return redirect(url_for("backup.index"))
+    if remote_name and not _VALID_NAME_RE.match(remote_name):
+        flash("Invalid destination name.", "error")
         return redirect(url_for("backup.index"))
 
-    if not _VALID_NAME_RE.match(target_name) or not _VALID_NAME_RE.match(remote_name):
-        flash("Invalid source or destination name.", "error")
-        return redirect(url_for("backup.index"))
+    if not target_name:
+        label = "Backup All"
+        web_job_manager.create_and_start(
+            "backup", label,
+            "backup", "--all",
+        )
+    else:
+        args = ["backup", f"--source={target_name}"]
+        label_parts = [f"Backup {target_name}"]
+        if remote_name:
+            args.append(f"--destination={remote_name}")
+            label_parts.append(f"-> {remote_name}")
+        label = " ".join(label_parts)
+        web_job_manager.create_and_start("backup", label, *args)
 
-    label = f"Backup {target_name} -> {remote_name}"
-    web_job_manager.create_and_start(
-        "backup", label,
-        "backup", "--target", target_name, "--remote", remote_name,
-    )
     flash(f"Backup job started: {label}", "success")
     return redirect(url_for("jobs.index"))

@@ -12,8 +12,10 @@
                 <thead>
                     <tr>
                         <th>File</th>
+                        <th>Date</th>
+                        <th>Time</th>
                         <th>Size</th>
-                        <th>Last Modified</th>
+                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -21,6 +23,8 @@
                     {% for f in log_files %}
                     <tr class="hover">
                         <td class="font-mono font-medium">{{ f.name }}</td>
+                        <td>{{ f.date }}</td>
+                        <td>{{ f.time }}</td>
                         <td>
                             {% if f.size < 1024 %}
                             {{ f.size }} B
@@ -30,7 +34,15 @@
                             {{ "%.1f"|format(f.size / 1048576) }} MB
                             {% endif %}
                         </td>
-                        <td>{{ f.mtime.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            {% if f.status in ('Success', 'OK') %}
+                            <span class="badge badge-success badge-sm">{{ f.status }}</span>
+                            {% elif f.status == 'Failed' %}
+                            <span class="badge badge-error badge-sm">{{ f.status }}</span>
+                            {% else %}
+                            <span class="badge badge-warning badge-sm">{{ f.status }}</span>
+                            {% endif %}
+                        </td>
                         <td>
                             <a href="{{ url_for('logs.view', filename=f.name) }}" class="btn btn-ghost btn-xs">View</a>
                         </td>

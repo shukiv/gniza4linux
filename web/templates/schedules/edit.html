@@ -9,7 +9,12 @@
 </div>
 
 <form method="POST" action="{{ url_for('schedules.save') }}"
-      x-data="{ scheduleType: '{{ schedule.schedule }}' }">
+      x-data="{ scheduleType: '{{ schedule.schedule }}' }"
+      @submit.prevent="
+        if (document.querySelectorAll('input[name=targets]:checked').length === 0) { alert('Select at least one source.'); return; }
+        if (document.querySelectorAll('input[name=remotes]:checked').length === 0) { alert('Select at least one destination.'); return; }
+        $el.submit();
+      ">
     {% if not is_new %}
     <input type="hidden" name="original_name" value="{{ schedule.name }}">
     {% endif %}
@@ -27,6 +32,7 @@
                 <div class="form-control">
                     <label class="label"><span class="label-text">Schedule Type</span></label>
                     <select x-model="scheduleType" name="schedule" class="select select-bordered">
+                        <option value="hourly">Hourly</option>
                         <option value="daily">Daily</option>
                         <option value="weekly">Weekly</option>
                         <option value="monthly">Monthly</option>
@@ -34,27 +40,55 @@
                     </select>
                 </div>
 
-                <!-- Daily / Weekly / Monthly: time field -->
-                <div class="form-control" x-show="scheduleType !== 'custom'" x-cloak>
-                    <label class="label"><span class="label-text">Time</span></label>
-                    <input type="time" name="time" value="{{ schedule.time }}" class="input input-bordered">
-                </div>
-
-                <!-- Weekly: day of week -->
-                <div class="form-control" x-show="scheduleType === 'weekly'" x-cloak>
-                    <label class="label"><span class="label-text">Day of Week</span></label>
-                    <select name="day" class="select select-bordered">
-                        {% for d in ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] %}
-                        <option value="{{ d }}" {{ 'selected' if schedule.day == d else '' }}>{{ d|capitalize }}</option>
+                <!-- Hourly: interval -->
+                <div class="form-control" x-show="scheduleType === 'hourly'" x-cloak>
+                    <label class="label"><span class="label-text">Every N Hours</span></label>
+                    <select name="hourly_interval" class="select select-bordered">
+                        {% for h in [1, 2, 3, 4, 6, 8, 12] %}
+                        <option value="{{ h }}" {{ 'selected' if schedule.schedule == 'hourly' and schedule.day == h|string else '' }}>Every {{ h }} hour{{ 's' if h > 1 else '' }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
-                <!-- Monthly: day of month -->
+                <!-- Daily / Weekly / Monthly: time field -->
+                <div class="form-control" x-show="scheduleType !== 'custom' && scheduleType !== 'hourly'" x-cloak>
+                    <label class="label"><span class="label-text">Time</span></label>
+                    <input type="time" name="time" value="{{ schedule.time }}" class="input input-bordered">
+                </div>
+
+                <!-- Daily: day of week checkboxes (multi-select) -->
+                <div class="form-control md:col-span-2" x-show="scheduleType === 'daily'" x-cloak>
+                    <label class="label"><span class="label-text">Days of Week</span></label>
+                    <div class="flex flex-wrap gap-3">
+                        {% set day_list = schedule.day.split(',') if schedule.day else [] %}
+                        {% for d, label in [('0','Sun'),('1','Mon'),('2','Tue'),('3','Wed'),('4','Thu'),('5','Fri'),('6','Sat')] %}
+                        <label class="label cursor-pointer gap-1">
+                            <input type="checkbox" name="day" value="{{ d }}" class="checkbox checkbox-primary checkbox-sm"
+                                   {{ 'checked' if d in day_list else '' }}>
+                            <span class="label-text">{{ label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Weekly: day of week select -->
+                <div class="form-control" x-show="scheduleType === 'weekly'" x-cloak>
+                    <label class="label"><span class="label-text">Day of Week</span></label>
+                    <select name="weekly_day" class="select select-bordered">
+                        {% for val, label in [('0','Sunday'),('1','Monday'),('2','Tuesday'),('3','Wednesday'),('4','Thursday'),('5','Friday'),('6','Saturday')] %}
+                        <option value="{{ val }}" {{ 'selected' if schedule.schedule == 'weekly' and schedule.day == val else '' }}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Monthly: day of month select (fixed options) -->
                 <div class="form-control" x-show="scheduleType === 'monthly'" x-cloak>
                     <label class="label"><span class="label-text">Day of Month</span></label>
-                    <input type="number" name="day" value="{{ schedule.day }}" class="input input-bordered"
-                           min="1" max="31" placeholder="1">
+                    <select name="monthly_day" class="select select-bordered">
+                        {% for d in [1, 7, 14, 21, 28] %}
+                        <option value="{{ d }}" {{ 'selected' if schedule.schedule == 'monthly' and schedule.day == d|string else '' }}>{{ d }}{{ 'st' if d in [1, 21] else ('nd' if d == 2 else 'th') }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
 
                 <!-- Custom: cron expression -->
@@ -70,22 +104,40 @@
 
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
-            <h2 class="card-title text-base mb-4">Targets &amp; Destinations</h2>
+            <h2 class="card-title text-base mb-4">Sources &amp; Destinations</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="form-control">
-                    <label class="label"><span class="label-text">Targets (comma-separated)</span></label>
-                    <input type="text" name="targets" value="{{ schedule.targets }}" class="input input-bordered"
-                           placeholder="all or target1,target2">
+                    <label class="label"><span class="label-text">Sources</span></label>
+                    {% set selected_targets = schedule.targets.split(',') if schedule.targets else [] %}
                     {% if targets %}
-                    <label class="label"><span class="label-text-alt text-base-content/40">Available: {{ targets|join(', ') }}</span></label>
+                    <div class="flex flex-col gap-2">
+                        {% for t in targets %}
+                        <label class="label cursor-pointer gap-2 justify-start">
+                            <input type="checkbox" name="targets" value="{{ t }}" class="checkbox checkbox-primary checkbox-sm"
+                                   {{ 'checked' if t in selected_targets else '' }}>
+                            <span class="label-text">{{ t }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <span class="text-base-content/40 text-sm">No sources configured</span>
                     {% endif %}
                 </div>
                 <div class="form-control">
-                    <label class="label"><span class="label-text">Remotes (comma-separated)</span></label>
-                    <input type="text" name="remotes" value="{{ schedule.remotes }}" class="input input-bordered"
-                           placeholder="all or remote1,remote2">
+                    <label class="label"><span class="label-text">Destinations</span></label>
+                    {% set selected_remotes = schedule.remotes.split(',') if schedule.remotes else [] %}
                     {% if remotes %}
-                    <label class="label"><span class="label-text-alt text-base-content/40">Available: {{ remotes|join(', ') }}</span></label>
+                    <div class="flex flex-col gap-2">
+                        {% for r in remotes %}
+                        <label class="label cursor-pointer gap-2 justify-start">
+                            <input type="checkbox" name="remotes" value="{{ r }}" class="checkbox checkbox-primary checkbox-sm"
+                                   {{ 'checked' if r in selected_remotes else '' }}>
+                            <span class="label-text">{{ r }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <span class="text-base-content/40 text-sm">No destinations configured</span>
                     {% endif %}
                 </div>
             </div>

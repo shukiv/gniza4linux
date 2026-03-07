@@ -4,7 +4,7 @@ from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
 )
 
-from tui.config import list_conf_dir
+from tui.config import CONFIG_DIR, list_conf_dir, parse_conf, update_conf_key
 from web.app import login_required
 from web.jobs import web_job_manager
 
@@ -17,38 +17,43 @@ _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 @login_required
 def index():
     targets = list_conf_dir("targets.d")
-    remotes = list_conf_dir("remotes.d")
-    return render_template("retention/index.html", targets=targets, remotes=remotes)
+    data = parse_conf(CONFIG_DIR / "gniza.conf")
+    retention_count = data.get("RETENTION_COUNT", "7")
+    return render_template("retention/index.html", targets=targets, retention_count=retention_count)
 
 
 @bp.route("/run", methods=["POST"])
 @login_required
 def run():
     target_name = request.form.get("target", "").strip()
-    remote_name = request.form.get("remote", "").strip()
-    dry_run = request.form.get("dry_run")
 
     if target_name and not _VALID_NAME_RE.match(target_name):
         flash("Invalid source name.", "error")
-        return redirect(url_for("retention.index"))
-    if remote_name and not _VALID_NAME_RE.match(remote_name):
-        flash("Invalid destination name.", "error")
         return redirect(url_for("retention.index"))
 
     args = ["retention"]
     label_parts = ["Retention"]
 
     if target_name:
-        args += ["--target", target_name]
+        args.append(f"--source={target_name}")
         label_parts.append(target_name)
-    if remote_name:
-        args += ["--remote", remote_name]
-        label_parts.append(remote_name)
-    if dry_run:
-        args.append("--dry-run")
-        label_parts.append("(dry-run)")
+    else:
+        args.append("--all")
+        label_parts.append("(all)")
 
     label = " ".join(label_parts)
     web_job_manager.create_and_start("retention", label, *args)
     flash(f"Retention job started: {label}", "success")
     return redirect(url_for("jobs.index"))
+
+
+@bp.route("/save-default", methods=["POST"])
+@login_required
+def save_default():
+    retention_count = request.form.get("retention_count", "").strip()
+    if not retention_count.isdigit() or int(retention_count) < 1:
+        flash("Retention count must be a positive number.", "error")
+        return redirect(url_for("retention.index"))
+    update_conf_key(CONFIG_DIR / "gniza.conf", "RETENTION_COUNT", retention_count)
+    flash(f"Default retention count set to {retention_count}.", "success")
+    return redirect(url_for("retention.index"))

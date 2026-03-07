@@ -13,8 +13,8 @@
             <form method="POST" action="{{ url_for('backup.run') }}">
                 <div class="form-control mb-4">
                     <label class="label"><span class="label-text">Source</span></label>
-                    <select name="target" class="select select-bordered" required>
-                        <option value="" disabled selected>Select a source...</option>
+                    <select name="target" class="select select-bordered">
+                        <option value="">All Sources</option>
                         {% for t in targets %}
                         <option value="{{ t }}">{{ t }}</option>
                         {% endfor %}
@@ -23,16 +23,16 @@
 
                 <div class="form-control mb-6">
                     <label class="label"><span class="label-text">Destination</span></label>
-                    <select name="remote" class="select select-bordered" required>
-                        <option value="" disabled selected>Select a destination...</option>
+                    <select name="remote" class="select select-bordered">
+                        <option value="">Default (all)</option>
                         {% for r in remotes %}
                         <option value="{{ r }}">{{ r }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
-                <div class="card-actions justify-end">
-                    <button type="submit" class="btn btn-primary">Run Backup</button>
+                <div class="card-actions justify-end gap-2">
+                    <button type="submit" class="btn btn-primary" onclick="return confirm('Run backup?')">Run Backup</button>
                 </div>
             </form>
         </div>

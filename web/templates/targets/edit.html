@@ -9,7 +9,7 @@
 </div>
 
 <form method="POST" action="{{ url_for('targets.save') }}"
-      x-data="{ sourceType: '{{ target.source_type }}', mysqlEnabled: {{ 'true' if target.mysql_enabled == 'yes' else 'false' }} }">
+      x-data="{ sourceType: '{{ target.source_type }}', mysqlEnabled: {{ 'true' if target.mysql_enabled == 'yes' else 'false' }}, sourceAuthMethod: '{{ target.source_auth_method or 'key' }}' }">
     {% if not is_new %}
     <input type="hidden" name="original_name" value="{{ target.name }}">
     {% endif %}
@@ -93,16 +93,16 @@
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text">Auth Method</span></label>
-                        <select name="source_auth_method" class="select select-bordered">
+                        <select name="source_auth_method" class="select select-bordered" x-model="sourceAuthMethod">
                             <option value="key" {{ 'selected' if target.source_auth_method == 'key' else '' }}>SSH Key</option>
                             <option value="password" {{ 'selected' if target.source_auth_method == 'password' else '' }}>Password</option>
                         </select>
                     </div>
-                    <div class="form-control">
+                    <div class="form-control" x-show="sourceAuthMethod === 'key'" x-cloak>
                         <label class="label"><span class="label-text">SSH Key Path</span></label>
                         <input type="text" name="source_key" value="{{ target.source_key }}" class="input input-bordered" placeholder="~/.ssh/id_rsa">
                     </div>
-                    <div class="form-control">
+                    <div class="form-control" x-show="sourceAuthMethod === 'password'" x-cloak>
                         <label class="label"><span class="label-text">Password</span></label>
                         <input type="password" name="source_password" value="{{ target.source_password }}" class="input input-bordered">
                     </div>

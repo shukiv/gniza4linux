@@ -78,14 +78,29 @@ def save():
         if old_path.is_file():
             os.unlink(old_path)
 
+    schedule_type = form.get("schedule", "daily")
+
+    day = ""
+    if schedule_type == "daily":
+        day = ",".join(form.getlist("day"))
+    elif schedule_type == "weekly":
+        day = form.get("weekly_day", "")
+    elif schedule_type == "monthly":
+        day = form.get("monthly_day", "")
+    elif schedule_type == "hourly":
+        day = form.get("hourly_interval", "1")
+
+    selected_targets = form.getlist("targets")
+    selected_remotes = form.getlist("remotes")
+
     schedule = Schedule(
         name=name,
-        schedule=form.get("schedule", "daily"),
+        schedule=schedule_type,
         time=form.get("time", "02:00"),
-        day=form.get("day", ""),
+        day=day,
         cron=form.get("cron", ""),
-        targets=form.get("targets", ""),
-        remotes=form.get("remotes", ""),
+        targets=",".join(selected_targets),
+        remotes=",".join(selected_remotes),
         active="yes" if form.get("active") else "no",
     )
 

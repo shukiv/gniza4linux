@@ -165,7 +165,7 @@ send_backup_report() {
 
     if [[ -n "$failed_targets" ]]; then
         body+=""$'\n'
-        body+="Failed targets:"$'\n'
+        body+="Failed sources:"$'\n'
         body+="$failed_targets"$'\n'
     fi
 

@@ -34,7 +34,7 @@ class SnapshotsScreen(Screen):
             with Vertical(id="snapshots-screen"):
                 yield Static("Snapshots Browser", id="screen-title")
                 if not targets or not remotes:
-                    yield Static("Targets and remotes must be configured to browse snapshots.")
+                    yield Static("Sources and destinations must be configured to browse snapshots.")
                 else:
                     yield Static("Source:")
                     yield Select([(t, t) for t in targets], id="snap-target", prompt="Select source")
@@ -77,7 +77,7 @@ class SnapshotsScreen(Screen):
         target_sel = self.query_one("#snap-target", Select)
         remote_sel = self.query_one("#snap-remote", Select)
         if not isinstance(target_sel.value, str) or not isinstance(remote_sel.value, str):
-            self.notify("Select target and remote first", severity="error")
+            self.notify("Select source and destination first", severity="error")
             return
         target = str(target_sel.value)
         remote = str(remote_sel.value)
@@ -98,7 +98,7 @@ class SnapshotsScreen(Screen):
         target_sel = self.query_one("#snap-target", Select)
         remote_sel = self.query_one("#snap-remote", Select)
         if not isinstance(target_sel.value, str) or not isinstance(remote_sel.value, str):
-            self.notify("Select target and remote first", severity="error")
+            self.notify("Select source and destination first", severity="error")
             return
         snapshot = self._selected_snapshot()
         if not snapshot:

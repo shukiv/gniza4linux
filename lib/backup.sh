@@ -356,13 +356,13 @@ backup_all_targets() {
     echo "============================================"
     echo "Timestamp:   $(timestamp)"
     echo "Duration:    $(human_duration $duration)"
-    echo "Remotes:     $(echo "$remotes" | tr '\n' ' ')"
+    echo "Destinations: $(echo "$remotes" | tr '\n' ' ')"
     echo "Total:       $total"
     echo "Succeeded:   ${C_GREEN}${succeeded}${C_RESET}"
     if (( failed > 0 )); then
         echo "Failed:      ${C_RED}${failed}${C_RESET}"
         echo ""
-        echo "Failed targets:"
+        echo "Failed sources:"
         echo "$failed_targets"
     else
         echo "Failed:      0"

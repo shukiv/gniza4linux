@@ -402,14 +402,14 @@ td.name {
     <!-- Stats -->
     <div class="stats">
         <div class="stat-card">
-            <div class="stat-label">Targets</div>
+            <div class="stat-label">Sources</div>
             <div class="stat-value accent">{{ targets|length }}</div>
             <div class="stat-detail">{{ targets|selectattr('enabled', 'equalto', 'yes')|list|length }} enabled</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Remotes</div>
+            <div class="stat-label">Destinations</div>
             <div class="stat-value info">{{ remotes|length }}</div>
-            <div class="stat-detail">storage destinations</div>
+            <div class="stat-detail">backup destinations</div>
         </div>
         <div class="stat-card">
             <div class="stat-label">Schedules</div>
@@ -435,13 +435,13 @@ td.name {
             <div class="card-header">
                 <div class="card-title">
                     <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                    Targets
+                    Sources
                 </div>
             </div>
             <div class="card-body">
                 {% if targets %}
                 <table>
-                    <thead><tr><th>Name</th><th>Remote</th><th>Status</th><th></th></tr></thead>
+                    <thead><tr><th>Name</th><th>Destination</th><th>Status</th><th></th></tr></thead>
                     <tbody>
                     {% for t in targets %}
                     <tr>
@@ -464,7 +464,7 @@ td.name {
                     </tbody>
                 </table>
                 {% else %}
-                <div class="empty">No targets configured</div>
+                <div class="empty">No sources configured</div>
                 {% endif %}
             </div>
         </div>
@@ -474,7 +474,7 @@ td.name {
             <div class="card-header">
                 <div class="card-title">
                     <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="6" cy="18" r="1" fill="currentColor"/></svg>
-                    Remotes
+                    Destinations
                 </div>
             </div>
             <div class="card-body">
@@ -492,7 +492,7 @@ td.name {
                     </tbody>
                 </table>
                 {% else %}
-                <div class="empty">No remotes configured</div>
+                <div class="empty">No destinations configured</div>
                 {% endif %}
             </div>
         </div>

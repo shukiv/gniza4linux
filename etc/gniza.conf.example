@@ -7,7 +7,7 @@ BACKUP_MODE="full"
 # Default bandwidth limit in KB/s (0 = unlimited)
 BWLIMIT=0
 
-# Default retention: number of snapshots to keep per target
+# Default retention: number of snapshots to keep per source
 RETENTION_COUNT=30
 
 # Logging
@@ -33,7 +33,7 @@ SSH_RETRIES=3
 # Extra rsync options (careful: validated for safe characters)
 RSYNC_EXTRA_OPTS=""
 
-# Disk usage threshold (%). Backups abort if remote disk usage >= this value.
+# Disk usage threshold (%). Backups abort if destination disk usage >= this value.
 # Set to 0 to disable the check.
 DISK_USAGE_THRESHOLD=95
 

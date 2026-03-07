@@ -23,6 +23,9 @@ class FolderPicker(ModalScreen[str | None]):
     def compose(self) -> ComposeResult:
         with Vertical(id="folder-picker"):
             yield Static(self._title, id="fp-title")
+            with Horizontal(id="fp-search-row"):
+                yield Input(placeholder="Go to path (e.g. /var/www)", id="fp-search")
+                yield Button("Go", id="fp-go", variant="primary")
             yield _DirOnly(self._start, id="fp-tree")
             with Horizontal(id="fp-new-row"):
                 yield Input(placeholder="New folder name", id="fp-new-name")
@@ -42,10 +45,29 @@ class FolderPicker(ModalScreen[str | None]):
         if event.button.id == "fp-select":
             path = self._get_selected_path()
             self.dismiss(str(path) if path else None)
+        elif event.button.id == "fp-go":
+            self._go_to_path()
         elif event.button.id == "fp-create":
             self._create_folder()
         else:
             self.dismiss(None)
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "fp-search":
+            self._go_to_path()
+
+    def _go_to_path(self) -> None:
+        raw = self.query_one("#fp-search", Input).value.strip()
+        if not raw:
+            return
+        target = Path(raw).expanduser()
+        if not target.is_dir():
+            self.notify(f"Not a directory: {target}", severity="error")
+            return
+        # Replace the tree with a new root
+        tree = self.query_one("#fp-tree", _DirOnly)
+        tree.path = target
+        tree.reload()
 
     def _create_folder(self) -> None:
         name = self.query_one("#fp-new-name", Input).value.strip()

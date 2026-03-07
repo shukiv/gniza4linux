@@ -2,7 +2,7 @@ import subprocess
 
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
-from textual.widgets import Tree, Static, Button
+from textual.widgets import Tree, Static, Button, Input
 from textual.containers import Horizontal, Vertical
 
 
@@ -33,6 +33,9 @@ class RemoteFolderPicker(ModalScreen[str | None]):
     def compose(self) -> ComposeResult:
         with Vertical(id="folder-picker"):
             yield Static(f"{self._title} ({self._user}@{self._host})", id="fp-title")
+            with Horizontal(id="fp-search-row"):
+                yield Input(placeholder="Go to path (e.g. /var/www)", id="fp-search")
+                yield Button("Go", id="fp-go", variant="primary")
             yield Tree("/", id="fp-remote-tree")
             with Horizontal(id="fp-buttons"):
                 yield Button("Select", variant="primary", id="fp-select")
@@ -107,8 +110,33 @@ class RemoteFolderPicker(ModalScreen[str | None]):
                 self.dismiss(str(node.data))
             else:
                 self.dismiss(None)
+        elif event.button.id == "fp-go":
+            self._go_to_path()
         else:
             self.dismiss(None)
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "fp-search":
+            self._go_to_path()
+
+    def _go_to_path(self) -> None:
+        raw = self.query_one("#fp-search", Input).value.strip()
+        if not raw:
+            return
+        path = raw if raw.startswith("/") else "/" + raw
+        dirs = self._list_dirs(path)
+        tree = self.query_one("#fp-remote-tree", Tree)
+        tree.clear()
+        tree.root.data = path
+        tree.root.set_label(path)
+        if not dirs:
+            self.notify(f"No subdirectories in {path}", severity="warning")
+            return
+        for d in dirs:
+            name = d.rstrip("/").rsplit("/", 1)[-1]
+            child = tree.root.add(name, data=d, allow_expand=True)
+            child.add_leaf("...", data=None)
+        tree.root.expand()
 
     def action_cancel(self) -> None:
         self.dismiss(None)

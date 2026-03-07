@@ -23,7 +23,7 @@ class RetentionScreen(Screen):
             with Vertical(id="retention-screen"):
                 yield Static("Retention Cleanup", id="screen-title")
                 if not targets:
-                    yield Static("No targets configured.")
+                    yield Static("No sources configured.")
                 else:
                     yield Static("Source:")
                     yield Select(
@@ -49,7 +49,7 @@ class RetentionScreen(Screen):
         elif event.button.id == "btn-cleanup":
             target_sel = self.query_one("#ret-target", Select)
             if not isinstance(target_sel.value, str):
-                self.notify("Select a target first", severity="error")
+                self.notify("Select a source first", severity="error")
                 return
             target = str(target_sel.value)
             self.app.push_screen(
@@ -58,7 +58,7 @@ class RetentionScreen(Screen):
             )
         elif event.button.id == "btn-cleanup-all":
             self.app.push_screen(
-                ConfirmDialog("Run retention cleanup for ALL targets?", "Confirm"),
+                ConfirmDialog("Run retention cleanup for ALL sources?", "Confirm"),
                 callback=lambda ok: self._do_cleanup_all() if ok else None,
             )
         elif event.button.id == "btn-save-count":
@@ -82,7 +82,7 @@ class RetentionScreen(Screen):
 
     @work
     async def _do_cleanup_all(self) -> None:
-        log_screen = OperationLog("Retention: All Targets", show_spinner=False)
+        log_screen = OperationLog("Retention: All Sources", show_spinner=False)
         self.app.push_screen(log_screen)
         rc = await stream_cli(log_screen.write, "retention", "--all")
         if rc == 0:

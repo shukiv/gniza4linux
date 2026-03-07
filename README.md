@@ -82,6 +82,23 @@ gniza --cli backup --source=mysite
 gniza --cli backup --all
 ```
 
+## Terminal UI
+
+Launch with `gniza` (no arguments). The TUI provides:
+
+- **Sources** — Create, edit, delete backup sources with folder browser
+- **Destinations** — Configure SSH, local, S3, or Google Drive destinations with connection testing
+- **Backup** — Run backups with source/destination selection
+- **Restore** — Browse snapshots and restore to original location or custom directory
+- **Running Tasks** — Monitor active backup/restore jobs with live log output
+- **Schedules** — Manage cron schedules with time/day pickers and toggle switches
+- **Snapshots** — Browse and manage stored snapshots
+- **Logs** — View backup history with pagination
+- **Settings** — Configure global options
+- **Setup Wizard** — Guided first-run configuration
+
+The TUI adapts to terminal width, with an inline documentation panel on wide screens and a help modal on narrow ones.
+
 ## CLI Reference
 
 ```
@@ -387,23 +404,6 @@ gniza web status            # Check status
 Access at `http://<server-ip>:2323`. Credentials are stored in `gniza.conf` as `WEB_USER` and `WEB_API_KEY`.
 
 Supports both root (system service) and user (user service) modes.
-
-## Terminal UI
-
-Launch with `gniza` (no arguments). The TUI provides:
-
-- **Sources** — Create, edit, delete backup sources with folder browser
-- **Destinations** — Configure SSH, local, S3, or Google Drive destinations with connection testing
-- **Backup** — Run backups with source/destination selection
-- **Restore** — Browse snapshots and restore to original location or custom directory
-- **Running Tasks** — Monitor active backup/restore jobs with live log output
-- **Schedules** — Manage cron schedules with time/day pickers and toggle switches
-- **Snapshots** — Browse and manage stored snapshots
-- **Logs** — View backup history with pagination
-- **Settings** — Configure global options
-- **Setup Wizard** — Guided first-run configuration
-
-The TUI adapts to terminal width, with an inline documentation panel on wide screens and a help modal on narrow ones.
 
 ## Disk Space Safety
 

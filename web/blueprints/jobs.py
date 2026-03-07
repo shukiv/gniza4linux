@@ -31,6 +31,13 @@ def table():
     return render_template("jobs/table_partial.html", jobs=jobs, has_running=has_running)
 
 
+@bp.route("/running-badge")
+@login_required
+def running_badge():
+    count = web_job_manager.running_count()
+    return render_template("jobs/running_badge.html", count=count)
+
+
 @bp.route("/<job_id>/log")
 @login_required
 def log(job_id):

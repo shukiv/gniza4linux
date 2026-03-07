@@ -72,8 +72,6 @@ class RemoteEditScreen(Screen):
                     yield Button("Browse...", id="btn-browse-base")
                 yield Static("Bandwidth limit (KB/s, 0=unlimited):")
                 yield Input(value=remote.bwlimit, placeholder="0", id="re-bwlimit")
-                yield Static("Retention count:")
-                yield Input(value=remote.retention_count, placeholder="30", id="re-retention")
                 # S3 fields
                 yield Static("S3 Bucket:", id="lbl-s3bucket", classes="s3-field")
                 yield Input(value=remote.s3_bucket, placeholder="bucket-name", id="re-s3bucket", classes="s3-field")
@@ -202,7 +200,6 @@ class RemoteEditScreen(Screen):
             password=self.query_one("#re-password", Input).value,
             base=self.query_one("#re-base", Input).value.strip() or "/backups",
             bwlimit=self.query_one("#re-bwlimit", Input).value.strip() or "0",
-            retention_count=self.query_one("#re-retention", Input).value.strip() or "30",
             s3_bucket=self.query_one("#re-s3bucket", Input).value.strip(),
             s3_region=self.query_one("#re-s3region", Input).value.strip() or "us-east-1",
             s3_endpoint=self.query_one("#re-s3endpoint", Input).value.strip(),

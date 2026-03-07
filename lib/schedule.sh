@@ -79,6 +79,7 @@ load_schedule() {
     SCHEDULE_ACTIVE="yes"
     SCHEDULE_REMOTES=""
     SCHEDULE_TARGETS=""
+    SCHEDULE_RETENTION_COUNT=""
 
     _safe_source_config "$conf" || {
         log_error "Failed to parse schedule config: $conf"
@@ -88,6 +89,7 @@ load_schedule() {
     # Map REMOTES/TARGETS to SCHEDULE_* to avoid conflicts
     SCHEDULE_REMOTES="${REMOTES:-}"
     SCHEDULE_TARGETS="${TARGETS:-}"
+    SCHEDULE_RETENTION_COUNT="${RETENTION_COUNT:-}"
 
     log_debug "Loaded schedule '$name': ${SCHEDULE} at ${SCHEDULE_TIME:-02:00}, remotes=${SCHEDULE_REMOTES:-all}, targets=${SCHEDULE_TARGETS:-all}"
 }

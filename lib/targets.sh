@@ -50,7 +50,6 @@ load_target() {
     TARGET_EXCLUDE="${TARGET_EXCLUDE:-}"
     TARGET_INCLUDE="${TARGET_INCLUDE:-}"
     TARGET_REMOTE="${TARGET_REMOTE:-}"
-    TARGET_RETENTION="${TARGET_RETENTION:-}"
     TARGET_PRE_HOOK="${TARGET_PRE_HOOK:-}"
     TARGET_POST_HOOK="${TARGET_POST_HOOK:-}"
     TARGET_ENABLED="${TARGET_ENABLED:-yes}"
@@ -175,16 +174,15 @@ validate_target() {
 # ── CRUD ──────────────────────────────────────────────────────
 
 # Write a target .conf file.
-# Usage: create_target <name> <folders> [exclude] [remote] [retention] [pre_hook] [post_hook] [enabled]
+# Usage: create_target <name> <folders> [exclude] [remote] [pre_hook] [post_hook] [enabled]
 create_target() {
     local name="$1"
     local folders="$2"
     local exclude="${3:-}"
     local remote="${4:-}"
-    local retention="${5:-}"
-    local pre_hook="${6:-}"
-    local post_hook="${7:-}"
-    local enabled="${8:-yes}"
+    local pre_hook="${5:-}"
+    local post_hook="${6:-}"
+    local enabled="${7:-yes}"
 
     validate_target_name "$name" || return 1
 
@@ -195,7 +193,6 @@ TARGET_NAME="$name"
 TARGET_FOLDERS="$folders"
 TARGET_EXCLUDE="$exclude"
 TARGET_REMOTE="$remote"
-TARGET_RETENTION="$retention"
 TARGET_PRE_HOOK="$pre_hook"
 TARGET_POST_HOOK="$post_hook"
 TARGET_ENABLED="$enabled"

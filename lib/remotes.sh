@@ -18,7 +18,6 @@ declare -g _SAVED_REMOTE_KEY=""
 declare -g _SAVED_REMOTE_PASSWORD=""
 declare -g _SAVED_REMOTE_BASE=""
 declare -g _SAVED_BWLIMIT=""
-declare -g _SAVED_RETENTION_COUNT=""
 declare -g _SAVED_RSYNC_EXTRA_OPTS=""
 declare -g _SAVED_REMOTE_TYPE=""
 declare -g _SAVED_S3_ACCESS_KEY_ID=""
@@ -39,7 +38,6 @@ _save_remote_globals() {
     _SAVED_REMOTE_PASSWORD="${REMOTE_PASSWORD:-}"
     _SAVED_REMOTE_BASE="${REMOTE_BASE:-/backups}"
     _SAVED_BWLIMIT="${BWLIMIT:-0}"
-    _SAVED_RETENTION_COUNT="${RETENTION_COUNT:-30}"
     _SAVED_RSYNC_EXTRA_OPTS="${RSYNC_EXTRA_OPTS:-}"
     _SAVED_REMOTE_TYPE="${REMOTE_TYPE:-ssh}"
     _SAVED_S3_ACCESS_KEY_ID="${S3_ACCESS_KEY_ID:-}"
@@ -60,7 +58,6 @@ _restore_remote_globals() {
     REMOTE_PASSWORD="$_SAVED_REMOTE_PASSWORD"
     REMOTE_BASE="$_SAVED_REMOTE_BASE"
     BWLIMIT="$_SAVED_BWLIMIT"
-    RETENTION_COUNT="$_SAVED_RETENTION_COUNT"
     RSYNC_EXTRA_OPTS="$_SAVED_RSYNC_EXTRA_OPTS"
     REMOTE_TYPE="$_SAVED_REMOTE_TYPE"
     S3_ACCESS_KEY_ID="$_SAVED_S3_ACCESS_KEY_ID"
@@ -122,7 +119,6 @@ load_remote() {
     REMOTE_PASSWORD="${REMOTE_PASSWORD:-}"
     REMOTE_BASE="${REMOTE_BASE:-$DEFAULT_REMOTE_BASE}"
     BWLIMIT="${BWLIMIT:-$DEFAULT_BWLIMIT}"
-    RETENTION_COUNT="${RETENTION_COUNT:-$DEFAULT_RETENTION_COUNT}"
     RSYNC_EXTRA_OPTS="${RSYNC_EXTRA_OPTS:-}"
 
     # Cloud-specific defaults
@@ -155,12 +151,6 @@ validate_remote() {
     load_remote "$name" || return 1
 
     local errors=0
-
-    # Common validations
-    if ! [[ "$RETENTION_COUNT" =~ ^[0-9]+$ ]] || (( RETENTION_COUNT < 1 )); then
-        log_error "Remote '$name': RETENTION_COUNT must be >= 1, got: $RETENTION_COUNT"
-        ((errors++)) || true
-    fi
 
     case "${REMOTE_TYPE:-ssh}" in
         ssh)

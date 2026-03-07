@@ -108,13 +108,13 @@ class ScheduleEditScreen(Screen):
                 yield Static("Sources (off=all):")
                 for tname in list_conf_dir("targets.d"):
                     with Horizontal(classes="sched-switch-row"):
-                        yield Static(tname, classes="sched-switch-label")
                         yield Switch(value=False, id=f"sched-src-{tname}")
+                        yield Static(tname, classes="sched-switch-label")
                 yield Static("Destinations (off=all):")
                 for rname in list_conf_dir("remotes.d"):
                     with Horizontal(classes="sched-switch-row"):
-                        yield Static(rname, classes="sched-switch-label")
                         yield Switch(value=False, id=f"sched-dst-{rname}")
+                        yield Static(rname, classes="sched-switch-label")
                 with Horizontal(id="sched-edit-buttons"):
                     yield Button("Save", variant="primary", id="btn-save")
                     yield Button("Cancel", id="btn-cancel")

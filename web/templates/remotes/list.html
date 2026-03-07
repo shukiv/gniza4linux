@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/pagination.html" import pagination %}
 
 {% block title %}GNIZA - Destinations{% endblock %}
 {% block page_title %}Destinations{% endblock %}
@@ -54,6 +55,7 @@
                 </tbody>
             </table>
         </div>
+        {{ pagination(page, total_pages, url_for('remotes.index') + '?page=') }}
         {% else %}
         <div class="p-8 text-center text-base-content/40">
             <p class="mb-4">No destinations configured</p>

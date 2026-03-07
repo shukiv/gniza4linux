@@ -1,0 +1,17 @@
+{% macro pagination(page, total_pages, url_prefix) %}
+{% if total_pages > 1 %}
+<div class="flex justify-center py-4">
+    <div class="join">
+        {% if page > 1 %}
+        <a href="{{ url_prefix }}{{ page - 1 }}" class="join-item btn btn-sm">&laquo;</a>
+        {% endif %}
+        {% for p in range(1, total_pages + 1) %}
+        <a href="{{ url_prefix }}{{ p }}" class="join-item btn btn-sm {{ 'btn-active' if p == page else '' }}">{{ p }}</a>
+        {% endfor %}
+        {% if page < total_pages %}
+        <a href="{{ url_prefix }}{{ page + 1 }}" class="join-item btn btn-sm">&raquo;</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endmacro %}

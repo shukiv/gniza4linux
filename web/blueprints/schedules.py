@@ -70,12 +70,21 @@ def _load_schedules():
 @bp.route("/")
 @login_required
 def index():
+    page = request.args.get("page", 1, type=int)
+    if page < 1:
+        page = 1
     try:
         schedules = _load_schedules()
     except Exception:
         schedules = []
         flash("Failed to load schedules.", "error")
-    return render_template("schedules/list.html", schedules=schedules)
+    total = len(schedules)
+    per_page = 20
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page = min(page, total_pages)
+    start = (page - 1) * per_page
+    schedules = schedules[start:start + per_page]
+    return render_template("schedules/list.html", schedules=schedules, page=page, total_pages=total_pages)
 
 
 @bp.route("/new")

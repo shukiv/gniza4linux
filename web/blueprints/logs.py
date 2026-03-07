@@ -90,6 +90,7 @@ def index():
 
     total = len(log_files)
     total_pages = max(1, (total + LOGS_PER_PAGE - 1) // LOGS_PER_PAGE)
+    page = min(page, total_pages)
     start = (page - 1) * LOGS_PER_PAGE
     end = start + LOGS_PER_PAGE
     page_files = log_files[start:end]

@@ -46,9 +46,10 @@
                         <td class="max-w-xs truncate text-base-content/60">{{ s.targets or '--' }}</td>
                         <td class="max-w-xs truncate text-base-content/60">{{ s.remotes or '--' }}</td>
                         <td>
-                            <form method="POST" action="{{ url_for('schedules.toggle', name=s.name) }}" class="inline">
+                            <form method="POST" action="{{ url_for('schedules.toggle', name=s.name) }}" class="inline flex items-center gap-2">
                                 <input type="checkbox" class="toggle toggle-success toggle-sm" {{ 'checked' if s.active == 'yes' else '' }}
                                        onchange="this.form.submit()">
+                                <span class="text-sm {{ 'text-success' if s.active == 'yes' else 'text-base-content/50' }}">{{ 'Enabled' if s.active == 'yes' else 'Disabled' }}</span>
                             </form>
                         </td>
                         <td>

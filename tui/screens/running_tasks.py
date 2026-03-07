@@ -34,13 +34,13 @@ class RunningTasksScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="running-tasks-screen"):
+                yield Button("← Back", id="btn-back", classes="back-btn")
                 yield Static("Running Tasks", id="screen-title")
                 yield DataTable(id="rt-table")
                 with Horizontal(id="rt-buttons"):
                     yield Button("View Log", variant="primary", id="btn-rt-view")
                     yield Button("Kill Job", variant="error", id="btn-rt-kill")
                     yield Button("Clear Finished", variant="warning", id="btn-rt-clear")
-                    yield Button("Back", id="btn-rt-back")
                 yield Static("", id="rt-progress-label")
                 yield ProgressBar(id="rt-progress", total=100, show_eta=False)
                 yield _SafeRichLog(id="rt-log-viewer", wrap=True, highlight=True)
@@ -98,7 +98,7 @@ class RunningTasksScreen(Screen):
             table.move_cursor(row=min(old_row, table.row_count - 1))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-rt-back":
+        if event.button.id == "btn-back":
             self.app.pop_screen()
         elif event.button.id == "btn-rt-clear":
             job_manager.remove_finished()

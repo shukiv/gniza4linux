@@ -21,6 +21,7 @@ class RetentionScreen(Screen):
         current_count = conf.get("RETENTION_COUNT", "30")
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="retention-screen"):
+                yield Button("← Back", id="btn-back", classes="back-btn")
                 yield Static("Retention Cleanup", id="screen-title")
                 if not targets:
                     yield Static("No sources configured.")
@@ -39,7 +40,6 @@ class RetentionScreen(Screen):
                 with Horizontal():
                     yield Input(value=current_count, id="ret-count", placeholder="30")
                     yield Button("Save", id="btn-save-count")
-                yield Button("Back", id="btn-back")
             yield DocsPanel.for_screen("retention-screen")
         yield Footer()
 

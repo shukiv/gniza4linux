@@ -21,6 +21,7 @@ class RestoreScreen(Screen):
         remotes = list_conf_dir("remotes.d")
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="restore-screen"):
+                yield Button("← Back", id="btn-back", classes="back-btn")
                 yield Static("Restore", id="screen-title")
                 if not targets or not remotes:
                     yield Static("Both sources and destinations must be configured for restore.")
@@ -43,7 +44,6 @@ class RestoreScreen(Screen):
                         yield Switch(value=True, id="restore-mysql-switch")
                     with Horizontal(id="restore-buttons"):
                         yield Button("Restore", variant="primary", id="btn-restore")
-                        yield Button("Back", id="btn-back")
             yield DocsPanel.for_screen("restore-screen")
         yield Footer()
 

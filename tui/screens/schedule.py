@@ -21,6 +21,7 @@ class ScheduleScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="schedule-screen"):
+                yield Button("← Back", id="btn-back", classes="back-btn")
                 yield Static("Schedules", id="screen-title")
                 yield DataTable(id="sched-table")
                 with Horizontal(id="sched-buttons"):
@@ -29,7 +30,6 @@ class ScheduleScreen(Screen):
                     yield Button("Toggle Active", variant="warning", id="btn-toggle")
                     yield Button("Delete", variant="error", id="btn-delete")
                     yield Button("Show crontab", id="btn-show")
-                    yield Button("Back", id="btn-back")
             yield DocsPanel.for_screen("schedule-screen")
         yield Footer()
 

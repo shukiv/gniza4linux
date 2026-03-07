@@ -21,6 +21,7 @@ class SettingsScreen(Screen):
         settings = AppSettings.from_conf(conf)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="settings-screen"):
+                yield Button("← Back", id="btn-back", classes="back-btn")
                 yield Static("Settings", id="screen-title")
                 with Vertical(classes="settings-section", id="section-general"):
                     yield Static("Log Level:")
@@ -79,7 +80,6 @@ class SettingsScreen(Screen):
                 with Horizontal(id="set-buttons"):
                     yield Button("Save", variant="primary", id="btn-save")
                     yield Button("Send Test Email", id="btn-test-email")
-                    yield Button("Back", id="btn-back")
             yield DocsPanel.for_screen("settings-screen")
         yield Footer()
 

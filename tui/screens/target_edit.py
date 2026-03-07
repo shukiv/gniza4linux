@@ -7,7 +7,7 @@ from textual.containers import Vertical, Horizontal
 
 from tui.config import parse_conf, write_conf, CONFIG_DIR, list_conf_dir
 from tui.models import Target
-from tui.widgets import FolderPicker, DocsPanel
+from tui.widgets import FolderPicker, RemoteFolderPicker, DocsPanel
 
 _NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')
 
@@ -74,8 +74,9 @@ class TargetEditScreen(Screen):
                 yield Static("Root Folder ID:", classes="source-field source-gdrive-field")
                 yield Input(value=target.source_gdrive_root_folder_id, placeholder="folder ID", id="te-source-gdrive-root-folder-id", classes="source-field source-gdrive-field")
                 yield Static("Folders (comma-separated):")
-                yield Input(value=target.folders, placeholder="/path1,/path2", id="te-folders")
-                yield Button("Browse...", id="btn-browse")
+                with Horizontal(id="te-folders-row"):
+                    yield Input(value=target.folders, placeholder="/path1,/path2", id="te-folders")
+                    yield Button("Browse...", id="btn-browse")
                 yield Static("Include patterns:")
                 yield Input(value=target.include, placeholder="*.conf,docs/", id="te-include")
                 yield Static("Exclude patterns:")
@@ -172,17 +173,33 @@ class TargetEditScreen(Screen):
         elif source_type == "gdrive":
             for w in self.query(".source-gdrive-field"):
                 w.display = True
-        # Hide browse button when remote
-        self.query_one("#btn-browse", Button).display = not is_remote
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-cancel":
             self.dismiss(None)
         elif event.button.id == "btn-browse":
-            self.app.push_screen(
-                FolderPicker("Select folder to back up"),
-                callback=self._folder_selected,
-            )
+            source_type = str(self.query_one("#te-source-type", Select).value)
+            if source_type == "ssh":
+                host = self.query_one("#te-source-host", Input).value.strip()
+                if not host:
+                    self.notify("Enter Source Host first", severity="error")
+                    return
+                self.app.push_screen(
+                    RemoteFolderPicker(
+                        host=host,
+                        user=self.query_one("#te-source-user", Input).value.strip() or "root",
+                        port=self.query_one("#te-source-port", Input).value.strip() or "22",
+                        auth_method=str(self.query_one("#te-source-auth-method", Select).value),
+                        key=self.query_one("#te-source-key", Input).value.strip(),
+                        password=self.query_one("#te-source-password", Input).value.strip(),
+                    ),
+                    callback=self._folder_selected,
+                )
+            else:
+                self.app.push_screen(
+                    FolderPicker("Select folder to back up"),
+                    callback=self._folder_selected,
+                )
         elif event.button.id == "btn-save":
             self._save()
 

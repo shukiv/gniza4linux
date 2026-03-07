@@ -138,8 +138,42 @@
             </div>
             <div class="form-control mt-2">
                 <label class="label"><span class="label-text">Folders (one per line)</span></label>
-                <textarea name="folders" class="textarea textarea-bordered h-24 font-mono" placeholder="/home&#10;/etc&#10;/var/www">{{ target.folders }}</textarea>
+                <div class="flex gap-2 items-start">
+                    <textarea name="folders" id="folders-textarea" class="textarea textarea-bordered h-24 font-mono flex-1" placeholder="/home&#10;/etc&#10;/var/www">{{ target.folders }}</textarea>
+                    <button type="button" class="btn btn-outline btn-sm mt-1"
+                            x-show="sourceType === 'local'"
+                            onclick="document.getElementById('folder_browser_modal_folders').showModal()"
+                            hx-get="{{ url_for('api.browse', path='/', target='folders') }}"
+                            hx-target="#folder-browser-box-folders"
+                            hx-swap="innerHTML">
+                        Browse
+                    </button>
+                </div>
             </div>
+
+            <!-- Folder Browser Modal -->
+            <dialog id="folder_browser_modal_folders" class="modal"
+                    @folder-selected.window="
+                        if ($event.detail.target === 'folders') {
+                            let ta = document.getElementById('folders-textarea');
+                            let val = ta.value.trim();
+                            let path = $event.detail.path;
+                            if (val && !val.endsWith('\n')) { val += '\n'; }
+                            if (!val.split('\n').map(s => s.trim()).includes(path)) {
+                                ta.value = val + path + '\n';
+                            }
+                            document.getElementById('folder_browser_modal_folders').close();
+                        }
+                    ">
+                <div class="modal-box w-11/12 max-w-lg">
+                    <h3 class="font-bold text-lg mb-3">Browse Folders</h3>
+                    <div id="folder-browser-box-folders" class="folder-browser-box"></div>
+                    <div class="modal-action">
+                        <form method="dialog"><button class="btn btn-ghost btn-sm">Close</button></form>
+                    </div>
+                </div>
+                <form method="dialog" class="modal-backdrop"><button>close</button></form>
+            </dialog>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                 <div class="form-control">
                     <label class="label"><span class="label-text">Exclude patterns (one per line)</span></label>

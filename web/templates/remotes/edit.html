@@ -52,7 +52,17 @@
                 </div>
                 <div class="form-control">
                     <label class="label"><span class="label-text">Base Path</span></label>
-                    <input type="text" name="base" value="{{ remote.base }}" class="input input-bordered font-mono" placeholder="/backups">
+                    <div class="flex gap-2">
+                        <input type="text" name="base" id="base-path-input" value="{{ remote.base }}" class="input input-bordered font-mono flex-1" placeholder="/backups">
+                        <button type="button" class="btn btn-outline btn-sm"
+                                x-show="remoteType === 'local'"
+                                onclick="document.getElementById('folder_browser_modal_base').showModal()"
+                                hx-get="{{ url_for('api.browse', path='/', target='base') }}"
+                                hx-target="#folder-browser-box-base"
+                                hx-swap="innerHTML">
+                            Browse
+                        </button>
+                    </div>
                 </div>
                 <div class="form-control">
                     <label class="label"><span class="label-text">Bandwidth Limit (KB/s, 0=unlimited)</span></label>
@@ -149,6 +159,24 @@
             </div>
         </div>
     </div>
+
+    <!-- Folder Browser Modal -->
+    <dialog id="folder_browser_modal_base" class="modal"
+            @folder-selected.window="
+                if ($event.detail.target === 'base') {
+                    document.getElementById('base-path-input').value = $event.detail.path;
+                    document.getElementById('folder_browser_modal_base').close();
+                }
+            ">
+        <div class="modal-box w-11/12 max-w-lg">
+            <h3 class="font-bold text-lg mb-3">Browse Folders</h3>
+            <div id="folder-browser-box-base" class="folder-browser-box"></div>
+            <div class="modal-action">
+                <form method="dialog"><button class="btn btn-ghost btn-sm">Close</button></form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+    </dialog>
 
     <!-- Actions -->
     <div class="flex justify-end gap-2">

@@ -165,77 +165,57 @@
         }
       })();
 
-      // Mobile keyboard control: toggle button to show/hide virtual keyboard
+      // Mobile keyboard control: block virtual keyboard unless toggled open
       (function() {
         if (!("ontouchstart" in window)) return;
 
-        var kbOpen = false;
+        var kbAllowed = false;
 
-        // Create floating keyboard toggle button
+        // Floating toggle button
         var btn = document.createElement("div");
         btn.id = "kb-toggle";
-        btn.textContent = "⌨";
+        btn.textContent = "\u2328";
         btn.style.cssText = "position:fixed;bottom:12px;right:12px;z-index:9999;" +
-          "width:44px;height:44px;border-radius:50%;background:rgba(94,11,167,0.85);" +
-          "color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;" +
-          "cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.4);user-select:none;" +
-          "-webkit-tap-highlight-color:transparent;";
+          "width:48px;height:48px;border-radius:50%;background:rgba(94,11,167,0.9);" +
+          "color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;" +
+          "cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.5);user-select:none;" +
+          "-webkit-tap-highlight-color:transparent;touch-action:manipulation;";
         document.addEventListener("DOMContentLoaded", function() {
           document.body.appendChild(btn);
         });
 
-        function getTA() {
-          return document.querySelector(".xterm-helper-textarea");
-        }
-
-        function openKeyboard() {
-          kbOpen = true;
-          var ta = getTA();
-          if (ta) {
-            ta.setAttribute("inputmode", "text");
-            ta.focus();
-          }
-          btn.style.background = "rgba(0,204,0,0.85)";
-          btn.textContent = "✕";
-        }
-
-        function closeKeyboard() {
-          kbOpen = false;
-          var ta = getTA();
-          if (ta) {
-            ta.setAttribute("inputmode", "none");
-            ta.blur();
-          }
-          btn.style.background = "rgba(94,11,167,0.85)";
-          btn.textContent = "⌨";
-        }
-
-        btn.addEventListener("click", function(e) {
+        btn.addEventListener("touchstart", function(e) {
           e.preventDefault();
           e.stopPropagation();
-          if (kbOpen) closeKeyboard(); else openKeyboard();
-        });
-
-        // Prevent keyboard from auto-opening on every tap
-        document.addEventListener("touchend", function(e) {
-          if (e.target === btn || btn.contains(e.target)) return;
-          if (kbOpen) return;
-          setTimeout(function() {
-            var active = document.activeElement;
-            if (active && active.classList && active.classList.contains("xterm-helper-textarea")) {
-              active.blur();
-            }
-          }, 30);
-        }, { passive: true });
-
-        // Set inputmode=none on xterm textarea once it appears (prevent initial keyboard)
-        var checkReady = setInterval(function() {
-          var ta = getTA();
-          if (ta) {
-            clearInterval(checkReady);
-            ta.setAttribute("inputmode", "none");
+          kbAllowed = !kbAllowed;
+          var ta = document.querySelector(".xterm-helper-textarea");
+          if (kbAllowed) {
+            btn.style.background = "rgba(0,204,0,0.9)";
+            btn.textContent = "\u2715";
+            if (ta) { ta.inputMode = "text"; ta.focus(); }
+          } else {
+            btn.style.background = "rgba(94,11,167,0.9)";
+            btn.textContent = "\u2328";
+            if (ta) { ta.inputMode = "none"; ta.blur(); }
           }
-        }, 200);
+        }, { passive: false });
+
+        // Intercept focus on xterm textarea — set inputmode=none if keyboard not allowed
+        document.addEventListener("focusin", function(e) {
+          if (kbAllowed) return;
+          if (e.target && e.target.classList && e.target.classList.contains("xterm-helper-textarea")) {
+            e.target.inputMode = "none";
+          }
+        }, true);
+
+        // Set inputmode=none as soon as textarea appears
+        new MutationObserver(function(mutations, obs) {
+          var ta = document.querySelector(".xterm-helper-textarea");
+          if (ta) {
+            ta.inputMode = "none";
+            obs.disconnect();
+          }
+        }).observe(document.body, { childList: true, subtree: true });
       })();
 
       // Touch-to-scroll: translate swipe into mouse wheel for Textual scrollable containers

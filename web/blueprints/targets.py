@@ -17,7 +17,7 @@ _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 
 def _lines_to_csv(text: str) -> str:
     """Convert newline-separated textarea input to comma-separated config value."""
-    return ",".join(line.strip() for line in text.splitlines() if line.strip())
+    return ",".join(line.strip().strip('"') for line in text.splitlines() if line.strip())
 
 
 def _ssh_cmd(host, port="22", user="root", key="", password=""):

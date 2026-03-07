@@ -13,7 +13,7 @@
           sourceType: '{{ target.source_type }}',
           mysqlEnabled: {{ 'true' if target.mysql_enabled == 'yes' else 'false' }},
           sourceAuthMethod: '{{ target.source_auth_method or 'key' }}',
-          folderList: {{ target.folders.split(',') | map('trim') | select | list | tojson }},
+          folderList: {{ target.folders.replace('"', '').split(',') | map('trim') | select | list | tojson }},
           addFolder(path) { path = path.trim(); if (path && !this.folderList.includes(path)) this.folderList.push(path); },
           removeFolder(i) { this.folderList.splice(i, 1); }
       }">

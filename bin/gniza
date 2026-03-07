@@ -594,6 +594,29 @@ run_cli() {
             exit "$rc"
             ;;
 
+        test-email)
+            if [[ -z "${NOTIFY_EMAIL:-}" ]]; then
+                echo "Error: NOTIFY_EMAIL is not set. Configure it in Settings first."
+                exit 1
+            fi
+            if [[ -z "${SMTP_HOST:-}" ]]; then
+                echo "Error: SMTP_HOST is not set. Configure SMTP settings first."
+                exit 1
+            fi
+            local hostname; hostname=$(hostname -f 2>/dev/null || hostname)
+            local subject="[gniza] [$hostname] Test Email"
+            local body="This is a test email from gniza on $hostname."$'\n'
+            body+="Sent at: $(date '+%Y-%m-%d %H:%M:%S')"$'\n'
+            body+=""$'\n'
+            body+="If you received this message, your SMTP settings are working correctly."
+            if _send_via_smtp "$subject" "$body"; then
+                echo "Test email sent successfully to $NOTIFY_EMAIL"
+            else
+                echo "Failed to send test email. Check your SMTP settings."
+                exit 1
+            fi
+            ;;
+
         version)
             echo "gniza v${GNIZA4LINUX_VERSION}"
             ;;

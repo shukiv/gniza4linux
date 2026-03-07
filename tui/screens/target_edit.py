@@ -1,7 +1,7 @@
 import re
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, Input, Select
+from textual.widgets import Header, Footer, Static, Button, Input, Select, RadioSet, RadioButton
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
@@ -37,11 +37,11 @@ class TargetEditScreen(Screen):
                     yield Input(value="", placeholder="Target name", id="te-name")
                 yield Static("--- Source ---", classes="section-label")
                 yield Static("Source Type:")
-                yield Select(
-                    [("Local", "local"), ("SSH", "ssh"), ("S3", "s3"), ("Google Drive", "gdrive")],
-                    value=target.source_type,
-                    id="te-source-type",
-                )
+                with RadioSet(id="te-source-type"):
+                    yield RadioButton("Local", value=target.source_type == "local")
+                    yield RadioButton("SSH", value=target.source_type == "ssh")
+                    yield RadioButton("S3", value=target.source_type == "s3")
+                    yield RadioButton("Google Drive", value=target.source_type == "gdrive")
                 yield Static("Source Host:", classes="source-field source-ssh-field")
                 yield Input(value=target.source_host, placeholder="hostname or IP", id="te-source-host", classes="source-field source-ssh-field")
                 yield Static("Source Port:", classes="source-field source-ssh-field")
@@ -131,10 +131,17 @@ class TargetEditScreen(Screen):
         self._update_mysql_visibility()
         self._update_source_visibility()
 
+    _SOURCE_TYPE_MAP = {"Local": "local", "SSH": "ssh", "S3": "s3", "Google Drive": "gdrive"}
+    _SOURCE_TYPE_RMAP = {v: k for k, v in _SOURCE_TYPE_MAP.items()}
+
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id in ("te-mysql-enabled", "te-mysql-mode"):
             self._update_mysql_visibility()
-        elif event.select.id in ("te-source-type", "te-source-auth-method"):
+        elif event.select.id == "te-source-auth-method":
+            self._update_source_visibility()
+
+    def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
+        if event.radio_set.id == "te-source-type":
             self._update_source_visibility()
 
     def _update_mysql_visibility(self) -> None:
@@ -149,8 +156,13 @@ class TargetEditScreen(Screen):
             for w in self.query(".mysql-all-field"):
                 w.display = mode == "all"
 
+    def _get_source_type(self) -> str:
+        radio = self.query_one("#te-source-type", RadioSet)
+        label = str(radio.pressed_button.label) if radio.pressed_button else "Local"
+        return self._SOURCE_TYPE_MAP.get(label, "local")
+
     def _update_source_visibility(self) -> None:
-        source_type = str(self.query_one("#te-source-type", Select).value)
+        source_type = self._get_source_type()
         is_remote = source_type != "local"
         # Hide all source fields first
         for w in self.query(".source-field"):
@@ -176,7 +188,7 @@ class TargetEditScreen(Screen):
         if event.button.id == "btn-cancel":
             self.dismiss(None)
         elif event.button.id == "btn-browse":
-            source_type = str(self.query_one("#te-source-type", Select).value)
+            source_type = self._get_source_type()
             if source_type == "ssh":
                 host = self.query_one("#te-source-host", Input).value.strip()
                 if not host:
@@ -230,7 +242,7 @@ class TargetEditScreen(Screen):
 
         folders = self.query_one("#te-folders", Input).value.strip()
         mysql_enabled = str(self.query_one("#te-mysql-enabled", Select).value)
-        source_type = str(self.query_one("#te-source-type", Select).value)
+        source_type = self._get_source_type()
         if not folders and mysql_enabled != "yes" and source_type == "local":
             self.notify("At least one folder or MySQL backup is required", severity="error")
             return

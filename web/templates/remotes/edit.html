@@ -27,12 +27,24 @@
                 </div>
                 <div class="form-control">
                     <label class="label"><span class="label-text">Type</span></label>
-                    <select x-model="remoteType" name="type" class="select select-bordered">
-                        <option value="local">Local</option>
-                        <option value="ssh">SSH</option>
-                        <option value="s3">S3</option>
-                        <option value="gdrive">Google Drive</option>
-                    </select>
+                    <div class="flex flex-wrap gap-4 mt-1">
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="type" value="ssh" class="radio radio-primary" x-model="remoteType">
+                            <span class="label-text">SSH</span>
+                        </label>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="type" value="local" class="radio radio-primary" x-model="remoteType">
+                            <span class="label-text">Local</span>
+                        </label>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="type" value="s3" class="radio radio-primary" x-model="remoteType">
+                            <span class="label-text">S3</span>
+                        </label>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="type" value="gdrive" class="radio radio-primary" x-model="remoteType">
+                            <span class="label-text">Google Drive</span>
+                        </label>
+                    </div>
                 </div>
                 <div class="form-control">
                     <label class="label"><span class="label-text">Base Path</span></label>

@@ -16,6 +16,9 @@ _NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')
 REMOTE_TYPES = [("SSH", "ssh"), ("Local directory", "local"), ("Amazon S3", "s3"), ("Google Drive", "gdrive")]
 
 
+_TYPE_MAP = {"SSH": "ssh", "Local directory": "local", "Amazon S3": "s3", "Google Drive": "gdrive"}
+
+
 class RemoteEditScreen(Screen):
 
     BINDINGS = [("escape", "go_back", "Back")]
@@ -40,11 +43,11 @@ class RemoteEditScreen(Screen):
                     yield Static("Name:")
                     yield Input(value="", placeholder="Remote name", id="re-name")
                 yield Static("Type:")
-                yield Select(
-                    REMOTE_TYPES,
-                    id="re-type",
-                    value=remote.type,
-                )
+                with RadioSet(id="re-type"):
+                    yield RadioButton("SSH", value=remote.type == "ssh")
+                    yield RadioButton("Local directory", value=remote.type == "local")
+                    yield RadioButton("Amazon S3", value=remote.type == "s3")
+                    yield RadioButton("Google Drive", value=remote.type == "gdrive")
                 # SSH fields
                 yield Static("Host:", id="lbl-host", classes="ssh-field")
                 yield Input(value=remote.host, placeholder="hostname or IP", id="re-host", classes="ssh-field")
@@ -97,13 +100,21 @@ class RemoteEditScreen(Screen):
     def on_mount(self) -> None:
         self._update_field_visibility()
 
+    def _get_remote_type(self) -> str:
+        radio = self.query_one("#re-type", RadioSet)
+        label = str(radio.pressed_button.label) if radio.pressed_button else "SSH"
+        return _TYPE_MAP.get(label, "ssh")
+
     def on_select_changed(self, event: Select.Changed) -> None:
-        if event.select.id in ("re-type", "re-auth"):
+        if event.select.id == "re-auth":
+            self._update_field_visibility()
+
+    def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
+        if event.radio_set.id == "re-type":
             self._update_field_visibility()
 
     def _update_field_visibility(self) -> None:
-        type_sel = self.query_one("#re-type", Select)
-        rtype = str(type_sel.value) if isinstance(type_sel.value, str) else "ssh"
+        rtype = self._get_remote_type()
         is_ssh = rtype == "ssh"
         for w in self.query(".ssh-field"):
             w.display = is_ssh
@@ -138,8 +149,7 @@ class RemoteEditScreen(Screen):
             self.query_one("#re-key", Input).value = path
 
     def _browse_base_path(self) -> None:
-        type_sel = self.query_one("#re-type", Select)
-        rtype = str(type_sel.value) if isinstance(type_sel.value, str) else "ssh"
+        rtype = self._get_remote_type()
         current_base = self.query_one("#re-base", Input).value.strip() or "/"
         if rtype == "local":
             self.app.push_screen(
@@ -186,8 +196,7 @@ class RemoteEditScreen(Screen):
         else:
             name = self._edit_name
 
-        type_sel = self.query_one("#re-type", Select)
-        rtype = str(type_sel.value) if isinstance(type_sel.value, str) else "ssh"
+        rtype = self._get_remote_type()
 
         remote = Remote(
             name=name,

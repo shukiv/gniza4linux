@@ -38,7 +38,39 @@ Options:
   --cli             Force CLI mode (no TUI)
   --debug           Enable debug logging
   --config=FILE     Override config file path
-  --help            Show this help
+  --help            Show this help (use --full-help for detailed docs)
+  --full-help       Show full documentation
+  --version         Show version
+
+Commands:
+  targets           Manage sources (list, add, delete, show)
+  remotes           Manage destinations (list, add, delete, show, test)
+  backup            Run backup
+  restore           Restore from a snapshot
+  snapshots         List or browse snapshots
+  retention         Enforce retention policies
+  schedule          Manage cron schedules (install, show, remove)
+  logs              View backup logs
+  web               Web dashboard (start, install-service, status)
+  uninstall         Uninstall gniza
+
+Run 'gniza --full-help' for detailed usage of all commands.
+If no command is given, the TUI is launched.
+EOF
+}
+
+show_full_help() {
+    cat <<EOF
+gniza v${GNIZA4LINUX_VERSION} - Linux Backup Manager
+
+Usage: gniza [OPTIONS] [COMMAND]
+
+Options:
+  --cli             Force CLI mode (no TUI)
+  --debug           Enable debug logging
+  --config=FILE     Override config file path
+  --help            Show short help
+  --full-help       Show this full documentation
   --version         Show version
 
 Sources (what to back up):
@@ -46,48 +78,70 @@ Sources (what to back up):
   targets add --name=NAME --folders=PATHS
                                         Create a new source
   targets delete --name=NAME            Delete a source
-  targets show --name=NAME              Show source configuration
+  targets show --name=NAME              Show full source configuration
 
 Destinations (where to store backups):
   remotes list                          List all configured destinations
-  remotes add --name=NAME               Create a new destination
+  remotes add --name=NAME               Create a new destination (edit config manually or via TUI)
   remotes delete --name=NAME            Delete a destination
-  remotes show --name=NAME              Show destination configuration
+  remotes show --name=NAME              Show full destination configuration
   remotes test --name=NAME              Validate destination connectivity
-  remotes disk-info-short --name=NAME   Show destination disk usage
+  remotes disk-info-short --name=NAME   Show destination disk usage (used/total/free)
 
 Operations:
   backup [--target=NAME] [--remote=NAME] [--all]
-                                        Run backup (all sources if none specified)
+      Run backup. If no source is specified, all sources are backed up.
+      Use --target=a,b,c to back up multiple sources.
+      Use --remote=NAME to target a specific destination.
+
   restore --target=NAME --snapshot=TS [--remote=NAME] [--dest=DIR]
           [--folder=PATH] [--skip-mysql]
-                                        Restore from a snapshot
+      Restore from a snapshot. Use --dest for custom restore location.
+      Use --folder to restore a single directory from the snapshot.
+      Use --skip-mysql to skip MySQL database restore.
+
   retention [--target=NAME] [--remote=NAME] [--all]
-                                        Enforce snapshot retention policies
+      Enforce snapshot retention policies. Deletes snapshots beyond
+      the configured retention count (oldest first, pinned preserved).
 
 Snapshots:
   snapshots list [--target=NAME] [--remote=NAME]
-                                        List available snapshots
+      List available snapshots. Filter by source and/or destination.
+
   snapshots browse --target=NAME --snapshot=TS [--remote=NAME]
-                                        Browse snapshot contents
+      List all files in a specific snapshot.
 
 Scheduling:
-  schedule install                      Install cron entries for all schedules
-  schedule show                         Show current cron entries
-  schedule remove                       Remove all gniza cron entries
+  schedule install      Install cron entries for all active schedules
+  schedule show         Show current gniza cron entries
+  schedule remove       Remove all gniza cron entries from crontab
 
 Logs & Info:
-  logs [--last] [--tail=N]              View backup logs
-  version                               Show version
+  logs                  List all log files
+  logs --last           Show the most recent backup log
+  logs --last --tail=N  Show last N lines of the most recent log
+  version               Show version
 
 Web Dashboard:
-  web start [--port=PORT] [--host=HOST] Start web server
-  web install-service                   Install as systemd service
-  web remove-service                    Remove systemd service
-  web status                            Show service status
+  web start [--port=PORT] [--host=HOST]
+      Start the web dashboard (default: port 2323, host 0.0.0.0).
+      Serves the full TUI in a browser with HTTP Basic Auth.
+
+  web install-service   Install as a systemd service (auto-starts on boot)
+  web remove-service    Stop and remove the systemd service
+  web status            Show service status
 
 System:
-  uninstall                             Run the uninstall script
+  uninstall             Run the uninstall script
+
+Configuration:
+  Sources:       \$CONFIG_DIR/targets.d/<name>.conf
+  Destinations:  \$CONFIG_DIR/remotes.d/<name>.conf
+  Schedules:     \$CONFIG_DIR/schedules.d/<name>.conf
+  Settings:      \$CONFIG_DIR/gniza.conf
+
+  Root mode:     /etc/gniza/
+  User mode:     ~/.config/gniza/
 
 If no command is given, the TUI is launched.
 EOF
@@ -113,8 +167,12 @@ while [[ $# -gt 0 ]]; do
             CONFIG_FILE="${1#--config=}"
             shift
             ;;
-        --help)
+        --help|-h)
             show_help
+            exit 0
+            ;;
+        --full-help|--docs)
+            show_full_help
             exit 0
             ;;
         --version)

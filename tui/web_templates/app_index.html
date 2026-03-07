@@ -165,6 +165,70 @@
         }
       })();
 
+      // Mobile keyboard control: prevent keyboard on every tap, add toggle button
+      (function() {
+        if (!("ontouchstart" in window)) return;
+
+        var kbOpen = false;
+
+        // Create floating keyboard toggle button
+        var btn = document.createElement("div");
+        btn.id = "kb-toggle";
+        btn.textContent = "⌨";
+        btn.style.cssText = "position:fixed;bottom:12px;right:12px;z-index:9999;" +
+          "width:44px;height:44px;border-radius:50%;background:rgba(94,11,167,0.85);" +
+          "color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;" +
+          "cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.4);user-select:none;";
+        document.addEventListener("DOMContentLoaded", function() {
+          document.body.appendChild(btn);
+        });
+
+        function setKeyboard(open) {
+          kbOpen = open;
+          var ta = document.querySelector(".xterm-helper-textarea");
+          if (!ta) return;
+          if (open) {
+            ta.removeAttribute("readonly");
+            ta.setAttribute("inputmode", "text");
+            ta.focus();
+            btn.style.background = "rgba(0,204,0,0.85)";
+          } else {
+            ta.setAttribute("inputmode", "none");
+            ta.setAttribute("readonly", "readonly");
+            ta.blur();
+            btn.style.background = "rgba(94,11,167,0.85)";
+          }
+        }
+
+        btn.addEventListener("click", function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          setKeyboard(!kbOpen);
+        });
+
+        // Block xterm from auto-focusing its textarea on touch
+        document.addEventListener("touchend", function(e) {
+          if (e.target === btn || btn.contains(e.target)) return;
+          if (kbOpen) return; // user wants keyboard open
+          setTimeout(function() {
+            var active = document.activeElement;
+            if (active && active.classList && active.classList.contains("xterm-helper-textarea")) {
+              active.blur();
+            }
+          }, 50);
+        }, { passive: true });
+
+        // Disable keyboard on xterm textarea once it appears
+        var checkReady = setInterval(function() {
+          var ta = document.querySelector(".xterm-helper-textarea");
+          if (ta) {
+            clearInterval(checkReady);
+            ta.setAttribute("readonly", "readonly");
+            ta.setAttribute("inputmode", "none");
+          }
+        }, 200);
+      })();
+
       // Touch-to-scroll: translate swipe into mouse wheel for Textual scrollable containers
       (function() {
         var touchStartY = null;

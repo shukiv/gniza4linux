@@ -39,6 +39,7 @@ def save():
         ssh_retries=form.get("ssh_retries", "3"),
         rsync_extra_opts=form.get("rsync_extra_opts", ""),
         disk_usage_threshold=form.get("disk_usage_threshold", "95"),
+        max_concurrent_jobs=form.get("max_concurrent_jobs", "1"),
         web_port=form.get("web_port", "2323"),
         web_host=form.get("web_host", "0.0.0.0"),
         web_api_key=form.get("web_api_key", ""),

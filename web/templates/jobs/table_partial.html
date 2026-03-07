@@ -1,6 +1,6 @@
 {% from "components/pagination.html" import pagination %}
 <div id="jobs-table"
-     {% if has_running %}
+     {% if has_running or has_queued %}
      hx-get="{{ url_for('jobs.table', page=page) }}"
      hx-trigger="every 2s"
      hx-swap="morph:outerHTML"
@@ -32,6 +32,8 @@
                         <span class="loading loading-spinner loading-xs"></span>
                         Running
                     </span>
+                    {% elif job.status == "queued" %}
+                    <span class="text-base-content/60 font-medium">Queued</span>
                     {% elif job.status == "skipped" %}
                     <span class="text-warning font-medium">Skipped</span>
                     {% elif job.status == "success" %}
@@ -46,7 +48,7 @@
                 <td class="text-xs">
                     {% if job.finished_at %}
                         {{ job.finished_at.strftime('%Y-%m-%d %H:%M:%S') }}
-                    {% elif job.status == "running" %}
+                    {% elif job.status in ("running", "queued") %}
                         <span class="text-info">--</span>
                     {% else %}
                         --
@@ -57,6 +59,8 @@
                         {{ ((job.finished_at - job.started_at).total_seconds() | int) // 60 }}m {{ ((job.finished_at - job.started_at).total_seconds() | int) % 60 }}s
                     {% elif job.status == "running" %}
                         <span class="text-info">in progress</span>
+                    {% elif job.status == "queued" %}
+                        <span class="text-base-content/60">waiting</span>
                     {% else %}
                         --
                     {% endif %}
@@ -67,7 +71,7 @@
                                 @click="selectedJob = selectedJob === '{{ job.id }}' ? null : '{{ job.id }}'">
                             View Log
                         </button>
-                        {% if job.status == "running" %}
+                        {% if job.status in ("running", "queued") %}
                         <form method="POST" action="{{ url_for('jobs.kill', job_id=job.id) }}" class="inline">
                             <button type="submit" class="btn btn-error btn-sm">Kill</button>
                         </form>

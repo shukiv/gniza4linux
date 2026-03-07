@@ -40,6 +40,8 @@ class SettingsScreen(Screen):
                     yield Input(value=settings.bwlimit, id="set-bwlimit")
                     yield Static("Disk Usage Threshold (%, 0=disable):")
                     yield Input(value=settings.disk_usage_threshold, id="set-diskthreshold")
+                    yield Static("Simultaneous Jobs (0=unlimited):")
+                    yield Input(value=settings.max_concurrent_jobs, id="set-maxjobs")
                     yield Static("Extra rsync options:")
                     yield Input(value=settings.rsync_extra_opts, id="set-rsyncopts")
                 with Vertical(classes="settings-section", id="section-email"):
@@ -122,6 +124,7 @@ class SettingsScreen(Screen):
             ssh_retries=self.query_one("#set-sshretries", Input).value.strip() or "3",
             rsync_extra_opts=self.query_one("#set-rsyncopts", Input).value.strip(),
             disk_usage_threshold=self.query_one("#set-diskthreshold", Input).value.strip() or "95",
+            max_concurrent_jobs=self.query_one("#set-maxjobs", Input).value.strip() or "1",
             web_port=self.query_one("#set-web-port", Input).value.strip() or "2323",
             web_host=self.query_one("#set-web-host", Input).value.strip() or "0.0.0.0",
             web_api_key=self.query_one("#set-web-key", Input).value,

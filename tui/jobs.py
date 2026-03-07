@@ -11,7 +11,7 @@ from pathlib import Path
 from textual.message import Message
 
 from tui.backend import start_cli_background
-from tui.config import get_log_retain_days
+from tui.config import get_log_retain_days, get_max_concurrent_jobs
 
 MAX_OUTPUT_LINES = 10_000
 
@@ -48,6 +48,7 @@ class Job:
     _pgid: int | None = field(default=None, repr=False)
     _reconnected: bool = field(default=False, repr=False)
     _log_file: str | None = field(default=None, repr=False)
+    _cli_args: tuple[str, ...] | None = field(default=None, repr=False)
     _tail_task: asyncio.Task | None = field(default=None, repr=False)
 
 
@@ -73,17 +74,37 @@ class JobManager:
 
     def remove_finished(self) -> None:
         for job in self._jobs.values():
-            if job.status != "running" and job._log_file:
+            if job.status not in ("running", "queued") and job._log_file:
                 try:
                     Path(job._log_file).unlink(missing_ok=True)
                 except OSError:
                     pass
-        self._jobs = {k: v for k, v in self._jobs.items() if v.status == "running"}
+        self._jobs = {k: v for k, v in self._jobs.items() if v.status in ("running", "queued")}
         self._save_registry()
 
     def start_job(self, app, job: Job, *cli_args: str) -> None:
+        max_jobs = get_max_concurrent_jobs()
+        if max_jobs > 0 and self.running_count() >= max_jobs:
+            job.status = "queued"
+            job._cli_args = cli_args
+            self._save_registry()
+            return
         task = asyncio.create_task(self.run_job(app, job, *cli_args))
         job._tail_task = task  # prevent GC of the asyncio task
+
+    def _dispatch_queue(self, app) -> None:
+        """Start queued jobs if under the concurrency limit."""
+        max_jobs = get_max_concurrent_jobs()
+        for job in sorted(self._jobs.values(), key=lambda j: j.started_at):
+            if job.status != "queued" or job._cli_args is None:
+                continue
+            if max_jobs > 0 and self.running_count() >= max_jobs:
+                break
+            job.status = "running"
+            cli_args = job._cli_args
+            job._cli_args = None
+            task = asyncio.create_task(self.run_job(app, job, *cli_args))
+            job._tail_task = task
 
     async def run_job(self, app, job: Job, *cli_args: str) -> int:
         log_path = _work_dir() / f"gniza-job-{job.id}.log"
@@ -164,6 +185,7 @@ class JobManager:
                 app.post_message(JobFinished(job.id, rc))
             except Exception:
                 pass
+            self._dispatch_queue(app)
         return job.return_code if job.return_code is not None else 1
 
     @staticmethod
@@ -182,6 +204,14 @@ class JobManager:
         job = self._jobs.get(job_id)
         if not job:
             return "job not found"
+        # Queued job: just cancel it
+        if job.status == "queued":
+            job.status = "failed"
+            job.return_code = -9
+            job.finished_at = datetime.now()
+            job._cli_args = None
+            self._save_registry()
+            return "cancelled queued job"
         msg = ""
         # Reconnected jobs: use stored PID/PGID
         if job._reconnected and job._pid:
@@ -242,7 +272,7 @@ class JobManager:
         now = datetime.now()
         for job in self._jobs.values():
             # Skip finished jobs older than LOG_RETAIN
-            if job.status != "running" and job.finished_at:
+            if job.status not in ("running", "queued") and job.finished_at:
                 age_days = (now - job.finished_at).total_seconds() / 86400
                 if age_days > get_log_retain_days():
                     if job._log_file:
@@ -267,6 +297,8 @@ class JobManager:
             if job.status == "running" and pid is not None:
                 entry["pid"] = pid
                 entry["pgid"] = job._pgid
+            if job.status == "queued" and job._cli_args:
+                entry["cli_args"] = list(job._cli_args)
             entries.append(entry)
         try:
             REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -288,6 +320,21 @@ class JobManager:
                 continue
             saved_status = entry.get("status", "running")
             pid = entry.get("pid")
+
+            if saved_status == "queued":
+                job = Job(
+                    id=job_id,
+                    kind=entry.get("kind", "backup"),
+                    label=entry.get("label", "Job"),
+                    status="queued",
+                    started_at=datetime.fromisoformat(entry["started_at"]),
+                )
+                job._log_file = entry.get("log_file")
+                cli_args = entry.get("cli_args")
+                if cli_args:
+                    job._cli_args = tuple(cli_args)
+                self._jobs[job.id] = job
+                continue
 
             # Already-finished job from a previous session
             if saved_status != "running":
@@ -486,6 +533,7 @@ class JobManager:
                     app.post_message(JobFinished(job.id, rc or 0))
                 except Exception:
                     pass
+                self._dispatch_queue(app)
         except (asyncio.CancelledError, KeyboardInterrupt):
             # TUI shutting down — keep job as running for next reconnect
             raise

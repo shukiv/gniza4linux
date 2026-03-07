@@ -53,7 +53,7 @@
 <p class="mb-3 text-base-content/70">Monitor running backup and restore jobs.</p>
 <h4 class="font-semibold text-sm mb-1">Table columns</h4>
 <ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
-    <li><strong>Status</strong> — Current state (running, ok, skip, failed, unknown).</li>
+    <li><strong>Status</strong> — Current state (running, queued, ok, skip, failed, unknown).</li>
     <li><strong>Job</strong> — Description of the operation.</li>
     <li><strong>Started</strong> — When the job began.</li>
     <li><strong>Duration</strong> — Elapsed time.</li>
@@ -63,5 +63,6 @@
     <li>The table refreshes every second.</li>
     <li>The progress bar shows rsync transfer progress when viewing a running job's log.</li>
     <li>Jobs continue in the background even if you navigate away from this screen.</li>
+    <li>When the simultaneous jobs limit is reached, new jobs are queued and start automatically when a slot opens.</li>
 </ul>
 {% endblock %}

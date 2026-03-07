@@ -1115,6 +1115,7 @@ All global settings are in `gniza.conf` in the config directory.
 | `BWLIMIT` | `0` | Global bandwidth limit in KB/s |
 | `RETENTION_COUNT` | `30` | Default snapshots to keep |
 | `DISK_USAGE_THRESHOLD` | `95` | Abort if destination >= this % (0 = disabled) |
+| `MAX_CONCURRENT_JOBS` | `1` | Max simultaneous jobs (0 = unlimited) |
 | `RSYNC_EXTRA_OPTS` | (empty) | Additional rsync flags |
 | `WORK_DIR` | `/tmp` | Temp directory for staging and dumps |
 

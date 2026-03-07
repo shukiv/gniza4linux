@@ -18,3 +18,6 @@ REMOTES=""
 
 # Comma-separated target names (empty = all targets)
 TARGETS=""
+
+# Override global retention count (empty = use global default)
+RETENTION_COUNT=""

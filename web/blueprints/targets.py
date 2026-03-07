@@ -91,7 +91,6 @@ def save():
         exclude=form.get("exclude", ""),
         include=form.get("include", ""),
         remote=form.get("remote", ""),
-        retention=form.get("retention", ""),
         pre_hook=form.get("pre_hook", ""),
         post_hook=form.get("post_hook", ""),
         enabled="yes" if form.get("enabled") else "no",

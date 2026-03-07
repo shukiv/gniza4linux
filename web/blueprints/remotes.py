@@ -72,7 +72,23 @@ def _test_remote(remote):
             return False, f"Failed to write test file: {e}"
         return True, None
 
-    # s3, gdrive — skip testing
+    if remote.type == "s3":
+        from tui.rclone_test import test_rclone_s3
+        return test_rclone_s3(
+            bucket=remote.s3_bucket,
+            region=remote.s3_region,
+            endpoint=remote.s3_endpoint,
+            access_key_id=remote.s3_access_key_id,
+            secret_access_key=remote.s3_secret_access_key,
+        )
+
+    if remote.type == "gdrive":
+        from tui.rclone_test import test_rclone_gdrive
+        return test_rclone_gdrive(
+            sa_file=remote.gdrive_sa_file,
+            root_folder_id=remote.gdrive_root_folder_id,
+        )
+
     return True, None
 
 

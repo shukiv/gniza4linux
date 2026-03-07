@@ -350,7 +350,33 @@ class TargetEditScreen(Screen):
                     pass
             return True
 
-        # s3, gdrive — skip testing
+        if target.source_type == "s3":
+            self.notify("Testing S3 connection...")
+            from tui.rclone_test import test_rclone_s3
+            ok, err = test_rclone_s3(
+                bucket=target.source_s3_bucket,
+                region=target.source_s3_region,
+                endpoint=target.source_s3_endpoint,
+                access_key_id=target.source_s3_access_key_id,
+                secret_access_key=target.source_s3_secret_access_key,
+            )
+            if not ok:
+                self.notify(f"S3 test failed: {err}", severity="error")
+                return False
+            return True
+
+        if target.source_type == "gdrive":
+            self.notify("Testing Google Drive connection...")
+            from tui.rclone_test import test_rclone_gdrive
+            ok, err = test_rclone_gdrive(
+                sa_file=target.source_gdrive_sa_file,
+                root_folder_id=target.source_gdrive_root_folder_id,
+            )
+            if not ok:
+                self.notify(f"Google Drive test failed: {err}", severity="error")
+                return False
+            return True
+
         return True
 
     def action_go_back(self) -> None:

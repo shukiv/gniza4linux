@@ -1,5 +1,11 @@
-{% if result.status == 'success' %}
-<span class="badge badge-success badge-md">{{ result.message }}</span>
-{% else %}
-<span class="badge badge-error badge-md">{{ result.message }}</span>
-{% endif %}
+<div id="test-toast" class="toast toast-top toast-end z-50">
+    <div class="alert {{ 'alert-success' if result.status == 'success' else 'alert-error' }} shadow-lg">
+        <span>{{ result.message }}</span>
+    </div>
+</div>
+<script>
+setTimeout(function() {
+    var toast = document.getElementById('test-toast');
+    if (toast) toast.remove();
+}, 5000);
+</script>

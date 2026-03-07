@@ -222,14 +222,23 @@ class ScheduleEditScreen(Screen):
         else:
             day_val = ""
 
+        selected_targets = self._get_selected_switches("sched-src-")
+        selected_remotes = self._get_selected_switches("sched-dst-")
+        if not selected_targets:
+            self.notify("Select at least one source", severity="error")
+            return
+        if not selected_remotes:
+            self.notify("Select at least one destination", severity="error")
+            return
+
         sched = Schedule(
             name=name,
             schedule=stype,
             time=self.query_one("#sched-time", Input).value.strip() or "02:00",
             day=day_val,
             cron=self.query_one("#sched-cron", Input).value.strip(),
-            targets=",".join(self._get_selected_switches("sched-src-")),
-            remotes=",".join(self._get_selected_switches("sched-dst-")),
+            targets=",".join(selected_targets),
+            remotes=",".join(selected_remotes),
         )
         conf = CONFIG_DIR / "schedules.d" / f"{name}.conf"
         write_conf(conf, sched.to_conf())

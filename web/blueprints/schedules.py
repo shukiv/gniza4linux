@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime, timedelta
 
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
@@ -14,11 +15,55 @@ bp = Blueprint("schedules", __name__, url_prefix="/schedules")
 _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 
 
+def _calc_next_run(s):
+    now = datetime.now()
+    try:
+        hour, minute = (int(x) for x in s.time.split(":")) if s.time else (2, 0)
+    except (ValueError, IndexError):
+        hour, minute = 2, 0
+
+    if s.schedule == "hourly":
+        next_dt = now.replace(minute=minute, second=0, microsecond=0)
+        if next_dt <= now:
+            next_dt += timedelta(hours=1)
+    elif s.schedule == "daily":
+        next_dt = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if next_dt <= now:
+            next_dt += timedelta(days=1)
+    elif s.schedule == "weekly":
+        try:
+            target_dow = int(s.day) if s.day else 0
+        except ValueError:
+            target_dow = 0
+        next_dt = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        days_ahead = (target_dow - now.weekday()) % 7
+        if days_ahead == 0 and next_dt <= now:
+            days_ahead = 7
+        next_dt += timedelta(days=days_ahead)
+    elif s.schedule == "monthly":
+        try:
+            target_dom = int(s.day) if s.day else 1
+        except ValueError:
+            target_dom = 1
+        next_dt = now.replace(day=target_dom, hour=hour, minute=minute, second=0, microsecond=0)
+        if next_dt <= now:
+            if now.month == 12:
+                next_dt = next_dt.replace(year=now.year + 1, month=1)
+            else:
+                next_dt = next_dt.replace(month=now.month + 1)
+    else:
+        return "--"
+    return next_dt.strftime("%Y-%m-%d %H:%M")
+
+
 def _load_schedules():
     schedules = []
     for name in list_conf_dir("schedules.d"):
         data = parse_conf(CONFIG_DIR / "schedules.d" / f"{name}.conf")
-        schedules.append(Schedule.from_conf(name, data))
+        s = Schedule.from_conf(name, data)
+        s._last_run = data.get("LAST_RUN", "") or "never"
+        s._next_run = _calc_next_run(s) if s.active == "yes" else "inactive"
+        schedules.append(s)
     return schedules
 
 

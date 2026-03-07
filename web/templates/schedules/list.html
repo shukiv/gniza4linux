@@ -23,6 +23,8 @@
                         <th>Time</th>
                         <th>Targets</th>
                         <th>Remotes</th>
+                        <th>Last Run</th>
+                        <th>Next Run</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -45,6 +47,8 @@
                         </td>
                         <td class="max-w-xs truncate text-base-content/60">{{ s.targets or '--' }}</td>
                         <td class="max-w-xs truncate text-base-content/60">{{ s.remotes or '--' }}</td>
+                        <td class="text-sm font-mono text-base-content/60">{{ s._last_run }}</td>
+                        <td class="text-sm font-mono text-base-content/60">{{ s._next_run }}</td>
                         <td>
                             <form method="POST" action="{{ url_for('schedules.toggle', name=s.name) }}" class="inline flex items-center gap-2">
                                 <input type="checkbox" class="toggle toggle-success toggle-sm" {{ 'checked' if s.active == 'yes' else '' }}

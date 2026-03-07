@@ -95,15 +95,21 @@ class MainMenuScreen(Screen):
         self._update_running_label()
 
     def _update_running_label(self) -> None:
-        count = job_manager.running_count()
+        running = job_manager.running_count()
+        queued = sum(1 for j in job_manager.list_jobs() if j.status == "queued")
         menu = self.query_one("#menu-list", OptionList)
         # Find the running_tasks option index
         for idx in range(menu.option_count):
             opt = menu.get_option_at_index(idx)
             if opt.id == "running_tasks":
-                if count > 0:
+                if running > 0 or queued > 0:
                     spinner = SPINNER_FRAMES[self._spinner_idx]
-                    label = f"{spinner} Running Tasks ({count})"
+                    parts = f"{spinner} Running Tasks"
+                    if running > 0:
+                        parts += f" ({running})"
+                    if queued > 0:
+                        parts += f" +{queued} queued"
+                    label = parts
                 else:
                     label = "Running Tasks"
                 menu.replace_option_prompt(opt.id, label)

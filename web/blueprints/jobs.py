@@ -17,10 +17,7 @@ def index():
     if page < 1:
         page = 1
     jobs = web_job_manager.list_jobs()
-    # Sort: running first, then by started_at descending
-    jobs.sort(key=lambda j: (j.status != "running", j.started_at), reverse=True)
-    # Re-sort so running jobs appear first (reverse of the tuple sort)
-    jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
+    jobs.sort(key=lambda j: (0 if j.status == "running" else 1 if j.status == "queued" else 2, -j.started_at.timestamp()))
     has_running = any(j.status == "running" for j in jobs)
     has_queued = any(j.status == "queued" for j in jobs)
     total = len(jobs)
@@ -57,7 +54,8 @@ def table():
 @login_required
 def running_badge():
     count = web_job_manager.running_count()
-    return render_template("jobs/running_badge.html", count=count)
+    queued = sum(1 for j in web_job_manager.list_jobs() if j.status == "queued")
+    return render_template("jobs/running_badge.html", count=count, queued=queued)
 
 
 @bp.route("/<job_id>/log")

@@ -28,14 +28,19 @@ class HeaderTaskClock(HeaderClock):
 
     def render(self):
         clock = datetime.now().time().strftime(self.time_format)
-        count = job_manager.running_count()
-        if count > 0:
-            return Text.assemble(
-                ("Tasks ", "bold"),
-                (f"({count})", "bold yellow"),
-                "  ",
-                clock,
-            )
+        running = job_manager.running_count()
+        queued = sum(1 for j in job_manager.list_jobs() if j.status == "queued")
+        if running > 0 or queued > 0:
+            parts: list[tuple[str, str] | str] = [("Tasks ", "bold")]
+            if running > 0:
+                parts.append((f"({running})", "bold yellow"))
+            if queued > 0:
+                if running > 0:
+                    parts.append(" ")
+                parts.append((f"+{queued} queued", "bold dim"))
+            parts.append("  ")
+            parts.append(clock)
+            return Text.assemble(*parts)
         return Text(clock)
 
 

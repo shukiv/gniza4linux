@@ -61,7 +61,6 @@ SCREEN_DOCS = {
         "  [bold]Name[/bold] - Unique identifier (letters, digits, dash, underscore; max 32 chars).\n"
         "  [bold]Folders[/bold] - Comma-separated paths to back up. Use Browse to pick folders interactively.\n"
         "  [bold]Include/Exclude[/bold] - Glob patterns to filter files (e.g. *.conf, *.log).\n"
-        "  [bold]Destination override[/bold] - Force this source to a specific destination instead of the default.\n"
         "  [bold]Pre/Post hooks[/bold] - Shell commands to run before/after the backup.\n"
         "\n"
         "[bold]Source section:[/bold]\n"

@@ -9,7 +9,7 @@ from textual.containers import Vertical, Horizontal
 
 from tui.config import parse_conf, write_conf, CONFIG_DIR, list_conf_dir
 from tui.models import Target
-from tui.widgets import FolderPicker, RemoteFolderPicker, DocsPanel
+from tui.widgets import FolderPicker, RemoteFolderPicker, DocsPanel, TagList
 
 _NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')
 
@@ -75,10 +75,10 @@ class TargetEditScreen(Screen):
                 yield Input(value=target.source_gdrive_sa_file, placeholder="/path/to/sa.json", id="te-source-gdrive-sa-file", classes="source-field source-gdrive-field")
                 yield Static("Root Folder ID:", classes="source-field source-gdrive-field")
                 yield Input(value=target.source_gdrive_root_folder_id, placeholder="folder ID", id="te-source-gdrive-root-folder-id", classes="source-field source-gdrive-field")
-                yield Static("Folders (comma-separated):")
-                with Horizontal(id="te-folders-row"):
-                    yield Input(value=target.folders, placeholder="/path1,/path2", id="te-folders")
-                    yield Button("Browse...", id="btn-browse")
+                yield Static("Folders:")
+                folder_items = [f.strip() for f in target.folders.split(",") if f.strip()]
+                yield TagList(items=folder_items, placeholder="/path/to/folder", widget_id="te-folders")
+                yield Button("Browse...", id="btn-browse")
                 yield Static("Include patterns:")
                 yield Input(value=target.include, placeholder="*.conf,docs/", id="te-include")
                 yield Static("Exclude patterns:")
@@ -215,14 +215,7 @@ class TargetEditScreen(Screen):
 
     def _folder_selected(self, path: str | None) -> None:
         if path:
-            folders_input = self.query_one("#te-folders", Input)
-            current = folders_input.value.strip()
-            if current:
-                existing = [f.strip() for f in current.split(",")]
-                if path not in existing:
-                    folders_input.value = current + "," + path
-            else:
-                folders_input.value = path
+            self.query_one("#te-folders", TagList).add_item(path)
 
     def _save(self) -> None:
         if self._is_new:
@@ -240,7 +233,7 @@ class TargetEditScreen(Screen):
         else:
             name = self._edit_name
 
-        folders = self.query_one("#te-folders", Input).value.strip()
+        folders = self.query_one("#te-folders", TagList).value
         mysql_enabled = str(self.query_one("#te-mysql-enabled", Select).value)
         source_type = self._get_source_type()
         if not folders and mysql_enabled != "yes" and source_type == "local":

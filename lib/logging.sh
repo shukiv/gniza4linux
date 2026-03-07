@@ -20,7 +20,7 @@ init_logging() {
     local log_dir="${LOG_DIR:-/var/log/gniza}"
     mkdir -p "$log_dir" || die "Cannot create log directory: $log_dir"
 
-    LOG_FILE="$log_dir/gniza-$(date -u +%Y%m%d-%H%M%S).log"
+    LOG_FILE="$log_dir/gniza-$(date +%Y%m%d-%H%M%S).log"
     touch "$LOG_FILE" || die "Cannot write to log file: $LOG_FILE"
 
     # Clean old logs

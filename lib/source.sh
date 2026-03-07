@@ -22,10 +22,16 @@ pull_from_source() {
         s3)
             _build_source_rclone_config "s3"
             _rclone_from_source "$remote_path" "$local_dir"
+            local rc=$?
+            rm -f "${_SOURCE_RCLONE_CONF:-}"; _SOURCE_RCLONE_CONF=""
+            return $rc
             ;;
         gdrive)
             _build_source_rclone_config "gdrive"
             _rclone_from_source "$remote_path" "$local_dir"
+            local rc=$?
+            rm -f "${_SOURCE_RCLONE_CONF:-}"; _SOURCE_RCLONE_CONF=""
+            return $rc
             ;;
         *)
             log_error "Unknown source type: ${TARGET_SOURCE_TYPE}"
@@ -82,14 +88,33 @@ _rsync_from_source_ssh() {
         else
             "${rsync_cmd[@]}" || rc=$?
         fi
+        unset SSHPASS
 
         if (( rc == 0 )); then
             log_debug "rsync (source pull) succeeded on attempt $attempt"
             return 0
         fi
 
-        if (( rc == 23 || rc == 24 )); then
-            log_warn "rsync (source pull) completed with warnings (exit $rc): some files could not be transferred"
+        if (( rc == 23 )); then
+            log_warn "rsync (source pull) partial transfer (exit 23): retrying to pick up failed files..."
+            sleep 2
+            local rc2=0
+            if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+                echo "=== rsync (source pull retry): $source_spec -> $local_dir ===" >> "$_TRANSFER_LOG"
+                "${rsync_cmd[@]}" > >(_snaplog_tee) 2>&1 || rc2=$?
+            else
+                "${rsync_cmd[@]}" || rc2=$?
+            fi
+            unset SSHPASS
+            if (( rc2 == 0 )); then
+                log_info "rsync (source pull) retry succeeded — all files transferred"
+                return 0
+            fi
+            log_warn "rsync (source pull) retry completed (exit $rc2): some files could not be transferred"
+            return 0
+        fi
+        if (( rc == 24 )); then
+            log_warn "rsync (source pull) completed with warnings (exit $rc): vanished source files"
             return 0
         fi
 
@@ -110,7 +135,7 @@ _rsync_from_source_ssh() {
 # Usage: _build_source_rclone_config <type>
 _build_source_rclone_config() {
     local src_type="$1"
-    _SOURCE_RCLONE_CONF=$(mktemp /tmp/gniza-source-rclone-XXXXXX.conf)
+    _SOURCE_RCLONE_CONF=$(mktemp "${WORK_DIR:-/tmp}/gniza-source-rclone-XXXXXX.conf")
 
     if [[ "$src_type" == "s3" ]]; then
         cat > "$_SOURCE_RCLONE_CONF" <<EOF

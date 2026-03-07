@@ -142,6 +142,10 @@ validate_target() {
                         ((errors++)) || true
                     fi
                     ;;
+                *)
+                    log_error "Target '$name': unknown TARGET_SOURCE_TYPE: ${TARGET_SOURCE_TYPE}"
+                    ((errors++)) || true
+                    ;;
             esac
             # Validate paths are absolute (even on remote)
             local -a folders

@@ -31,7 +31,7 @@
                     {% for s in schedules %}
                     <tr class="hover">
                         <td class="font-mono font-medium">{{ s.name }}</td>
-                        <td><span class="badge badge-outline badge-sm">{{ s.schedule }}</span></td>
+                        <td><span class="badge badge-outline badge-md">{{ s.schedule }}</span></td>
                         <td>
                             {% if s.schedule == 'custom' %}
                             <span class="font-mono text-sm">{{ s.cron }}</span>
@@ -48,9 +48,9 @@
                         <td>
                             <form method="POST" action="{{ url_for('schedules.toggle', name=s.name) }}" class="inline">
                                 {% if s.active == 'yes' %}
-                                <button type="submit" class="badge badge-success badge-sm gap-1 cursor-pointer">Active</button>
+                                <button type="submit" class="badge badge-success badge-md gap-1 cursor-pointer">Active</button>
                                 {% else %}
-                                <button type="submit" class="badge badge-error badge-sm gap-1 cursor-pointer">Inactive</button>
+                                <button type="submit" class="badge badge-error badge-md gap-1 cursor-pointer">Inactive</button>
                                 {% endif %}
                             </form>
                         </td>

@@ -35,16 +35,16 @@
                         <td>{{ job.label }}</td>
                         <td>
                             {% if job.status == "running" %}
-                            <span class="badge badge-info badge-sm gap-1">
+                            <span class="badge badge-info badge-md gap-1">
                                 <span class="loading loading-spinner loading-xs"></span>
                                 Running
                             </span>
                             {% elif job.status == "success" %}
-                            <span class="badge badge-success badge-sm">Success</span>
+                            <span class="badge badge-success badge-md">Success</span>
                             {% elif job.status == "failed" %}
-                            <span class="badge badge-error badge-sm">Failed</span>
+                            <span class="badge badge-error badge-md">Failed</span>
                             {% else %}
-                            <span class="badge badge-warning badge-sm">Unknown</span>
+                            <span class="badge badge-warning badge-md">Unknown</span>
                             {% endif %}
                         </td>
                         <td class="text-xs">{{ job.started_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>

@@ -56,7 +56,7 @@
                         </td>
                         <td>
                             <div class="flex gap-1">
-                                <a href="{{ url_for('schedules.edit', name=s.name) }}" class="btn btn-ghost btn-sm">Edit</a>
+                                <a href="{{ url_for('schedules.edit', name=s.name) }}" class="btn btn-primary btn-sm">Edit</a>
                                 <button class="btn btn-error btn-sm"
                                         @click="deleteName = '{{ s.name }}'; deleteUrl = '{{ url_for('schedules.delete', name=s.name) }}'; showModal = true">
                                     Delete

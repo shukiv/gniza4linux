@@ -14,9 +14,10 @@
     {% include "components/flash.html" %}
     <div class="card w-full max-w-sm bg-base-200 shadow-xl">
         <div class="card-body">
-            <div class="flex items-center justify-center gap-3 mb-4">
-                <img src="{{ url_for('static', filename='gniza.svg') }}" alt="GNIZA" class="w-10 h-10" />
+            <div class="flex flex-col items-center gap-1 mb-4">
+                <img src="{{ url_for('static', filename='gniza.svg') }}" alt="GNIZA" class="w-12 h-12" />
                 <h2 class="card-title text-2xl font-bold">GNIZA</h2>
+                <p class="text-xs text-base-content/50 -mt-1">Linux Backup Manager</p>
             </div>
             <form method="POST">
                 <div class="form-control">

@@ -100,13 +100,33 @@ class JobManager:
                         if len(job.output) < MAX_OUTPUT_LINES:
                             job.output.append(text)
                     else:
+                        # Fallback: check if process is actually alive
+                        # (proc.poll/waitpid can miss exits in asyncio)
+                        try:
+                            os.kill(proc.pid, 0)
+                        except ProcessLookupError:
+                            break
+                        except PermissionError:
+                            pass
                         await asyncio.sleep(0.2)
                 # Read remaining lines after process exit
                 for line in f:
                     text = line.rstrip("\n")
                     if len(job.output) < MAX_OUTPUT_LINES:
                         job.output.append(text)
-            rc = proc.returncode if proc.returncode is not None else 1
+            rc = proc.returncode
+            if rc is None:
+                # proc.poll() missed the exit — try one more wait
+                try:
+                    proc.wait(timeout=1)
+                    rc = proc.returncode
+                except Exception:
+                    pass
+            if rc is None:
+                # Fall back to log-based detection
+                rc = self._detect_return_code(str(log_path))
+                if rc is None:
+                    rc = 1
             job.return_code = rc
             job.status = "success" if rc == 0 else "failed"
         except (asyncio.CancelledError, KeyboardInterrupt):
@@ -146,31 +166,44 @@ class JobManager:
         job = self._jobs.get(job_id)
         if not job:
             return "job not found"
+        msg = ""
         # Reconnected jobs: use stored PID/PGID
         if job._reconnected and job._pid:
             try:
                 pgid = job._pgid or os.getpgid(job._pid)
                 os.killpg(pgid, signal.SIGKILL)
-                return f"killed pgid={pgid} (pid={job._pid})"
+                msg = f"killed pgid={pgid} (pid={job._pid})"
             except (ProcessLookupError, PermissionError, OSError) as e:
                 try:
                     os.kill(job._pid, signal.SIGKILL)
-                    return f"fallback kill pid={job._pid} ({e})"
+                    msg = f"fallback kill pid={job._pid} ({e})"
                 except (ProcessLookupError, OSError) as e2:
-                    return f"failed: {e}, {e2}"
-        if job._proc is None:
-            return f"proc is None (status={job.status})"
-        pid = job._proc.pid
-        try:
-            pgid = os.getpgid(pid)
-            os.killpg(pgid, signal.SIGKILL)
-            return f"killed pgid={pgid} (pid={pid})"
-        except (ProcessLookupError, PermissionError, OSError) as e:
+                    msg = f"failed: {e}, {e2}"
+        elif job._proc is not None:
+            pid = job._proc.pid
             try:
-                job._proc.kill()
-                return f"fallback kill pid={pid} ({e})"
-            except (ProcessLookupError, OSError) as e2:
-                return f"failed: {e}, {e2}"
+                pgid = os.getpgid(pid)
+                os.killpg(pgid, signal.SIGKILL)
+                msg = f"killed pgid={pgid} (pid={pid})"
+            except (ProcessLookupError, PermissionError, OSError) as e:
+                try:
+                    job._proc.kill()
+                    msg = f"fallback kill pid={pid} ({e})"
+                except (ProcessLookupError, OSError) as e2:
+                    msg = f"failed: {e}, {e2}"
+        else:
+            msg = f"proc is None (status={job.status})"
+        # Always mark the job as finished after kill attempt
+        if job.status == "running":
+            job.status = "failed"
+            job.return_code = -9
+            job.finished_at = datetime.now()
+            job._reconnected = False
+            if job._tail_task:
+                job._tail_task.cancel()
+                job._tail_task = None
+            self._save_registry()
+        return msg
 
     def kill_running(self) -> None:
         for job in self._jobs.values():

@@ -252,7 +252,7 @@ SCREEN_DOCS = {
         "Monitor running backup and restore jobs.\n"
         "\n"
         "[bold]Table columns:[/bold]\n"
-        "  [bold]Status[/bold] - Current state (running, ok, failed, unknown).\n"
+        "  [bold]Status[/bold] - Current state (running, ok, skip, failed, unknown).\n"
         "  [bold]Job[/bold] - Description of the operation.\n"
         "  [bold]Started[/bold] - When the job began.\n"
         "  [bold]Duration[/bold] - Elapsed time.\n"

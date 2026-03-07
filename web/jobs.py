@@ -152,7 +152,10 @@ class WebJobManager:
                 if not alive:
                     if rc is None:
                         rc = self._detect_return_code(entry.get("log_file"))
-                    status = "success" if rc == 0 else "failed" if rc else "unknown"
+                    if rc == 0 and self._is_skipped(entry.get("log_file")):
+                        status = "skipped"
+                    else:
+                        status = "success" if rc == 0 else "failed" if rc else "unknown"
                     entry["status"] = status
                     entry["return_code"] = rc
                     entry["finished_at"] = now.isoformat()
@@ -206,6 +209,19 @@ class WebJobManager:
             REGISTRY_FILE.write_text(json.dumps(entries, indent=2))
         except OSError:
             pass
+
+    @staticmethod
+    def _is_skipped(log_file):
+        """Check if all targets were skipped (disabled)."""
+        if not log_file or not Path(log_file).is_file():
+            return False
+        try:
+            text = Path(log_file).read_text()
+            return ("is disabled, skipping" in text
+                    and "Backup completed" not in text
+                    and "Backup Summary" not in text)
+        except OSError:
+            return False
 
     @staticmethod
     def _detect_return_code(log_file):

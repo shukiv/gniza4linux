@@ -14,6 +14,7 @@ def login():
         token = request.form.get("token", "")
         stored_key = current_app.config["API_KEY"]
         if token and secrets.compare_digest(token, stored_key):
+            session.clear()
             session["logged_in"] = True
             return redirect(url_for("dashboard.index"))
         flash("Invalid API key.", "error")

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Restore{% endblock %}
+{% block page_title %}Restore{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl" x-data="{ target: '', remote: '' }">
+    <div class="alert alert-warning mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        <span>Restore is a destructive operation. Files at the restore destination will be overwritten with the snapshot contents.</span>
+    </div>
+
+    <div class="card bg-base-200 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Restore from Snapshot</h2>
+            <p class="text-base-content/60 mb-4">Select a source, destination, and snapshot to restore. The restore job will run in the background.</p>
+
+            <form method="POST" action="{{ url_for('restore.run') }}">
+                <div class="form-control mb-4">
+                    <label class="label"><span class="label-text">Source</span></label>
+                    <select name="target" class="select select-bordered" required
+                            x-model="target"
+                            @change="remote = ''; $nextTick(() => { htmx.ajax('GET', '/restore/destinations/' + target, {target: '#dest-select', swap: 'innerHTML'}) })">
+                        <option value="" disabled selected>Select a source...</option>
+                        {% for t in targets %}
+                        <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control mb-4">
+                    <label class="label"><span class="label-text">Destination</span></label>
+                    <select name="remote" id="dest-select" class="select select-bordered" required
+                            x-model="remote"
+                            @change="if (target && remote) { htmx.ajax('GET', '/restore/snapshots/' + target + '/' + remote, {target: '#snap-select', swap: 'innerHTML'}) }">
+                        <option value="" disabled selected>Select a source first...</option>
+                    </select>
+                </div>
+
+                <div class="form-control mb-6">
+                    <label class="label"><span class="label-text">Snapshot</span></label>
+                    <select name="snapshot" id="snap-select" class="select select-bordered" required>
+                        <option value="" disabled selected>Select a destination first...</option>
+                    </select>
+                </div>
+
+                <div class="card-actions justify-end">
+                    <button type="submit" class="btn btn-primary">Restore</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

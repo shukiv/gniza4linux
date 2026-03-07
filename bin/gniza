@@ -639,10 +639,10 @@ if [[ "$SUBCOMMAND" == "web" ]]; then
             _web_port="" _web_host=""
             _web_port=$(_parse_flag "--port" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _web_host=$(_parse_flag "--host" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
-            _web_args=(--web)
+            _web_args=()
             [[ -n "$_web_port" ]] && _web_args+=(--port="$_web_port")
             [[ -n "$_web_host" ]] && _web_args+=(--host="$_web_host")
-            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m tui "${_web_args[@]}"
+            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m web "${_web_args[@]}"
             ;;
         install-service)
             if [[ $EUID -eq 0 ]]; then
@@ -665,7 +665,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$(command -v python3) -m tui --web --host 0.0.0.0 --port 2323
+ExecStart=$(command -v python3) -m web --host=0.0.0.0 --port=2323
 WorkingDirectory=$GNIZA_DIR
 Environment=GNIZA_DIR=$GNIZA_DIR
 Environment=PYTHONPATH=$GNIZA_DIR

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Snapshots{% endblock %}
+{% block page_title %}Snapshots{% endblock %}
+
+{% block content %}
+<div x-data="{ target: '', remote: '' }">
+    <div class="card bg-base-200 shadow mb-6">
+        <div class="card-body">
+            <h2 class="card-title">Browse Snapshots</h2>
+            <p class="text-base-content/60 mb-4">Select a source and destination to view available snapshots.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Source</span></label>
+                    <select class="select select-bordered" x-model="target"
+                            @change="remote = ''">
+                        <option value="" disabled selected>Select a source...</option>
+                        {% for t in targets %}
+                        <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Destination</span></label>
+                    <select class="select select-bordered" x-model="remote"
+                            @change="if (target && remote) { htmx.ajax('GET', '/snapshots/list/' + target + '/' + remote, {target: '#snapshot-list', swap: 'innerHTML'}) }">
+                        <option value="" disabled selected>Select a destination...</option>
+                        {% for r in remotes %}
+                        <option value="{{ r }}">{{ r }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Snapshot list -->
+    <div class="card bg-base-200 shadow mb-6">
+        <div class="card-body">
+            <h3 class="card-title text-base">Snapshots</h3>
+            <div id="snapshot-list">
+                <p class="text-base-content/40">Select a source and destination above to list snapshots.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- File browser -->
+    <div class="card bg-base-200 shadow">
+        <div class="card-body">
+            <h3 class="card-title text-base">File Browser</h3>
+            <div id="snapshot-browser">
+                <p class="text-base-content/40">Select a snapshot above to browse its contents.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

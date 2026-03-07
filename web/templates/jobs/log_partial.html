@@ -1,0 +1,5 @@
+<pre class="whitespace-pre-wrap break-all">{% for line in lines %}{{ line }}
+{% endfor %}</pre>
+{% if job and job.status != "running" %}
+<div class="mt-2 text-xs text-base-content/50">-- Job {{ job.status }} (rc={{ job.return_code }}) --</div>
+{% endif %}

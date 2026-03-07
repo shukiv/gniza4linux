@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Destinations{% endblock %}
+{% block page_title %}Destinations{% endblock %}
+
+{% block content %}
+<div x-data="{ showModal: false, deleteUrl: '', deleteName: '' }">
+
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-xl font-semibold">Backup Destinations</h2>
+    <a href="{{ url_for('remotes.new') }}" class="btn btn-primary btn-sm">+ Add Destination</a>
+</div>
+
+<div class="card bg-base-200 shadow">
+    <div class="card-body p-0">
+        {% if remotes %}
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Host</th>
+                        <th>Base Path</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in remotes %}
+                    <tr class="hover">
+                        <td class="font-mono font-medium">{{ r.name }}</td>
+                        <td><span class="badge badge-outline badge-sm">{{ r.type }}</span></td>
+                        <td>{{ r.host or '--' }}</td>
+                        <td class="font-mono text-base-content/60">{{ r.base }}</td>
+                        <td>
+                            <div class="flex gap-1 items-center">
+                                <a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-ghost btn-xs">Edit</a>
+                                <button class="btn btn-info btn-xs"
+                                        hx-post="{{ url_for('remotes.test', name=r.name) }}"
+                                        hx-target="#test-result-{{ r.name }}"
+                                        hx-swap="innerHTML">
+                                    Test
+                                </button>
+                                <button class="btn btn-error btn-xs"
+                                        @click="deleteName = '{{ r.name }}'; deleteUrl = '{{ url_for('remotes.delete', name=r.name) }}'; showModal = true">
+                                    Delete
+                                </button>
+                                <span id="test-result-{{ r.name }}" class="ml-2"></span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-base-content/40">
+            <p class="mb-4">No destinations configured</p>
+            <a href="{{ url_for('remotes.new') }}" class="btn btn-primary btn-sm">Create your first destination</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete confirm modal -->
+<dialog class="modal" :class="{ 'modal-open': showModal }">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Confirm Delete</h3>
+        <p class="py-4">Are you sure you want to delete destination <span class="font-mono font-bold" x-text="deleteName"></span>?</p>
+        <div class="modal-action">
+            <form :action="deleteUrl" method="POST">
+                <button type="submit" class="btn btn-error">Delete</button>
+            </form>
+            <button class="btn" @click="showModal = false">Cancel</button>
+        </div>
+    </div>
+    <div class="modal-backdrop" @click="showModal = false"></div>
+</dialog>
+
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% if error %}
+<div class="alert alert-error">
+    <span>{{ error }}</span>
+</div>
+{% elif files %}
+<div class="overflow-x-auto max-h-96 overflow-y-auto">
+    <table class="table table-xs font-mono">
+        <tbody>
+            {% for f in files %}
+            <tr class="hover">
+                <td>{{ f }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<p class="text-base-content/40 text-sm mt-2">{{ files|length }} entries</p>
+{% else %}
+<p class="text-base-content/40">No files found in this snapshot.</p>
+{% endif %}

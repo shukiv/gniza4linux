@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Setup Wizard{% endblock %}
+{% block page_title %}Setup Wizard{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto" x-data="{ step: {{ request.args.get('step', 1, type=int) }} }">
+
+    <!-- Progress steps -->
+    <ul class="steps steps-horizontal w-full mb-8">
+        <li class="step" :class="step >= 1 ? 'step-primary' : ''">Welcome</li>
+        <li class="step" :class="step >= 2 ? 'step-primary' : ''">Destination</li>
+        <li class="step" :class="step >= 3 ? 'step-primary' : ''">Source</li>
+        <li class="step" :class="step >= 4 ? 'step-primary' : ''">Schedule</li>
+        <li class="step" :class="step >= 5 ? 'step-primary' : ''">Done</li>
+    </ul>
+
+    <!-- Step 1: Welcome + API Key -->
+    <div x-show="step === 1" x-cloak>
+        <div class="card bg-base-200 shadow">
+            <div class="card-body">
+                <h2 class="card-title">Welcome to GNIZA</h2>
+                <p class="text-base-content/60 mb-4">Let's configure your backup system. First, set an API key for web access.</p>
+
+                <form method="POST" action="{{ url_for('wizard.step', n=1) }}">
+                    <div class="form-control mb-4">
+                        <label class="label"><span class="label-text">API Key</span></label>
+                        <input type="text" name="api_key" class="input input-bordered" placeholder="Enter a secure API key" required>
+                        <label class="label"><span class="label-text-alt text-base-content/40">This key is used for web authentication</span></label>
+                    </div>
+                    <div class="card-actions justify-between">
+                        <span></span>
+                        <button type="submit" class="btn btn-primary">Next</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: First Destination -->
+    <div x-show="step === 2" x-cloak>
+        <div class="card bg-base-200 shadow">
+            <div class="card-body">
+                <h2 class="card-title">Configure Destination</h2>
+                <p class="text-base-content/60 mb-4">Where should backups be stored?</p>
+
+                <form method="POST" action="{{ url_for('wizard.step', n=2) }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Name</span></label>
+                            <input type="text" name="name" class="input input-bordered" placeholder="my-storage" required pattern="[A-Za-z0-9_-]+">
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Type</span></label>
+                            <select name="type" class="select select-bordered">
+                                <option value="local">Local</option>
+                                <option value="ssh">SSH</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Base Path</span></label>
+                            <input type="text" name="base" class="input input-bordered" value="/backups" placeholder="/backups">
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Host (SSH only)</span></label>
+                            <input type="text" name="host" class="input input-bordered" placeholder="192.168.1.100">
+                        </div>
+                    </div>
+                    <div class="card-actions justify-between">
+                        <button type="button" class="btn btn-ghost" @click="step = 1">Back</button>
+                        <button type="submit" class="btn btn-primary">Next</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: First Source -->
+    <div x-show="step === 3" x-cloak>
+        <div class="card bg-base-200 shadow">
+            <div class="card-body">
+                <h2 class="card-title">Configure Source</h2>
+                <p class="text-base-content/60 mb-4">What should be backed up?</p>
+
+                <form method="POST" action="{{ url_for('wizard.step', n=3) }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Name</span></label>
+                            <input type="text" name="name" class="input input-bordered" placeholder="my-server" required pattern="[A-Za-z0-9_-]+">
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Destination</span></label>
+                            <select name="remote" class="select select-bordered">
+                                <option value="">-- None --</option>
+                                {% for r in remotes %}
+                                <option value="{{ r }}">{{ r }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-control mb-4">
+                        <label class="label"><span class="label-text">Folders (one per line)</span></label>
+                        <textarea name="folders" class="textarea textarea-bordered h-24 font-mono" placeholder="/home&#10;/etc&#10;/var/www"></textarea>
+                    </div>
+                    <div class="card-actions justify-between">
+                        <button type="button" class="btn btn-ghost" @click="step = 2">Back</button>
+                        <button type="submit" class="btn btn-primary">Next</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4: First Schedule -->
+    <div x-show="step === 4" x-cloak>
+        <div class="card bg-base-200 shadow">
+            <div class="card-body">
+                <h2 class="card-title">Configure Schedule</h2>
+                <p class="text-base-content/60 mb-4">When should backups run?</p>
+
+                <form method="POST" action="{{ url_for('wizard.step', n=4) }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Name</span></label>
+                            <input type="text" name="name" class="input input-bordered" placeholder="nightly" required pattern="[A-Za-z0-9_-]+">
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Schedule</span></label>
+                            <select name="schedule" class="select select-bordered">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Time</span></label>
+                            <input type="time" name="time" class="input input-bordered" value="02:00">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Targets</span></label>
+                            <input type="text" name="targets" class="input input-bordered" placeholder="all" value="all">
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">Remotes</span></label>
+                            <input type="text" name="remotes" class="input input-bordered" placeholder="all" value="all">
+                        </div>
+                    </div>
+                    <div class="card-actions justify-between">
+                        <button type="button" class="btn btn-ghost" @click="step = 3">Back</button>
+                        <button type="submit" class="btn btn-primary">Next</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 5: Summary -->
+    <div x-show="step === 5" x-cloak>
+        <div class="card bg-base-200 shadow">
+            <div class="card-body text-center">
+                <h2 class="card-title justify-center text-2xl mb-4">Setup Complete!</h2>
+                <p class="text-base-content/60 mb-6">Your backup system is configured. You can further customize sources, destinations, and schedules from the main interface.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="stat bg-base-300 rounded-lg">
+                        <div class="stat-title">Destinations</div>
+                        <div class="stat-value text-primary">{{ remotes|length }}</div>
+                    </div>
+                    <div class="stat bg-base-300 rounded-lg">
+                        <div class="stat-title">Sources</div>
+                        <div class="stat-value text-primary">{{ targets|length }}</div>
+                    </div>
+                    <div class="stat bg-base-300 rounded-lg">
+                        <div class="stat-title">Schedules</div>
+                        <div class="stat-value text-primary">{{ schedules|length }}</div>
+                    </div>
+                </div>
+
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

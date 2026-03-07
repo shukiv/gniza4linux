@@ -1,0 +1,7 @@
+<option value="" disabled selected>Select a snapshot...</option>
+{% for s in snapshots %}
+<option value="{{ s }}">{{ s }}</option>
+{% endfor %}
+{% if not snapshots %}
+<option value="" disabled>No snapshots found</option>
+{% endif %}

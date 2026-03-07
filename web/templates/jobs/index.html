@@ -37,6 +37,7 @@
              hx-trigger="intersect once"
              hx-swap="innerHTML"
              {% endif %}
+             hx-on::after-swap="this.scrollTop = this.scrollHeight"
         >
             <span class="text-base-content/40">Loading log...</span>
         </div>

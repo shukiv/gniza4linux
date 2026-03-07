@@ -101,8 +101,8 @@ class WebJobManager:
         self._jobs = {k: v for k, v in self._jobs.items() if v.status == "running"}
         self._save_registry()
 
-    def get_log_lines(self, job_id, offset=0):
-        """Read log file from offset line. Returns (lines, total_lines)."""
+    def get_log_lines(self, job_id, tail=100):
+        """Read last `tail` lines from the job's log file. Returns (lines, total_lines)."""
         job = self._jobs.get(job_id)
         if not job or not job.log_file:
             return [], 0
@@ -110,8 +110,8 @@ class WebJobManager:
             with open(job.log_file) as f:
                 all_lines = f.readlines()
             total = len(all_lines)
-            new_lines = [l.rstrip('\n') for l in all_lines[offset:]]
-            return new_lines, total
+            last_lines = [l.rstrip('\n') for l in all_lines[-tail:]]
+            return last_lines, total
         except (OSError, FileNotFoundError):
             return [], 0
 

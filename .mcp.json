@@ -1,0 +1,14 @@
+{
+    "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/mcp.schema.json",
+    "mcpServers": {
+        "textual-mcp": {
+            "command": "/home/shuki/projects/textual-mcp/.venv/bin/python",
+            "args": [
+                "-m",
+                "textual_mcp.server"
+            ],
+            "cwd": "/home/shuki/projects/textual-mcp",
+            "description": "Textual TUI framework MCP: CSS validation, widget generation, style analysis, doc search"
+        }
+    }
+}

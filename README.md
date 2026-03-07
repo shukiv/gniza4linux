@@ -165,6 +165,23 @@ REMOTE_TYPE="local"
 REMOTE_BASE="/mnt/backup-drive"
 ```
 
+## How Incremental Backups Work
+
+GNIZA uses rsync's `--link-dest` option to create space-efficient incremental backups using **hardlinks**.
+
+**The first backup** copies every file from source to destination. This takes the most time and disk space, since every file must be transferred in full. Depending on the size of your data and network speed, this initial backup may take a long time — this is normal.
+
+**Every backup after the first** is significantly faster. Rsync compares each file against the previous snapshot. Files that haven't changed are not transferred again — instead, rsync creates a **hardlink** to the same data block on disk from the previous snapshot. Only new or modified files are actually copied.
+
+This means:
+
+- Each snapshot appears as a full, complete directory tree — you can browse or restore any snapshot independently.
+- Unchanged files share disk space between snapshots through hardlinks, so 10 snapshots of 50 GB with only minor changes might use 55 GB total instead of 500 GB.
+- Deleting an old snapshot only frees space for files that are not referenced by any other snapshot.
+- Subsequent backups typically finish in seconds or minutes rather than hours, since only the differences are transferred.
+
+> **Example**: A first backup of 20 GB takes 45 minutes over SSH. The next day, only 200 MB of files changed — the second backup takes under 2 minutes and uses only 200 MB of additional disk space, while still appearing as a complete 20 GB snapshot.
+
 ## Snapshot Structure
 
 ```

@@ -25,6 +25,7 @@ source "$GNIZA_DIR/lib/rclone.sh"
 source "$GNIZA_DIR/lib/snapshot.sh"
 source "$GNIZA_DIR/lib/transfer.sh"
 source "$GNIZA_DIR/lib/snaplog.sh"
+source "$GNIZA_DIR/lib/source.sh"
 
 # ── Help ─────────────────────────────────────────────────────
 show_help() {

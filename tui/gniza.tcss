@@ -73,6 +73,19 @@ Select {
     margin: 0 0 1 0;
 }
 
+#settings-screen Input,
+#settings-screen Select {
+    margin: 0;
+}
+
+#settings-screen Static {
+    margin: 1 0 0 0;
+}
+
+#settings-screen #screen-title {
+    margin: 0;
+}
+
 SelectionList {
     height: auto;
     max-height: 8;
@@ -120,6 +133,7 @@ SelectionList {
 #targets-buttons,
 #remotes-buttons,
 #rt-buttons,
+#log-pager-buttons,
 #logs-buttons,
 #snapshots-buttons,
 #sched-buttons,
@@ -138,6 +152,7 @@ SelectionList {
 #targets-buttons Button,
 #remotes-buttons Button,
 #rt-buttons Button,
+#log-pager-buttons Button,
 #logs-buttons Button,
 #snapshots-buttons Button,
 #sched-buttons Button,
@@ -146,6 +161,12 @@ SelectionList {
 #re-buttons Button,
 #set-buttons Button {
     margin: 0 1 0 0;
+}
+
+#log-page-info {
+    width: auto;
+    padding: 0 1;
+    content-align: center middle;
 }
 
 /* Dialogs */
@@ -175,6 +196,25 @@ SelectionList {
 
 #cd-buttons Button {
     margin: 0 1 0 0;
+}
+
+/* Help modal */
+HelpModal {
+    align: center middle;
+}
+
+#help-modal {
+    width: 90%;
+    max-width: 70;
+    height: 80%;
+    padding: 1 2;
+    background: $panel;
+    border: thick $accent;
+}
+
+#help-modal #help-close {
+    margin: 1 0 0 0;
+    width: auto;
 }
 
 /* Folder picker */

@@ -6,10 +6,14 @@ _GNIZA4LINUX_SNAPLOG_LOADED=1
 
 # Tee helper: copies stdin to the transfer log, app log, and stderr (TUI).
 # Used as process substitution target: cmd > >(_snaplog_tee) 2>&1
-# Uses tee(1) to preserve \r from rsync --info=progress2 in real-time.
+# The raw transfer log gets everything; LOG_FILE only gets structured
+# log lines — skips rsync progress percentages and verbose file listings
+# to keep the app log small and readable.
 _snaplog_tee() {
     if [[ -n "${LOG_FILE:-}" ]]; then
-        tee -a "${_TRANSFER_LOG}" "${LOG_FILE}" >&2
+        tee -a "${_TRANSFER_LOG}" >(
+            grep --line-buffered -E '^\[|^(sent |total size |Total |rsync |Number of |===)' >> "${LOG_FILE}"
+        ) >&2
     else
         tee -a "${_TRANSFER_LOG}" >&2
     fi

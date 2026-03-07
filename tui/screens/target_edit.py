@@ -34,6 +34,44 @@ class TargetEditScreen(Screen):
                 if self._is_new:
                     yield Static("Name:")
                     yield Input(value="", placeholder="Target name", id="te-name")
+                yield Static("--- Source ---", classes="section-label")
+                yield Static("Source Type:")
+                yield Select(
+                    [("Local", "local"), ("SSH", "ssh"), ("S3", "s3"), ("Google Drive", "gdrive")],
+                    value=target.source_type,
+                    id="te-source-type",
+                )
+                yield Static("Source Host:", classes="source-field source-ssh-field")
+                yield Input(value=target.source_host, placeholder="hostname or IP", id="te-source-host", classes="source-field source-ssh-field")
+                yield Static("Source Port:", classes="source-field source-ssh-field")
+                yield Input(value=target.source_port, placeholder="22", id="te-source-port", classes="source-field source-ssh-field")
+                yield Static("Source User:", classes="source-field source-ssh-field")
+                yield Input(value=target.source_user, placeholder="root", id="te-source-user", classes="source-field source-ssh-field")
+                yield Static("Auth Method:", classes="source-field source-ssh-field")
+                yield Select(
+                    [("SSH Key", "key"), ("Password", "password")],
+                    value=target.source_auth_method,
+                    id="te-source-auth-method",
+                    classes="source-field source-ssh-field",
+                )
+                yield Static("SSH Key Path:", classes="source-field source-ssh-field source-key-field")
+                yield Input(value=target.source_key, placeholder="/root/.ssh/id_rsa", id="te-source-key", classes="source-field source-ssh-field source-key-field")
+                yield Static("Password:", classes="source-field source-ssh-field source-password-field")
+                yield Input(value=target.source_password, placeholder="SSH password", password=True, id="te-source-password", classes="source-field source-ssh-field source-password-field")
+                yield Static("S3 Bucket:", classes="source-field source-s3-field")
+                yield Input(value=target.source_s3_bucket, placeholder="my-bucket", id="te-source-s3-bucket", classes="source-field source-s3-field")
+                yield Static("S3 Region:", classes="source-field source-s3-field")
+                yield Input(value=target.source_s3_region, placeholder="us-east-1", id="te-source-s3-region", classes="source-field source-s3-field")
+                yield Static("S3 Endpoint:", classes="source-field source-s3-field")
+                yield Input(value=target.source_s3_endpoint, placeholder="https://s3.amazonaws.com", id="te-source-s3-endpoint", classes="source-field source-s3-field")
+                yield Static("S3 Access Key:", classes="source-field source-s3-field")
+                yield Input(value=target.source_s3_access_key_id, placeholder="AKIA...", id="te-source-s3-access-key", classes="source-field source-s3-field")
+                yield Static("S3 Secret Key:", classes="source-field source-s3-field")
+                yield Input(value=target.source_s3_secret_access_key, placeholder="secret", password=True, id="te-source-s3-secret-key", classes="source-field source-s3-field")
+                yield Static("Service Account File:", classes="source-field source-gdrive-field")
+                yield Input(value=target.source_gdrive_sa_file, placeholder="/path/to/sa.json", id="te-source-gdrive-sa-file", classes="source-field source-gdrive-field")
+                yield Static("Root Folder ID:", classes="source-field source-gdrive-field")
+                yield Input(value=target.source_gdrive_root_folder_id, placeholder="folder ID", id="te-source-gdrive-root-folder-id", classes="source-field source-gdrive-field")
                 yield Static("Folders (comma-separated):")
                 yield Input(value=target.folders, placeholder="/path1,/path2", id="te-folders")
                 yield Button("Browse...", id="btn-browse")
@@ -91,10 +129,13 @@ class TargetEditScreen(Screen):
 
     def on_mount(self) -> None:
         self._update_mysql_visibility()
+        self._update_source_visibility()
 
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id in ("te-mysql-enabled", "te-mysql-mode"):
             self._update_mysql_visibility()
+        elif event.select.id in ("te-source-type", "te-source-auth-method"):
+            self._update_source_visibility()
 
     def _update_mysql_visibility(self) -> None:
         enabled = str(self.query_one("#te-mysql-enabled", Select).value)
@@ -107,6 +148,31 @@ class TargetEditScreen(Screen):
                 w.display = mode == "select"
             for w in self.query(".mysql-all-field"):
                 w.display = mode == "all"
+
+    def _update_source_visibility(self) -> None:
+        source_type = str(self.query_one("#te-source-type", Select).value)
+        is_remote = source_type != "local"
+        # Hide all source fields first
+        for w in self.query(".source-field"):
+            w.display = False
+        # Show fields for selected source type
+        if source_type == "ssh":
+            for w in self.query(".source-ssh-field"):
+                w.display = True
+            # Toggle key/password based on auth method
+            auth = str(self.query_one("#te-source-auth-method", Select).value)
+            for w in self.query(".source-key-field"):
+                w.display = auth == "key"
+            for w in self.query(".source-password-field"):
+                w.display = auth == "password"
+        elif source_type == "s3":
+            for w in self.query(".source-s3-field"):
+                w.display = True
+        elif source_type == "gdrive":
+            for w in self.query(".source-gdrive-field"):
+                w.display = True
+        # Hide browse button when remote
+        self.query_one("#btn-browse", Button).display = not is_remote
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-cancel":
@@ -148,8 +214,12 @@ class TargetEditScreen(Screen):
 
         folders = self.query_one("#te-folders", Input).value.strip()
         mysql_enabled = str(self.query_one("#te-mysql-enabled", Select).value)
-        if not folders and mysql_enabled != "yes":
+        source_type = str(self.query_one("#te-source-type", Select).value)
+        if not folders and mysql_enabled != "yes" and source_type == "local":
             self.notify("At least one folder or MySQL backup is required", severity="error")
+            return
+        if source_type != "local" and not folders:
+            self.notify("At least one remote path is required", severity="error")
             return
 
         target = Target(
@@ -162,6 +232,20 @@ class TargetEditScreen(Screen):
             pre_hook=self.query_one("#te-prehook", Input).value.strip(),
             post_hook=self.query_one("#te-posthook", Input).value.strip(),
             enabled=str(self.query_one("#te-enabled", Select).value),
+            source_type=source_type,
+            source_host=self.query_one("#te-source-host", Input).value.strip(),
+            source_port=self.query_one("#te-source-port", Input).value.strip(),
+            source_user=self.query_one("#te-source-user", Input).value.strip(),
+            source_auth_method=str(self.query_one("#te-source-auth-method", Select).value),
+            source_key=self.query_one("#te-source-key", Input).value.strip(),
+            source_password=self.query_one("#te-source-password", Input).value.strip(),
+            source_s3_bucket=self.query_one("#te-source-s3-bucket", Input).value.strip(),
+            source_s3_region=self.query_one("#te-source-s3-region", Input).value.strip(),
+            source_s3_endpoint=self.query_one("#te-source-s3-endpoint", Input).value.strip(),
+            source_s3_access_key_id=self.query_one("#te-source-s3-access-key", Input).value.strip(),
+            source_s3_secret_access_key=self.query_one("#te-source-s3-secret-key", Input).value.strip(),
+            source_gdrive_sa_file=self.query_one("#te-source-gdrive-sa-file", Input).value.strip(),
+            source_gdrive_root_folder_id=self.query_one("#te-source-gdrive-root-folder-id", Input).value.strip(),
             mysql_enabled=mysql_enabled,
             mysql_mode=str(self.query_one("#te-mysql-mode", Select).value),
             mysql_databases=self.query_one("#te-mysql-databases", Input).value.strip(),

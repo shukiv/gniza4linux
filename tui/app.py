@@ -63,17 +63,28 @@ class GnizaApp(App):
         else:
             self.notify(f"{job.label} failed (exit code {message.return_code})", severity="error")
 
-    # Width thresholds for docs panel
-    DOCS_VERTICAL_WIDTH = 80   # Below: panel moves to bottom
-    DOCS_HIDE_WIDTH = 45       # Below: panel hidden entirely
+    # Below this width: hide inline panel, F1 opens modal instead
+    DOCS_MODAL_WIDTH = 80
 
     def action_toggle_docs(self) -> None:
+        if self.size.width < self.DOCS_MODAL_WIDTH:
+            self._open_help_modal()
+        else:
+            try:
+                panel = self.screen.query_one("#docs-panel")
+                panel.display = not panel.display
+            except NoMatches:
+                pass
+
+    def _open_help_modal(self) -> None:
+        from tui.widgets import HelpModal
+        from tui.docs import SCREEN_DOCS
         try:
             panel = self.screen.query_one("#docs-panel")
-            panel.display = not panel.display
-            panel._user_toggled = True
+            content = panel._content
         except NoMatches:
-            pass
+            content = "No documentation available for this screen."
+        self.push_screen(HelpModal(content))
 
     def on_resize(self, event: Resize) -> None:
         self._update_docs_layout(event.size.width)
@@ -85,23 +96,12 @@ class GnizaApp(App):
     def _update_docs_layout(self, width: int) -> None:
         try:
             panel = self.screen.query_one("#docs-panel")
-            container = self.screen.query_one(".screen-with-docs")
         except NoMatches:
             return
-        # Auto-hide only on very narrow screens (unless user toggled)
-        if not getattr(panel, "_user_toggled", False):
-            panel.display = width >= self.DOCS_HIDE_WIDTH
-        # Switch layout direction
-        if width < self.DOCS_VERTICAL_WIDTH:
-            container.styles.layout = "vertical"
-            panel.styles.width = "100%"
-            panel.styles.min_width = None
-            panel.styles.max_height = "40%"
+        if width < self.DOCS_MODAL_WIDTH:
+            panel.display = False
         else:
-            container.styles.layout = "horizontal"
-            panel.styles.width = "30%"
-            panel.styles.min_width = 30
-            panel.styles.max_height = None
+            panel.display = True
 
     async def action_quit(self) -> None:
         if job_manager.running_count() > 0:

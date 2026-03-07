@@ -12,6 +12,7 @@ from tui.jobs import job_manager
 from tui.widgets import ConfirmDialog, DocsPanel
 
 _PROGRESS_RE = re.compile(r"(\d+)%")
+_SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
 
 class RunningTasksScreen(Screen):
@@ -39,8 +40,9 @@ class RunningTasksScreen(Screen):
         table = self.query_one("#rt-table", DataTable)
         table.add_columns("Status", "Job", "Started", "Duration")
         table.cursor_type = "row"
+        self._spinner_idx = 0
         self._refresh_table()
-        self._timer = self.set_interval(1, self._refresh_table)
+        self._timer = self.set_interval(1, self._tick)
         self._log_timer: Timer | None = None
         self._viewing_job_id: str | None = None
         self._log_file_pos: int = 0
@@ -60,14 +62,19 @@ class RunningTasksScreen(Screen):
         hours, m = divmod(mins, 60)
         return f"{hours}h {m}m"
 
+    def _tick(self) -> None:
+        self._spinner_idx = (self._spinner_idx + 1) % len(_SPINNER)
+        self._refresh_table()
+
     def _refresh_table(self) -> None:
         job_manager.check_reconnected()
         table = self.query_one("#rt-table", DataTable)
         old_row = table.cursor_coordinate.row if table.row_count > 0 else 0
         table.clear()
+        spinner = _SPINNER[self._spinner_idx]
         for job in job_manager.list_jobs():
             if job.status == "running":
-                icon = "... "
+                icon = f" {spinner} "
             elif job.status == "success":
                 icon = " ok "
             elif job.status == "unknown":
@@ -109,17 +116,25 @@ class RunningTasksScreen(Screen):
         progress = self.query_one("#rt-progress", ProgressBar)
         label = self.query_one("#rt-progress-label", Static)
         progress.update(progress=0)
-        # Load existing content from log file
+        # Load only the tail of the log file (like tail -f)
         if job._log_file and Path(job._log_file).is_file():
             try:
                 raw = Path(job._log_file).read_bytes()
                 self._log_file_pos = len(raw)
                 content = raw.decode(errors="replace")
+                # Show only last 100 lines
+                lines = content.splitlines()
+                if len(lines) > 100:
+                    log_viewer.write(f"--- showing last 100 of {len(lines)} lines ---")
+                    content = "\n".join(lines[-100:])
                 self._process_log_content(content, log_viewer)
             except OSError:
                 pass
         elif job.output:
-            for line in job.output:
+            tail = job.output[-100:] if len(job.output) > 100 else job.output
+            if len(job.output) > 100:
+                log_viewer.write(f"--- showing last 100 of {len(job.output)} lines ---")
+            for line in tail:
                 log_viewer.write(line)
         # Show/hide progress bar based on job status
         is_running = job.status == "running"

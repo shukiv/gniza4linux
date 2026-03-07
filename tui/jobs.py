@@ -323,12 +323,13 @@ class JobManager:
             text = Path(log_file).read_text()
             if not text.strip():
                 return None
-            for marker in ("FATAL:", "ERROR:", "failed", "Failed"):
-                if marker in text:
-                    return 1
-            # Look for success indicators
-            if "completed" in text.lower() or "Backup Summary" in text:
+            # Check success markers first — these are definitive
+            if "Backup completed" in text or "Backup Summary" in text:
                 return 0
+            # Only match structured log lines for errors, not rsync file listings
+            for line in text.splitlines():
+                if "[FATAL]" in line or "[ERROR]" in line:
+                    return 1
         except OSError:
             return None
         return None

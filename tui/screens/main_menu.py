@@ -4,6 +4,8 @@ from textual.widgets import Header, Footer, Static, OptionList
 from textual.widgets.option_list import Option
 from textual.containers import Horizontal, Vertical
 
+from tui.jobs import job_manager
+
 LOGO = """\
 [green]▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 ▓▓▓▓▓▓▓▓▓▓▓▓          ▓▓▓▓▓▓▓▓▓▓▓
@@ -39,6 +41,8 @@ MENU_ITEMS = [
     ("quit", "Quit"),
 ]
 
+SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+
 
 class MainMenuScreen(Screen):
 
@@ -59,6 +63,9 @@ class MainMenuScreen(Screen):
     def on_mount(self) -> None:
         self._update_layout()
         self.query_one("#menu-list", OptionList).focus()
+        self._spinner_idx = 0
+        self._update_running_label()
+        self._spinner_timer = self.set_interval(1, self._tick_spinner)
 
     def on_resize(self) -> None:
         self._update_layout()
@@ -76,6 +83,25 @@ class MainMenuScreen(Screen):
             layout.styles.layout = "horizontal"
             layout.styles.align = ("center", "middle")
             layout.styles.overflow_y = "hidden"
+
+    def _tick_spinner(self) -> None:
+        self._spinner_idx = (self._spinner_idx + 1) % len(SPINNER_FRAMES)
+        self._update_running_label()
+
+    def _update_running_label(self) -> None:
+        count = job_manager.running_count()
+        menu = self.query_one("#menu-list", OptionList)
+        # Find the running_tasks option index
+        for idx in range(menu.option_count):
+            opt = menu.get_option_at_index(idx)
+            if opt.id == "running_tasks":
+                if count > 0:
+                    spinner = SPINNER_FRAMES[self._spinner_idx]
+                    label = f"{spinner} Running Tasks ({count})"
+                else:
+                    label = "Running Tasks"
+                menu.replace_option_prompt(opt.id, label)
+                break
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         option_id = event.option.id

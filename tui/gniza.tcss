@@ -185,7 +185,8 @@ SelectionList {
 #set-buttons {
     height: auto;
     margin: 1 0;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 #backup-buttons Button,
@@ -203,6 +204,7 @@ SelectionList {
 #re-buttons Button,
 #set-buttons Button {
     margin: 0 1 0 0;
+    min-width: 10;
 }
 
 #log-page-info {

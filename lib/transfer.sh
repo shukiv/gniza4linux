@@ -80,11 +80,27 @@ rsync_to_remote() {
             return 0
         fi
 
-        # Exit 23 = partial transfer (permission denied on some files)
+        # Exit 23 = partial transfer (some files failed)
         # Exit 24 = vanished source files (deleted during transfer)
-        # Both are expected in non-root backups — treat as success with warning
-        if (( rc == 23 || rc == 24 )); then
-            log_warn "rsync completed with warnings (exit $rc): some files could not be transferred"
+        if (( rc == 23 )); then
+            log_warn "rsync partial transfer (exit 23): retrying to pick up failed files..."
+            sleep 2
+            local rc2=0
+            if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+                echo "=== rsync (retry): $source_dir -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
+                "${rsync_cmd[@]}" > >(_snaplog_tee) 2>&1 || rc2=$?
+            else
+                "${rsync_cmd[@]}" || rc2=$?
+            fi
+            if (( rc2 == 0 )); then
+                log_info "rsync retry succeeded — all files transferred"
+                return 0
+            fi
+            log_warn "rsync retry completed (exit $rc2): some files could not be transferred"
+            return 0
+        fi
+        if (( rc == 24 )); then
+            log_warn "rsync completed with warnings (exit $rc): vanished source files"
             return 0
         fi
 
@@ -160,8 +176,25 @@ rsync_local() {
             return 0
         fi
 
-        if (( rc == 23 || rc == 24 )); then
-            log_warn "rsync (local) completed with warnings (exit $rc): some files could not be transferred"
+        if (( rc == 23 )); then
+            log_warn "rsync (local) partial transfer (exit 23): retrying to pick up failed files..."
+            sleep 2
+            local rc2=0
+            if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+                echo "=== rsync (local retry): $source_dir -> $local_dest ===" >> "$_TRANSFER_LOG"
+                rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" > >(_snaplog_tee) 2>&1 || rc2=$?
+            else
+                rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" || rc2=$?
+            fi
+            if (( rc2 == 0 )); then
+                log_info "rsync (local) retry succeeded — all files transferred"
+                return 0
+            fi
+            log_warn "rsync (local) retry completed (exit $rc2): some files could not be transferred"
+            return 0
+        fi
+        if (( rc == 24 )); then
+            log_warn "rsync (local) completed with warnings (exit $rc): vanished source files"
             return 0
         fi
 

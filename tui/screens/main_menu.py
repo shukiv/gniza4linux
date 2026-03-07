@@ -1,6 +1,7 @@
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, OptionList
+from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.widgets.option_list import Option
 from textual.containers import Horizontal, Vertical
 

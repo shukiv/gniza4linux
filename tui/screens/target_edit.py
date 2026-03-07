@@ -1,4 +1,6 @@
+import os
 import re
+import subprocess
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Input, Select, RadioSet, RadioButton
@@ -122,7 +124,7 @@ class TargetEditScreen(Screen):
                 yield Static("MySQL Extra Options:", classes="mysql-field")
                 yield Input(value=target.mysql_extra_opts, placeholder="--single-transaction --routines --triggers", id="te-mysql-extra-opts", classes="mysql-field")
                 with Horizontal(id="te-buttons"):
-                    yield Button("Save", variant="primary", id="btn-save")
+                    yield Button("Test & Save", variant="primary", id="btn-save")
                     yield Button("Cancel", id="btn-cancel")
             yield DocsPanel.for_screen("target-edit")
         yield Footer()
@@ -283,10 +285,73 @@ class TargetEditScreen(Screen):
             mysql_port=self.query_one("#te-mysql-port", Input).value.strip(),
             mysql_extra_opts=self.query_one("#te-mysql-extra-opts", Input).value.strip(),
         )
+
+        if not self._test_source(target):
+            return
+
         conf = CONFIG_DIR / "targets.d" / f"{name}.conf"
         write_conf(conf, target.to_conf())
         self.notify(f"Target '{name}' saved.")
         self.dismiss(name)
+
+    def _ssh_cmd(self, host, port="22", user="root", key="", password=""):
+        ssh_opts = [
+            "ssh",
+            "-o", "BatchMode=yes",
+            "-o", "StrictHostKeyChecking=accept-new",
+            "-o", "ConnectTimeout=10",
+            "-p", port or "22",
+        ]
+        if key:
+            ssh_opts += ["-i", key]
+        ssh_opts.append(f"{user}@{host}")
+        if password:
+            return ["sshpass", "-p", password] + ssh_opts
+        return ssh_opts
+
+    def _test_source(self, target: Target) -> bool:
+        if target.source_type == "local":
+            if target.folders:
+                folder_list = [f.strip() for f in target.folders.split(",") if f.strip()]
+                missing = [f for f in folder_list if not os.path.isdir(f)]
+                if missing:
+                    self.notify(f"Warning: folders not found: {', '.join(missing)}", severity="warning")
+            return True
+
+        if target.source_type == "ssh":
+            self.notify("Testing SSH connection...")
+            host = target.source_host
+            port = target.source_port or "22"
+            user = target.source_user or "root"
+            key = target.source_key if target.source_auth_method == "key" else ""
+            password = target.source_password if target.source_auth_method == "password" else ""
+            cmd = self._ssh_cmd(host, port, user, key, password)
+            try:
+                result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15)
+                if result.returncode != 0:
+                    self.notify(f"SSH connection failed: {result.stderr.strip() or 'unknown error'}", severity="error")
+                    return False
+            except subprocess.TimeoutExpired:
+                self.notify("SSH connection timed out", severity="error")
+                return False
+            except OSError as e:
+                self.notify(f"SSH connection failed: {e}", severity="error")
+                return False
+            if target.folders:
+                folder_list = [f.strip() for f in target.folders.split(",") if f.strip()]
+                try:
+                    result = subprocess.run(
+                        cmd + ["test", "-d", folder_list[0]],
+                        capture_output=True, text=True, timeout=15,
+                    )
+                    if result.returncode != 0:
+                        self.notify(f"Warning: folder '{folder_list[0]}' not accessible on remote", severity="warning")
+                except (subprocess.TimeoutExpired, OSError):
+                    pass
+            return True
+
+        # s3, gdrive — skip testing
+        return True
 
     def action_go_back(self) -> None:
         self.dismiss(None)

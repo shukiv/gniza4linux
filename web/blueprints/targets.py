@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
@@ -12,6 +13,63 @@ from web.app import login_required
 bp = Blueprint("targets", __name__, url_prefix="/sources")
 
 _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
+
+
+def _ssh_cmd(host, port="22", user="root", key="", password=""):
+    ssh_opts = [
+        "ssh",
+        "-o", "BatchMode=yes",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", "ConnectTimeout=10",
+        "-p", port or "22",
+    ]
+    if key:
+        ssh_opts += ["-i", key]
+    ssh_opts.append(f"{user}@{host}")
+    if password:
+        return ["sshpass", "-p", password] + ssh_opts
+    return ssh_opts
+
+
+def _test_source(target):
+    if target.source_type == "local":
+        if target.folders:
+            folder_list = [f.strip() for f in target.folders.split(",") if f.strip()]
+            missing = [f for f in folder_list if not os.path.isdir(f)]
+            if missing:
+                return None, f"Warning: folders not found: {', '.join(missing)}"
+        return True, None
+
+    if target.source_type == "ssh":
+        host = target.source_host
+        port = target.source_port or "22"
+        user = target.source_user or "root"
+        key = target.source_key if target.source_auth_method == "key" else ""
+        password = target.source_password if target.source_auth_method == "password" else ""
+        cmd = _ssh_cmd(host, port, user, key, password)
+        try:
+            result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15)
+            if result.returncode != 0:
+                return False, f"SSH connection failed: {result.stderr.strip() or 'unknown error'}"
+        except subprocess.TimeoutExpired:
+            return False, "SSH connection timed out"
+        except OSError as e:
+            return False, f"SSH connection failed: {e}"
+        if target.folders:
+            folder_list = [f.strip() for f in target.folders.split(",") if f.strip()]
+            try:
+                result = subprocess.run(
+                    cmd + ["test", "-d", folder_list[0]],
+                    capture_output=True, text=True, timeout=15,
+                )
+                if result.returncode != 0:
+                    return None, f"Warning: folder '{folder_list[0]}' not accessible on remote"
+            except (subprocess.TimeoutExpired, OSError):
+                pass
+        return True, None
+
+    # s3, gdrive — skip testing
+    return True, None
 
 
 def _load_targets():
@@ -118,6 +176,15 @@ def save():
         mysql_port=form.get("mysql_port", "3306"),
         mysql_extra_opts=form.get("mysql_extra_opts", "--single-transaction --routines --triggers"),
     )
+
+    ok, msg = _test_source(target)
+    if ok is False:
+        flash(msg, "error")
+        if original_name:
+            return redirect(url_for("targets.edit", name=original_name))
+        return redirect(url_for("targets.new"))
+    if ok is None and msg:
+        flash(msg, "warning")
 
     write_conf(CONFIG_DIR / "targets.d" / f"{target.name}.conf", target.to_conf())
     flash(f"Source '{target.name}' saved.", "success")

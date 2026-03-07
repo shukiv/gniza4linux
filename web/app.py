@@ -105,6 +105,7 @@ def create_app():
     from web.blueprints.retention import bp as retention_bp
     from web.blueprints.logs import bp as logs_bp
     from web.blueprints.wizard import bp as wizard_bp
+    from web.blueprints.api import bp as api_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -119,5 +120,6 @@ def create_app():
     app.register_blueprint(retention_bp)
     app.register_blueprint(logs_bp)
     app.register_blueprint(wizard_bp)
+    app.register_blueprint(api_bp)
 
     return app

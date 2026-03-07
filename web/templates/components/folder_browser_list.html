@@ -1,0 +1,41 @@
+{% if error %}
+<div class="alert alert-error text-sm mb-2">{{ error }}</div>
+{% endif %}
+
+<div class="text-sm font-mono bg-base-300 px-3 py-2 rounded mb-2 break-all">{{ current_path }}</div>
+
+<div class="flex gap-2 mb-3">
+    <button type="button" class="btn btn-sm btn-primary"
+            @click="$dispatch('folder-selected', { path: '{{ current_path }}', target: '{{ target }}' })">
+        Select this folder
+    </button>
+</div>
+
+<ul class="menu menu-sm bg-base-100 rounded-box w-full max-h-64 overflow-y-auto">
+    {% if parent is not none %}
+    <li>
+        <a hx-get="{{ url_for('api.browse', path=parent, target=target) }}"
+           hx-target="closest .folder-browser-box"
+           hx-swap="innerHTML"
+           class="font-mono">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+            ..
+        </a>
+    </li>
+    {% endif %}
+    {% for d in dirs %}
+    <li>
+        <a hx-get="{{ url_for('api.browse', path=current_path.rstrip('/') + '/' + d, target=target) }}"
+           hx-target="closest .folder-browser-box"
+           hx-swap="innerHTML"
+           class="font-mono">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+            {{ d }}
+        </a>
+    </li>
+    {% else %}
+    {% if not error %}
+    <li class="disabled"><span class="text-base-content/50 italic">No subdirectories</span></li>
+    {% endif %}
+    {% endfor %}
+</ul>

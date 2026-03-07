@@ -73,12 +73,16 @@ The installer detects dependencies, sets up config directories, and optionally l
 # Launch the TUI
 gniza
 
-# Or use the CLI
-gniza targets add --name=mysite --folders=/var/www,/etc/nginx
-gniza remotes add --name=backup-server
+# Or use the CLI to add a source and destination
+gniza --cli targets add --name=mysite --folders=/var/www,/etc/nginx
+gniza --cli remotes add --name=backup-server
+
+# Run a backup
 gniza --cli backup --target=mysite
 gniza --cli backup --all
 ```
+
+> **Note**: The CLI uses `targets` for sources and `remotes` for destinations. The TUI uses the friendlier "Sources" and "Destinations" labels.
 
 ## CLI Reference
 
@@ -92,17 +96,35 @@ Options:
   --help            Show help
   --version         Show version
 
-Commands:
-  backup            [--target=NAME] [--remote=NAME] [--all]
-  restore           --target=NAME --snapshot=TS [--remote=NAME] [--dest=DIR] [--skip-mysql]
-  targets           list | add | delete | show [--name=NAME] [--folders=PATHS]
-  remotes           list | add | delete | show | test | disk-info-short [--name=NAME]
-  snapshots         list [--target=NAME] [--remote=NAME]
-                    browse --target=NAME --snapshot=TS [--remote=NAME]
-  retention         [--target=NAME] [--remote=NAME] [--all]
-  schedule          install | show | remove
-  logs              [--last] [--tail=N]
-  web               start | install-service | remove-service | status [--port=PORT]
+Sources:
+  targets list                          List all configured sources
+  targets add --name=NAME --folders=PATHS
+  targets delete --name=NAME
+  targets show --name=NAME
+
+Destinations:
+  remotes list                          List all configured destinations
+  remotes add --name=NAME
+  remotes delete --name=NAME
+  remotes show --name=NAME
+  remotes test --name=NAME              Validate connectivity
+  remotes disk-info-short --name=NAME   Show disk usage
+
+Operations:
+  backup [--target=NAME] [--remote=NAME] [--all]
+  restore --target=NAME --snapshot=TS [--remote=NAME] [--dest=DIR] [--skip-mysql]
+  retention [--target=NAME] [--remote=NAME] [--all]
+
+Snapshots:
+  snapshots list [--target=NAME] [--remote=NAME]
+  snapshots browse --target=NAME --snapshot=TS [--remote=NAME]
+
+Scheduling:
+  schedule install | show | remove
+
+Other:
+  logs [--last] [--tail=N]
+  web start | install-service | remove-service | status [--port=PORT]
   uninstall
 ```
 
@@ -113,7 +135,7 @@ Commands:
 | Root | `/etc/gniza/` | `/var/log/gniza/` | `/var/run/gniza.lock` |
 | User | `~/.config/gniza/` | `~/.local/state/gniza/log/` | `$XDG_RUNTIME_DIR/gniza-$UID.lock` |
 
-Config subdirectories: `targets.d/*.conf`, `remotes.d/*.conf`, `schedules.d/*.conf`
+Config subdirectories: `targets.d/*.conf` (sources), `remotes.d/*.conf` (destinations), `schedules.d/*.conf`
 
 ### Global Settings (`gniza.conf`)
 
@@ -245,8 +267,8 @@ SCHEDULE_TIME="02:00"           # HH:MM
 SCHEDULE_DAY=""                 # Day of week (0-6) or day of month (1-28)
 SCHEDULE_CRON=""                # Full cron expression (when SCHEDULE=custom)
 SCHEDULE_ACTIVE="yes"
-TARGETS=""                      # Comma-separated sources (empty = all)
-REMOTES=""                      # Comma-separated destinations (empty = all)
+TARGETS=""                      # Comma-separated source names (empty = all)
+REMOTES=""                      # Comma-separated destination names (empty = all)
 ```
 
 ## How Incremental Backups Work
@@ -292,14 +314,14 @@ Requires `rclone` to be installed.
 ## Snapshot Structure
 
 ```
-$BASE/<hostname>/targets/<source>/snapshots/<YYYY-MM-DDTHHMMSS>/
-├── meta.json           # Metadata (source, timestamp, duration, pinned)
-├── manifest.txt        # File listing
-├── var/www/            # Backed-up directories
-├── etc/nginx/
-└── _mysql/             # MySQL dumps (if enabled)
-    ├── dbname.sql.gz
-    └── _grants.sql.gz
+<base>/<hostname>/sources/<name>/snapshots/<YYYY-MM-DDTHHMMSS>/
++-- meta.json           # Metadata (source, timestamp, duration, pinned)
++-- manifest.txt        # File listing
++-- var/www/            # Backed-up directories
++-- etc/nginx/
++-- _mysql/             # MySQL dumps (if enabled)
+    +-- dbname.sql.gz
+    +-- _grants.sql.gz
 ```
 
 During transfer, snapshots are stored in a `.partial` directory. On success, the directory is renamed to the final timestamp. Interrupted backups leave no incomplete snapshots.
@@ -337,13 +359,12 @@ Auto-detects `mysqldump` or `mariadb-dump`.
 gniza manages cron entries for automated backups.
 
 ```bash
-# Via CLI
 gniza --cli schedule install     # Install all schedules to crontab
 gniza --cli schedule show        # Show current cron entries
 gniza --cli schedule remove      # Remove gniza cron entries
 ```
 
-Cron entries are tagged with `# gniza4linux:<name>` for clean install/removal. Each schedule can target specific sources and destinations.
+Cron entries are tagged for clean install/removal. Each schedule can be scoped to specific sources and destinations. Last run time is tracked per schedule and only updated on successful completion.
 
 ## Notifications
 
@@ -360,8 +381,6 @@ Email notifications on backup success or failure.
 Serve the full TUI in a browser via textual-serve with HTTP Basic Auth.
 
 ```bash
-# Enable during install (generates admin password)
-# Or set up manually:
 gniza web install-service   # Install systemd service (port 2323)
 gniza web start             # Start the service
 gniza web status            # Check status
@@ -380,7 +399,7 @@ Launch with `gniza` (no arguments). The TUI provides:
 - **Backup** — Run backups with source/destination selection
 - **Restore** — Browse snapshots and restore to original location or custom directory
 - **Running Tasks** — Monitor active backup/restore jobs with live log output
-- **Schedules** — Manage cron schedules with time/day pickers
+- **Schedules** — Manage cron schedules with time/day pickers and toggle switches
 - **Snapshots** — Browse and manage stored snapshots
 - **Logs** — View backup history with pagination
 - **Settings** — Configure global options

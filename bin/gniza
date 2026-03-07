@@ -41,18 +41,53 @@ Options:
   --help            Show this help
   --version         Show version
 
-Commands:
-  backup            [--target=NAME] [--remote=NAME] [--all]
-  restore           --target=NAME [--snapshot=TS] [--remote=NAME] [--dest=DIR] [--folder=PATH]
-  targets           list|add|delete|show [--name=NAME] [--folders=PATHS]
-  remotes           list|add|delete|show|test [--name=NAME]
-  snapshots         list [--target=NAME] [--remote=NAME]
-  retention         [--target=NAME] [--remote=NAME] [--all]
-  schedule          install|show|remove
-  logs              [--last] [--tail=N]
-  web               start|install-service|remove-service|status [--port=PORT] [--host=HOST]
-  uninstall         Run the uninstall script
-  version
+Sources (what to back up):
+  targets list                          List all configured sources
+  targets add --name=NAME --folders=PATHS
+                                        Create a new source
+  targets delete --name=NAME            Delete a source
+  targets show --name=NAME              Show source configuration
+
+Destinations (where to store backups):
+  remotes list                          List all configured destinations
+  remotes add --name=NAME               Create a new destination
+  remotes delete --name=NAME            Delete a destination
+  remotes show --name=NAME              Show destination configuration
+  remotes test --name=NAME              Validate destination connectivity
+  remotes disk-info-short --name=NAME   Show destination disk usage
+
+Operations:
+  backup [--target=NAME] [--remote=NAME] [--all]
+                                        Run backup (all sources if none specified)
+  restore --target=NAME --snapshot=TS [--remote=NAME] [--dest=DIR]
+          [--folder=PATH] [--skip-mysql]
+                                        Restore from a snapshot
+  retention [--target=NAME] [--remote=NAME] [--all]
+                                        Enforce snapshot retention policies
+
+Snapshots:
+  snapshots list [--target=NAME] [--remote=NAME]
+                                        List available snapshots
+  snapshots browse --target=NAME --snapshot=TS [--remote=NAME]
+                                        Browse snapshot contents
+
+Scheduling:
+  schedule install                      Install cron entries for all schedules
+  schedule show                         Show current cron entries
+  schedule remove                       Remove all gniza cron entries
+
+Logs & Info:
+  logs [--last] [--tail=N]              View backup logs
+  version                               Show version
+
+Web Dashboard:
+  web start [--port=PORT] [--host=HOST] Start web server
+  web install-service                   Install as systemd service
+  web remove-service                    Remove systemd service
+  web status                            Show service status
+
+System:
+  uninstall                             Run the uninstall script
 
 If no command is given, the TUI is launched.
 EOF
@@ -189,7 +224,7 @@ run_cli() {
 
             if [[ -z "$remote" ]]; then
                 remote=$(list_remotes | head -1)
-                [[ -z "$remote" ]] && die "No remotes configured"
+                [[ -z "$remote" ]] && die "No destinations configured"
             fi
 
             if [[ -n "$folder" ]]; then
@@ -209,43 +244,77 @@ run_cli() {
                 list)
                     local targets; targets=$(list_targets)
                     if [[ -z "$targets" ]]; then
-                        echo "No targets configured."
+                        echo "No sources configured."
                     else
                         echo "$targets"
                     fi
                     ;;
                 add)
-                    [[ -z "$name" ]] && die "targets add requires --name=NAME"
-                    [[ -z "$folders" ]] && die "targets add requires --folders=PATHS"
+                    [[ -z "$name" ]] && die "sources add requires --name=NAME"
+                    [[ -z "$folders" ]] && die "sources add requires --folders=PATHS"
                     create_target "$name" "$folders"
                     ;;
                 delete)
-                    [[ -z "$name" ]] && die "targets delete requires --name=NAME"
+                    [[ -z "$name" ]] && die "sources delete requires --name=NAME"
                     delete_target "$name"
                     ;;
                 show)
-                    [[ -z "$name" ]] && die "targets show requires --name=NAME"
+                    [[ -z "$name" ]] && die "sources show requires --name=NAME"
                     load_target "$name"
-                    echo "TARGET_NAME=$TARGET_NAME"
-                    echo "TARGET_FOLDERS=$TARGET_FOLDERS"
-                    echo "TARGET_EXCLUDE=$TARGET_EXCLUDE"
-                    echo "TARGET_REMOTE=$TARGET_REMOTE"
-                    echo "TARGET_RETENTION=$TARGET_RETENTION"
-                    echo "TARGET_PRE_HOOK=$TARGET_PRE_HOOK"
-                    echo "TARGET_POST_HOOK=$TARGET_POST_HOOK"
-                    echo "TARGET_ENABLED=$TARGET_ENABLED"
-                    echo "TARGET_MYSQL_ENABLED=$TARGET_MYSQL_ENABLED"
-                    echo "TARGET_MYSQL_MODE=$TARGET_MYSQL_MODE"
-                    echo "TARGET_MYSQL_DATABASES=$TARGET_MYSQL_DATABASES"
-                    echo "TARGET_MYSQL_EXCLUDE=$TARGET_MYSQL_EXCLUDE"
-                    echo "TARGET_MYSQL_USER=$TARGET_MYSQL_USER"
-                    echo "TARGET_MYSQL_PASSWORD=****"
-                    echo "TARGET_MYSQL_HOST=$TARGET_MYSQL_HOST"
-                    echo "TARGET_MYSQL_PORT=$TARGET_MYSQL_PORT"
-                    echo "TARGET_MYSQL_EXTRA_OPTS=$TARGET_MYSQL_EXTRA_OPTS"
+                    echo "=== Source: $TARGET_NAME ==="
+                    echo ""
+                    echo "Name:           $TARGET_NAME"
+                    echo "Enabled:        $TARGET_ENABLED"
+                    echo "Folders:        $TARGET_FOLDERS"
+                    echo "Exclude:        ${TARGET_EXCLUDE:-(none)}"
+                    echo "Include:        ${TARGET_INCLUDE:-(none)}"
+                    echo "Destination:    ${TARGET_REMOTE:-(all)}"
+                    echo "Retention:      ${TARGET_RETENTION:-(default)}"
+                    echo "Pre-hook:       ${TARGET_PRE_HOOK:-(none)}"
+                    echo "Post-hook:      ${TARGET_POST_HOOK:-(none)}"
+                    echo ""
+                    echo "--- Source Type ---"
+                    echo "Type:           $TARGET_SOURCE_TYPE"
+                    case "$TARGET_SOURCE_TYPE" in
+                        ssh)
+                            echo "Host:           $TARGET_SOURCE_HOST"
+                            echo "Port:           $TARGET_SOURCE_PORT"
+                            echo "User:           $TARGET_SOURCE_USER"
+                            echo "Auth method:    $TARGET_SOURCE_AUTH_METHOD"
+                            if [[ "$TARGET_SOURCE_AUTH_METHOD" == "key" ]]; then
+                                echo "Key:            ${TARGET_SOURCE_KEY:-(default)}"
+                            else
+                                echo "Password:       ****"
+                            fi
+                            ;;
+                        s3)
+                            echo "Bucket:         $TARGET_SOURCE_S3_BUCKET"
+                            echo "Region:         $TARGET_SOURCE_S3_REGION"
+                            echo "Endpoint:       ${TARGET_SOURCE_S3_ENDPOINT:-(default)}"
+                            echo "Access Key:     ${TARGET_SOURCE_S3_ACCESS_KEY_ID:+****}"
+                            echo "Secret Key:     ${TARGET_SOURCE_S3_SECRET_ACCESS_KEY:+****}"
+                            ;;
+                        gdrive)
+                            echo "SA File:        $TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE"
+                            echo "Root Folder ID: ${TARGET_SOURCE_GDRIVE_ROOT_FOLDER_ID:-(root)}"
+                            ;;
+                    esac
+                    if [[ "$TARGET_MYSQL_ENABLED" == "yes" ]]; then
+                        echo ""
+                        echo "--- MySQL ---"
+                        echo "Enabled:        yes"
+                        echo "Mode:           $TARGET_MYSQL_MODE"
+                        echo "Databases:      ${TARGET_MYSQL_DATABASES:-(all)}"
+                        echo "Exclude:        ${TARGET_MYSQL_EXCLUDE:-(none)}"
+                        echo "User:           ${TARGET_MYSQL_USER:-(current)}"
+                        echo "Password:       ${TARGET_MYSQL_PASSWORD:+****}"
+                        echo "Host:           $TARGET_MYSQL_HOST"
+                        echo "Port:           $TARGET_MYSQL_PORT"
+                        echo "Extra opts:     $TARGET_MYSQL_EXTRA_OPTS"
+                    fi
                     ;;
                 *)
-                    die "Unknown targets action: $action (expected list|add|delete|show)"
+                    die "Unknown sources action: $action (expected list|add|delete|show)"
                     ;;
             esac
             ;;
@@ -259,46 +328,73 @@ run_cli() {
                 list)
                     local remotes; remotes=$(list_remotes)
                     if [[ -z "$remotes" ]]; then
-                        echo "No remotes configured."
+                        echo "No destinations configured."
                     else
                         echo "$remotes"
                     fi
                     ;;
                 add)
-                    [[ -z "$name" ]] && die "remotes add requires --name=NAME"
-                    echo "Use the TUI or manually create $CONFIG_DIR/remotes.d/${name}.conf"
+                    [[ -z "$name" ]] && die "destinations add requires --name=NAME"
+                    echo "Use the TUI or manually create $CONFIG_DIR/remotes.d/${name}.conf to configure the destination."
                     ;;
                 delete)
-                    [[ -z "$name" ]] && die "remotes delete requires --name=NAME"
+                    [[ -z "$name" ]] && die "destinations delete requires --name=NAME"
                     local conf="$CONFIG_DIR/remotes.d/${name}.conf"
-                    [[ ! -f "$conf" ]] && die "Remote config not found: $conf"
+                    [[ ! -f "$conf" ]] && die "Destination config not found: $conf"
                     rm -f "$conf"
-                    log_info "Deleted remote config: $conf"
+                    log_info "Deleted destination config: $conf"
                     ;;
                 show)
-                    [[ -z "$name" ]] && die "remotes show requires --name=NAME"
+                    [[ -z "$name" ]] && die "destinations show requires --name=NAME"
                     load_remote "$name"
-                    echo "REMOTE_TYPE=$REMOTE_TYPE"
-                    echo "REMOTE_HOST=${REMOTE_HOST:-}"
-                    echo "REMOTE_PORT=$REMOTE_PORT"
-                    echo "REMOTE_USER=$REMOTE_USER"
-                    echo "REMOTE_AUTH_METHOD=$REMOTE_AUTH_METHOD"
-                    echo "REMOTE_BASE=$REMOTE_BASE"
-                    echo "BWLIMIT=$BWLIMIT"
-                    echo "RETENTION_COUNT=$RETENTION_COUNT"
+                    echo "=== Destination: $name ==="
+                    echo ""
+                    echo "Type:           $REMOTE_TYPE"
+                    case "$REMOTE_TYPE" in
+                        ssh)
+                            echo "Host:           $REMOTE_HOST"
+                            echo "Port:           $REMOTE_PORT"
+                            echo "User:           $REMOTE_USER"
+                            echo "Auth method:    $REMOTE_AUTH_METHOD"
+                            if [[ "$REMOTE_AUTH_METHOD" == "key" ]]; then
+                                echo "Key:            ${REMOTE_KEY:-(default)}"
+                            else
+                                echo "Password:       ****"
+                            fi
+                            echo "Base path:      $REMOTE_BASE"
+                            ;;
+                        local)
+                            echo "Base path:      $REMOTE_BASE"
+                            ;;
+                        s3)
+                            echo "Bucket:         ${S3_BUCKET:-}"
+                            echo "Region:         ${S3_REGION:-}"
+                            echo "Endpoint:       ${S3_ENDPOINT:-(default)}"
+                            echo "Access Key:     ${S3_ACCESS_KEY_ID:+****}"
+                            echo "Secret Key:     ${S3_SECRET_ACCESS_KEY:+****}"
+                            echo "Base path:      $REMOTE_BASE"
+                            ;;
+                        gdrive)
+                            echo "SA File:        ${GDRIVE_SERVICE_ACCOUNT_FILE:-}"
+                            echo "Root Folder ID: ${GDRIVE_ROOT_FOLDER_ID:-(root)}"
+                            echo "Base path:      $REMOTE_BASE"
+                            ;;
+                    esac
+                    echo "Bandwidth:      ${BWLIMIT:-0} KB/s"
+                    echo "Retention:      $RETENTION_COUNT snapshots"
                     ;;
                 test)
-                    [[ -z "$name" ]] && die "remotes test requires --name=NAME"
+                    [[ -z "$name" ]] && die "destinations test requires --name=NAME"
                     validate_remote "$name"
-                    echo "Remote '$name' is valid."
+                    echo "Destination '$name' is valid."
                     ;;
                 disk-info-short)
-                    [[ -z "$name" ]] && die "remotes disk-info-short requires --name=NAME"
+                    [[ -z "$name" ]] && die "destinations disk-info-short requires --name=NAME"
                     load_remote "$name"
                     remote_disk_info_short
                     ;;
                 *)
-                    die "Unknown remotes action: $action (expected list|add|delete|show|test|disk-info-short)"
+                    die "Unknown destinations action: $action (expected list|add|delete|show|test|disk-info-short)"
                     ;;
             esac
             ;;
@@ -313,10 +409,10 @@ run_cli() {
                 list)
                     if [[ -z "$remote" ]]; then
                         remote=$(list_remotes | head -1)
-                        [[ -z "$remote" ]] && die "No remotes configured"
+                        [[ -z "$remote" ]] && die "No destinations configured"
                     fi
                     _save_remote_globals
-                    load_remote "$remote" || die "Failed to load remote: $remote"
+                    load_remote "$remote" || die "Failed to load destination: $remote"
                     if [[ -n "$target" ]]; then
                         list_remote_snapshots "$target"
                     else
@@ -336,7 +432,7 @@ run_cli() {
                     [[ -z "$snapshot" ]] && die "browse requires --snapshot=TS"
                     if [[ -z "$remote" ]]; then
                         remote=$(list_remotes | head -1)
-                        [[ -z "$remote" ]] && die "No remotes configured"
+                        [[ -z "$remote" ]] && die "No destinations configured"
                     fi
                     list_snapshot_contents "$target" "$snapshot" "$remote"
                     ;;
@@ -354,10 +450,10 @@ run_cli() {
 
             if [[ -z "$remote" ]]; then
                 remote=$(list_remotes | head -1)
-                [[ -z "$remote" ]] && die "No remotes configured"
+                [[ -z "$remote" ]] && die "No destinations configured"
             fi
             _save_remote_globals
-            load_remote "$remote" || die "Failed to load remote: $remote"
+            load_remote "$remote" || die "Failed to load destination: $remote"
 
             if [[ "$all" == "true" || -z "$target" ]]; then
                 local targets; targets=$(list_targets)

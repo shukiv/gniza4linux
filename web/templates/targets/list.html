@@ -15,7 +15,7 @@
     <div class="card-body p-0">
         {% if targets %}
         <div class="overflow-x-auto">
-            <table class="table table-sm">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -44,8 +44,8 @@
                         </td>
                         <td>
                             <div class="flex gap-1">
-                                <a href="{{ url_for('targets.edit', name=t.name) }}" class="btn btn-ghost btn-xs">Edit</a>
-                                <button class="btn btn-error btn-xs"
+                                <a href="{{ url_for('targets.edit', name=t.name) }}" class="btn btn-ghost btn-sm">Edit</a>
+                                <button class="btn btn-error btn-sm"
                                         @click="deleteName = '{{ t.name }}'; deleteUrl = '{{ url_for('targets.delete', name=t.name) }}'; showModal = true">
                                     Delete
                                 </button>

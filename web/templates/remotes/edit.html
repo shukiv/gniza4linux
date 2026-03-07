@@ -57,22 +57,30 @@
                         <button type="button" class="btn btn-outline btn-sm"
                                 x-show="remoteType === 'local' || remoteType === 'ssh'"
                                 @click="
+                                    let url;
                                     if (remoteType === 'ssh') {
                                         let host = document.querySelector('[name=host]')?.value;
                                         if (!host) { alert('Enter a host first'); return; }
-                                        let port = document.querySelector('[name=port]')?.value || '22';
-                                        let user = document.querySelector('[name=user]')?.value || 'root';
-                                        let key = document.querySelector('[name=key]')?.value || '';
-                                        let password = document.querySelector('[name=password]')?.value || '';
-                                        let url = '/api/browse/ssh?path=/&target=base&host=' + encodeURIComponent(host) + '&port=' + encodeURIComponent(port) + '&user=' + encodeURIComponent(user) + '&key=' + encodeURIComponent(key) + '&password=' + encodeURIComponent(password);
-                                        htmx.ajax('GET', url, {target: '#folder-browser-box-base', swap: 'innerHTML'}).then(() => {
-                                            document.getElementById('folder_browser_modal_base').showModal();
+                                        let params = new URLSearchParams({
+                                            path: '/', target: 'base',
+                                            host: host,
+                                            port: document.querySelector('[name=port]')?.value || '22',
+                                            user: document.querySelector('[name=user]')?.value || 'root',
+                                            key: document.querySelector('[name=key]')?.value || '',
+                                            password: document.querySelector('[name=password]')?.value || ''
                                         });
+                                        url = '/api/browse/ssh?' + params.toString();
                                     } else {
-                                        htmx.ajax('GET', '/api/browse?path=/&target=base', {target: '#folder-browser-box-base', swap: 'innerHTML'}).then(() => {
-                                            document.getElementById('folder_browser_modal_base').showModal();
-                                        });
+                                        url = '/api/browse?path=/&target=base';
                                     }
+                                    htmx.ajax('GET', url, {target: '#folder-browser-box-base', swap: 'innerHTML'}).then(() => {
+                                        let box = document.getElementById('folder-browser-box-base');
+                                        if (box.querySelector('.alert-error')) {
+                                            alert(box.querySelector('.alert-error').textContent.trim());
+                                            return;
+                                        }
+                                        document.getElementById('folder_browser_modal_base').showModal();
+                                    });
                                 ">
                             Browse
                         </button>

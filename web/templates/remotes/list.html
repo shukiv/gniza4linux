@@ -37,7 +37,7 @@
                         <td>
                             <div class="flex gap-1 items-center">
                                 <a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-primary btn-sm">Edit</a>
-                                <button class="btn btn-primary btn-sm"
+                                <button class="btn btn-success btn-sm"
                                         hx-post="{{ url_for('remotes.test', name=r.name) }}"
                                         hx-target="#test-result-{{ r.name }}"
                                         hx-swap="innerHTML">

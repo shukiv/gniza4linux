@@ -81,7 +81,7 @@ class SnapshotsScreen(Screen):
             return
         target = str(target_sel.value)
         remote = str(remote_sel.value)
-        rc, stdout, stderr = await run_cli("snapshots", "list", f"--target={target}", f"--remote={remote}")
+        rc, stdout, stderr = await run_cli("snapshots", "list", f"--source={target}", f"--destination={remote}")
         table = self.query_one("#snap-table", DataTable)
         table.clear()
         lines = [l.strip() for l in stdout.splitlines() if l.strip() and not l.startswith("===")]
@@ -109,7 +109,7 @@ class SnapshotsScreen(Screen):
 
         self.notify("Loading files...")
         rc, stdout, stderr = await run_cli(
-            "snapshots", "browse", f"--target={target}", f"--remote={remote}", f"--snapshot={snapshot}"
+            "snapshots", "browse", f"--source={target}", f"--destination={remote}", f"--snapshot={snapshot}"
         )
 
         # Parse file list, strip remote prefix to get relative paths

@@ -74,15 +74,13 @@ The installer detects dependencies, sets up config directories, and optionally l
 gniza
 
 # Or use the CLI to add a source and destination
-gniza --cli targets add --name=mysite --folders=/var/www,/etc/nginx
-gniza --cli remotes add --name=backup-server
+gniza --cli sources add --name=mysite --folders=/var/www,/etc/nginx
+gniza --cli destinations add --name=backup-server
 
 # Run a backup
-gniza --cli backup --target=mysite
+gniza --cli backup --source=mysite
 gniza --cli backup --all
 ```
-
-> **Note**: The CLI uses `targets` for sources and `remotes` for destinations. The TUI uses the friendlier "Sources" and "Destinations" labels.
 
 ## CLI Reference
 
@@ -97,27 +95,27 @@ Options:
   --version         Show version
 
 Sources:
-  targets list                          List all configured sources
-  targets add --name=NAME --folders=PATHS
-  targets delete --name=NAME
-  targets show --name=NAME
+  sources list                          List all configured sources
+  sources add --name=NAME --folders=PATHS
+  sources delete --name=NAME
+  sources show --name=NAME
 
 Destinations:
-  remotes list                          List all configured destinations
-  remotes add --name=NAME
-  remotes delete --name=NAME
-  remotes show --name=NAME
-  remotes test --name=NAME              Validate connectivity
-  remotes disk-info-short --name=NAME   Show disk usage
+  destinations list                          List all configured destinations
+  destinations add --name=NAME
+  destinations delete --name=NAME
+  destinations show --name=NAME
+  destinations test --name=NAME              Validate connectivity
+  destinations disk-info-short --name=NAME   Show disk usage
 
 Operations:
-  backup [--target=NAME] [--remote=NAME] [--all]
-  restore --target=NAME --snapshot=TS [--remote=NAME] [--dest=DIR] [--skip-mysql]
-  retention [--target=NAME] [--remote=NAME] [--all]
+  backup [--source=NAME] [--destination=NAME] [--all]
+  restore --source=NAME --snapshot=TS [--destination=NAME] [--dest=DIR] [--skip-mysql]
+  retention [--source=NAME] [--destination=NAME] [--all]
 
 Snapshots:
-  snapshots list [--target=NAME] [--remote=NAME]
-  snapshots browse --target=NAME --snapshot=TS [--remote=NAME]
+  snapshots list [--source=NAME] [--destination=NAME]
+  snapshots browse --source=NAME --snapshot=TS [--destination=NAME]
 
 Scheduling:
   schedule install | show | remove

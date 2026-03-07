@@ -90,7 +90,7 @@ class RemotesScreen(Screen):
     async def _fetch_disk_info(self) -> None:
         remotes = list_conf_dir("remotes.d")
         for name in remotes:
-            rc, stdout, stderr = await run_cli("remotes", "disk-info-short", f"--name={name}")
+            rc, stdout, stderr = await run_cli("destinations", "disk-info-short", f"--name={name}")
             disk_text = stdout.strip() if rc == 0 and stdout.strip() else "N/A"
             try:
                 table = self.query_one("#remotes-table", DataTable)
@@ -103,7 +103,7 @@ class RemotesScreen(Screen):
     async def _test_remote(self, name: str) -> None:
         log_screen = OperationLog(f"Testing Destination: {name}", show_spinner=False)
         self.app.push_screen(log_screen)
-        rc, stdout, stderr = await run_cli("remotes", "test", f"--name={name}")
+        rc, stdout, stderr = await run_cli("destinations", "test", f"--name={name}")
         if stdout:
             log_screen.write(stdout)
         if stderr:

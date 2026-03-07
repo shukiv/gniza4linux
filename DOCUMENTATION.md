@@ -131,7 +131,7 @@ Each backup creates a **snapshot** — a timestamped directory containing a full
 
 **CLI**:
 ```bash
-gniza --cli targets add --name=mysite --folders=/var/www,/etc/nginx
+gniza --cli sources add --name=mysite --folders=/var/www,/etc/nginx
 ```
 
 **Manual**: Create `<config_dir>/targets.d/mysite.conf`.
@@ -258,7 +258,7 @@ Common uses:
 ### Viewing a Source
 
 ```bash
-gniza --cli targets show --name=mysite
+gniza --cli sources show --name=mysite
 ```
 
 Shows all configured fields including source type details and MySQL settings.
@@ -266,7 +266,7 @@ Shows all configured fields including source type details and MySQL settings.
 ### Deleting a Source
 
 ```bash
-gniza --cli targets delete --name=mysite
+gniza --cli sources delete --name=mysite
 ```
 
 This removes the config file only. Existing snapshots on destinations are not affected.
@@ -281,7 +281,7 @@ This removes the config file only. Existing snapshots on destinations are not af
 
 **CLI**:
 ```bash
-gniza --cli remotes add --name=backup-server
+gniza --cli destinations add --name=backup-server
 ```
 
 This creates a config template. Edit it manually or use the TUI to configure.
@@ -371,7 +371,7 @@ Requires `rclone`.
 ### Testing a Destination
 
 ```bash
-gniza --cli remotes test --name=backup-server
+gniza --cli destinations test --name=backup-server
 ```
 
 Validates connectivity and configuration. For SSH destinations, tests the SSH connection. For S3/GDrive, verifies credentials and access.
@@ -379,7 +379,7 @@ Validates connectivity and configuration. For SSH destinations, tests the SSH co
 ### Checking Disk Usage
 
 ```bash
-gniza --cli remotes disk-info-short --name=backup-server
+gniza --cli destinations disk-info-short --name=backup-server
 ```
 
 Shows used/total space, free space, and usage percentage. Works with SSH and local destinations.
@@ -395,13 +395,13 @@ Shows used/total space, free space, and usage percentage. Works with SSH and loc
 gniza --cli backup --all
 
 # Back up a specific source
-gniza --cli backup --target=mysite
+gniza --cli backup --source=mysite
 
 # Back up a specific source to a specific destination
-gniza --cli backup --target=mysite --remote=backup-server
+gniza --cli backup --source=mysite --destination=backup-server
 
 # Back up multiple sources
-gniza --cli backup --target=mysite,databases
+gniza --cli backup --source=mysite,databases
 ```
 
 ### How Backup Works
@@ -477,19 +477,19 @@ Each source uses `flock`-based locking to prevent overlapping backups of the sam
 
 ```bash
 # Restore latest snapshot in-place
-gniza --cli restore --target=mysite --remote=backup-server
+gniza --cli restore --source=mysite --destination=backup-server
 
 # Restore a specific snapshot
-gniza --cli restore --target=mysite --remote=backup-server --snapshot=2026-03-07T020000
+gniza --cli restore --source=mysite --destination=backup-server --snapshot=2026-03-07T020000
 
 # Restore to a custom directory
-gniza --cli restore --target=mysite --remote=backup-server --dest=/tmp/restore
+gniza --cli restore --source=mysite --destination=backup-server --dest=/tmp/restore
 
 # Restore a single folder from a snapshot
-gniza --cli restore --target=mysite --remote=backup-server --snapshot=2026-03-07T020000 --folder=/var/www
+gniza --cli restore --source=mysite --destination=backup-server --snapshot=2026-03-07T020000 --folder=/var/www
 
 # Skip MySQL restore
-gniza --cli restore --target=mysite --remote=backup-server --skip-mysql
+gniza --cli restore --source=mysite --destination=backup-server --skip-mysql
 ```
 
 ### Restore Behavior
@@ -514,19 +514,19 @@ Navigate to Restore, select a source, destination, and snapshot, choose in-place
 gniza --cli snapshots list
 
 # List snapshots for a specific source
-gniza --cli snapshots list --target=mysite
+gniza --cli snapshots list --source=mysite
 
 # List snapshots on a specific destination
-gniza --cli snapshots list --remote=backup-server
+gniza --cli snapshots list --destination=backup-server
 
 # Both
-gniza --cli snapshots list --target=mysite --remote=backup-server
+gniza --cli snapshots list --source=mysite --destination=backup-server
 ```
 
 ### Browsing Snapshot Contents
 
 ```bash
-gniza --cli snapshots browse --target=mysite --snapshot=2026-03-07T020000
+gniza --cli snapshots browse --source=mysite --snapshot=2026-03-07T020000
 ```
 
 Lists all files in the snapshot.
@@ -579,10 +579,10 @@ Retention runs automatically after each successful backup. The oldest snapshots 
 gniza --cli retention --all
 
 # Enforce for a specific source
-gniza --cli retention --target=mysite
+gniza --cli retention --source=mysite
 
 # Enforce on a specific destination
-gniza --cli retention --remote=backup-server
+gniza --cli retention --destination=backup-server
 ```
 
 ### Snapshot Pinning
@@ -704,7 +704,7 @@ Default options ensure consistent dumps for InnoDB tables and include stored pro
 During restore, MySQL dumps from `_mysql/` are automatically restored. Use `--skip-mysql` to skip:
 
 ```bash
-gniza --cli restore --target=mysite --remote=backup-server --skip-mysql
+gniza --cli restore --source=mysite --destination=backup-server --skip-mysql
 ```
 
 In the TUI, toggle the "Restore MySQL databases" switch.
@@ -854,56 +854,56 @@ Launch with `gniza` (no arguments). Requires Python 3 and Textual.
 ### Sources
 
 ```bash
-gniza --cli targets list                              # List all sources
-gniza --cli targets add --name=NAME --folders=PATHS   # Create a source
-gniza --cli targets delete --name=NAME                # Delete a source
-gniza --cli targets show --name=NAME                  # Show source details
+gniza --cli sources list                              # List all sources
+gniza --cli sources add --name=NAME --folders=PATHS   # Create a source
+gniza --cli sources delete --name=NAME                # Delete a source
+gniza --cli sources show --name=NAME                  # Show source details
 ```
 
 ### Destinations
 
 ```bash
-gniza --cli remotes list                              # List all destinations
-gniza --cli remotes add --name=NAME                   # Create a destination
-gniza --cli remotes delete --name=NAME                # Delete a destination
-gniza --cli remotes show --name=NAME                  # Show destination details
-gniza --cli remotes test --name=NAME                  # Test connectivity
-gniza --cli remotes disk-info-short --name=NAME       # Show disk usage
+gniza --cli destinations list                              # List all destinations
+gniza --cli destinations add --name=NAME                   # Create a destination
+gniza --cli destinations delete --name=NAME                # Delete a destination
+gniza --cli destinations show --name=NAME                  # Show destination details
+gniza --cli destinations test --name=NAME                  # Test connectivity
+gniza --cli destinations disk-info-short --name=NAME       # Show disk usage
 ```
 
 ### Backup
 
 ```bash
 gniza --cli backup --all                              # Back up everything
-gniza --cli backup --target=NAME                      # Back up one source
-gniza --cli backup --target=NAME --remote=NAME        # Source to specific destination
-gniza --cli backup --target=a,b,c                     # Multiple sources
+gniza --cli backup --source=NAME                      # Back up one source
+gniza --cli backup --source=NAME --destination=NAME        # Source to specific destination
+gniza --cli backup --source=a,b,c                     # Multiple sources
 ```
 
 ### Restore
 
 ```bash
-gniza --cli restore --target=NAME --remote=NAME --snapshot=TS
-gniza --cli restore --target=NAME --remote=NAME --dest=/tmp/restore
-gniza --cli restore --target=NAME --remote=NAME --folder=/var/www
-gniza --cli restore --target=NAME --remote=NAME --skip-mysql
+gniza --cli restore --source=NAME --destination=NAME --snapshot=TS
+gniza --cli restore --source=NAME --destination=NAME --dest=/tmp/restore
+gniza --cli restore --source=NAME --destination=NAME --folder=/var/www
+gniza --cli restore --source=NAME --destination=NAME --skip-mysql
 ```
 
 ### Snapshots
 
 ```bash
 gniza --cli snapshots list                            # All snapshots
-gniza --cli snapshots list --target=NAME              # For one source
-gniza --cli snapshots list --remote=NAME              # On one destination
-gniza --cli snapshots browse --target=NAME --snapshot=TS
+gniza --cli snapshots list --source=NAME              # For one source
+gniza --cli snapshots list --destination=NAME              # On one destination
+gniza --cli snapshots browse --source=NAME --snapshot=TS
 ```
 
 ### Retention
 
 ```bash
 gniza --cli retention --all                           # Enforce everywhere
-gniza --cli retention --target=NAME                   # One source
-gniza --cli retention --remote=NAME                   # One destination
+gniza --cli retention --source=NAME                   # One source
+gniza --cli retention --destination=NAME                   # One destination
 ```
 
 ### Scheduling
@@ -1004,7 +1004,7 @@ All global settings are in `gniza.conf` in the config directory.
 ### Credential Handling
 
 - Passwords are never logged or displayed in output
-- `targets show` and `remotes show` mask passwords with `****`
+- `sources show` and `destinations show` mask passwords with `****`
 - MySQL passwords are passed via `MYSQL_PWD` environment variable
 - SSH passwords are passed via `sshpass`, not command-line arguments
 
@@ -1040,7 +1040,7 @@ gniza --cli --debug backup --all
 Create at least one destination in `<config_dir>/remotes.d/`.
 
 **SSH connection failures**
-- Test with: `gniza --cli remotes test --name=<destination>`
+- Test with: `gniza --cli destinations test --name=<destination>`
 - Check that the SSH key exists and has correct permissions (600)
 - Verify the remote host is reachable: `ssh -p PORT user@host`
 - If using password auth, ensure `sshpass` is installed

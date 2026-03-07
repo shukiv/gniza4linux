@@ -91,9 +91,9 @@ class BackupScreen(Screen):
 
     def _do_backup(self, target: str, remote: str) -> None:
         job = job_manager.create_job("backup", f"Backup: {target}")
-        args = ["backup", f"--target={target}"]
+        args = ["backup", f"--source={target}"]
         if remote:
-            args.append(f"--remote={remote}")
+            args.append(f"--destination={remote}")
         job_manager.start_job(self.app, job, *args)
         self.app.switch_screen("running_tasks")
 

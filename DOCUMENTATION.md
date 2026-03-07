@@ -90,7 +90,7 @@ bash scripts/install.sh          # user mode
 | rclone | No | S3 and Google Drive support |
 | python3 | No | TUI and web dashboard |
 | textual | No | Terminal UI framework |
-| textual-serve | No | Web dashboard |
+| flask | No | Web dashboard framework |
 
 The installer detects available dependencies and warns about missing optional ones.
 
@@ -782,7 +782,7 @@ If SMTP is not configured, gniza falls back to the system `mail` or `sendmail` c
 
 ## Web Dashboard
 
-Serve the full TUI in a browser with HTTP Basic Auth.
+A full-featured web application for managing gniza from any browser. Built with Flask, Tailwind CSS, DaisyUI, and HTMX — all frontend assets loaded via CDN (no build step required).
 
 ### Setup
 
@@ -814,8 +814,8 @@ Web dashboard settings are in `gniza.conf`:
 ```ini
 WEB_PORT="2323"                        # Dashboard port
 WEB_HOST="0.0.0.0"                     # Bind address (0.0.0.0 = all interfaces)
-WEB_USER="admin"                       # HTTP Basic Auth username
-WEB_API_KEY="generated-during-install" # HTTP Basic Auth password
+WEB_USER="admin"                       # Login username
+WEB_API_KEY="generated-during-install" # Login password
 ```
 
 The API key is generated automatically during installation if you enable the web dashboard. You can change it in Settings or directly in `gniza.conf`.
@@ -826,18 +826,61 @@ systemctl --user restart gniza-web.service   # user mode
 sudo systemctl restart gniza-web.service     # root mode
 ```
 
+### Web Screens
+
+The web dashboard has full feature parity with the TUI:
+
+| Screen | Description |
+|--------|-------------|
+| **Dashboard** | Overview with sources, destinations, schedules tables, and last backup log with status |
+| **Sources** | Create, edit, delete sources with toggle enable/disable. Supports all source types (local, SSH, S3, Google Drive), MySQL backup, hooks, include/exclude filters |
+| **Destinations** | Create, edit, delete destinations. Test connection, view disk usage inline. Supports SSH, local, S3, Google Drive |
+| **Schedules** | Create, edit, delete schedules with toggle active/inactive. Supports hourly, daily (multi-day), weekly, monthly, and custom cron |
+| **Backup** | Select source and destination, or back up all. Starts a background job and redirects to Running Tasks |
+| **Restore** | Select source, destination, and snapshot. Options for custom restore path, specific folder, and skip MySQL |
+| **Running Tasks** | Live job list with status updates every 2 seconds. View log output, kill running jobs, clear finished jobs |
+| **Snapshots** | Browse snapshots by source and destination. View file tree with HTMX-loaded directory expansion |
+| **Retention** | Run retention cleanup per source or all. Edit default retention count |
+| **Logs** | Paginated log viewer with status detection (success/error). View full log content |
+| **Settings** | Edit all global settings organized in sections: General, Email, SSH, Web. Send test email |
+
+### Authentication
+
+The web dashboard uses session-based authentication. Login with the username and API key configured in `gniza.conf`. Sessions are secured with:
+
+- Derived secret key (never stores API key directly in session)
+- Secure cookie flags (HttpOnly, SameSite=Lax)
+- Session fixation protection on login
+
+### Theme
+
+The web dashboard supports dark and light themes. Toggle between them using the sun/moon icon in the top-right header. Theme preference is saved in the browser's local storage.
+
+### Live Job Monitoring
+
+Running tasks are polled every 2 seconds via HTMX. When a backup or restore process finishes, the status automatically updates to Success, Failed, or Unknown. Job logs can be viewed inline with a single click.
+
 ### Mobile Access
 
-The web dashboard works on mobile browsers. On small screens:
-- Font size auto-adjusts to fit approximately 50 columns
-- Button rows scroll horizontally
-- The documentation panel hides automatically on narrow screens
-- Touch scrolling is supported in all scrollable areas
+The web dashboard is responsive and works on mobile browsers:
+- Sidebar collapses into a hamburger menu on small screens
+- Tables scroll horizontally on narrow viewports
+- All forms and controls are touch-friendly
 
 ### Root vs User Mode
 
 - **Root**: Installs as a system service (`/etc/systemd/system/gniza-web.service`)
 - **User**: Installs as a user service (`~/.config/systemd/user/gniza-web.service`)
+
+### Tech Stack
+
+| Component | Purpose |
+|-----------|---------|
+| **Flask** | Python web framework, blueprint-based architecture |
+| **Tailwind CSS** | Utility CSS framework (CDN) |
+| **DaisyUI** | Tailwind component library with theme support (CDN) |
+| **HTMX** | Dynamic HTML interactions, SSE log streaming (CDN) |
+| **Alpine.js** | Lightweight JS for conditional form fields and state (CDN) |
 
 ---
 

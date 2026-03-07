@@ -15,6 +15,11 @@ bp = Blueprint("targets", __name__, url_prefix="/sources")
 _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 
 
+def _lines_to_csv(text: str) -> str:
+    """Convert newline-separated textarea input to comma-separated config value."""
+    return ",".join(line.strip() for line in text.splitlines() if line.strip())
+
+
 def _ssh_cmd(host, port="22", user="root", key="", password=""):
     ssh_opts = [
         "ssh",
@@ -161,9 +166,9 @@ def save():
 
     target = Target(
         name=name,
-        folders=form.get("folders", ""),
-        exclude=form.get("exclude", ""),
-        include=form.get("include", ""),
+        folders=_lines_to_csv(form.get("folders", "")),
+        exclude=_lines_to_csv(form.get("exclude", "")),
+        include=_lines_to_csv(form.get("include", "")),
         remote=form.get("remote", ""),
         pre_hook=form.get("pre_hook", ""),
         post_hook=form.get("post_hook", ""),

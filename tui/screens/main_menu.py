@@ -80,7 +80,7 @@ class MainMenuScreen(Screen):
         width = self.app.size.width
         logo = self.query_one("#logo")
         layout = self.query_one("#main-layout")
-        logo.display = width >= 48
+        logo.display = width >= 100
         if width < 100:
             layout.styles.layout = "vertical"
             layout.styles.align = ("center", "top")

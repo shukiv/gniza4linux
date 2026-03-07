@@ -146,7 +146,7 @@ fi
 
 # Only create log files for operations that produce meaningful output
 case "${SUBCOMMAND:-}" in
-    backup|restore|retention) init_logging ;;
+    backup|restore|retention|scheduled-run) init_logging ;;
 esac
 
 # ── Parse subcommand flags helper ────────────────────────────
@@ -497,6 +497,43 @@ run_cli() {
             else
                 ls -lt "$log_dir"/gniza-*.log 2>/dev/null || echo "No log files found."
             fi
+            ;;
+
+        scheduled-run)
+            local sched_name="" target="" remote=""
+            sched_name=$(_parse_flag "--schedule" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            target=$(_parse_flag "--target" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            [[ -z "$sched_name" ]] && die "scheduled-run requires --schedule=NAME"
+
+            trap release_all_target_locks EXIT
+
+            local rc=0
+            if [[ -n "$target" && "$target" == *,* ]]; then
+                local IFS=','
+                local names
+                read -ra names <<< "$target"
+                for t in "${names[@]}"; do
+                    t="${t#"${t%%[![:space:]]*}"}"
+                    t="${t%"${t##*[![:space:]]}"}"
+                    [[ -z "$t" ]] && continue
+                    backup_target "$t" "$remote" || rc=$?
+                done
+            elif [[ -n "$target" ]]; then
+                backup_target "$target" "$remote" || rc=$?
+            else
+                backup_all_targets "$remote" || rc=$?
+            fi
+
+            # Stamp LAST_RUN on success
+            if (( rc == 0 )); then
+                local conf="$CONFIG_DIR/schedules.d/${sched_name}.conf"
+                if [[ -f "$conf" ]]; then
+                    sed -i '/^LAST_RUN=/d' "$conf"
+                    echo "LAST_RUN=\"$(date '+%Y-%m-%d %H:%M')\"" >> "$conf"
+                fi
+            fi
+            exit "$rc"
             ;;
 
         version)

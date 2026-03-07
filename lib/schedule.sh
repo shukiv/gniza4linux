@@ -185,7 +185,7 @@ build_cron_line() {
         extra_flags+=" --target=$SCHEDULE_TARGETS"
     fi
 
-    echo "$cron_expr PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\" $bin_path backup${extra_flags} >>\"${LOG_DIR}/cron.log\" 2>&1"
+    echo "${cron_expr} PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\" ${bin_path} scheduled-run --schedule=${name}${extra_flags} >>\"${LOG_DIR}/cron.log\" 2>&1"
 }
 
 # ── Crontab Management ────────────────────────────────────────

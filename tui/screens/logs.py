@@ -4,11 +4,21 @@ from pathlib import Path
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, DataTable, RichLog
+from textual.widgets._rich_log import Strip
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
 from tui.config import LOG_DIR
 from tui.widgets import DocsPanel
+
+
+class _SafeRichLog(RichLog):
+    """RichLog that guards against negative y in render_line (Textual bug)."""
+
+    def render_line(self, y: int) -> Strip:
+        if y < 0 or not self.lines:
+            return Strip.blank(self.size.width)
+        return super().render_line(y)
 
 
 _LOG_NAME_RE = re.compile(r"gniza-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})\.log")
@@ -89,7 +99,7 @@ class LogsScreen(Screen):
                     yield Button("◀ Prev", id="btn-prev-page")
                     yield Static("", id="log-page-info")
                     yield Button("Next ▶", id="btn-next-page")
-                yield RichLog(id="log-viewer", wrap=True, highlight=True)
+                yield _SafeRichLog(id="log-viewer", wrap=True, highlight=True)
             yield DocsPanel.for_screen("logs-screen")
         yield Footer()
 

@@ -18,7 +18,7 @@ class RemotesScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="remotes-screen"):
-                yield Static("Remotes", id="screen-title")
+                yield Static("Destinations", id="screen-title")
                 yield DataTable(id="remotes-table")
                 with Horizontal(id="remotes-buttons"):
                     yield Button("Add", variant="primary", id="btn-add")

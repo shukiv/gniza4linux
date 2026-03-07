@@ -105,12 +105,12 @@ class ScheduleEditScreen(Screen):
                     placeholder="0 2 * * *",
                     classes="sched-cron-field",
                 )
-                yield Static("Targets (empty=all):")
+                yield Static("Sources (empty=all):")
                 yield SelectionList[str](
                     *self._build_target_choices(),
                     id="sched-targets",
                 )
-                yield Static("Remotes (empty=all):")
+                yield Static("Destinations (empty=all):")
                 yield SelectionList[str](
                     *self._build_remote_choices(),
                     id="sched-remotes",

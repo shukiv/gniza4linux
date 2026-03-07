@@ -23,7 +23,7 @@ class TargetEditScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        title = "Add Target" if self._is_new else f"Edit Target: {self._edit_name}"
+        title = "Add Source" if self._is_new else f"Edit Source: {self._edit_name}"
         target = Target()
         if not self._is_new:
             data = parse_conf(CONFIG_DIR / "targets.d" / f"{self._edit_name}.conf")

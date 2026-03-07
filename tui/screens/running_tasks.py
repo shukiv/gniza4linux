@@ -5,9 +5,19 @@ from pathlib import Path
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, DataTable, RichLog, ProgressBar
+from textual.widgets._rich_log import Strip
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 from textual.timer import Timer
+
+
+class _SafeRichLog(RichLog):
+    """RichLog that guards against negative y in render_line (Textual bug)."""
+
+    def render_line(self, y: int) -> Strip:
+        if y < 0 or not self.lines:
+            return Strip.blank(self.size.width)
+        return super().render_line(y)
 
 from tui.jobs import job_manager
 from tui.widgets import ConfirmDialog, DocsPanel
@@ -33,7 +43,7 @@ class RunningTasksScreen(Screen):
                     yield Button("Back", id="btn-rt-back")
                 yield Static("", id="rt-progress-label")
                 yield ProgressBar(id="rt-progress", total=100, show_eta=False)
-                yield RichLog(id="rt-log-viewer", wrap=True, highlight=True)
+                yield _SafeRichLog(id="rt-log-viewer", wrap=True, highlight=True)
             yield DocsPanel.for_screen("running-tasks-screen")
         yield Footer()
 

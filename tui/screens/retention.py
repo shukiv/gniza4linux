@@ -25,11 +25,11 @@ class RetentionScreen(Screen):
                 if not targets:
                     yield Static("No targets configured.")
                 else:
-                    yield Static("Target:")
+                    yield Static("Source:")
                     yield Select(
                         [(t, t) for t in targets],
                         id="ret-target",
-                        prompt="Select target",
+                        prompt="Select source",
                     )
                     with Horizontal(id="ret-buttons"):
                         yield Button("Run Cleanup", variant="primary", id="btn-cleanup")

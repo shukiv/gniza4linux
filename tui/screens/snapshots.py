@@ -36,10 +36,10 @@ class SnapshotsScreen(Screen):
                 if not targets or not remotes:
                     yield Static("Targets and remotes must be configured to browse snapshots.")
                 else:
-                    yield Static("Target:")
-                    yield Select([(t, t) for t in targets], id="snap-target", prompt="Select target")
-                    yield Static("Remote:")
-                    yield Select([(r, r) for r in remotes], id="snap-remote", prompt="Select remote")
+                    yield Static("Source:")
+                    yield Select([(t, t) for t in targets], id="snap-target", prompt="Select source")
+                    yield Static("Destination:")
+                    yield Select([(r, r) for r in remotes], id="snap-remote", prompt="Select destination")
                     yield Button("Load Snapshots", id="btn-load", variant="primary")
                     yield DataTable(id="snap-table")
                     with Horizontal(id="snapshots-buttons"):

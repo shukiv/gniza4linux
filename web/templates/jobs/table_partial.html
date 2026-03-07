@@ -1,0 +1,75 @@
+<div id="jobs-table"
+     {% if has_running %}
+     hx-get="{{ url_for('jobs.table') }}"
+     hx-trigger="every 2s"
+     hx-swap="outerHTML"
+     {% endif %}
+>
+{% if jobs %}
+<div class="overflow-x-auto">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Label</th>
+                <th>Status</th>
+                <th>Started</th>
+                <th>Duration</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr class="hover">
+                <td class="font-mono text-xs">{{ job.id }}</td>
+                <td>{{ job.label }}</td>
+                <td>
+                    {% if job.status == "running" %}
+                    <span class="text-info font-medium inline-flex items-center gap-1">
+                        <span class="loading loading-spinner loading-xs"></span>
+                        Running
+                    </span>
+                    {% elif job.status == "skipped" %}
+                    <span class="text-warning font-medium">Skipped</span>
+                    {% elif job.status == "success" %}
+                    <span class="text-success font-medium">Success</span>
+                    {% elif job.status == "failed" %}
+                    <span class="text-error font-medium">Failed</span>
+                    {% else %}
+                    <span class="text-warning font-medium">Unknown</span>
+                    {% endif %}
+                </td>
+                <td class="text-xs">{{ job.started_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td class="text-xs">
+                    {% if job.finished_at %}
+                        {{ ((job.finished_at - job.started_at).total_seconds() | int) // 60 }}m {{ ((job.finished_at - job.started_at).total_seconds() | int) % 60 }}s
+                    {% elif job.status == "running" %}
+                        <span class="text-info">in progress</span>
+                    {% else %}
+                        --
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="flex gap-1">
+                        <button class="btn btn-primary btn-sm"
+                                @click="selectedJob = selectedJob === '{{ job.id }}' ? null : '{{ job.id }}'">
+                            View Log
+                        </button>
+                        {% if job.status == "running" %}
+                        <form method="POST" action="{{ url_for('jobs.kill', job_id=job.id) }}" class="inline">
+                            <button type="submit" class="btn btn-error btn-sm">Kill</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="p-8 text-center text-base-content/40">
+    <p>No jobs found</p>
+</div>
+{% endif %}
+</div>

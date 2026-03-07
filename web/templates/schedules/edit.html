@@ -102,51 +102,53 @@
         </div>
     </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="card bg-base-200 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-4">Sources</h2>
+                {% set selected_targets = schedule.targets.split(',') if schedule.targets else [] %}
+                {% if targets %}
+                <div class="flex flex-col gap-2">
+                    {% for t in targets %}
+                    <label class="label cursor-pointer gap-3 justify-start p-0">
+                        <input type="checkbox" name="targets" value="{{ t }}" class="toggle toggle-primary toggle-sm"
+                               {{ 'checked' if t in selected_targets else '' }}>
+                        <span class="label-text">{{ t }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <span class="text-base-content/40 text-sm">No sources configured</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card bg-base-200 shadow">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-4">Destinations</h2>
+                {% set selected_remotes = schedule.remotes.split(',') if schedule.remotes else [] %}
+                {% if remotes %}
+                <div class="flex flex-col gap-2">
+                    {% for r in remotes %}
+                    <label class="label cursor-pointer gap-3 justify-start p-0">
+                        <input type="checkbox" name="remotes" value="{{ r }}" class="toggle toggle-primary toggle-sm"
+                               {{ 'checked' if r in selected_remotes else '' }}>
+                        <span class="label-text">{{ r }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <span class="text-base-content/40 text-sm">No destinations configured</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
-            <h2 class="card-title text-base mb-4">Sources &amp; Destinations</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Sources</span></label>
-                    {% set selected_targets = schedule.targets.split(',') if schedule.targets else [] %}
-                    {% if targets %}
-                    <div class="flex flex-col gap-2">
-                        {% for t in targets %}
-                        <label class="label cursor-pointer gap-2 justify-start">
-                            <input type="checkbox" name="targets" value="{{ t }}" class="checkbox checkbox-primary checkbox-sm"
-                                   {{ 'checked' if t in selected_targets else '' }}>
-                            <span class="label-text">{{ t }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <span class="text-base-content/40 text-sm">No sources configured</span>
-                    {% endif %}
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Destinations</span></label>
-                    {% set selected_remotes = schedule.remotes.split(',') if schedule.remotes else [] %}
-                    {% if remotes %}
-                    <div class="flex flex-col gap-2">
-                        {% for r in remotes %}
-                        <label class="label cursor-pointer gap-2 justify-start">
-                            <input type="checkbox" name="remotes" value="{{ r }}" class="checkbox checkbox-primary checkbox-sm"
-                                   {{ 'checked' if r in selected_remotes else '' }}>
-                            <span class="label-text">{{ r }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <span class="text-base-content/40 text-sm">No destinations configured</span>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="form-control mt-4">
-                <label class="label cursor-pointer gap-2 justify-start">
-                    <span class="label-text">Active</span>
-                    <input type="checkbox" name="active" class="checkbox checkbox-primary" {{ 'checked' if schedule.active == 'yes' else '' }}>
-                </label>
-            </div>
+            <label class="label cursor-pointer gap-3 justify-start p-0">
+                <input type="checkbox" name="active" class="toggle toggle-success" {{ 'checked' if schedule.active == 'yes' else '' }}>
+                <span class="label-text font-medium">Active</span>
+            </label>
         </div>
     </div>
 

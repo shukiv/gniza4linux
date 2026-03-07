@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Schedules{% endblock %}
+{% block page_title %}Schedules{% endblock %}
+
+{% block content %}
+<div x-data="{ showModal: false, deleteUrl: '', deleteName: '' }">
+
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-xl font-semibold">Backup Schedules</h2>
+    <a href="{{ url_for('schedules.new') }}" class="btn btn-primary btn-sm">+ Add Schedule</a>
+</div>
+
+<div class="card bg-base-200 shadow">
+    <div class="card-body p-0">
+        {% if schedules %}
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Time</th>
+                        <th>Targets</th>
+                        <th>Remotes</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in schedules %}
+                    <tr class="hover">
+                        <td class="font-mono font-medium">{{ s.name }}</td>
+                        <td><span class="badge badge-outline badge-sm">{{ s.schedule }}</span></td>
+                        <td>
+                            {% if s.schedule == 'custom' %}
+                            <span class="font-mono text-sm">{{ s.cron }}</span>
+                            {% elif s.schedule == 'weekly' %}
+                            {{ s.day }} {{ s.time }}
+                            {% elif s.schedule == 'monthly' %}
+                            Day {{ s.day }} {{ s.time }}
+                            {% else %}
+                            {{ s.time }}
+                            {% endif %}
+                        </td>
+                        <td class="max-w-xs truncate text-base-content/60">{{ s.targets or '--' }}</td>
+                        <td class="max-w-xs truncate text-base-content/60">{{ s.remotes or '--' }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('schedules.toggle', name=s.name) }}" class="inline">
+                                {% if s.active == 'yes' %}
+                                <button type="submit" class="badge badge-success badge-sm gap-1 cursor-pointer">Active</button>
+                                {% else %}
+                                <button type="submit" class="badge badge-error badge-sm gap-1 cursor-pointer">Inactive</button>
+                                {% endif %}
+                            </form>
+                        </td>
+                        <td>
+                            <div class="flex gap-1">
+                                <a href="{{ url_for('schedules.edit', name=s.name) }}" class="btn btn-ghost btn-xs">Edit</a>
+                                <button class="btn btn-error btn-xs"
+                                        @click="deleteName = '{{ s.name }}'; deleteUrl = '{{ url_for('schedules.delete', name=s.name) }}'; showModal = true">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-base-content/40">
+            <p class="mb-4">No schedules configured</p>
+            <a href="{{ url_for('schedules.new') }}" class="btn btn-primary btn-sm">Create your first schedule</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete confirm modal -->
+<dialog class="modal" :class="{ 'modal-open': showModal }">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Confirm Delete</h3>
+        <p class="py-4">Are you sure you want to delete schedule <span class="font-mono font-bold" x-text="deleteName"></span>?</p>
+        <div class="modal-action">
+            <form :action="deleteUrl" method="POST">
+                <button type="submit" class="btn btn-error">Delete</button>
+            </form>
+            <button class="btn" @click="showModal = false">Cancel</button>
+        </div>
+    </div>
+    <div class="modal-backdrop" @click="showModal = false"></div>
+</dialog>
+
+</div>
+{% endblock %}

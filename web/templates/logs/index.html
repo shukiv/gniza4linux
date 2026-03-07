@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Logs{% endblock %}
+{% block page_title %}Logs{% endblock %}
+
+{% block content %}
+<div class="card bg-base-200 shadow">
+    <div class="card-body p-0">
+        {% if log_files %}
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Size</th>
+                        <th>Last Modified</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in log_files %}
+                    <tr class="hover">
+                        <td class="font-mono font-medium">{{ f.name }}</td>
+                        <td>
+                            {% if f.size < 1024 %}
+                            {{ f.size }} B
+                            {% elif f.size < 1048576 %}
+                            {{ "%.1f"|format(f.size / 1024) }} KB
+                            {% else %}
+                            {{ "%.1f"|format(f.size / 1048576) }} MB
+                            {% endif %}
+                        </td>
+                        <td>{{ f.mtime.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <a href="{{ url_for('logs.view', filename=f.name) }}" class="btn btn-ghost btn-xs">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if total_pages > 1 %}
+        <div class="flex justify-center p-4">
+            <div class="join">
+                {% if page > 1 %}
+                <a href="{{ url_for('logs.index', page=page-1) }}" class="join-item btn btn-sm">Previous</a>
+                {% endif %}
+                <span class="join-item btn btn-sm btn-disabled">Page {{ page }} / {{ total_pages }}</span>
+                {% if page < total_pages %}
+                <a href="{{ url_for('logs.index', page=page+1) }}" class="join-item btn btn-sm">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="p-8 text-center text-base-content/40">
+            <p>No log files found</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

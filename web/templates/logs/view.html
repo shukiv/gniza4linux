@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - {{ filename }}{% endblock %}
+{% block page_title %}Log: {{ filename }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('logs.index') }}" class="btn btn-ghost btn-sm">&larr; Back to Logs</a>
+</div>
+
+<div class="card bg-base-200 shadow">
+    <div class="card-body">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="card-title text-base font-mono">{{ filename }}</h2>
+            <span class="text-sm text-base-content/40">Lines {{ start + 1 }}-{{ end }} of {{ total_lines }}</span>
+        </div>
+
+        {% if start > 0 %}
+        <div class="mb-2">
+            <a href="{{ url_for('logs.view', filename=filename, offset=max(0, start - view_lines)) }}"
+               class="btn btn-ghost btn-xs">Load earlier lines</a>
+        </div>
+        {% endif %}
+
+        <div class="bg-base-300 rounded-lg p-4 overflow-x-auto max-h-[70vh] overflow-y-auto">
+            <pre class="text-sm font-mono whitespace-pre-wrap">{% for line in lines %}{{ line }}
+{% endfor %}</pre>
+        </div>
+
+        {% if end < total_lines %}
+        <div class="mt-2">
+            <a href="{{ url_for('logs.view', filename=filename, offset=end) }}"
+               class="btn btn-ghost btn-xs">Load later lines</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

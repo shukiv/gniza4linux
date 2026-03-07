@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, flash
 
 from tui.config import CONFIG_DIR, LOG_DIR, parse_conf, list_conf_dir
 from tui.models import Target, Remote, Schedule
@@ -42,10 +42,13 @@ def _last_log_info():
     if not logs:
         return None
     latest = logs[0]
-    lines = latest.read_text(errors="replace").splitlines()
-    last_lines = lines[-50:] if len(lines) > 50 else lines
+    from collections import deque
+    with open(latest, errors="replace") as f:
+        lines = deque(f, maxlen=200)
+    lines = [l.rstrip("\n") for l in lines]
+    last_lines = list(lines)[-50:]
     status = "unknown"
-    for line in reversed(lines):
+    for line in reversed(list(lines)):
         lower = line.lower()
         if "completed successfully" in lower or "backup done" in lower:
             status = "success"
@@ -64,12 +67,25 @@ def _last_log_info():
 @bp.route("/")
 @login_required
 def index():
-    targets = _load_targets()
-    remotes = _load_remotes()
-    schedules = _load_schedules()
-    last_log = _last_log_info()
+    targets, remotes, schedules, last_log = [], [], [], None
+    try:
+        targets = _load_targets()
+    except Exception:
+        flash("Failed to load sources.", "error")
+    try:
+        remotes = _load_remotes()
+    except Exception:
+        flash("Failed to load destinations.", "error")
+    try:
+        schedules = _load_schedules()
+    except Exception:
+        flash("Failed to load schedules.", "error")
+    try:
+        last_log = _last_log_info()
+    except Exception:
+        pass
     return render_template(
-        "dashboard.html",
+        "dashboard/index.html",
         targets=targets,
         remotes=remotes,
         schedules=schedules,

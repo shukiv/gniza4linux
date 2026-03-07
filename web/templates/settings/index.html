@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ url_for('settings.save') }}" x-data="{ showApiKey: false }">
+
+    <!-- General -->
+    <div class="collapse collapse-arrow bg-base-200 shadow mb-4">
+        <input type="checkbox" checked />
+        <div class="collapse-title font-medium">General</div>
+        <div class="collapse-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Backup Mode</span></label>
+                    <select name="backup_mode" class="select select-bordered">
+                        <option value="incremental" {{ 'selected' if settings.backup_mode == 'incremental' else '' }}>Incremental</option>
+                        <option value="full" {{ 'selected' if settings.backup_mode == 'full' else '' }}>Full</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Bandwidth Limit (KB/s, 0=unlimited)</span></label>
+                    <input type="text" name="bwlimit" value="{{ settings.bwlimit }}" class="input input-bordered">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Retention Count</span></label>
+                    <input type="text" name="retention_count" value="{{ settings.retention_count }}" class="input input-bordered">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Log Level</span></label>
+                    <select name="log_level" class="select select-bordered">
+                        <option value="DEBUG" {{ 'selected' if settings.log_level == 'DEBUG' else '' }}>DEBUG</option>
+                        <option value="INFO" {{ 'selected' if settings.log_level == 'INFO' else '' }}>INFO</option>
+                        <option value="WARNING" {{ 'selected' if settings.log_level == 'WARNING' else '' }}>WARNING</option>
+                        <option value="ERROR" {{ 'selected' if settings.log_level == 'ERROR' else '' }}>ERROR</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Log Retention (days)</span></label>
+                    <input type="text" name="log_retain" value="{{ settings.log_retain }}" class="input input-bordered">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Disk Usage Threshold (%)</span></label>
+                    <input type="text" name="disk_usage_threshold" value="{{ settings.disk_usage_threshold }}" class="input input-bordered">
+                </div>
+                <div class="form-control md:col-span-2">
+                    <label class="label"><span class="label-text">Extra rsync Options</span></label>
+                    <input type="text" name="rsync_extra_opts" value="{{ settings.rsync_extra_opts }}" class="input input-bordered font-mono" placeholder="--compress --partial">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Notifications -->
+    <div class="collapse collapse-arrow bg-base-200 shadow mb-4">
+        <input type="checkbox" />
+        <div class="collapse-title font-medium">Email Notifications</div>
+        <div class="collapse-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Notify Email</span></label>
+                    <input type="email" name="notify_email" value="{{ settings.notify_email }}" class="input input-bordered" placeholder="admin@example.com">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Notify On</span></label>
+                    <select name="notify_on" class="select select-bordered">
+                        <option value="failure" {{ 'selected' if settings.notify_on == 'failure' else '' }}>Failure only</option>
+                        <option value="always" {{ 'selected' if settings.notify_on == 'always' else '' }}>Always</option>
+                        <option value="never" {{ 'selected' if settings.notify_on == 'never' else '' }}>Never</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">SMTP Host</span></label>
+                    <input type="text" name="smtp_host" value="{{ settings.smtp_host }}" class="input input-bordered" placeholder="smtp.gmail.com">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">SMTP Port</span></label>
+                    <input type="text" name="smtp_port" value="{{ settings.smtp_port }}" class="input input-bordered" placeholder="587">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">SMTP User</span></label>
+                    <input type="text" name="smtp_user" value="{{ settings.smtp_user }}" class="input input-bordered">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">SMTP Password</span></label>
+                    <input type="password" name="smtp_password" value="{{ settings.smtp_password }}" class="input input-bordered">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">From Address</span></label>
+                    <input type="email" name="smtp_from" value="{{ settings.smtp_from }}" class="input input-bordered" placeholder="gniza@example.com">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">SMTP Security</span></label>
+                    <select name="smtp_security" class="select select-bordered">
+                        <option value="tls" {{ 'selected' if settings.smtp_security == 'tls' else '' }}>TLS</option>
+                        <option value="ssl" {{ 'selected' if settings.smtp_security == 'ssl' else '' }}>SSL</option>
+                        <option value="none" {{ 'selected' if settings.smtp_security == 'none' else '' }}>None</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SSH -->
+    <div class="collapse collapse-arrow bg-base-200 shadow mb-4">
+        <input type="checkbox" />
+        <div class="collapse-title font-medium">SSH</div>
+        <div class="collapse-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">SSH Timeout (seconds)</span></label>
+                    <input type="text" name="ssh_timeout" value="{{ settings.ssh_timeout }}" class="input input-bordered">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">SSH Retries</span></label>
+                    <input type="text" name="ssh_retries" value="{{ settings.ssh_retries }}" class="input input-bordered">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Web Dashboard -->
+    <div class="collapse collapse-arrow bg-base-200 shadow mb-4">
+        <input type="checkbox" />
+        <div class="collapse-title font-medium">Web Dashboard</div>
+        <div class="collapse-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Web Port</span></label>
+                    <input type="text" name="web_port" value="{{ settings.web_port }}" class="input input-bordered">
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Web Host</span></label>
+                    <input type="text" name="web_host" value="{{ settings.web_host }}" class="input input-bordered">
+                </div>
+                <div class="form-control md:col-span-2">
+                    <label class="label"><span class="label-text">API Key</span></label>
+                    <div class="join w-full">
+                        <input :type="showApiKey ? 'text' : 'password'" name="web_api_key" value="{{ settings.web_api_key }}" class="input input-bordered join-item w-full font-mono">
+                        <button type="button" class="btn join-item" @click="showApiKey = !showApiKey" x-text="showApiKey ? 'Hide' : 'Show'">Show</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-2 mt-6">
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+    </div>
+</form>
+{% endblock %}

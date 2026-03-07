@@ -1,0 +1,5 @@
+{% if result.status == 'success' %}
+<span class="badge badge-success badge-sm">{{ result.message }}</span>
+{% else %}
+<span class="badge badge-error badge-sm">{{ result.message }}</span>
+{% endif %}

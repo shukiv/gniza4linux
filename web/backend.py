@@ -27,4 +27,6 @@ def start_cli_background(*args, log_file):
     proc = subprocess.Popen(
         cmd, stdout=fh, stderr=subprocess.STDOUT, start_new_session=True
     )
+    # Child process has its own fd now; close ours to avoid leak
+    fh.close()
     return proc

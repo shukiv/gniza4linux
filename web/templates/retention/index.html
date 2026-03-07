@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Retention{% endblock %}
+{% block page_title %}Retention Cleanup{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl">
+    <div class="card bg-base-200 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Run Retention Cleanup</h2>
+            <p class="text-base-content/60 mb-4">Remove old snapshots based on retention policies. Use dry-run to preview what would be deleted.</p>
+
+            <form method="POST" action="{{ url_for('retention.run') }}">
+                <div class="form-control mb-4">
+                    <label class="label"><span class="label-text">Source (optional)</span></label>
+                    <select name="target" class="select select-bordered">
+                        <option value="">All sources</option>
+                        {% for t in targets %}
+                        <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control mb-4">
+                    <label class="label"><span class="label-text">Destination (optional)</span></label>
+                    <select name="remote" class="select select-bordered">
+                        <option value="">All destinations</option>
+                        {% for r in remotes %}
+                        <option value="{{ r }}">{{ r }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control mb-6">
+                    <label class="label cursor-pointer gap-2 justify-start">
+                        <span class="label-text">Dry run (preview only)</span>
+                        <input type="checkbox" name="dry_run" class="checkbox checkbox-primary" checked>
+                    </label>
+                </div>
+
+                <div class="card-actions justify-end">
+                    <button type="submit" class="btn btn-primary">Run Cleanup</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

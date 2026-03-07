@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Running Tasks{% endblock %}
+{% block page_title %}Running Tasks{% endblock %}
+
+{% block content %}
+<div x-data="{ selectedJob: null }">
+
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-xl font-semibold">Jobs</h2>
+    <form method="POST" action="{{ url_for('jobs.clear') }}">
+        <button type="submit" class="btn btn-ghost btn-sm">Clear Finished</button>
+    </form>
+</div>
+
+<div class="card bg-base-200 shadow mb-6">
+    <div class="card-body p-0">
+        {% if jobs %}
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Label</th>
+                        <th>Status</th>
+                        <th>Started</th>
+                        <th>Duration</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr class="hover">
+                        <td class="font-mono text-xs">{{ job.id }}</td>
+                        <td>{{ job.label }}</td>
+                        <td>
+                            {% if job.status == "running" %}
+                            <span class="badge badge-info badge-sm gap-1">
+                                <span class="loading loading-spinner loading-xs"></span>
+                                Running
+                            </span>
+                            {% elif job.status == "success" %}
+                            <span class="badge badge-success badge-sm">Success</span>
+                            {% elif job.status == "failed" %}
+                            <span class="badge badge-error badge-sm">Failed</span>
+                            {% else %}
+                            <span class="badge badge-warning badge-sm">Unknown</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-xs">{{ job.started_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td class="text-xs">
+                            {% if job.finished_at %}
+                                {{ ((job.finished_at - job.started_at).total_seconds() | int) // 60 }}m {{ ((job.finished_at - job.started_at).total_seconds() | int) % 60 }}s
+                            {% elif job.status == "running" %}
+                                <span class="text-info">in progress</span>
+                            {% else %}
+                                --
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="flex gap-1">
+                                <button class="btn btn-ghost btn-xs"
+                                        @click="selectedJob = selectedJob === '{{ job.id }}' ? null : '{{ job.id }}'">
+                                    View Log
+                                </button>
+                                {% if job.status == "running" %}
+                                <form method="POST" action="{{ url_for('jobs.kill', job_id=job.id) }}" class="inline">
+                                    <button type="submit" class="btn btn-error btn-xs">Kill</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-base-content/40">
+            <p>No jobs found</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Log viewer panel -->
+{% for job in jobs %}
+<div x-show="selectedJob === '{{ job.id }}'" x-cloak class="card bg-base-200 shadow mb-4">
+    <div class="card-body">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="card-title text-sm">Log: {{ job.label }}</h3>
+            <button class="btn btn-ghost btn-xs" @click="selectedJob = null">Close</button>
+        </div>
+        <div class="bg-base-300 rounded-lg p-4 max-h-96 overflow-y-auto font-mono text-xs"
+             {% if job.status == "running" %}
+             hx-get="{{ url_for('jobs.log', job_id=job.id) }}"
+             hx-trigger="every 2s"
+             hx-swap="innerHTML"
+             {% else %}
+             hx-get="{{ url_for('jobs.log', job_id=job.id) }}"
+             hx-trigger="intersect once"
+             hx-swap="innerHTML"
+             {% endif %}
+        >
+            <span class="text-base-content/40">Loading log...</span>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+</div>
+{% endblock %}

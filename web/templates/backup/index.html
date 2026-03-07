@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Backup{% endblock %}
+{% block page_title %}Backup{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl">
+    <div class="card bg-base-200 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Run Backup</h2>
+            <p class="text-base-content/60 mb-4">Select a source and destination to start a backup job. The backup will run in the background and you can monitor it from the Running Tasks page.</p>
+
+            <form method="POST" action="{{ url_for('backup.run') }}">
+                <div class="form-control mb-4">
+                    <label class="label"><span class="label-text">Source</span></label>
+                    <select name="target" class="select select-bordered" required>
+                        <option value="" disabled selected>Select a source...</option>
+                        {% for t in targets %}
+                        <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control mb-6">
+                    <label class="label"><span class="label-text">Destination</span></label>
+                    <select name="remote" class="select select-bordered" required>
+                        <option value="" disabled selected>Select a destination...</option>
+                        {% for r in remotes %}
+                        <option value="{{ r }}">{{ r }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="card-actions justify-end">
+                    <button type="submit" class="btn btn-primary">Run Backup</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

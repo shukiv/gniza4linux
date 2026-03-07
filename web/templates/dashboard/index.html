@@ -60,9 +60,9 @@
                         <td>{{ t.remote or '--' }}</td>
                         <td>
                             {% if t.enabled == 'yes' %}
-                            <span class="badge badge-success badge-sm gap-1">Enabled</span>
+                            <span class="badge badge-success badge-md gap-1">Enabled</span>
                             {% else %}
-                            <span class="badge badge-error badge-sm gap-1">Disabled</span>
+                            <span class="badge badge-error badge-md gap-1">Disabled</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -97,7 +97,7 @@
                     {% for r in remotes %}
                     <tr class="hover">
                         <td class="font-mono font-medium">{{ r.name }}</td>
-                        <td><span class="badge badge-outline badge-sm">{{ r.type }}</span></td>
+                        <td><span class="badge badge-outline badge-md">{{ r.type }}</span></td>
                         <td>{{ r.host or '--' }}</td>
                         <td class="font-mono text-base-content/60">{{ r.base }}</td>
                     </tr>
@@ -136,9 +136,9 @@
                         <td class="text-base-content/60">{{ s.targets or '--' }}</td>
                         <td>
                             {% if s.active == 'yes' %}
-                            <span class="badge badge-success badge-sm gap-1">Active</span>
+                            <span class="badge badge-success badge-md gap-1">Active</span>
                             {% else %}
-                            <span class="badge badge-error badge-sm gap-1">Inactive</span>
+                            <span class="badge badge-error badge-md gap-1">Inactive</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -160,7 +160,7 @@
             <div class="collapse-title font-medium border-b border-base-300 flex items-center gap-2">
                 Last Backup Log
                 {% if last_log %}
-                <span class="badge {{ 'badge-success' if last_log.status == 'success' else 'badge-error' if last_log.status == 'error' else 'badge-warning' }} badge-sm">{{ last_log.status|capitalize }}</span>
+                <span class="badge {{ 'badge-success' if last_log.status == 'success' else 'badge-error' if last_log.status == 'error' else 'badge-warning' }} badge-md">{{ last_log.status|capitalize }}</span>
                 {% endif %}
             </div>
             <div class="collapse-content p-0">

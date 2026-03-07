@@ -107,3 +107,12 @@ def get_log_retain_days() -> int:
         return int(data.get("LOG_RETAIN", "90"))
     except (ValueError, TypeError):
         return 90
+
+
+def get_max_concurrent_jobs() -> int:
+    """Return MAX_CONCURRENT_JOBS from gniza.conf as an int (default 1, 0=unlimited)."""
+    data = parse_conf(CONFIG_DIR / "gniza.conf")
+    try:
+        return max(0, int(data.get("MAX_CONCURRENT_JOBS", "1")))
+    except (ValueError, TypeError):
+        return 1

@@ -37,6 +37,10 @@
                     <label class="label"><span class="label-text">Disk Usage Threshold (%)</span></label>
                     <input type="text" name="disk_usage_threshold" value="{{ settings.disk_usage_threshold }}" class="input input-bordered">
                 </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Simultaneous Jobs (0=unlimited)</span></label>
+                    <input type="text" name="max_concurrent_jobs" value="{{ settings.max_concurrent_jobs }}" class="input input-bordered">
+                </div>
                 <div class="form-control md:col-span-2">
                     <label class="label"><span class="label-text">Extra rsync Options</span></label>
                     <input type="text" name="rsync_extra_opts" value="{{ settings.rsync_extra_opts }}" class="input input-bordered font-mono" placeholder="--compress --partial">
@@ -153,6 +157,7 @@
     <li><strong>Retention Count</strong> — Default number of snapshots to keep.</li>
     <li><strong>Bandwidth Limit</strong> — Default transfer speed limit in KB/s.</li>
     <li><strong>Disk Threshold</strong> — Warn when destination disk usage exceeds this percentage.</li>
+    <li><strong>Simultaneous Jobs</strong> — Max concurrent backup/restore jobs (0 = unlimited).</li>
 </ul>
 <h4 class="font-semibold text-sm mb-1">Email Notifications</h4>
 <p class="mb-3 text-base-content/70">Configure SMTP to receive email alerts on backup success or failure.</p>

@@ -22,6 +22,7 @@ def index():
     # Re-sort so running jobs appear first (reverse of the tuple sort)
     jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
     has_running = any(j.status == "running" for j in jobs)
+    has_queued = any(j.status == "queued" for j in jobs)
     total = len(jobs)
     per_page = 20
     total_pages = max(1, (total + per_page - 1) // per_page)
@@ -29,7 +30,7 @@ def index():
     start = (page - 1) * per_page
     page_jobs = jobs[start:start + per_page]
     return render_template("jobs/index.html", jobs=page_jobs, has_running=has_running,
-                           page=page, total_pages=total_pages)
+                           has_queued=has_queued, page=page, total_pages=total_pages)
 
 
 @bp.route("/table")
@@ -41,6 +42,7 @@ def table():
     jobs = web_job_manager.list_jobs()
     jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
     has_running = any(j.status == "running" for j in jobs)
+    has_queued = any(j.status == "queued" for j in jobs)
     total = len(jobs)
     per_page = 20
     total_pages = max(1, (total + per_page - 1) // per_page)
@@ -48,7 +50,7 @@ def table():
     start = (page - 1) * per_page
     page_jobs = jobs[start:start + per_page]
     return render_template("jobs/table_partial.html", jobs=page_jobs, has_running=has_running,
-                           page=page, total_pages=total_pages)
+                           has_queued=has_queued, page=page, total_pages=total_pages)
 
 
 @bp.route("/running-badge")
@@ -86,7 +88,7 @@ def stream(job_id):
 @login_required
 def kill(job_id):
     result = web_job_manager.kill_job(job_id)
-    if result == "killed":
+    if result in ("killed", "cancelled"):
         flash("Job killed.", "success")
     else:
         flash(f"Could not kill job: {result}", "error")

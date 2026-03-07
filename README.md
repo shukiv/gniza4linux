@@ -234,6 +234,7 @@ RETENTION_COUNT=30              # Default snapshots to keep
 LOG_LEVEL="info"                # info or debug
 LOG_RETAIN=90                   # Days to keep log files
 DISK_USAGE_THRESHOLD=95         # Abort if destination >= this % (0 = disabled)
+MAX_CONCURRENT_JOBS=1           # Max simultaneous jobs (0 = unlimited)
 SSH_TIMEOUT=30                  # SSH connection timeout in seconds
 SSH_RETRIES=3                   # Number of retry attempts
 RSYNC_EXTRA_OPTS=""             # Additional rsync flags

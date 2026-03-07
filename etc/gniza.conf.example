@@ -37,6 +37,9 @@ RSYNC_EXTRA_OPTS=""
 # Set to 0 to disable the check.
 DISK_USAGE_THRESHOLD=95
 
+# Maximum number of simultaneous jobs (0 = unlimited)
+MAX_CONCURRENT_JOBS=1
+
 # Work directory for temporary files (MySQL dumps, rclone configs, etc.)
 # Default: /usr/local/gniza/workdir (root) or ~/.local/state/gniza/workdir (user)
 #WORK_DIR="/usr/local/gniza/workdir"

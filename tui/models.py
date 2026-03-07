@@ -254,6 +254,7 @@ class AppSettings:
     ssh_retries: str = "3"
     rsync_extra_opts: str = ""
     disk_usage_threshold: str = "95"
+    max_concurrent_jobs: str = "1"
     web_port: str = "2323"
     web_host: str = "0.0.0.0"
     web_api_key: str = ""
@@ -278,6 +279,7 @@ class AppSettings:
             ssh_retries=data.get("SSH_RETRIES", "3"),
             rsync_extra_opts=data.get("RSYNC_EXTRA_OPTS", ""),
             disk_usage_threshold=data.get("DISK_USAGE_THRESHOLD", "95"),
+            max_concurrent_jobs=data.get("MAX_CONCURRENT_JOBS", "1"),
             web_port=data.get("WEB_PORT", "2323"),
             web_host=data.get("WEB_HOST", "0.0.0.0"),
             web_api_key=data.get("WEB_API_KEY", ""),
@@ -302,6 +304,7 @@ class AppSettings:
             "SSH_RETRIES": self.ssh_retries,
             "RSYNC_EXTRA_OPTS": self.rsync_extra_opts,
             "DISK_USAGE_THRESHOLD": self.disk_usage_threshold,
+            "MAX_CONCURRENT_JOBS": self.max_concurrent_jobs,
             "WEB_PORT": self.web_port,
             "WEB_HOST": self.web_host,
             "WEB_API_KEY": self.web_api_key,

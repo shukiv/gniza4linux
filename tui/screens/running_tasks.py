@@ -85,10 +85,12 @@ class RunningTasksScreen(Screen):
         table.clear()
         spinner = _SPINNER[self._spinner_idx]
         jobs = job_manager.list_jobs()
-        jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
+        jobs.sort(key=lambda j: (0 if j.status == "running" else 1 if j.status == "queued" else 2, -j.started_at.timestamp()))
         for job in jobs:
             if job.status == "running":
                 icon = f" {spinner} "
+            elif job.status == "queued":
+                icon = "wait"
             elif job.status == "skipped":
                 icon = "skip"
             elif job.status == "success":
@@ -232,17 +234,19 @@ class RunningTasksScreen(Screen):
             ids = [j.id for j in job_manager.list_jobs()]
             self.notify(f"Not found: key={row_key!r} ids={ids}", severity="warning")
             return
-        if job.status != "running":
+        if job.status not in ("running", "queued"):
             self.notify(f"Job already finished ({job.status})", severity="warning")
             return
+        action = "Cancel" if job.status == "queued" else "Kill"
         self.app.push_screen(
-            ConfirmDialog(f"Kill job '{job.label}'?", "Confirm Kill"),
+            ConfirmDialog(f"{action} job '{job.label}'?", f"Confirm {action}"),
             callback=lambda ok: self._do_kill(job_id) if ok else None,
         )
 
     def _do_kill(self, job_id: str) -> None:
         result = job_manager.kill_job(job_id)
         self.notify(f"Kill: {result}")
+        job_manager._dispatch_queue(self.app)
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

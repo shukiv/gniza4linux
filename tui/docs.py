@@ -232,6 +232,7 @@ SCREEN_DOCS = {
         "  [bold]Retention Count[/bold] - Default number of snapshots to keep.\n"
         "  [bold]Bandwidth Limit[/bold] - Default transfer speed limit in KB/s.\n"
         "  [bold]Disk Threshold[/bold] - Warn when destination disk usage exceeds this percentage.\n"
+        "  [bold]Simultaneous Jobs[/bold] - Max concurrent backup/restore jobs (0 = unlimited).\n"
         "\n"
         "[bold]Email Notifications:[/bold]\n"
         "  Configure SMTP to receive email alerts on backup success or failure.\n"
@@ -252,7 +253,7 @@ SCREEN_DOCS = {
         "Monitor running backup and restore jobs.\n"
         "\n"
         "[bold]Table columns:[/bold]\n"
-        "  [bold]Status[/bold] - Current state (running, ok, skip, failed, unknown).\n"
+        "  [bold]Status[/bold] - Current state (running, queued, ok, skip, failed, unknown).\n"
         "  [bold]Job[/bold] - Description of the operation.\n"
         "  [bold]Started[/bold] - When the job began.\n"
         "  [bold]Duration[/bold] - Elapsed time.\n"
@@ -265,6 +266,7 @@ SCREEN_DOCS = {
         "[bold]Tips:[/bold]\n"
         "  - The table refreshes every second.\n"
         "  - The progress bar shows rsync transfer progress when viewing a running job's log.\n"
-        "  - Jobs continue in the background even if you navigate away from this screen."
+        "  - Jobs continue in the background even if you navigate away from this screen.\n"
+        "  - When the simultaneous jobs limit is reached, new jobs are queued and start automatically when a slot opens."
     ),
 }

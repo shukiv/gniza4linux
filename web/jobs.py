@@ -1,12 +1,13 @@
 import json
 import os
 import signal
+import threading
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from tui.config import get_log_retain_days
+from tui.config import get_log_retain_days, get_max_concurrent_jobs
 from web.backend import start_cli_background
 
 MAX_OUTPUT_LINES = 10_000
@@ -34,6 +35,7 @@ class WebJob:
     pid: int | None = None
     pgid: int | None = None
     log_file: str | None = None
+    cli_args: tuple[str, ...] | None = None
 
 
 class WebJobManager:
@@ -41,28 +43,39 @@ class WebJobManager:
 
     def __init__(self):
         self._jobs = {}
+        self._lock = threading.Lock()
         self.load_registry()
 
     def create_and_start(self, kind, label, *cli_args):
-        """Create a job, start the CLI process, save to registry. Returns the job."""
-        job_id = uuid.uuid4().hex[:8]
-        log_path = _work_dir() / f"gniza-job-{job_id}.log"
-        log_path.parent.mkdir(parents=True, exist_ok=True)
+        """Create a job. If under concurrency limit, start it; otherwise queue it."""
+        with self._lock:
+            job_id = uuid.uuid4().hex[:8]
+            log_path = _work_dir() / f"gniza-job-{job_id}.log"
+            log_path.parent.mkdir(parents=True, exist_ok=True)
 
-        proc = start_cli_background(*cli_args, log_file=str(log_path))
+            max_jobs = get_max_concurrent_jobs()
+            if max_jobs > 0 and self._running_count_internal() >= max_jobs:
+                job = WebJob(
+                    id=job_id, kind=kind, label=label,
+                    status="queued", log_file=str(log_path),
+                    cli_args=cli_args,
+                )
+                self._jobs[job_id] = job
+                self._save_registry()
+                return job
 
-        job = WebJob(
-            id=job_id, kind=kind, label=label,
-            pid=proc.pid, log_file=str(log_path)
-        )
-        try:
-            job.pgid = os.getpgid(proc.pid)
-        except OSError:
-            pass
-
-        self._jobs[job_id] = job
-        self._save_registry()
-        return job
+            proc = start_cli_background(*cli_args, log_file=str(log_path))
+            job = WebJob(
+                id=job_id, kind=kind, label=label,
+                pid=proc.pid, log_file=str(log_path)
+            )
+            try:
+                job.pgid = os.getpgid(proc.pid)
+            except OSError:
+                pass
+            self._jobs[job_id] = job
+            self._save_registry()
+            return job
 
     def get_job(self, job_id):
         self.load_registry()
@@ -76,9 +89,45 @@ class WebJobManager:
         self.load_registry()
         return sum(1 for j in self._jobs.values() if j.status == "running")
 
+    def _running_count_internal(self):
+        """Count running jobs without reloading registry (avoids recursion)."""
+        return sum(1 for j in self._jobs.values() if j.status == "running")
+
+    def _dispatch_queue(self):
+        """Start queued jobs if under the concurrency limit."""
+        with self._lock:
+            max_jobs = get_max_concurrent_jobs()
+            started = False
+            for job in sorted(self._jobs.values(), key=lambda j: j.started_at):
+                if job.status != "queued" or not job.cli_args:
+                    continue
+                if max_jobs > 0 and self._running_count_internal() >= max_jobs:
+                    break
+                proc = start_cli_background(*job.cli_args, log_file=job.log_file)
+                job.status = "running"
+                job.pid = proc.pid
+                try:
+                    job.pgid = os.getpgid(proc.pid)
+                except OSError:
+                    pass
+                job.cli_args = None
+                started = True
+            if started:
+                self._save_registry()
+
     def kill_job(self, job_id):
         job = self._jobs.get(job_id)
-        if not job or not job.pid:
+        if not job:
+            return "not found"
+        if job.status == "queued":
+            job.status = "failed"
+            job.return_code = -9
+            job.finished_at = datetime.now()
+            job.cli_args = None
+            self._save_registry()
+            self._dispatch_queue()
+            return "cancelled"
+        if not job.pid:
             return "not found"
         try:
             pgid = job.pgid or os.getpgid(job.pid)
@@ -93,12 +142,12 @@ class WebJobManager:
 
     def remove_finished(self):
         for job in self._jobs.values():
-            if job.status != "running" and job.log_file:
+            if job.status not in ("running", "queued") and job.log_file:
                 try:
                     Path(job.log_file).unlink(missing_ok=True)
                 except OSError:
                     pass
-        self._jobs = {k: v for k, v in self._jobs.items() if v.status == "running"}
+        self._jobs = {k: v for k, v in self._jobs.items() if v.status in ("running", "queued")}
         self._save_registry()
 
     def get_log_lines(self, job_id, tail=100):
@@ -130,6 +179,19 @@ class WebJobManager:
             job_id = entry["id"]
             status = entry.get("status", "running")
             pid = entry.get("pid")
+
+            if status == "queued":
+                job = WebJob(
+                    id=job_id,
+                    kind=entry.get("kind", "backup"),
+                    label=entry.get("label", "Job"),
+                    status="queued",
+                    started_at=datetime.fromisoformat(entry.get("started_at", now.isoformat())),
+                    log_file=entry.get("log_file"),
+                    cli_args=tuple(entry["cli_args"]) if entry.get("cli_args") else None,
+                )
+                refreshed[job_id] = job
+                continue
 
             # Check if running process is still alive
             if status == "running" and pid:
@@ -168,7 +230,7 @@ class WebJobManager:
                     changed = True
 
             # Skip expired finished jobs
-            if status != "running":
+            if status not in ("running", "queued"):
                 fin = entry.get("finished_at")
                 if fin:
                     try:
@@ -201,6 +263,7 @@ class WebJobManager:
         self._jobs = refreshed
         if changed:
             self._save_registry()
+            self._dispatch_queue()
 
     def _save_registry(self):
         entries = []
@@ -215,6 +278,8 @@ class WebJobManager:
             if job.status == "running" and job.pid:
                 entry["pid"] = job.pid
                 entry["pgid"] = job.pgid
+            if job.status == "queued" and job.cli_args:
+                entry["cli_args"] = list(job.cli_args)
             entries.append(entry)
         try:
             REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)

@@ -7,7 +7,7 @@ from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 from textual import work
 
-from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR, LOG_DIR
+from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR
 from tui.models import Schedule
 from tui.backend import run_cli
 from tui.widgets import ConfirmDialog, OperationLog, DocsPanel
@@ -40,27 +40,14 @@ class ScheduleScreen(Screen):
         table = self.query_one("#sched-table", DataTable)
         table.clear(columns=True)
         table.add_columns("Name", "Active", "Type", "Time", "Last Run", "Next Run", "Sources", "Destinations")
-        last_run = self._get_last_run()
         schedules = list_conf_dir("schedules.d")
         for name in schedules:
             data = parse_conf(CONFIG_DIR / "schedules.d" / f"{name}.conf")
             s = Schedule.from_conf(name, data)
             active = "✅" if s.active == "yes" else "❌"
+            last_run = data.get("LAST_RUN", "never") or "never"
             next_run = self._calc_next_run(s) if s.active == "yes" else "inactive"
             table.add_row(name, active, s.schedule, s.time, last_run, next_run, s.targets or "all", s.remotes or "all", key=name)
-
-    def _get_last_run(self) -> str:
-        """Get the timestamp of the most recent backup log."""
-        from pathlib import Path
-        log_dir = Path(str(LOG_DIR))
-        if not log_dir.is_dir():
-            return "never"
-        logs = sorted(log_dir.glob("gniza-*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
-        if not logs:
-            return "never"
-        mtime = logs[0].stat().st_mtime
-        dt = datetime.fromtimestamp(mtime)
-        return dt.strftime("%Y-%m-%d %H:%M")
 
     def _calc_next_run(self, s: Schedule) -> str:
         """Calculate the next run time from schedule config."""

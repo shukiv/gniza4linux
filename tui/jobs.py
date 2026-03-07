@@ -135,7 +135,10 @@ class JobManager:
                 if rc is None:
                     rc = 1
             job.return_code = rc
-            job.status = "success" if rc == 0 else "failed"
+            if rc == 0 and self._is_skipped(job.output):
+                job.status = "skipped"
+            else:
+                job.status = "success" if rc == 0 else "failed"
         except (asyncio.CancelledError, KeyboardInterrupt):
             # TUI is shutting down — keep status as "running" so the job
             # stays in the registry for reconnection on next launch.
@@ -342,8 +345,10 @@ class JobManager:
                 rc = rc_from_wait if rc_from_wait is not None else self._detect_return_code(entry.get("log_file"))
                 if rc is None:
                     status = "unknown"
+                elif rc == 0:
+                    status = "success"
                 else:
-                    status = "success" if rc == 0 else "failed"
+                    status = "failed"
                 job = Job(
                     id=job_id,
                     kind=entry.get("kind", "backup"),
@@ -361,8 +366,19 @@ class JobManager:
                     job.output = lines[:MAX_OUTPUT_LINES]
                 except OSError:
                     pass
+            # Detect skipped after loading output
+            if job.status == "success" and self._is_skipped(job.output):
+                job.status = "skipped"
             self._jobs[job.id] = job
         self._save_registry()
+
+    @staticmethod
+    def _is_skipped(output: list[str]) -> bool:
+        """Check if all targets were skipped (disabled)."""
+        text = "\n".join(output)
+        return ("is disabled, skipping" in text
+                and "Backup completed" not in text
+                and "Backup Summary" not in text)
 
     @staticmethod
     def _detect_return_code(log_file: str | None) -> int | None:

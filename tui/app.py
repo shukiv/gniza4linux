@@ -58,7 +58,9 @@ class GnizaApp(App):
         job = job_manager.get_job(message.job_id)
         if not job:
             return
-        if message.return_code == 0:
+        if job.status == "skipped":
+            self.notify(f"{job.label} — all targets skipped", severity="warning")
+        elif message.return_code == 0:
             self.notify(f"{job.label} completed successfully")
         else:
             self.notify(f"{job.label} failed (exit code {message.return_code})", severity="error")

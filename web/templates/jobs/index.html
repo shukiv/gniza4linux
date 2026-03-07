@@ -39,6 +39,8 @@
                                 <span class="loading loading-spinner loading-xs"></span>
                                 Running
                             </span>
+                            {% elif job.status == "skipped" %}
+                            <span class="text-warning font-medium">Skipped</span>
                             {% elif job.status == "success" %}
                             <span class="text-success font-medium">Success</span>
                             {% elif job.status == "failed" %}

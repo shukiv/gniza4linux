@@ -87,6 +87,8 @@ class RunningTasksScreen(Screen):
         for job in job_manager.list_jobs():
             if job.status == "running":
                 icon = f" {spinner} "
+            elif job.status == "skipped":
+                icon = "skip"
             elif job.status == "success":
                 icon = " ok "
             elif job.status == "unknown":

@@ -38,12 +38,6 @@
                     <label class="label"><span class="label-text">Retention</span></label>
                     <input type="text" name="retention" value="{{ target.retention }}" class="input input-bordered" placeholder="Use remote default">
                 </div>
-                <div class="form-control flex items-start">
-                    <label class="label cursor-pointer gap-2">
-                        <span class="label-text">Enabled</span>
-                        <input type="checkbox" name="enabled" class="checkbox checkbox-primary" {{ 'checked' if target.enabled == 'yes' else '' }}>
-                    </label>
-                </div>
             </div>
             <div class="form-control mt-2">
                 <label class="label"><span class="label-text">Folders (one per line)</span></label>
@@ -159,7 +153,7 @@
             <div class="flex items-center gap-4 mb-4">
                 <h2 class="card-title text-base">MySQL Backup</h2>
                 <label class="label cursor-pointer gap-2">
-                    <input type="checkbox" name="mysql_enabled" class="checkbox checkbox-primary"
+                    <input type="checkbox" name="mysql_enabled" class="toggle toggle-primary toggle-sm"
                            x-model="mysqlEnabled" :true-value="true" :false-value="false"
                            {{ 'checked' if target.mysql_enabled == 'yes' else '' }}>
                     <span class="label-text">Enable</span>
@@ -222,6 +216,15 @@
                     <input type="text" name="post_hook" value="{{ target.post_hook }}" class="input input-bordered font-mono" placeholder="/path/to/script.sh">
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-200 shadow mb-6">
+        <div class="card-body">
+            <label class="label cursor-pointer gap-3 justify-start p-0">
+                <input type="checkbox" name="enabled" class="toggle toggle-success" {{ 'checked' if target.enabled == 'yes' else '' }}>
+                <span class="label-text font-medium">Enabled</span>
+            </label>
         </div>
     </div>
 

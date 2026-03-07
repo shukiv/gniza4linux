@@ -194,10 +194,10 @@
             <h3 class="font-bold text-lg mb-3">Browse Folders</h3>
             <div id="folder-browser-box-base" class="folder-browser-box"></div>
             <div class="modal-action">
-                <form method="dialog"><button class="btn btn-ghost btn-sm">Close</button></form>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('folder_browser_modal_base').close()">Close</button>
             </div>
         </div>
-        <form method="dialog" class="modal-backdrop"><button>close</button></form>
+        <div class="modal-backdrop" onclick="document.getElementById('folder_browser_modal_base').close()"></div>
     </dialog>
 
     <!-- Actions -->

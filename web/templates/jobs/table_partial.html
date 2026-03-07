@@ -14,6 +14,7 @@
                 <th>Label</th>
                 <th>Status</th>
                 <th>Started</th>
+                <th>Ended</th>
                 <th>Duration</th>
                 <th>Actions</th>
             </tr>
@@ -40,6 +41,15 @@
                     {% endif %}
                 </td>
                 <td class="text-xs">{{ job.started_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td class="text-xs">
+                    {% if job.finished_at %}
+                        {{ job.finished_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                    {% elif job.status == "running" %}
+                        <span class="text-info">--</span>
+                    {% else %}
+                        --
+                    {% endif %}
+                </td>
                 <td class="text-xs">
                     {% if job.finished_at %}
                         {{ ((job.finished_at - job.started_at).total_seconds() | int) // 60 }}m {{ ((job.finished_at - job.started_at).total_seconds() | int) % 60 }}s

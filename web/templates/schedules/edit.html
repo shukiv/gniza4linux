@@ -98,6 +98,14 @@
                            placeholder="0 2 * * *">
                     <label class="label"><span class="label-text-alt text-base-content/40">Format: minute hour day month weekday</span></label>
                 </div>
+
+                <!-- Retention count override -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Retention Count</span></label>
+                    <input type="text" name="retention_count" value="{{ schedule.retention_count }}" class="input input-bordered"
+                           placeholder="Leave empty for global default">
+                    <label class="label"><span class="label-text-alt text-base-content/40">Override global retention count for this schedule</span></label>
+                </div>
             </div>
         </div>
     </div>

@@ -86,7 +86,6 @@ def save():
         password=form.get("password", ""),
         base=form.get("base", "/backups"),
         bwlimit=form.get("bwlimit", "0"),
-        retention_count=form.get("retention_count", "30"),
         s3_bucket=form.get("s3_bucket", ""),
         s3_region=form.get("s3_region", "us-east-1"),
         s3_endpoint=form.get("s3_endpoint", ""),

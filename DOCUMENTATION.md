@@ -148,7 +148,6 @@ gniza --cli sources add --name=mysite --folders=/var/www,/etc/nginx
 | `TARGET_EXCLUDE` | (empty) | Comma-separated rsync exclude patterns |
 | `TARGET_INCLUDE` | (empty) | Comma-separated rsync include patterns |
 | `TARGET_REMOTE` | (empty) | Pin to a specific destination (empty = all) |
-| `TARGET_RETENTION` | (empty) | Override retention count (empty = use destination default) |
 | `TARGET_PRE_HOOK` | (empty) | Shell command to run before backup |
 | `TARGET_POST_HOOK` | (empty) | Shell command to run after backup |
 | `TARGET_ENABLED` | `yes` | Set to `no` to skip this source during backups |
@@ -302,7 +301,6 @@ REMOTE_AUTH_METHOD="key"
 REMOTE_KEY="/root/.ssh/id_rsa"
 REMOTE_BASE="/backups"
 BWLIMIT="0"
-RETENTION_COUNT="30"
 ```
 
 If `REMOTE_KEY` is not specified, it defaults to `~/.ssh/id_rsa`.
@@ -320,7 +318,6 @@ Store snapshots on a local drive (USB, NFS mount, second disk).
 ```ini
 REMOTE_TYPE="local"
 REMOTE_BASE="/mnt/backup-drive"
-RETENTION_COUNT="30"
 ```
 
 #### S3 Destination
@@ -335,7 +332,6 @@ S3_SECRET_ACCESS_KEY="..."
 S3_REGION="us-east-1"
 S3_ENDPOINT=""
 REMOTE_BASE="/backups"
-RETENTION_COUNT="30"
 ```
 
 Requires `rclone`.
@@ -349,7 +345,6 @@ REMOTE_TYPE="gdrive"
 GDRIVE_SERVICE_ACCOUNT_FILE="/path/to/service-account.json"
 GDRIVE_ROOT_FOLDER_ID=""
 REMOTE_BASE="/backups"
-RETENTION_COUNT="30"
 ```
 
 Requires `rclone`.
@@ -367,7 +362,6 @@ Requires `rclone`.
 | `REMOTE_PASSWORD` | (empty) | SSH password (requires sshpass) |
 | `REMOTE_BASE` | `/backups` | Base directory for snapshots |
 | `BWLIMIT` | `0` | Bandwidth limit in KB/s (0 = unlimited) |
-| `RETENTION_COUNT` | `30` | Number of snapshots to keep per source |
 
 ### Testing a Destination
 
@@ -561,22 +555,48 @@ Lists all files in the snapshot.
 
 ## Retention
 
-Retention controls how many snapshots are kept per source per destination.
+Retention controls how many snapshots are kept per source per destination. When the number of snapshots exceeds the retention count, the oldest unpinned snapshots are automatically deleted.
 
-### Configuration Priority
+### Configuration
 
-1. **Per-source** `TARGET_RETENTION` (highest priority)
-2. **Per-destination** `RETENTION_COUNT`
-3. **Global** `RETENTION_COUNT` in `gniza.conf` (default: 30)
+Retention count is configured at two levels:
+
+| Level | Location | Description |
+|-------|----------|-------------|
+| **Global default** | `gniza.conf` → `RETENTION_COUNT=30` | Applies to all backups unless overridden |
+| **Per-schedule** | `schedules.d/<name>.conf` → `RETENTION_COUNT=N` | Overrides global for backups triggered by this schedule |
+
+An empty or missing `RETENTION_COUNT` in a schedule means "use global default."
+
+**Example — different retention per schedule:**
+
+```ini
+# schedules.d/hourly.conf — keep many recent snapshots
+SCHEDULE="hourly"
+TARGETS="web"
+RETENTION_COUNT="168"    # 7 days × 24 hours
+
+# schedules.d/daily.conf — keep fewer, longer-term snapshots
+SCHEDULE="daily"
+TARGETS="web"
+RETENTION_COUNT="30"     # 30 days
+```
+
+The global default is set in `gniza.conf` or via the TUI/web Settings screen:
+
+```ini
+# gniza.conf
+RETENTION_COUNT=30
+```
 
 ### Automatic Enforcement
 
-Retention runs automatically after each successful backup. The oldest snapshots beyond the retention count are deleted.
+Retention runs automatically after each successful backup. The schedule's `RETENTION_COUNT` is used if set, otherwise the global default applies. Only unpinned snapshots are counted and deleted.
 
 ### Manual Enforcement
 
 ```bash
-# Enforce retention for all sources on all destinations
+# Enforce retention for all sources on all destinations (uses global default)
 gniza --cli retention --all
 
 # Enforce for a specific source
@@ -584,11 +604,14 @@ gniza --cli retention --source=mysite
 
 # Enforce on a specific destination
 gniza --cli retention --destination=backup-server
+
+# Override the retention count for this run
+gniza --cli retention --source=mysite --count=10
 ```
 
 ### Snapshot Pinning
 
-Pinned snapshots are never deleted by retention enforcement. Pin a snapshot by setting `"pinned": true` in its `meta.json` file.
+Pinned snapshots are never deleted by retention enforcement. Pin a snapshot by setting `"pinned": true` in its `meta.json` file. Pinned snapshots do not count toward the retention limit.
 
 ---
 
@@ -610,6 +633,7 @@ SCHEDULE_CRON=""                # Full cron expression (when SCHEDULE=custom)
 SCHEDULE_ACTIVE="yes"           # yes | no
 TARGETS=""                      # Comma-separated source names (empty = all)
 REMOTES=""                      # Comma-separated destination names (empty = all)
+RETENTION_COUNT=""              # Override global retention count (empty = use global default)
 ```
 
 ### Schedule Types

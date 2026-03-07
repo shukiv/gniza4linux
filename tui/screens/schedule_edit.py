@@ -105,6 +105,12 @@ class ScheduleEditScreen(Screen):
                     placeholder="0 2 * * *",
                     classes="sched-cron-field",
                 )
+                yield Static("Retention count (empty=use global default):")
+                yield Input(
+                    id="sched-retention",
+                    value=sched.retention_count,
+                    placeholder="Leave empty for global default",
+                )
                 yield Static("Sources (off=all):")
                 for tname in list_conf_dir("targets.d"):
                     with Horizontal(classes="sched-switch-row"):
@@ -239,6 +245,7 @@ class ScheduleEditScreen(Screen):
             cron=self.query_one("#sched-cron", Input).value.strip(),
             targets=",".join(selected_targets),
             remotes=",".join(selected_remotes),
+            retention_count=self.query_one("#sched-retention", Input).value.strip(),
         )
         conf = CONFIG_DIR / "schedules.d" / f"{name}.conf"
         write_conf(conf, sched.to_conf())

@@ -12,7 +12,7 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 - **Incremental snapshots** — rsync `--link-dest` hardlink deduplication across snapshots
 - **MySQL/MariaDB backup** — Dump all or selected databases with grants, routines, and triggers
 - **Atomic snapshots** — `.partial` directory during transfer, renamed on success
-- **Retention policies** — Automatic pruning per-destination or per-source with snapshot pinning
+- **Retention policies** — Automatic pruning per-schedule with global default and snapshot pinning
 - **Disk space safety** — Abort if destination usage exceeds threshold (default 95%)
 - **Pre/post hooks** — Run shell commands before and after each backup
 - **Cron scheduling** — Hourly, daily, weekly, monthly, or custom cron expressions
@@ -264,7 +264,6 @@ TARGET_FOLDERS="/var/www,/etc/nginx"
 TARGET_EXCLUDE="*.log,*.tmp,.cache"
 TARGET_INCLUDE=""
 TARGET_REMOTE=""                # Pin to a specific destination
-TARGET_RETENTION=""             # Override retention count
 TARGET_PRE_HOOK=""              # Shell command before backup
 TARGET_POST_HOOK=""             # Shell command after backup
 TARGET_ENABLED="yes"
@@ -319,7 +318,6 @@ REMOTE_KEY="/root/.ssh/backup_key"  # Defaults to ~/.ssh/id_rsa
 REMOTE_PASSWORD=""
 REMOTE_BASE="/backups"
 BWLIMIT=0                      # Override global bandwidth limit
-RETENTION_COUNT=30              # Override global retention
 ```
 
 **Local destination** (USB drive, NFS mount):
@@ -358,6 +356,7 @@ SCHEDULE_CRON=""                # Full cron expression (when SCHEDULE=custom)
 SCHEDULE_ACTIVE="yes"
 TARGETS=""                      # Comma-separated source names (empty = all)
 REMOTES=""                      # Comma-separated destination names (empty = all)
+RETENTION_COUNT=""              # Override global retention (empty = use global default)
 ```
 
 ## Retention
@@ -365,8 +364,7 @@ REMOTES=""                      # Comma-separated destination names (empty = all
 Retention policies control how many snapshots to keep per source per destination.
 
 - **Global default**: `RETENTION_COUNT` in `gniza.conf` (default: 30)
-- **Per-destination override**: `RETENTION_COUNT` in the destination config
-- **Per-source override**: `TARGET_RETENTION` in the source config
+- **Per-schedule override**: `RETENTION_COUNT` in the schedule config
 - **Snapshot pinning**: Pin individual snapshots in `meta.json` to preserve them indefinitely
 
 Retention runs automatically after each successful backup. Run it manually with:

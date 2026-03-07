@@ -100,9 +100,10 @@ Operations:
       Use --folder to restore a single directory from the snapshot.
       Use --skip-mysql to skip MySQL database restore.
 
-  retention [--source=NAME] [--destination=NAME] [--all]
+  retention [--source=NAME] [--destination=NAME] [--count=N] [--all]
       Enforce snapshot retention policies. Deletes snapshots beyond
       the configured retention count (oldest first, pinned preserved).
+      Use --count=N to override the default retention count.
 
 Snapshots:
   snapshots list [--source=NAME] [--destination=NAME]
@@ -567,7 +568,7 @@ run_cli() {
             local sched_conf="$CONFIG_DIR/schedules.d/${sched_name}.conf"
             if [[ -f "$sched_conf" ]]; then
                 local _sched_retention=""
-                _sched_retention=$(grep -oP '^RETENTION_COUNT="\K[^"]*' "$sched_conf" 2>/dev/null) || true
+                _sched_retention=$(grep -oP '^RETENTION_COUNT=["\x27]?\K[^"\x27]*' "$sched_conf" 2>/dev/null) || true
                 if [[ -n "$_sched_retention" ]]; then
                     export SCHEDULE_RETENTION_COUNT="$_sched_retention"
                 fi

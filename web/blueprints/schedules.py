@@ -102,6 +102,7 @@ def save():
         targets=",".join(selected_targets),
         remotes=",".join(selected_remotes),
         active="yes" if form.get("active") else "no",
+        retention_count=form.get("retention_count", ""),
     )
 
     conf_dir = CONFIG_DIR / "schedules.d"

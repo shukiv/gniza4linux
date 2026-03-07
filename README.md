@@ -92,7 +92,7 @@ gniza --cli backup --all
 Launch with `gniza` (no arguments). The TUI provides:
 
 - **Sources** — Create, edit, delete backup sources with folder browser
-- **Destinations** — Configure SSH, local, S3, or Google Drive destinations with connection testing
+- **Destinations** — Configure SSH, local, S3, or Google Drive destinations with Test & Save connection validation
 - **Backup** — Run backups with source/destination selection
 - **Restore** — Browse snapshots and restore to original location or custom directory
 - **Running Tasks** — Monitor active backup/restore jobs with live log output

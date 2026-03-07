@@ -181,6 +181,17 @@ TARGET_FOLDERS="/var/www,/etc/nginx"
 
 Folders must exist on the local machine.
 
+#### Test & Save (Sources)
+
+When creating or editing a source in the TUI or web dashboard, the **Test & Save** button validates the connection before saving.
+
+| Type | What is tested |
+|------|---------------|
+| **Local** | Folders exist (warning if missing, still saves) |
+| **SSH** | SSH connection succeeds, first folder is accessible (warning if not) |
+| **S3** | Credentials are present, bucket is accessible via `rclone lsd` |
+| **Google Drive** | Service account file exists, access is verified via `rclone lsd` |
+
 ##### SSH Source
 
 Pull files from a remote server over SSH. No agent needed on the remote machine.
@@ -370,6 +381,17 @@ gniza --cli destinations test --name=backup-server
 ```
 
 Validates connectivity and configuration. For SSH destinations, tests the SSH connection. For S3/GDrive, verifies credentials and access.
+
+### Test & Save
+
+When creating or editing a destination in the TUI or web dashboard, the **Test & Save** button validates the connection before writing the config file. If the test fails, the config is not saved and an error message is shown.
+
+| Type | What is tested |
+|------|---------------|
+| **Local** | Base directory can be accessed or created |
+| **SSH** | SSH connection, create base directory, upload a validation file |
+| **S3** | Credentials are present, bucket is accessible via `rclone lsd` |
+| **Google Drive** | Service account file exists on disk, access is verified via `rclone lsd` |
 
 ### Checking Disk Usage
 
@@ -883,6 +905,17 @@ The web dashboard supports dark and light themes. Toggle between them using the 
 ### Live Job Monitoring
 
 Running tasks are polled every 2 seconds via HTMX. When a backup or restore process finishes, the status automatically updates to Success, Failed, or Unknown. Job logs can be viewed inline with a single click.
+
+### Folder Browser
+
+The source and destination edit forms include a **Browse** button for selecting folders visually:
+
+- **Local sources/destinations**: Browses the server's local filesystem
+- **SSH sources**: Browses the remote server's filesystem over SSH (reads connection details from the form fields)
+
+The browser uses a DaisyUI file tree with collapsible folders. Subdirectories are lazy-loaded via HTMX when you expand a folder. Click "Select" to pick the current path.
+
+For SSH browsing, fill in the host, port, user, and key/password fields before clicking Browse. The browser connects to the remote server to list directories in real time.
 
 ### Mobile Access
 

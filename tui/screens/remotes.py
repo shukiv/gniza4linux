@@ -3,7 +3,7 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, DataTable
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
-from textual.events import Click
+
 from textual import work
 
 from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
@@ -61,7 +61,9 @@ class RemotesScreen(Screen):
         return None
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-add":
+        if event.button.id == "btn-back":
+            self.app.pop_screen()
+        elif event.button.id == "btn-add":
             self.app.push_screen("remote_edit", callback=lambda _: self._refresh_table())
         elif event.button.id == "btn-edit":
             name = self._selected_remote()
@@ -120,10 +122,6 @@ class RemotesScreen(Screen):
             conf.unlink()
             self.notify(f"Destination '{name}' deleted.")
         self._refresh_table()
-
-    def on_click(self, event: Click) -> None:
-        if event.widget.id == "btn-back":
-            self.app.pop_screen()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

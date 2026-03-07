@@ -21,8 +21,9 @@ class RetentionScreen(Screen):
         current_count = conf.get("RETENTION_COUNT", "30")
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="retention-screen"):
-                yield Button("← Back", id="btn-back", classes="back-btn")
-                yield Static("Retention Cleanup", id="screen-title")
+                with Horizontal(id="title-bar"):
+                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Static("Retention Cleanup", id="screen-title")
                 if not targets:
                     yield Static("No sources configured.")
                 else:

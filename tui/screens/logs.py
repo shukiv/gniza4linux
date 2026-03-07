@@ -90,8 +90,9 @@ class LogsScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="logs-screen"):
-                yield Button("← Back", id="btn-back", classes="back-btn")
-                yield Static("Logs", id="screen-title")
+                with Horizontal(id="title-bar"):
+                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Static("Logs", id="screen-title")
                 yield DataTable(id="logs-table")
                 with Horizontal(id="logs-buttons"):
                     yield Button("View", variant="primary", id="btn-view")

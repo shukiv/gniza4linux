@@ -21,8 +21,9 @@ class ScheduleScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="schedule-screen"):
-                yield Button("← Back", id="btn-back", classes="back-btn")
-                yield Static("Schedules", id="screen-title")
+                with Horizontal(id="title-bar"):
+                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Static("Schedules", id="screen-title")
                 yield DataTable(id="sched-table")
                 with Horizontal(id="sched-buttons"):
                     yield Button("Add", variant="primary", id="btn-add")

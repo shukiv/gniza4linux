@@ -34,8 +34,9 @@ class RunningTasksScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="running-tasks-screen"):
-                yield Button("← Back", id="btn-back", classes="back-btn")
-                yield Static("Running Tasks", id="screen-title")
+                with Horizontal(id="title-bar"):
+                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Static("Running Tasks", id="screen-title")
                 yield DataTable(id="rt-table")
                 with Horizontal(id="rt-buttons"):
                     yield Button("View Log", variant="primary", id="btn-rt-view")

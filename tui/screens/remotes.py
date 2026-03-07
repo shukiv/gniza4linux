@@ -18,8 +18,9 @@ class RemotesScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="remotes-screen"):
-                yield Button("← Back", id="btn-back", classes="back-btn")
-                yield Static("Destinations", id="screen-title")
+                with Horizontal(id="title-bar"):
+                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Static("Destinations", id="screen-title")
                 yield DataTable(id="remotes-table")
                 with Horizontal(id="remotes-buttons"):
                     yield Button("Add", variant="primary", id="btn-add")

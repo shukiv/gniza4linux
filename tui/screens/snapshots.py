@@ -32,8 +32,9 @@ class SnapshotsScreen(Screen):
         remotes = list_conf_dir("remotes.d")
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="snapshots-screen"):
-                yield Button("← Back", id="btn-back", classes="back-btn")
-                yield Static("Snapshots Browser", id="screen-title")
+                with Horizontal(id="title-bar"):
+                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Static("Snapshots Browser", id="screen-title")
                 if not targets or not remotes:
                     yield Static("Sources and destinations must be configured to browse snapshots.")
                 else:

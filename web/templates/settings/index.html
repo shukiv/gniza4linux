@@ -6,12 +6,12 @@
 {% block content %}
 <form method="POST" action="{{ url_for('settings.save') }}" x-data="{ showApiKey: false }">
 
-    <!-- General -->
-    <div class="collapse collapse-arrow bg-base-200 shadow mb-4">
-        <input type="checkbox" checked />
-        <div class="collapse-title font-medium">General</div>
-        <div class="collapse-content">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+    <div class="tabs tabs-lift">
+
+        <!-- General Tab -->
+        <input type="radio" name="settings_tabs" class="tab" aria-label="General" checked="checked" />
+        <div class="tab-content bg-base-100 border-base-300 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="form-control">
                     <label class="label"><span class="label-text">Bandwidth Limit (KB/s, 0=unlimited)</span></label>
                     <input type="text" name="bwlimit" value="{{ settings.bwlimit }}" class="input input-bordered">
@@ -43,14 +43,11 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Email Notifications -->
-    <div class="collapse collapse-arrow bg-base-200 shadow mb-4">
-        <input type="checkbox" />
-        <div class="collapse-title font-medium">Email Notifications</div>
-        <div class="collapse-content">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <!-- Email Notifications Tab -->
+        <input type="radio" name="settings_tabs" class="tab" aria-label="Email Notifications" />
+        <div class="tab-content bg-base-100 border-base-300 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="form-control">
                     <label class="label"><span class="label-text">Notify Email</span></label>
                     <input type="email" name="notify_email" value="{{ settings.notify_email }}" class="input input-bordered" placeholder="admin@example.com">
@@ -98,14 +95,11 @@
                 </form>
             </div>
         </div>
-    </div>
 
-    <!-- SSH -->
-    <div class="collapse collapse-arrow bg-base-200 shadow mb-4">
-        <input type="checkbox" />
-        <div class="collapse-title font-medium">SSH</div>
-        <div class="collapse-content">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <!-- SSH Tab -->
+        <input type="radio" name="settings_tabs" class="tab" aria-label="SSH" />
+        <div class="tab-content bg-base-100 border-base-300 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="form-control">
                     <label class="label"><span class="label-text">SSH Timeout (seconds)</span></label>
                     <input type="text" name="ssh_timeout" value="{{ settings.ssh_timeout }}" class="input input-bordered">
@@ -116,14 +110,11 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Web Dashboard -->
-    <div class="collapse collapse-arrow bg-base-200 shadow mb-4">
-        <input type="checkbox" />
-        <div class="collapse-title font-medium">Web Dashboard</div>
-        <div class="collapse-content">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <!-- Web Dashboard Tab -->
+        <input type="radio" name="settings_tabs" class="tab" aria-label="Web Dashboard" />
+        <div class="tab-content bg-base-100 border-base-300 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="form-control">
                     <label class="label"><span class="label-text">Web Port</span></label>
                     <input type="text" name="web_port" value="{{ settings.web_port }}" class="input input-bordered">
@@ -141,6 +132,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- Actions -->

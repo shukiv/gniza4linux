@@ -116,13 +116,27 @@ def delete(name):
     return redirect(url_for("remotes.index"))
 
 
+@bp.route("/<name>/disk")
+@login_required
+def disk(name):
+    if not _VALID_NAME_RE.match(name):
+        return '<span class="text-error text-xs">Invalid</span>'
+    try:
+        rc, stdout, stderr = run_cli_sync("destinations", "disk-info-short", f"--name={name}", timeout=30)
+        if rc == 0 and stdout.strip():
+            return f'<span class="text-xs">{stdout.strip()}</span>'
+        return '<span class="text-base-content/40 text-xs">N/A</span>'
+    except Exception:
+        return '<span class="text-base-content/40 text-xs">timeout</span>'
+
+
 @bp.route("/<name>/test", methods=["POST"])
 @login_required
 def test(name):
     if not _VALID_NAME_RE.match(name):
         return render_template("remotes/test_result.html", result={"status": "error", "message": "Invalid name."})
     try:
-        rc, stdout, stderr = run_cli_sync("test-remote", name, timeout=30)
+        rc, stdout, stderr = run_cli_sync("destinations", "test", f"--name={name}", timeout=30)
         if rc == 0:
             result = {"status": "success", "message": stdout.strip() or "Connection successful."}
         else:

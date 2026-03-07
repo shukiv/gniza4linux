@@ -31,7 +31,7 @@ def list_snapshots(target, remote):
     error = ""
     try:
         rc, stdout, stderr = run_cli_sync(
-            "list-snapshots", "--target", target, "--remote", remote,
+            "snapshots", "list", f"--source={target}", f"--destination={remote}",
             timeout=30,
         )
         if rc == 0 and stdout.strip():
@@ -52,7 +52,7 @@ def browse(target, remote, snapshot):
     error = ""
     try:
         rc, stdout, stderr = run_cli_sync(
-            "browse-snapshot", "--target", target, "--remote", remote, "--snapshot", snapshot,
+            "snapshots", "browse", f"--source={target}", f"--destination={remote}", f"--snapshot={snapshot}",
             timeout=30,
         )
         if rc == 0 and stdout.strip():

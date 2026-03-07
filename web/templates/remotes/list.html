@@ -22,6 +22,7 @@
                         <th>Type</th>
                         <th>Host</th>
                         <th>Base Path</th>
+                        <th>Disk</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -32,6 +33,7 @@
                         <td><span class="badge badge-outline badge-sm">{{ r.type }}</span></td>
                         <td>{{ r.host or '--' }}</td>
                         <td class="font-mono text-base-content/60">{{ r.base }}</td>
+                        <td><span hx-get="{{ url_for('remotes.disk', name=r.name) }}" hx-trigger="load" hx-swap="outerHTML">...</span></td>
                         <td>
                             <div class="flex gap-1 items-center">
                                 <a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-ghost btn-xs">Edit</a>

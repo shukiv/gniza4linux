@@ -5,6 +5,7 @@ from flask import (
 from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import AppSettings
 from web.app import login_required
+from web.backend import run_cli_sync
 
 bp = Blueprint("settings", __name__, url_prefix="/settings")
 
@@ -22,10 +23,9 @@ def index():
 def save():
     form = request.form
     settings = AppSettings(
-        backup_mode=form.get("backup_mode", "incremental"),
         bwlimit=form.get("bwlimit", "0"),
         retention_count=form.get("retention_count", "7"),
-        log_level=form.get("log_level", "INFO"),
+        log_level=form.get("log_level", "info"),
         log_retain=form.get("log_retain", "30"),
         notify_email=form.get("notify_email", ""),
         notify_on=form.get("notify_on", "failure"),
@@ -45,4 +45,18 @@ def save():
     )
     write_conf(CONFIG_DIR / "gniza.conf", settings.to_conf())
     flash("Settings saved.", "success")
+    return redirect(url_for("settings.index"))
+
+
+@bp.route("/test-email", methods=["POST"])
+@login_required
+def test_email():
+    try:
+        rc, stdout, stderr = run_cli_sync("test-email", timeout=30)
+        if rc == 0:
+            flash(stdout.strip() or "Test email sent successfully.", "success")
+        else:
+            flash(stderr.strip() or stdout.strip() or "Failed to send test email.", "error")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
     return redirect(url_for("settings.index"))

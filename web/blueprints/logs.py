@@ -1,4 +1,4 @@
-import os
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -18,9 +18,47 @@ _SAFE_FILENAME_CHARS = set(
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-"
 )
 
+_LOG_FILENAME_RE = re.compile(r'^gniza-(\d{8})-(\d{6})\.log$')
+
 
 def _is_safe_filename(name):
     return all(c in _SAFE_FILENAME_CHARS for c in name) and ".." not in name
+
+
+def _parse_log_filename(name):
+    m = _LOG_FILENAME_RE.match(name)
+    if not m:
+        return None, None
+    date_str = m.group(1)
+    time_str = m.group(2)
+    date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
+    time = f"{time_str[:2]}:{time_str[2:4]}:{time_str[4:6]}"
+    return date, time
+
+
+def _detect_status(filepath):
+    try:
+        size = filepath.stat().st_size
+        if size == 0:
+            return "Empty"
+        read_size = min(size, 102400)
+        with open(filepath, "rb") as f:
+            if size > read_size:
+                f.seek(size - read_size)
+            tail = f.read(read_size).decode("utf-8", errors="replace")
+    except OSError:
+        return "Interrupted"
+
+    has_error = "[ERROR]" in tail or "[FATAL]" in tail
+    has_completed = "Backup completed" in tail or "Restore completed" in tail
+
+    if has_completed and not has_error:
+        return "Success"
+    if has_error:
+        return "Failed"
+    if "Lock released" in tail:
+        return "OK"
+    return "Interrupted"
 
 
 @bp.route("/")
@@ -34,12 +72,17 @@ def index():
     log_files = []
     if log_path.is_dir():
         for f in log_path.iterdir():
-            if f.is_file():
+            if f.is_file() and _LOG_FILENAME_RE.match(f.name):
                 stat = f.stat()
+                date, time = _parse_log_filename(f.name)
+                status = _detect_status(f)
                 log_files.append({
                     "name": f.name,
                     "size": stat.st_size,
                     "mtime": datetime.fromtimestamp(stat.st_mtime),
+                    "date": date,
+                    "time": time,
+                    "status": status,
                 })
     log_files.sort(key=lambda x: x["mtime"], reverse=True)
 

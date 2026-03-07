@@ -13,13 +13,6 @@
         <div class="collapse-content">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div class="form-control">
-                    <label class="label"><span class="label-text">Backup Mode</span></label>
-                    <select name="backup_mode" class="select select-bordered">
-                        <option value="incremental" {{ 'selected' if settings.backup_mode == 'incremental' else '' }}>Incremental</option>
-                        <option value="full" {{ 'selected' if settings.backup_mode == 'full' else '' }}>Full</option>
-                    </select>
-                </div>
-                <div class="form-control">
                     <label class="label"><span class="label-text">Bandwidth Limit (KB/s, 0=unlimited)</span></label>
                     <input type="text" name="bwlimit" value="{{ settings.bwlimit }}" class="input input-bordered">
                 </div>
@@ -30,10 +23,10 @@
                 <div class="form-control">
                     <label class="label"><span class="label-text">Log Level</span></label>
                     <select name="log_level" class="select select-bordered">
-                        <option value="DEBUG" {{ 'selected' if settings.log_level == 'DEBUG' else '' }}>DEBUG</option>
-                        <option value="INFO" {{ 'selected' if settings.log_level == 'INFO' else '' }}>INFO</option>
-                        <option value="WARNING" {{ 'selected' if settings.log_level == 'WARNING' else '' }}>WARNING</option>
-                        <option value="ERROR" {{ 'selected' if settings.log_level == 'ERROR' else '' }}>ERROR</option>
+                        <option value="debug" {{ 'selected' if settings.log_level == 'debug' else '' }}>debug</option>
+                        <option value="info" {{ 'selected' if settings.log_level == 'info' else '' }}>info</option>
+                        <option value="warn" {{ 'selected' if settings.log_level == 'warn' else '' }}>warn</option>
+                        <option value="error" {{ 'selected' if settings.log_level == 'error' else '' }}>error</option>
                     </select>
                 </div>
                 <div class="form-control">
@@ -98,6 +91,11 @@
                         <option value="none" {{ 'selected' if settings.smtp_security == 'none' else '' }}>None</option>
                     </select>
                 </div>
+            </div>
+            <div class="mt-4">
+                <form method="POST" action="{{ url_for('settings.test_email') }}" class="inline">
+                    <button type="submit" class="btn btn-info btn-sm">Send Test Email</button>
+                </form>
             </div>
         </div>
     </div>

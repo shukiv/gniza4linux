@@ -63,6 +63,20 @@ load_target() {
     TARGET_MYSQL_HOST="${TARGET_MYSQL_HOST:-localhost}"
     TARGET_MYSQL_PORT="${TARGET_MYSQL_PORT:-3306}"
     TARGET_MYSQL_EXTRA_OPTS="${TARGET_MYSQL_EXTRA_OPTS:---single-transaction --routines --triggers}"
+    TARGET_SOURCE_TYPE="${TARGET_SOURCE_TYPE:-local}"
+    TARGET_SOURCE_HOST="${TARGET_SOURCE_HOST:-}"
+    TARGET_SOURCE_PORT="${TARGET_SOURCE_PORT:-22}"
+    TARGET_SOURCE_USER="${TARGET_SOURCE_USER:-root}"
+    TARGET_SOURCE_AUTH_METHOD="${TARGET_SOURCE_AUTH_METHOD:-key}"
+    TARGET_SOURCE_KEY="${TARGET_SOURCE_KEY:-}"
+    TARGET_SOURCE_PASSWORD="${TARGET_SOURCE_PASSWORD:-}"
+    TARGET_SOURCE_S3_BUCKET="${TARGET_SOURCE_S3_BUCKET:-}"
+    TARGET_SOURCE_S3_REGION="${TARGET_SOURCE_S3_REGION:-us-east-1}"
+    TARGET_SOURCE_S3_ENDPOINT="${TARGET_SOURCE_S3_ENDPOINT:-}"
+    TARGET_SOURCE_S3_ACCESS_KEY_ID="${TARGET_SOURCE_S3_ACCESS_KEY_ID:-}"
+    TARGET_SOURCE_S3_SECRET_ACCESS_KEY="${TARGET_SOURCE_S3_SECRET_ACCESS_KEY:-}"
+    TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE="${TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE:-}"
+    TARGET_SOURCE_GDRIVE_ROOT_FOLDER_ID="${TARGET_SOURCE_GDRIVE_ROOT_FOLDER_ID:-}"
 
     log_debug "Loaded target '$name': folders=${TARGET_FOLDERS} enabled=${TARGET_ENABLED}"
 }
@@ -86,23 +100,63 @@ validate_target() {
         log_error "Target '$name': TARGET_FOLDERS is required (or enable MySQL backup)"
         ((errors++)) || true
     elif [[ -n "$TARGET_FOLDERS" ]]; then
-        # Validate each folder exists
-        local -a folders
-        IFS=',' read -ra folders <<< "$TARGET_FOLDERS"
-        local folder
-        for folder in "${folders[@]}"; do
-            # Trim whitespace
-            folder="${folder#"${folder%%[![:space:]]*}"}"
-            folder="${folder%"${folder##*[![:space:]]}"}"
-            [[ -z "$folder" ]] && continue
-            if [[ "$folder" != /* ]]; then
-                log_error "Target '$name': folder path must be absolute: $folder"
-                ((errors++)) || true
-            elif [[ ! -d "$folder" ]]; then
-                log_error "Target '$name': folder does not exist: $folder"
-                ((errors++)) || true
-            fi
-        done
+        if [[ "${TARGET_SOURCE_TYPE:-local}" == "local" ]]; then
+            # Validate each folder exists locally
+            local -a folders
+            IFS=',' read -ra folders <<< "$TARGET_FOLDERS"
+            local folder
+            for folder in "${folders[@]}"; do
+                folder="${folder#"${folder%%[![:space:]]*}"}"
+                folder="${folder%"${folder##*[![:space:]]}"}"
+                [[ -z "$folder" ]] && continue
+                if [[ "$folder" != /* ]]; then
+                    log_error "Target '$name': folder path must be absolute: $folder"
+                    ((errors++)) || true
+                elif [[ ! -d "$folder" ]]; then
+                    log_error "Target '$name': folder does not exist: $folder"
+                    ((errors++)) || true
+                fi
+            done
+        else
+            # Remote source: validate connection fields
+            case "${TARGET_SOURCE_TYPE}" in
+                ssh)
+                    if [[ -z "${TARGET_SOURCE_HOST}" ]]; then
+                        log_error "Target '$name': TARGET_SOURCE_HOST is required for SSH source"
+                        ((errors++)) || true
+                    fi
+                    ;;
+                s3)
+                    if [[ -z "${TARGET_SOURCE_S3_BUCKET}" ]]; then
+                        log_error "Target '$name': TARGET_SOURCE_S3_BUCKET is required for S3 source"
+                        ((errors++)) || true
+                    fi
+                    if [[ -z "${TARGET_SOURCE_S3_ACCESS_KEY_ID}" || -z "${TARGET_SOURCE_S3_SECRET_ACCESS_KEY}" ]]; then
+                        log_error "Target '$name': S3 credentials are required for S3 source"
+                        ((errors++)) || true
+                    fi
+                    ;;
+                gdrive)
+                    if [[ -z "${TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE}" ]]; then
+                        log_error "Target '$name': service account file is required for Google Drive source"
+                        ((errors++)) || true
+                    fi
+                    ;;
+            esac
+            # Validate paths are absolute (even on remote)
+            local -a folders
+            IFS=',' read -ra folders <<< "$TARGET_FOLDERS"
+            local folder
+            for folder in "${folders[@]}"; do
+                folder="${folder#"${folder%%[![:space:]]*}"}"
+                folder="${folder%"${folder##*[![:space:]]}"}"
+                [[ -z "$folder" ]] && continue
+                if [[ "$folder" != /* ]]; then
+                    log_error "Target '$name': folder path must be absolute: $folder"
+                    ((errors++)) || true
+                fi
+            done
+        fi
     fi
 
     if [[ -n "$TARGET_ENABLED" && "$TARGET_ENABLED" != "yes" && "$TARGET_ENABLED" != "no" ]]; then

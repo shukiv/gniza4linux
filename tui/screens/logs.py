@@ -1,5 +1,4 @@
 import re
-from datetime import datetime
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -23,16 +22,26 @@ def _format_log_name(name: str) -> tuple[str, str]:
 
 
 def _detect_log_status(filepath: Path) -> str:
-    """Determine backup status from log file content."""
+    """Determine backup status from log file content.
+
+    Only reads last 100 KB for efficiency on large files.
+    """
     try:
-        text = filepath.read_text()
+        size = filepath.stat().st_size
+        if size == 0:
+            return "Empty"
+        with open(filepath, "r") as f:
+            if size > 102400:
+                f.seek(size - 102400)
+                f.readline()
+            tail = f.read()
     except OSError:
         return "?"
-    if not text.strip():
+    if not tail.strip():
         return "Empty"
-    has_error = "[ERROR]" in text or "[FATAL]" in text
-    has_completed = "Backup completed" in text or "Restore completed" in text
-    has_lock_released = "Lock released" in text
+    has_error = "[ERROR]" in tail or "[FATAL]" in tail
+    has_completed = "Backup completed" in tail or "Restore completed" in tail
+    has_lock_released = "Lock released" in tail
     if has_completed and not has_error:
         return "Success"
     if has_error:
@@ -42,9 +51,29 @@ def _detect_log_status(filepath: Path) -> str:
     return "Interrupted"
 
 
+def _build_line_index(filepath: Path) -> list[int]:
+    """Build an index of byte offsets for each line start. Fast even for large files."""
+    offsets = [0]
+    with open(filepath, "rb") as f:
+        while True:
+            chunk = f.read(1024 * 1024)
+            if not chunk:
+                break
+            base = offsets[-1] if not offsets else f.tell() - len(chunk)
+            start = 0
+            while True:
+                pos = chunk.find(b"\n", start)
+                if pos == -1:
+                    break
+                offsets.append(base + pos + 1)
+                start = pos + 1
+    return offsets
+
+
 class LogsScreen(Screen):
 
     BINDINGS = [("escape", "go_back", "Back")]
+    LINES_PER_PAGE = 200
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -54,14 +83,29 @@ class LogsScreen(Screen):
                 yield DataTable(id="logs-table")
                 with Horizontal(id="logs-buttons"):
                     yield Button("View", variant="primary", id="btn-view")
-                    yield Button("Status", id="btn-status")
                     yield Button("Back", id="btn-back")
+                with Horizontal(id="log-pager-buttons"):
+                    yield Button("◀ Prev", id="btn-prev-page")
+                    yield Static("", id="log-page-info")
+                    yield Button("Next ▶", id="btn-next-page")
                 yield RichLog(id="log-viewer", wrap=True, highlight=True)
             yield DocsPanel.for_screen("logs-screen")
         yield Footer()
 
     def on_mount(self) -> None:
+        self._log_filepath: Path | None = None
+        self._line_offsets: list[int] = []
+        self._total_lines: int = 0
+        self._current_page: int = 0
+        self._total_pages: int = 0
+        self._hide_pager()
         self._refresh_table()
+
+    def _hide_pager(self) -> None:
+        self.query_one("#log-pager-buttons").display = False
+
+    def _show_pager(self) -> None:
+        self.query_one("#log-pager-buttons").display = self._total_pages > 1
 
     def _refresh_table(self) -> None:
         table = self.query_one("#logs-table", DataTable)
@@ -95,56 +139,59 @@ class LogsScreen(Screen):
         elif event.button.id == "btn-view":
             name = self._selected_log()
             if name:
-                self._view_log(name)
+                self._open_log(name)
             else:
                 self.notify("Select a log file first", severity="warning")
-        elif event.button.id == "btn-status":
-            self._show_status()
+        elif event.button.id == "btn-prev-page":
+            if self._current_page > 0:
+                self._current_page -= 1
+                self._render_page()
+        elif event.button.id == "btn-next-page":
+            if self._current_page < self._total_pages - 1:
+                self._current_page += 1
+                self._render_page()
 
-    def _view_log(self, name: str) -> None:
+    def _open_log(self, name: str) -> None:
         filepath = (Path(LOG_DIR) / name).resolve()
         if not filepath.is_relative_to(Path(LOG_DIR).resolve()):
             self.notify("Invalid log path", severity="error")
             return
-        viewer = self.query_one("#log-viewer", RichLog)
-        viewer.clear()
-        if filepath.is_file():
-            content = filepath.read_text()
-            viewer.write(content)
-        else:
+        if not filepath.is_file():
+            viewer = self.query_one("#log-viewer", RichLog)
+            viewer.clear()
             viewer.write(f"File not found: {filepath}")
+            self._hide_pager()
+            return
+        self._log_filepath = filepath
+        self._line_offsets = _build_line_index(filepath)
+        self._total_lines = max(len(self._line_offsets) - 1, 1)
+        self._total_pages = max(1, (self._total_lines + self.LINES_PER_PAGE - 1) // self.LINES_PER_PAGE)
+        # Start at last page (most recent output)
+        self._current_page = self._total_pages - 1
+        self._show_pager()
+        self._render_page()
 
-    def _show_status(self) -> None:
+    def _render_page(self) -> None:
         viewer = self.query_one("#log-viewer", RichLog)
         viewer.clear()
-        log_dir = Path(LOG_DIR)
-        viewer.write("Backup Status Overview")
-        viewer.write("=" * 40)
-        if not log_dir.is_dir():
-            viewer.write("Log directory does not exist.")
+        if not self._log_filepath:
             return
-        logs = sorted(log_dir.glob("gniza-*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
-        if logs:
-            latest = logs[0]
-            from datetime import datetime
-            mtime = datetime.fromtimestamp(latest.stat().st_mtime)
-            viewer.write(f"Last log: {mtime.strftime('%Y-%m-%d %H:%M:%S')}")
-            last_line = ""
-            with open(latest) as f:
-                for line in f:
-                    last_line = line.rstrip()
-            if last_line:
-                viewer.write(f"Last entry: {last_line}")
-        else:
-            viewer.write("No backup logs found.")
-        viewer.write(f"Log files: {len(logs)}")
-        total = sum(f.stat().st_size for f in logs)
-        if total >= 1048576:
-            viewer.write(f"Total size: {total / 1048576:.1f} MB")
-        elif total >= 1024:
-            viewer.write(f"Total size: {total / 1024:.1f} KB")
-        else:
-            viewer.write(f"Total size: {total} B")
+        start_line = self._current_page * self.LINES_PER_PAGE
+        end_line = min(start_line + self.LINES_PER_PAGE, self._total_lines)
+        # Seek to the right byte offset and read the lines
+        start_byte = self._line_offsets[start_line]
+        end_byte = self._line_offsets[end_line] if end_line < len(self._line_offsets) else self._log_filepath.stat().st_size
+        with open(self._log_filepath, "r", errors="replace") as f:
+            f.seek(start_byte)
+            chunk = f.read(end_byte - start_byte)
+        for line in chunk.splitlines():
+            viewer.write(line)
+        # Update page info
+        page_info = self.query_one("#log-page-info", Static)
+        page_info.update(f" Page {self._current_page + 1}/{self._total_pages} ")
+        # Update button states
+        self.query_one("#btn-prev-page", Button).disabled = self._current_page == 0
+        self.query_one("#btn-next-page", Button).disabled = self._current_page >= self._total_pages - 1
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

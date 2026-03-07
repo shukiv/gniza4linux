@@ -12,6 +12,20 @@ class Target:
     pre_hook: str = ""
     post_hook: str = ""
     enabled: str = "yes"
+    source_type: str = "local"
+    source_host: str = ""
+    source_port: str = "22"
+    source_user: str = "root"
+    source_auth_method: str = "key"
+    source_key: str = ""
+    source_password: str = ""
+    source_s3_bucket: str = ""
+    source_s3_region: str = "us-east-1"
+    source_s3_endpoint: str = ""
+    source_s3_access_key_id: str = ""
+    source_s3_secret_access_key: str = ""
+    source_gdrive_sa_file: str = ""
+    source_gdrive_root_folder_id: str = ""
     mysql_enabled: str = "no"
     mysql_mode: str = "all"
     mysql_databases: str = ""
@@ -23,7 +37,7 @@ class Target:
     mysql_extra_opts: str = "--single-transaction --routines --triggers"
 
     def to_conf(self) -> dict[str, str]:
-        return {
+        data = {
             "TARGET_NAME": self.name,
             "TARGET_FOLDERS": self.folders,
             "TARGET_EXCLUDE": self.exclude,
@@ -33,6 +47,31 @@ class Target:
             "TARGET_PRE_HOOK": self.pre_hook,
             "TARGET_POST_HOOK": self.post_hook,
             "TARGET_ENABLED": self.enabled,
+            "TARGET_SOURCE_TYPE": self.source_type,
+        }
+        if self.source_type == "ssh":
+            data.update({
+                "TARGET_SOURCE_HOST": self.source_host,
+                "TARGET_SOURCE_PORT": self.source_port,
+                "TARGET_SOURCE_USER": self.source_user,
+                "TARGET_SOURCE_AUTH_METHOD": self.source_auth_method,
+                "TARGET_SOURCE_KEY": self.source_key,
+                "TARGET_SOURCE_PASSWORD": self.source_password,
+            })
+        elif self.source_type == "s3":
+            data.update({
+                "TARGET_SOURCE_S3_BUCKET": self.source_s3_bucket,
+                "TARGET_SOURCE_S3_REGION": self.source_s3_region,
+                "TARGET_SOURCE_S3_ENDPOINT": self.source_s3_endpoint,
+                "TARGET_SOURCE_S3_ACCESS_KEY_ID": self.source_s3_access_key_id,
+                "TARGET_SOURCE_S3_SECRET_ACCESS_KEY": self.source_s3_secret_access_key,
+            })
+        elif self.source_type == "gdrive":
+            data.update({
+                "TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE": self.source_gdrive_sa_file,
+                "TARGET_SOURCE_GDRIVE_ROOT_FOLDER_ID": self.source_gdrive_root_folder_id,
+            })
+        data.update({
             "TARGET_MYSQL_ENABLED": self.mysql_enabled,
             "TARGET_MYSQL_MODE": self.mysql_mode,
             "TARGET_MYSQL_DATABASES": self.mysql_databases,
@@ -42,7 +81,8 @@ class Target:
             "TARGET_MYSQL_HOST": self.mysql_host,
             "TARGET_MYSQL_PORT": self.mysql_port,
             "TARGET_MYSQL_EXTRA_OPTS": self.mysql_extra_opts,
-        }
+        })
+        return data
 
     @classmethod
     def from_conf(cls, name: str, data: dict[str, str]) -> "Target":
@@ -56,6 +96,20 @@ class Target:
             pre_hook=data.get("TARGET_PRE_HOOK", ""),
             post_hook=data.get("TARGET_POST_HOOK", ""),
             enabled=data.get("TARGET_ENABLED", "yes"),
+            source_type=data.get("TARGET_SOURCE_TYPE", "local"),
+            source_host=data.get("TARGET_SOURCE_HOST", ""),
+            source_port=data.get("TARGET_SOURCE_PORT", "22"),
+            source_user=data.get("TARGET_SOURCE_USER", "root"),
+            source_auth_method=data.get("TARGET_SOURCE_AUTH_METHOD", "key"),
+            source_key=data.get("TARGET_SOURCE_KEY", ""),
+            source_password=data.get("TARGET_SOURCE_PASSWORD", ""),
+            source_s3_bucket=data.get("TARGET_SOURCE_S3_BUCKET", ""),
+            source_s3_region=data.get("TARGET_SOURCE_S3_REGION", "us-east-1"),
+            source_s3_endpoint=data.get("TARGET_SOURCE_S3_ENDPOINT", ""),
+            source_s3_access_key_id=data.get("TARGET_SOURCE_S3_ACCESS_KEY_ID", ""),
+            source_s3_secret_access_key=data.get("TARGET_SOURCE_S3_SECRET_ACCESS_KEY", ""),
+            source_gdrive_sa_file=data.get("TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE", ""),
+            source_gdrive_root_folder_id=data.get("TARGET_SOURCE_GDRIVE_ROOT_FOLDER_ID", ""),
             mysql_enabled=data.get("TARGET_MYSQL_ENABLED", "no"),
             mysql_mode=data.get("TARGET_MYSQL_MODE", "all"),
             mysql_databases=data.get("TARGET_MYSQL_DATABASES", ""),

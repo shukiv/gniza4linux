@@ -17,6 +17,26 @@ _GNIZA4LINUX_SCHEDULE_LOADED=1
 readonly GNIZA4LINUX_CRON_TAG="# gniza4linux:"
 SCHEDULES_DIR="$CONFIG_DIR/schedules.d"
 
+# Check whether the cron daemon is running.
+# Returns 0 if running, 1 otherwise. Sets CRON_WARNING with a message.
+_cron_is_running() {
+    CRON_WARNING=""
+    # Try systemctl first (systemd-based systems)
+    if command -v systemctl &>/dev/null; then
+        if systemctl is-active cron &>/dev/null || systemctl is-active crond &>/dev/null; then
+            return 0
+        fi
+        CRON_WARNING="Cron daemon is not running. Start it with: sudo systemctl start cron"
+        return 1
+    fi
+    # Fallback: check for a running cron process
+    if pgrep -x cron &>/dev/null || pgrep -x crond &>/dev/null; then
+        return 0
+    fi
+    CRON_WARNING="Cron daemon does not appear to be running. Scheduled backups will not execute."
+    return 1
+}
+
 # ── Discovery ─────────────────────────────────────────────────
 
 # List schedule names (filenames without .conf) sorted alphabetically.
@@ -248,6 +268,12 @@ install_schedules() {
         local cron_line; cron_line=$(build_cron_line "$sname" 2>/dev/null) || continue
         echo "  [$sname] $cron_line"
     done <<< "$schedules"
+
+    # Warn if cron daemon is not running
+    if ! _cron_is_running; then
+        echo ""
+        log_warn "$CRON_WARNING"
+    fi
 }
 
 # Display current gniza4linux cron entries.

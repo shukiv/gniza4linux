@@ -4,6 +4,17 @@
 [[ -n "${_GNIZA4LINUX_TRANSFER_LOADED:-}" ]] && return 0
 _GNIZA4LINUX_TRANSFER_LOADED=1
 
+_check_disk_space_or_abort() {
+    local threshold="${DISK_USAGE_THRESHOLD:-${DEFAULT_DISK_USAGE_THRESHOLD:-95}}"
+    if [[ "$threshold" -gt 0 ]]; then
+        check_remote_disk_space "$threshold" || {
+            log_error "Disk space threshold exceeded during transfer — aborting backup"
+            return 1
+        }
+    fi
+    return 0
+}
+
 rsync_to_remote() {
     local source_dir="$1"
     local remote_dest="$2"
@@ -78,6 +89,7 @@ rsync_to_remote() {
         fi
 
         log_warn "rsync failed (exit $rc), attempt $attempt/$max_retries"
+        _check_disk_space_or_abort || return 1
 
         if (( attempt < max_retries )); then
             local backoff=$(( attempt * 10 ))
@@ -154,6 +166,7 @@ rsync_local() {
         fi
 
         log_warn "rsync (local) failed (exit $rc), attempt $attempt/$max_retries"
+        _check_disk_space_or_abort || return 1
 
         if (( attempt < max_retries )); then
             local backoff=$(( attempt * 10 ))

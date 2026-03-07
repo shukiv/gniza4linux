@@ -206,6 +206,7 @@ class Schedule:
     targets: str = ""
     remotes: str = ""
     active: str = "yes"
+    retention_count: str = ""
 
     def to_conf(self) -> dict[str, str]:
         return {
@@ -216,6 +217,7 @@ class Schedule:
             "SCHEDULE_ACTIVE": self.active,
             "TARGETS": self.targets,
             "REMOTES": self.remotes,
+            "RETENTION_COUNT": self.retention_count,
         }
 
     @classmethod
@@ -229,6 +231,7 @@ class Schedule:
             targets=data.get("TARGETS", ""),
             remotes=data.get("REMOTES", ""),
             active=data.get("SCHEDULE_ACTIVE", "yes"),
+            retention_count=data.get("RETENTION_COUNT", ""),
         )
 
 

@@ -6,7 +6,8 @@ _GNIZA4LINUX_RETENTION_LOADED=1
 
 enforce_retention() {
     local target_name="$1"
-    local keep="${RETENTION_COUNT:-$DEFAULT_RETENTION_COUNT}"
+    local override="${2:-}"
+    local keep="${override:-${RETENTION_COUNT:-$DEFAULT_RETENTION_COUNT}}"
 
     log_debug "Enforcing retention for $target_name: keeping $keep snapshots"
 

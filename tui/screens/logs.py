@@ -96,6 +96,7 @@ class LogsScreen(Screen):
                 yield DataTable(id="logs-table")
                 with Horizontal(id="logs-buttons"):
                     yield Button("View", variant="primary", id="btn-view")
+                    yield Button("Refresh", id="btn-refresh")
                 with Horizontal(id="log-pager-buttons"):
                     yield Button("◀ Prev", id="btn-prev-page")
                     yield Static("", id="log-page-info")
@@ -154,6 +155,9 @@ class LogsScreen(Screen):
                 self._open_log(name)
             else:
                 self.notify("Select a log file first", severity="warning")
+        elif event.button.id == "btn-refresh":
+            self._refresh_table()
+            self.notify("Log list refreshed")
         elif event.button.id == "btn-prev-page":
             if self._current_page > 0:
                 self._current_page -= 1

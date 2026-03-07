@@ -95,10 +95,10 @@ Launch with `gniza` (no arguments). The TUI provides:
 - **Destinations** — Configure SSH, local, S3, or Google Drive destinations with Test & Save connection validation
 - **Backup** — Run backups with source/destination selection
 - **Restore** — Browse snapshots and restore to original location or custom directory
-- **Running Tasks** — Monitor active backup/restore jobs with live log output
+- **Running Tasks** — Monitor active backup/restore jobs with live log output. Jobs show "Skipped" when all targets are disabled
 - **Schedules** — Manage cron schedules with time/day pickers and toggle switches
 - **Snapshots** — Browse and manage stored snapshots
-- **Logs** — View backup history with pagination
+- **Logs** — View backup history with pagination and status detection (success/error/skipped)
 - **Settings** — Configure global options
 - **Setup Wizard** — Guided first-run configuration
 

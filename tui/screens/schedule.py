@@ -41,7 +41,7 @@ class ScheduleScreen(Screen):
     def _refresh_table(self) -> None:
         table = self.query_one("#sched-table", DataTable)
         table.clear(columns=True)
-        table.add_columns("Name", "Active", "Type", "Time", "Last Run", "Next Run", "Sources", "Destinations")
+        table.add_columns("Name", "Active", "Type", "Time", "Last Run", "Next Run", "Sources", "Destinations", "Retention")
         schedules = list_conf_dir("schedules.d")
         for name in schedules:
             data = parse_conf(CONFIG_DIR / "schedules.d" / f"{name}.conf")
@@ -49,7 +49,8 @@ class ScheduleScreen(Screen):
             active = "✅" if s.active == "yes" else "❌"
             last_run = data.get("LAST_RUN", "never") or "never"
             next_run = self._calc_next_run(s) if s.active == "yes" else "inactive"
-            table.add_row(name, active, s.schedule, s.time, last_run, next_run, s.targets or "all", s.remotes or "all", key=name)
+            retention = s.retention_count or "default"
+            table.add_row(name, active, s.schedule, s.time, last_run, next_run, s.targets or "all", s.remotes or "all", retention, key=name)
 
     def _calc_next_run(self, s: Schedule) -> str:
         """Calculate the next run time from schedule config."""

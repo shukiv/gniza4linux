@@ -73,6 +73,11 @@ The installer detects dependencies, sets up config directories, and optionally l
 # Launch the TUI
 gniza
 
+# Start the web dashboard
+gniza web install-service
+gniza web start
+# Access at http://<server-ip>:2323
+
 # Or use the CLI to add a source and destination
 gniza --cli sources add --name=mysite --folders=/var/www,/etc/nginx
 gniza --cli destinations add --name=backup-server
@@ -80,11 +85,6 @@ gniza --cli destinations add --name=backup-server
 # Run a backup
 gniza --cli backup --source=mysite
 gniza --cli backup --all
-
-# Start the web dashboard
-gniza web install-service
-gniza web start
-# Access at http://<server-ip>:2323
 ```
 
 ## Terminal UI

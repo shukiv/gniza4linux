@@ -100,14 +100,21 @@ class JobManager:
                         if len(job.output) < MAX_OUTPUT_LINES:
                             job.output.append(text)
                     else:
-                        # Fallback: check if process is actually alive
-                        # (proc.poll/waitpid can miss exits in asyncio)
+                        # Fallback: directly reap zombie via waitpid
+                        # (proc.poll() can fail in asyncio/Textual context)
                         try:
-                            os.kill(proc.pid, 0)
-                        except ProcessLookupError:
+                            wpid, wstatus = os.waitpid(proc.pid, os.WNOHANG)
+                            if wpid != 0:
+                                if os.WIFEXITED(wstatus):
+                                    proc.returncode = os.WEXITSTATUS(wstatus)
+                                elif os.WIFSIGNALED(wstatus):
+                                    proc.returncode = -os.WTERMSIG(wstatus)
+                                else:
+                                    proc.returncode = 1
+                                break
+                        except ChildProcessError:
+                            # Already reaped
                             break
-                        except PermissionError:
-                            pass
                         await asyncio.sleep(0.2)
                 # Read remaining lines after process exit
                 for line in f:

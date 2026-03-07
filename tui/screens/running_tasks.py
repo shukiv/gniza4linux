@@ -84,7 +84,9 @@ class RunningTasksScreen(Screen):
         old_row = table.cursor_coordinate.row if table.row_count > 0 else 0
         table.clear()
         spinner = _SPINNER[self._spinner_idx]
-        for job in job_manager.list_jobs():
+        jobs = job_manager.list_jobs()
+        jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
+        for job in jobs:
             if job.status == "running":
                 icon = f" {spinner} "
             elif job.status == "skipped":

@@ -15,7 +15,7 @@
     <div class="card-body p-0">
         {% if remotes %}
         <div class="overflow-x-auto">
-            <table class="table table-sm">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -36,14 +36,14 @@
                         <td><span hx-get="{{ url_for('remotes.disk', name=r.name) }}" hx-trigger="load" hx-swap="outerHTML">...</span></td>
                         <td>
                             <div class="flex gap-1 items-center">
-                                <a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-ghost btn-xs">Edit</a>
-                                <button class="btn btn-info btn-xs"
+                                <a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-ghost btn-sm">Edit</a>
+                                <button class="btn btn-info btn-sm"
                                         hx-post="{{ url_for('remotes.test', name=r.name) }}"
                                         hx-target="#test-result-{{ r.name }}"
                                         hx-swap="innerHTML">
                                     Test
                                 </button>
-                                <button class="btn btn-error btn-xs"
+                                <button class="btn btn-error btn-sm"
                                         @click="deleteName = '{{ r.name }}'; deleteUrl = '{{ url_for('remotes.delete', name=r.name) }}'; showModal = true">
                                     Delete
                                 </button>

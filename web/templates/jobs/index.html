@@ -17,7 +17,7 @@
     <div class="card-body p-0">
         {% if jobs %}
         <div class="overflow-x-auto">
-            <table class="table table-sm">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -59,13 +59,13 @@
                         </td>
                         <td>
                             <div class="flex gap-1">
-                                <button class="btn btn-ghost btn-xs"
+                                <button class="btn btn-ghost btn-sm"
                                         @click="selectedJob = selectedJob === '{{ job.id }}' ? null : '{{ job.id }}'">
                                     View Log
                                 </button>
                                 {% if job.status == "running" %}
                                 <form method="POST" action="{{ url_for('jobs.kill', job_id=job.id) }}" class="inline">
-                                    <button type="submit" class="btn btn-error btn-xs">Kill</button>
+                                    <button type="submit" class="btn btn-error btn-sm">Kill</button>
                                 </form>
                                 {% endif %}
                             </div>
@@ -89,7 +89,7 @@
     <div class="card-body">
         <div class="flex items-center justify-between mb-2">
             <h3 class="card-title text-sm">Log: {{ job.label }}</h3>
-            <button class="btn btn-ghost btn-xs" @click="selectedJob = null">Close</button>
+            <button class="btn btn-ghost btn-sm" @click="selectedJob = null">Close</button>
         </div>
         <div class="bg-base-300 rounded-lg p-4 max-h-96 overflow-y-auto font-mono text-xs"
              {% if job.status == "running" %}

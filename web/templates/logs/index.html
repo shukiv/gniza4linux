@@ -8,7 +8,7 @@
     <div class="card-body p-0">
         {% if log_files %}
         <div class="overflow-x-auto">
-            <table class="table table-sm">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>File</th>
@@ -44,7 +44,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{{ url_for('logs.view', filename=f.name) }}" class="btn btn-ghost btn-xs">View</a>
+                            <a href="{{ url_for('logs.view', filename=f.name) }}" class="btn btn-ghost btn-sm">View</a>
                         </td>
                     </tr>
                     {% endfor %}

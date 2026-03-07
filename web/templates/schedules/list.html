@@ -15,7 +15,7 @@
     <div class="card-body p-0">
         {% if schedules %}
         <div class="overflow-x-auto">
-            <table class="table table-sm">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -56,8 +56,8 @@
                         </td>
                         <td>
                             <div class="flex gap-1">
-                                <a href="{{ url_for('schedules.edit', name=s.name) }}" class="btn btn-ghost btn-xs">Edit</a>
-                                <button class="btn btn-error btn-xs"
+                                <a href="{{ url_for('schedules.edit', name=s.name) }}" class="btn btn-ghost btn-sm">Edit</a>
+                                <button class="btn btn-error btn-sm"
                                         @click="deleteName = '{{ s.name }}'; deleteUrl = '{{ url_for('schedules.delete', name=s.name) }}'; showModal = true">
                                     Delete
                                 </button>

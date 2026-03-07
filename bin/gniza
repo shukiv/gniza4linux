@@ -327,7 +327,6 @@ run_cli() {
                     echo "Exclude:        ${TARGET_EXCLUDE:-(none)}"
                     echo "Include:        ${TARGET_INCLUDE:-(none)}"
                     echo "Destination:    ${TARGET_REMOTE:-(all)}"
-                    echo "Retention:      ${TARGET_RETENTION:-(default)}"
                     echo "Pre-hook:       ${TARGET_PRE_HOOK:-(none)}"
                     echo "Post-hook:      ${TARGET_POST_HOOK:-(none)}"
                     echo ""
@@ -439,7 +438,6 @@ run_cli() {
                             ;;
                     esac
                     echo "Bandwidth:      ${BWLIMIT:-0} KB/s"
-                    echo "Retention:      $RETENTION_COUNT snapshots"
                     ;;
                 test)
                     [[ -z "$name" ]] && die "destinations test requires --name=NAME"
@@ -501,9 +499,10 @@ run_cli() {
             ;;
 
         retention)
-            local target="" remote="" all=false
+            local target="" remote="" all=false count=""
             target=$(_parse_flag "--source" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            count=$(_parse_flag "--count" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
 
             if [[ -z "$remote" ]]; then
@@ -517,10 +516,10 @@ run_cli() {
                 local targets; targets=$(list_targets)
                 while IFS= read -r t; do
                     [[ -z "$t" ]] && continue
-                    enforce_retention "$t"
+                    enforce_retention "$t" "$count"
                 done <<< "$targets"
             else
-                enforce_retention "$target"
+                enforce_retention "$target" "$count"
             fi
             _restore_remote_globals
             ;;
@@ -563,6 +562,16 @@ run_cli() {
             target=$(_parse_flag "--source" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             [[ -z "$sched_name" ]] && die "scheduled-run requires --schedule=NAME"
+
+            # Load schedule config and export retention override if set
+            local sched_conf="$CONFIG_DIR/schedules.d/${sched_name}.conf"
+            if [[ -f "$sched_conf" ]]; then
+                local _sched_retention=""
+                _sched_retention=$(grep -oP '^RETENTION_COUNT="\K[^"]*' "$sched_conf" 2>/dev/null) || true
+                if [[ -n "$_sched_retention" ]]; then
+                    export SCHEDULE_RETENTION_COUNT="$_sched_retention"
+                fi
+            fi
 
             trap release_all_target_locks EXIT
 

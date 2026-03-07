@@ -39,7 +39,7 @@ class ScheduleScreen(Screen):
     def _refresh_table(self) -> None:
         table = self.query_one("#sched-table", DataTable)
         table.clear(columns=True)
-        table.add_columns("Name", "Active", "Type", "Time", "Last Run", "Next Run", "Targets", "Remotes")
+        table.add_columns("Name", "Active", "Type", "Time", "Last Run", "Next Run", "Sources", "Destinations")
         last_run = self._get_last_run()
         schedules = list_conf_dir("schedules.d")
         for name in schedules:
@@ -159,21 +159,19 @@ class ScheduleScreen(Screen):
     @work
     async def _sync_crontab(self) -> None:
         """Reinstall crontab with only active schedules."""
-        # Check if any schedule is active
-        has_active = False
-        for name in list_conf_dir("schedules.d"):
-            data = parse_conf(CONFIG_DIR / "schedules.d" / f"{name}.conf")
-            if data.get("SCHEDULE_ACTIVE", "yes") == "yes":
-                has_active = True
-                break
-        if has_active:
-            rc, stdout, stderr = await run_cli("schedule", "install")
-        else:
-            rc, stdout, stderr = await run_cli("schedule", "remove")
+        # Always use install — it only writes active schedules and
+        # safely strips old entries. Never call remove, which could
+        # wipe the crontab if called during a transient state.
+        rc, stdout, stderr = await run_cli("schedule", "install")
         if rc != 0:
-            self.notify(f"Crontab sync failed: {stderr or stdout}", severity="error")
+            # install returns 1 when no valid/active schedules exist;
+            # in that case, remove old entries cleanly
+            rc2, _, stderr2 = await run_cli("schedule", "remove")
+            if rc2 != 0:
+                self.notify(f"Crontab sync failed: {stderr2 or stderr or stdout}", severity="error")
+            return
         # Warn if cron daemon is not running
-        if has_active and not await self._is_cron_running():
+        if not await self._is_cron_running():
             self.notify(
                 "Cron daemon is not running — schedules won't execute. "
                 "Start it with: sudo systemctl start cron",

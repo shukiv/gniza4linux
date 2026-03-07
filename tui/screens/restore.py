@@ -25,10 +25,10 @@ class RestoreScreen(Screen):
                 if not targets or not remotes:
                     yield Static("Both targets and remotes must be configured for restore.")
                 else:
-                    yield Static("Target:")
-                    yield Select([(t, t) for t in targets], id="restore-target", prompt="Select target")
-                    yield Static("Remote:")
-                    yield Select([(r, r) for r in remotes], id="restore-remote", prompt="Select remote")
+                    yield Static("Source:")
+                    yield Select([(t, t) for t in targets], id="restore-target", prompt="Select source")
+                    yield Static("Destination:")
+                    yield Select([(r, r) for r in remotes], id="restore-remote", prompt="Select destination")
                     yield Static("Snapshot:")
                     yield Select([], id="restore-snapshot", prompt="Select target and remote first")
                     yield Static("Restore location:")

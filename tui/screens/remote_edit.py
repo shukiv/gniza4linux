@@ -8,7 +8,8 @@ from textual.containers import Vertical, Horizontal
 
 from tui.config import parse_conf, write_conf, CONFIG_DIR
 from tui.models import Remote
-from tui.widgets import FilePicker, DocsPanel
+from tui.widgets import FilePicker, DocsPanel, RemoteFolderPicker
+from tui.widgets.folder_picker import FolderPicker
 
 _NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')
 
@@ -26,7 +27,7 @@ class RemoteEditScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        title = "Add Remote" if self._is_new else f"Edit Remote: {self._edit_name}"
+        title = "Add Destination" if self._is_new else f"Edit Destination: {self._edit_name}"
         remote = Remote()
         if not self._is_new:
             data = parse_conf(CONFIG_DIR / "remotes.d" / f"{self._edit_name}.conf")
@@ -66,7 +67,9 @@ class RemoteEditScreen(Screen):
                 yield Input(value=remote.password, placeholder="SSH password", password=True, id="re-password", classes="ssh-field ssh-password-field")
                 # Common fields
                 yield Static("Base path:")
-                yield Input(value=remote.base, placeholder="/backups", id="re-base")
+                with Horizontal(id="re-base-row"):
+                    yield Input(value=remote.base, placeholder="/backups", id="re-base")
+                    yield Button("Browse...", id="btn-browse-base")
                 yield Static("Bandwidth limit (KB/s, 0=unlimited):")
                 yield Input(value=remote.bwlimit, placeholder="0", id="re-bwlimit")
                 yield Static("Retention count:")
@@ -127,12 +130,48 @@ class RemoteEditScreen(Screen):
                 FilePicker("Select SSH key file", start=str(Path.home() / ".ssh")),
                 callback=self._key_file_selected,
             )
+        elif event.button.id == "btn-browse-base":
+            self._browse_base_path()
         elif event.button.id == "btn-save":
             self._save()
 
     def _key_file_selected(self, path: str | None) -> None:
         if path:
             self.query_one("#re-key", Input).value = path
+
+    def _browse_base_path(self) -> None:
+        type_sel = self.query_one("#re-type", Select)
+        rtype = str(type_sel.value) if isinstance(type_sel.value, str) else "ssh"
+        current_base = self.query_one("#re-base", Input).value.strip() or "/"
+        if rtype == "local":
+            self.app.push_screen(
+                FolderPicker("Select base path", start=current_base),
+                callback=self._base_path_selected,
+            )
+        elif rtype == "ssh":
+            host = self.query_one("#re-host", Input).value.strip()
+            if not host:
+                self.notify("Enter a host first", severity="error")
+                return
+            port = self.query_one("#re-port", Input).value.strip() or "22"
+            user = self.query_one("#re-user", Input).value.strip() or "root"
+            auth_sel = self.query_one("#re-auth", Select)
+            auth = str(auth_sel.value) if isinstance(auth_sel.value, str) else "key"
+            key = self.query_one("#re-key", Input).value.strip() if auth == "key" else ""
+            password = self.query_one("#re-password", Input).value if auth == "password" else ""
+            self.app.push_screen(
+                RemoteFolderPicker(
+                    host=host, port=port, user=user,
+                    auth_method=auth, key=key, password=password,
+                ),
+                callback=self._base_path_selected,
+            )
+        else:
+            self.notify("Browse not available for this remote type", severity="warning")
+
+    def _base_path_selected(self, path: str | None) -> None:
+        if path:
+            self.query_one("#re-base", Input).value = path
 
     def _save(self) -> None:
         if self._is_new:

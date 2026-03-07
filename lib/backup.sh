@@ -10,14 +10,22 @@ backup_target() {
     local target_name="$1"
     local remote_name="${2:-}"
 
+    # 0. Per-target lock: prevent same target from running twice
+    acquire_target_lock "$target_name" || {
+        log_error "Skipping target '$target_name': already running"
+        return 1
+    }
+
     # 1. Load and validate target
     load_target "$target_name" || {
         log_error "Failed to load target: $target_name"
+        release_target_lock "$target_name"
         return 1
     }
 
     if [[ "${TARGET_ENABLED:-yes}" != "yes" ]]; then
         log_info "Target '$target_name' is disabled, skipping"
+        release_target_lock "$target_name"
         return 0
     fi
 
@@ -48,6 +56,7 @@ backup_target() {
 
     # 15. Restore remote globals
     _restore_remote_globals
+    release_target_lock "$target_name"
     return "$rc"
 }
 
@@ -66,8 +75,11 @@ _backup_target_impl() {
             ;;
         local)
             if [[ ! -d "$REMOTE_BASE" ]]; then
-                log_error "Remote base directory does not exist: $REMOTE_BASE"
-                return 1
+                log_info "Creating local remote base directory: $REMOTE_BASE"
+                mkdir -p "$REMOTE_BASE" || {
+                    log_error "Failed to create remote base directory: $REMOTE_BASE"
+                    return 1
+                }
             fi
             ;;
         s3|gdrive)

@@ -16,7 +16,7 @@ class TargetsScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="targets-screen"):
-                yield Static("Targets", id="screen-title")
+                yield Static("Sources", id="screen-title")
                 yield DataTable(id="targets-table")
                 with Horizontal(id="targets-buttons"):
                     yield Button("Add", variant="primary", id="btn-add")

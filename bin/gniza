@@ -147,8 +147,7 @@ run_cli() {
             remote=$(_parse_flag "--remote" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
 
-            acquire_lock
-            trap release_lock EXIT
+            trap release_all_target_locks EXIT
 
             if [[ "$all" == "true" || -z "$target" ]]; then
                 backup_all_targets "$remote"

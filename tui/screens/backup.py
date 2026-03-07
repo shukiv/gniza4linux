@@ -22,17 +22,17 @@ class BackupScreen(Screen):
                 if not targets:
                     yield Static("No targets configured. Add a target first.")
                 else:
-                    yield Static("Target:")
+                    yield Static("Source:")
                     yield Select(
                         [(t, t) for t in targets],
                         id="backup-target",
-                        prompt="Select target",
+                        prompt="Select source",
                     )
-                    yield Static("Remote (optional):")
+                    yield Static("Destination:")
                     yield Select(
                         [("Default (all)", "")] + [(r, r) for r in remotes],
                         id="backup-remote",
-                        prompt="Select remote",
+                        prompt="Select destination",
                         value="",
                     )
                     with Horizontal(id="backup-buttons"):
@@ -41,6 +41,29 @@ class BackupScreen(Screen):
                         yield Button("Back", id="btn-back")
             yield DocsPanel.for_screen("backup-screen")
         yield Footer()
+
+    def on_screen_resume(self) -> None:
+        self._refresh_selects()
+
+    def _refresh_selects(self) -> None:
+        targets = list_conf_dir("targets.d")
+        remotes = list_conf_dir("remotes.d")
+        try:
+            ts = self.query_one("#backup-target", Select)
+            old_target = ts.value
+            ts.set_options([(t, t) for t in targets])
+            if old_target in targets:
+                ts.value = old_target
+        except Exception:
+            pass
+        try:
+            rs = self.query_one("#backup-remote", Select)
+            old_remote = rs.value
+            rs.set_options([("Default (all)", "")] + [(r, r) for r in remotes])
+            if old_remote == "" or old_remote in remotes:
+                rs.value = old_remote
+        except Exception:
+            pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-back":

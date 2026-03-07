@@ -30,15 +30,18 @@ LOGO = """\
 """
 
 MENU_ITEMS = [
+    ("targets", "Sources"),
+    ("remotes", "Destinations"),
+    None,
     ("backup", "Backup"),
     ("restore", "Restore"),
     ("running_tasks", "Running Tasks"),
-    ("targets", "Targets"),
-    ("remotes", "Remotes"),
+    None,
     ("schedule", "Schedules"),
-    ("snapshots", "Snapshots Browser"),
+    ("snapshots", "Snapshots"),
     ("logs", "Logs"),
     ("settings", "Settings"),
+    None,
     ("quit", "Quit"),
 ]
 
@@ -54,10 +57,12 @@ class MainMenuScreen(Screen):
         with Horizontal(id="main-layout"):
             yield Static(LOGO, id="logo", markup=True)
             menu_items = []
-            for mid, label in MENU_ITEMS:
-                menu_items.append(Option(label, id=mid))
-                if mid == "running_tasks":
+            for item in MENU_ITEMS:
+                if item is None:
                     menu_items.append(None)
+                else:
+                    mid, label = item
+                    menu_items.append(Option(label, id=mid))
             yield OptionList(*menu_items, id="menu-list")
         yield Footer()
 

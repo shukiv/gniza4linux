@@ -6,6 +6,7 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Select, DataTable
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
+from textual.events import Click
 from textual import work
 
 from tui.config import list_conf_dir
@@ -33,7 +34,7 @@ class SnapshotsScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="snapshots-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
+                    yield Button("← Back", id="btn-back", classes="back-btn")
                     yield Static("Snapshots Browser", id="screen-title")
                 if not targets or not remotes:
                     yield Static("Sources and destinations must be configured to browse snapshots.")
@@ -57,9 +58,7 @@ class SnapshotsScreen(Screen):
             pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-back":
-            self.app.pop_screen()
-        elif event.button.id == "btn-load":
+        if event.button.id == "btn-load":
             self._load_snapshots()
         elif event.button.id == "btn-browse":
             self._browse_snapshot()
@@ -134,6 +133,10 @@ class SnapshotsScreen(Screen):
 
         browser = SnapshotBrowser(f"{target} / {snapshot}", files)
         self.app.push_screen(browser)
+
+    def on_click(self, event: Click) -> None:
+        if event.widget.id == "btn-back":
+            self.app.pop_screen()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

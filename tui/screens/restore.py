@@ -3,6 +3,7 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Select, Input, RadioSet, RadioButton, Switch
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
+from textual.events import Click
 from textual import work, on
 
 from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
@@ -22,7 +23,7 @@ class RestoreScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="restore-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
+                    yield Button("← Back", id="btn-back", classes="back-btn")
                     yield Static("Restore", id="screen-title")
                 if not targets or not remotes:
                     yield Static("Both sources and destinations must be configured for restore.")
@@ -97,9 +98,7 @@ class RestoreScreen(Screen):
             self.notify("No snapshots found", severity="warning")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-back":
-            self.app.pop_screen()
-        elif event.button.id == "btn-browse-dest":
+        if event.button.id == "btn-browse-dest":
             self.app.push_screen(
                 FolderPicker("Select destination directory"),
                 callback=self._dest_selected,
@@ -156,6 +155,10 @@ class RestoreScreen(Screen):
             args.append("--skip-mysql")
         job_manager.start_job(self.app, job, *args)
         self.app.switch_screen("running_tasks")
+
+    def on_click(self, event: Click) -> None:
+        if event.widget.id == "btn-back":
+            self.app.pop_screen()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

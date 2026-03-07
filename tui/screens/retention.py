@@ -3,6 +3,7 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Select, Input
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
+from textual.events import Click
 from textual import work
 
 from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR
@@ -22,7 +23,7 @@ class RetentionScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="retention-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
+                    yield Button("← Back", id="btn-back", classes="back-btn")
                     yield Static("Retention Cleanup", id="screen-title")
                 if not targets:
                     yield Static("No sources configured.")
@@ -45,9 +46,7 @@ class RetentionScreen(Screen):
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-back":
-            self.app.pop_screen()
-        elif event.button.id == "btn-cleanup":
+        if event.button.id == "btn-cleanup":
             target_sel = self.query_one("#ret-target", Select)
             if not isinstance(target_sel.value, str):
                 self.notify("Select a source first", severity="error")
@@ -91,6 +90,10 @@ class RetentionScreen(Screen):
         else:
             log_screen.write(f"\n[red]Cleanup failed (exit code {rc}).[/red]")
         log_screen.finish()
+
+    def on_click(self, event: Click) -> None:
+        if event.widget.id == "btn-back":
+            self.app.pop_screen()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

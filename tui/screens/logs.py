@@ -91,7 +91,7 @@ class LogsScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="logs-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
+                    yield Button("← Back", id="btn-back", classes="back-btn")
                     yield Static("Logs", id="screen-title")
                 yield DataTable(id="logs-table")
                 with Horizontal(id="logs-buttons"):

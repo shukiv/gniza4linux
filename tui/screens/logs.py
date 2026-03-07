@@ -59,6 +59,8 @@ def _detect_log_status(filepath: Path) -> str:
         return "Failed"
     if has_lock_released:
         return "OK"
+    if "is disabled, skipping" in tail:
+        return "Skipped"
     return "Interrupted"
 
 

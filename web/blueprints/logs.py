@@ -58,6 +58,8 @@ def _detect_status(filepath):
         return "Failed"
     if "Lock released" in tail:
         return "OK"
+    if "is disabled, skipping" in tail:
+        return "Skipped"
     return "Interrupted"
 
 

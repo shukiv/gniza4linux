@@ -54,7 +54,7 @@
                     <label class="label"><span class="label-text">Base Path</span></label>
                     <div class="flex gap-2">
                         <input type="text" name="base" id="base-path-input" value="{{ remote.base }}" class="input input-bordered font-mono flex-1" placeholder="/backups">
-                        <button type="button" class="btn btn-outline btn-sm"
+                        <button type="button" class="btn btn-outline"
                                 x-show="remoteType === 'local' || remoteType === 'ssh'"
                                 @click="
                                     let url;

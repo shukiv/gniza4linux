@@ -83,8 +83,6 @@ class TargetEditScreen(Screen):
                 yield Input(value=target.include, placeholder="*.conf,docs/", id="te-include")
                 yield Static("Exclude patterns:")
                 yield Input(value=target.exclude, placeholder="*.tmp,*.log", id="te-exclude")
-                yield Static("Destination override:")
-                yield Input(value=target.remote, placeholder="Leave empty for default", id="te-remote")
                 yield Static("Pre-backup hook:")
                 yield Input(value=target.pre_hook, placeholder="Command to run before backup", id="te-prehook")
                 yield Static("Post-backup hook:")
@@ -257,7 +255,7 @@ class TargetEditScreen(Screen):
             folders=folders,
             exclude=self.query_one("#te-exclude", Input).value.strip(),
             include=self.query_one("#te-include", Input).value.strip(),
-            remote=self.query_one("#te-remote", Input).value.strip(),
+            remote="",
             pre_hook=self.query_one("#te-prehook", Input).value.strip(),
             post_hook=self.query_one("#te-posthook", Input).value.strip(),
             enabled=str(self.query_one("#te-enabled", Select).value),

@@ -126,22 +126,11 @@
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
             <h2 class="card-title text-base mb-4">Basic Settings</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Name</span></label>
-                    <input type="text" name="name" value="{{ target.name }}" class="input input-bordered"
-                           placeholder="my-server" required pattern="[A-Za-z0-9_-]+"
-                           {{ 'readonly' if not is_new else '' }}>
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Remote (Destination)</span></label>
-                    <select name="remote" class="select select-bordered">
-                        <option value="">-- None --</option>
-                        {% for r in remotes %}
-                        <option value="{{ r.name }}" {{ 'selected' if target.remote == r.name else '' }}>{{ r.name }} ({{ r.type }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="form-control max-w-md">
+                <label class="label"><span class="label-text">Name</span></label>
+                <input type="text" name="name" value="{{ target.name }}" class="input input-bordered"
+                       placeholder="my-server" required pattern="[A-Za-z0-9_-]+"
+                       {{ 'readonly' if not is_new else '' }}>
             </div>
             <div class="form-control mt-2">
                 <label class="label"><span class="label-text">Folders</span></label>

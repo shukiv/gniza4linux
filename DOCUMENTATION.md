@@ -23,6 +23,7 @@ Complete reference for gniza, a Linux backup manager that works as a stand-alone
 - [CLI Reference](#cli-reference)
 - [Global Settings](#global-settings)
 - [Security](#security)
+- [Development](#development)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -647,9 +648,19 @@ gniza --cli schedule remove
 
 Cron entries are tagged with `# gniza4linux:<name>` for clean management. Running `schedule install` replaces existing entries cleanly.
 
+### How Scheduled Backups Run
+
+Each cron entry calls `gniza scheduled-run --schedule=<name>`. This internal command:
+
+1. Reads the schedule config to determine which sources and destinations to back up.
+2. Runs the backup (same as `gniza --cli backup`).
+3. On success, stamps `LAST_RUN="YYYY-MM-DD HH:MM"` in the schedule config file.
+
+The `LAST_RUN` timestamp is displayed in the Schedules screen of the TUI.
+
 ### Cron Logs
 
-Scheduled backups log output to `<log_dir>/cron.log`.
+Scheduled backups log output to `<log_dir>/cron.log`. Each run also creates a timestamped log file in the log directory (using local time).
 
 ---
 
@@ -750,6 +761,19 @@ Notification emails include:
 - Log file path
 - Hostname and timestamp
 
+### Test Email
+
+Verify your SMTP settings by sending a test email:
+
+**TUI**: Settings > Send Test Email (automatically saves settings first).
+
+**CLI**:
+```bash
+gniza --cli test-email
+```
+
+Requires `NOTIFY_EMAIL` and `SMTP_HOST` to be configured.
+
 ### Fallback
 
 If SMTP is not configured, gniza falls back to the system `mail` or `sendmail` command.
@@ -783,16 +807,32 @@ gniza web start --port=8080     # Custom port
 gniza web start --host=127.0.0.1  # Bind to localhost only
 ```
 
-### Authentication
+### Configuration
 
-Credentials are configured in `gniza.conf`:
+Web dashboard settings are in `gniza.conf`:
 
 ```ini
-WEB_USER="admin"
-WEB_API_KEY="generated-during-install"
+WEB_PORT="2323"                        # Dashboard port
+WEB_HOST="0.0.0.0"                     # Bind address (0.0.0.0 = all interfaces)
+WEB_USER="admin"                       # HTTP Basic Auth username
+WEB_API_KEY="generated-during-install" # HTTP Basic Auth password
 ```
 
-The API key is generated automatically during installation if you enable the web dashboard. You can change it manually.
+The API key is generated automatically during installation if you enable the web dashboard. You can change it in Settings or directly in `gniza.conf`.
+
+After changing web settings, restart the service:
+```bash
+systemctl --user restart gniza-web.service   # user mode
+sudo systemctl restart gniza-web.service     # root mode
+```
+
+### Mobile Access
+
+The web dashboard works on mobile browsers. On small screens:
+- Font size auto-adjusts to fit approximately 50 columns
+- Button rows scroll horizontally
+- The documentation panel hides automatically on narrow screens
+- Touch scrolling is supported in all scrollable areas
 
 ### Root vs User Mode
 
@@ -814,10 +854,25 @@ Launch with `gniza` (no arguments). Requires Python 3 and Textual.
 | **Backup** | Select sources and destinations, run backups |
 | **Restore** | Browse snapshots, restore to original or custom location |
 | **Running Tasks** | Monitor active jobs with live log output and progress |
-| **Schedules** | Create and manage cron schedules |
+| **Schedules** | Create and manage cron schedules, view last run time |
 | **Snapshots** | Browse stored snapshots |
 | **Logs** | View backup history with pagination |
-| **Settings** | Configure global options |
+| **Settings** | Configure global options in organized sections |
+
+### Navigation
+
+Every screen has a **← Back** button in the top-left corner next to the screen title. Press `Escape` or click the button to return to the previous screen.
+
+### Settings Screen
+
+The Settings screen organizes options into four bordered sections:
+
+| Section | Contents |
+|---------|----------|
+| **General** | Log level, log retention, retention count, bandwidth limit, disk threshold, rsync options |
+| **Email Notifications** | Email address, notify mode, SMTP host/port/user/password/from/security, Send Test Email button |
+| **SSH** | SSH timeout, SSH retries |
+| **Web Dashboard** | Port, host, API key |
 
 ### Features
 
@@ -826,7 +881,7 @@ Launch with `gniza` (no arguments). Requires Python 3 and Textual.
 - **Remote Folder Browser**: Browse SSH destination directories
 - **Connection Testing**: Test destination connectivity from the edit screen
 - **Documentation Panel**: Inline help on wide screens, help modal on narrow ones
-- **Responsive Layout**: Adapts to terminal width
+- **Responsive Layout**: Adapts to terminal width; button rows scroll horizontally on narrow screens
 - **Job Manager**: Run backups/restores in background with live log streaming
 
 ### Keyboard Shortcuts
@@ -912,6 +967,7 @@ gniza --cli retention --destination=NAME                   # One destination
 gniza --cli schedule install                          # Install cron entries
 gniza --cli schedule show                             # Show current entries
 gniza --cli schedule remove                           # Remove all entries
+gniza scheduled-run --schedule=NAME                   # Run a schedule (used by cron)
 ```
 
 ### Logs
@@ -930,6 +986,12 @@ gniza web start --port=8080 --host=0.0.0.0           # Custom port/host
 gniza web install-service                             # Install systemd service
 gniza web remove-service                              # Remove service
 gniza web status                                      # Check status
+```
+
+### Notifications
+
+```bash
+gniza --cli test-email                                # Send a test email
 ```
 
 ### System
@@ -967,8 +1029,10 @@ All global settings are in `gniza.conf` in the config directory.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `LOG_LEVEL` | `info` | `info` or `debug` |
+| `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, or `error` |
 | `LOG_RETAIN` | `90` | Days to keep log files |
+
+Log files are named using local time (e.g., `gniza-20260307-040001.log`) to match cron schedules which also run in local time.
 
 ### Notifications
 
@@ -1019,6 +1083,23 @@ All global settings are in `gniza.conf` in the config directory.
 
 ---
 
+## Development
+
+### Deploy Script
+
+For developers, `scripts/deploy.sh` automates the deploy workflow:
+
+```bash
+bash scripts/deploy.sh "commit message"
+```
+
+This script:
+1. Commits and pushes all changes to git
+2. Syncs updated files to the local install directory (`~/.local/share/gniza`)
+3. Restarts the web dashboard service if running
+
+---
+
 ## Troubleshooting
 
 ### Checking Logs
@@ -1048,11 +1129,11 @@ Create at least one destination in `<config_dir>/remotes.d/`.
 **Backup aborted due to disk space**
 The destination disk usage exceeds the threshold. Free space or adjust `DISK_USAGE_THRESHOLD` in `gniza.conf`.
 
-**Cron not running**
+**Cron not running or using stale flags**
 - Check that cron entries are installed: `gniza --cli schedule show`
 - Verify the cron daemon is running: `systemctl status cron`
 - Check cron logs: `<log_dir>/cron.log`
-- Re-install entries: `gniza --cli schedule install`
+- Re-install entries: `gniza --cli schedule install` (this regenerates all entries with current flags)
 
 **rclone required**
 S3 and Google Drive sources/destinations require rclone. Install from https://rclone.org/install/.

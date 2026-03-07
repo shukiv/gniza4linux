@@ -124,8 +124,7 @@ def index():
 @login_required
 def new():
     target = Target()
-    remotes = _load_remotes()
-    return render_template("targets/edit.html", target=target, remotes=remotes, is_new=True)
+    return render_template("targets/edit.html", target=target, is_new=True)
 
 
 @bp.route("/<name>/edit")
@@ -140,8 +139,7 @@ def edit(name):
         return redirect(url_for("targets.index"))
     data = parse_conf(conf_path)
     target = Target.from_conf(name, data)
-    remotes = _load_remotes()
-    return render_template("targets/edit.html", target=target, remotes=remotes, is_new=False)
+    return render_template("targets/edit.html", target=target, is_new=False)
 
 
 @bp.route("/save", methods=["POST"])
@@ -169,7 +167,7 @@ def save():
         folders=_lines_to_csv(form.get("folders", "")),
         exclude=_lines_to_csv(form.get("exclude", "")),
         include=_lines_to_csv(form.get("include", "")),
-        remote=form.get("remote", ""),
+        remote="",
         pre_hook=form.get("pre_hook", ""),
         post_hook=form.get("post_hook", ""),
         enabled="yes" if form.get("enabled") else "no",

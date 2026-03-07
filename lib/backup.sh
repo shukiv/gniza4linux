@@ -287,7 +287,7 @@ METAEOF
     fi
 
     # 14. Enforce retention
-    enforce_retention "$target_name"
+    enforce_retention "$target_name" "${SCHEDULE_RETENTION_COUNT:-}"
 
     snaplog_cleanup
     return 0

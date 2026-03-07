@@ -32,9 +32,6 @@ class TargetEditScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="target-edit"):
                 yield Static(title, id="screen-title")
-                if self._is_new:
-                    yield Static("Name:")
-                    yield Input(value="", placeholder="Target name", id="te-name")
                 yield Static("--- Source ---", classes="section-label")
                 yield Static("Source Type:")
                 with RadioSet(id="te-source-type"):
@@ -42,6 +39,9 @@ class TargetEditScreen(Screen):
                     yield RadioButton("SSH", value=target.source_type == "ssh")
                     yield RadioButton("S3", value=target.source_type == "s3")
                     yield RadioButton("Google Drive", value=target.source_type == "gdrive")
+                if self._is_new:
+                    yield Static("Name:")
+                    yield Input(value="", placeholder="Target name", id="te-name")
                 yield Static("Source Host:", classes="source-field source-ssh-field")
                 yield Input(value=target.source_host, placeholder="hostname or IP", id="te-source-host", classes="source-field source-ssh-field")
                 yield Static("Source Port:", classes="source-field source-ssh-field")

@@ -14,44 +14,6 @@
     <input type="hidden" name="original_name" value="{{ target.name }}">
     {% endif %}
 
-    <!-- Basic Settings -->
-    <div class="card bg-base-200 shadow mb-6">
-        <div class="card-body">
-            <h2 class="card-title text-base mb-4">Basic Settings</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Name</span></label>
-                    <input type="text" name="name" value="{{ target.name }}" class="input input-bordered"
-                           placeholder="my-server" required pattern="[A-Za-z0-9_-]+"
-                           {{ 'readonly' if not is_new else '' }}>
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Remote (Destination)</span></label>
-                    <select name="remote" class="select select-bordered">
-                        <option value="">-- None --</option>
-                        {% for r in remotes %}
-                        <option value="{{ r.name }}" {{ 'selected' if target.remote == r.name else '' }}>{{ r.name }} ({{ r.type }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            <div class="form-control mt-2">
-                <label class="label"><span class="label-text">Folders (one per line)</span></label>
-                <textarea name="folders" class="textarea textarea-bordered h-24 font-mono" placeholder="/home&#10;/etc&#10;/var/www">{{ target.folders }}</textarea>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Exclude patterns (one per line)</span></label>
-                    <textarea name="exclude" class="textarea textarea-bordered h-20 font-mono" placeholder="*.tmp&#10;.cache/">{{ target.exclude }}</textarea>
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Include patterns (one per line)</span></label>
-                    <textarea name="include" class="textarea textarea-bordered h-20 font-mono">{{ target.include }}</textarea>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Source Type -->
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
@@ -148,6 +110,44 @@
                         <label class="label"><span class="label-text">Root Folder ID</span></label>
                         <input type="text" name="source_gdrive_root_folder_id" value="{{ target.source_gdrive_root_folder_id }}" class="input input-bordered">
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Basic Settings -->
+    <div class="card bg-base-200 shadow mb-6">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">Basic Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Name</span></label>
+                    <input type="text" name="name" value="{{ target.name }}" class="input input-bordered"
+                           placeholder="my-server" required pattern="[A-Za-z0-9_-]+"
+                           {{ 'readonly' if not is_new else '' }}>
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Remote (Destination)</span></label>
+                    <select name="remote" class="select select-bordered">
+                        <option value="">-- None --</option>
+                        {% for r in remotes %}
+                        <option value="{{ r.name }}" {{ 'selected' if target.remote == r.name else '' }}>{{ r.name }} ({{ r.type }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-control mt-2">
+                <label class="label"><span class="label-text">Folders (one per line)</span></label>
+                <textarea name="folders" class="textarea textarea-bordered h-24 font-mono" placeholder="/home&#10;/etc&#10;/var/www">{{ target.folders }}</textarea>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Exclude patterns (one per line)</span></label>
+                    <textarea name="exclude" class="textarea textarea-bordered h-20 font-mono" placeholder="*.tmp&#10;.cache/">{{ target.exclude }}</textarea>
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Include patterns (one per line)</span></label>
+                    <textarea name="include" class="textarea textarea-bordered h-20 font-mono">{{ target.include }}</textarea>
                 </div>
             </div>
         </div>

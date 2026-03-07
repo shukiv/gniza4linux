@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}GNIZA{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+</head>
+<body class="min-h-screen bg-base-100">
+
+{% include "components/flash.html" %}
+
+{% block body %}
+<div class="drawer lg:drawer-open">
+    <input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
+
+    <!-- Main content area -->
+    <div class="drawer-content flex flex-col">
+        <!-- Header -->
+        <div class="navbar bg-base-200 border-b border-base-300 sticky top-0 z-30">
+            <div class="flex-none lg:hidden">
+                <label for="sidebar-toggle" class="btn btn-square btn-ghost">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </label>
+            </div>
+            <div class="flex-1">
+                <h1 class="text-lg font-semibold px-2">{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
+            <div class="flex-none">
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm">Logout</a>
+            </div>
+        </div>
+
+        <!-- Page content -->
+        <main class="p-4 md:p-6 max-w-7xl w-full mx-auto">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="drawer-side z-40">
+        <label for="sidebar-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
+        {% include "components/navbar.html" %}
+    </div>
+</div>
+{% endblock %}
+
+</body>
+</html>

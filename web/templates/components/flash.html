@@ -1,0 +1,17 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="toast toast-top toast-end z-50">
+    {% for category, message in messages %}
+    <div class="alert {{ 'alert-error' if category == 'error' else 'alert-success' if category == 'success' else 'alert-info' }} shadow-lg">
+        <span>{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+<script>
+setTimeout(function() {
+    var toast = document.querySelector('.toast');
+    if (toast) toast.style.display = 'none';
+}, 5000);
+</script>
+{% endif %}
+{% endwith %}

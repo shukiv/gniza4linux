@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Login{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex items-center justify-center bg-base-100">
+    {% include "components/flash.html" %}
+    <div class="card w-full max-w-sm bg-base-200 shadow-xl">
+        <div class="card-body">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-primary-content font-bold text-lg">G</span>
+                <h2 class="card-title text-2xl font-bold">GNIZA</h2>
+            </div>
+            <form method="POST">
+                <div class="form-control">
+                    <label class="label" for="token">
+                        <span class="label-text">API Key</span>
+                    </label>
+                    <input type="password" name="token" id="token" placeholder="Enter your API key"
+                           class="input input-bordered w-full" autofocus />
+                </div>
+                <div class="form-control mt-6">
+                    <button type="submit" class="btn btn-primary w-full">Sign In</button>
+                </div>
+            </form>
+            <p class="text-center text-sm text-base-content/50 mt-4">GNIZA Backup Manager</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

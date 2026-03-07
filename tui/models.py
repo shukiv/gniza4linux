@@ -8,7 +8,6 @@ class Target:
     exclude: str = ""
     include: str = ""
     remote: str = ""
-    retention: str = ""
     pre_hook: str = ""
     post_hook: str = ""
     enabled: str = "yes"
@@ -43,7 +42,6 @@ class Target:
             "TARGET_EXCLUDE": self.exclude,
             "TARGET_INCLUDE": self.include,
             "TARGET_REMOTE": self.remote,
-            "TARGET_RETENTION": self.retention,
             "TARGET_PRE_HOOK": self.pre_hook,
             "TARGET_POST_HOOK": self.post_hook,
             "TARGET_ENABLED": self.enabled,
@@ -92,7 +90,6 @@ class Target:
             exclude=data.get("TARGET_EXCLUDE", ""),
             include=data.get("TARGET_INCLUDE", ""),
             remote=data.get("TARGET_REMOTE", ""),
-            retention=data.get("TARGET_RETENTION", ""),
             pre_hook=data.get("TARGET_PRE_HOOK", ""),
             post_hook=data.get("TARGET_POST_HOOK", ""),
             enabled=data.get("TARGET_ENABLED", "yes"),
@@ -134,7 +131,6 @@ class Remote:
     password: str = ""
     base: str = "/backups"
     bwlimit: str = "0"
-    retention_count: str = "30"
     s3_bucket: str = ""
     s3_region: str = "us-east-1"
     s3_endpoint: str = ""
@@ -155,12 +151,10 @@ class Remote:
                 "REMOTE_PASSWORD": self.password,
                 "REMOTE_BASE": self.base,
                 "BWLIMIT": self.bwlimit,
-                "RETENTION_COUNT": self.retention_count,
             })
         elif self.type == "local":
             data.update({
                 "REMOTE_BASE": self.base,
-                "RETENTION_COUNT": self.retention_count,
             })
         elif self.type == "s3":
             data.update({
@@ -170,14 +164,12 @@ class Remote:
                 "S3_ACCESS_KEY_ID": self.s3_access_key_id,
                 "S3_SECRET_ACCESS_KEY": self.s3_secret_access_key,
                 "REMOTE_BASE": self.base,
-                "RETENTION_COUNT": self.retention_count,
             })
         elif self.type == "gdrive":
             data.update({
                 "GDRIVE_SERVICE_ACCOUNT_FILE": self.gdrive_sa_file,
                 "GDRIVE_ROOT_FOLDER_ID": self.gdrive_root_folder_id,
                 "REMOTE_BASE": self.base,
-                "RETENTION_COUNT": self.retention_count,
             })
         return data
 
@@ -194,7 +186,6 @@ class Remote:
             password=data.get("REMOTE_PASSWORD", ""),
             base=data.get("REMOTE_BASE", "/backups"),
             bwlimit=data.get("BWLIMIT", "0"),
-            retention_count=data.get("RETENTION_COUNT", "30"),
             s3_bucket=data.get("S3_BUCKET", ""),
             s3_region=data.get("S3_REGION", "us-east-1"),
             s3_endpoint=data.get("S3_ENDPOINT", ""),

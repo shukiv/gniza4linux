@@ -395,6 +395,18 @@ Switch {
     margin: 0 1;
 }
 
+.sched-switch-row {
+    height: 3;
+    align: left middle;
+    margin: 0;
+}
+
+.sched-switch-label {
+    width: 1fr;
+    height: 3;
+    content-align: left middle;
+}
+
 .section-label {
     text-style: bold;
     color: #00cc00;

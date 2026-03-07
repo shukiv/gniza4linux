@@ -1,7 +1,7 @@
 import re
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, Input, Select, SelectionList
+from textual.widgets import Header, Footer, Static, Button, Input, Select, SelectionList, Switch
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
@@ -105,27 +105,29 @@ class ScheduleEditScreen(Screen):
                     placeholder="0 2 * * *",
                     classes="sched-cron-field",
                 )
-                yield Static("Sources (empty=all):")
-                yield SelectionList[str](
-                    *self._build_target_choices(),
-                    id="sched-targets",
-                )
-                yield Static("Destinations (empty=all):")
-                yield SelectionList[str](
-                    *self._build_remote_choices(),
-                    id="sched-remotes",
-                )
+                yield Static("Sources (off=all):")
+                for tname in list_conf_dir("targets.d"):
+                    with Horizontal(classes="sched-switch-row"):
+                        yield Static(tname, classes="sched-switch-label")
+                        yield Switch(value=False, id=f"sched-src-{tname}")
+                yield Static("Destinations (off=all):")
+                for rname in list_conf_dir("remotes.d"):
+                    with Horizontal(classes="sched-switch-row"):
+                        yield Static(rname, classes="sched-switch-label")
+                        yield Switch(value=False, id=f"sched-dst-{rname}")
                 with Horizontal(id="sched-edit-buttons"):
                     yield Button("Save", variant="primary", id="btn-save")
                     yield Button("Cancel", id="btn-cancel")
             yield DocsPanel.for_screen("schedule-edit")
         yield Footer()
 
-    def _build_target_choices(self) -> list[tuple[str, str]]:
-        return [(name, name) for name in list_conf_dir("targets.d")]
-
-    def _build_remote_choices(self) -> list[tuple[str, str]]:
-        return [(name, name) for name in list_conf_dir("remotes.d")]
+    def _get_selected_switches(self, prefix: str) -> list[str]:
+        """Return names of enabled switches matching the ID prefix."""
+        selected = []
+        for sw in self.query(Switch):
+            if sw.id and sw.id.startswith(prefix) and sw.value:
+                selected.append(sw.id[len(prefix):])
+        return selected
 
     def on_mount(self) -> None:
         self._update_type_visibility()
@@ -144,22 +146,22 @@ class ScheduleEditScreen(Screen):
                 opt = days_list.get_option_at_index(idx)
                 if opt.value in day_vals:
                     days_list.select(opt.value)
-        # Targets
+        # Sources
         if sched.targets:
-            target_vals = set(sched.targets.split(","))
-            tlist = self.query_one("#sched-targets", SelectionList)
-            for idx in range(tlist.option_count):
-                opt = tlist.get_option_at_index(idx)
-                if opt.value in target_vals:
-                    tlist.select(opt.value)
-        # Remotes
+            for tname in sched.targets.split(","):
+                tname = tname.strip()
+                try:
+                    self.query_one(f"#sched-src-{tname}", Switch).value = True
+                except Exception:
+                    pass
+        # Destinations
         if sched.remotes:
-            remote_vals = set(sched.remotes.split(","))
-            rlist = self.query_one("#sched-remotes", SelectionList)
-            for idx in range(rlist.option_count):
-                opt = rlist.get_option_at_index(idx)
-                if opt.value in remote_vals:
-                    rlist.select(opt.value)
+            for rname in sched.remotes.split(","):
+                rname = rname.strip()
+                try:
+                    self.query_one(f"#sched-dst-{rname}", Switch).value = True
+                except Exception:
+                    pass
 
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id == "sched-type":
@@ -226,8 +228,8 @@ class ScheduleEditScreen(Screen):
             time=self.query_one("#sched-time", Input).value.strip() or "02:00",
             day=day_val,
             cron=self.query_one("#sched-cron", Input).value.strip(),
-            targets=",".join(self.query_one("#sched-targets", SelectionList).selected),
-            remotes=",".join(self.query_one("#sched-remotes", SelectionList).selected),
+            targets=",".join(self._get_selected_switches("sched-src-")),
+            remotes=",".join(self._get_selected_switches("sched-dst-")),
         )
         conf = CONFIG_DIR / "schedules.d" / f"{name}.conf"
         write_conf(conf, sched.to_conf())

@@ -12,6 +12,15 @@
 
 {% if current_path != '/' %}
 <div class="mb-2">
+    {% if ssh %}
+    <a class="btn btn-ghost btn-xs font-mono gap-1 cursor-pointer"
+       hx-get="{{ url_for('api.browse_ssh', path=current_path.rsplit('/', 1)[0] or '/', target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password) }}"
+       hx-target="closest .folder-browser-box"
+       hx-swap="innerHTML">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        ..
+    </a>
+    {% else %}
     <a class="btn btn-ghost btn-xs font-mono gap-1 cursor-pointer"
        hx-get="{{ url_for('api.browse', path=current_path.rsplit('/', 1)[0] or '/', target=target) }}"
        hx-target="closest .folder-browser-box"
@@ -19,6 +28,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         ..
     </a>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -27,7 +37,11 @@
         {% for d in dirs %}
         {% set child_path = current_path.rstrip('/') + '/' + d %}
         <li>
+            {% if ssh %}
+            <details hx-get="{{ url_for('api.browse_ssh_children', path=child_path, target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password) }}"
+            {% else %}
             <details hx-get="{{ url_for('api.browse_children', path=child_path, target=target) }}"
+            {% endif %}
                      hx-target="find ul"
                      hx-swap="innerHTML"
                      hx-trigger="toggle once"

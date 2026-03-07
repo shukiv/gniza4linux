@@ -141,11 +141,26 @@
                 <div class="flex gap-2 items-start">
                     <textarea name="folders" id="folders-textarea" class="textarea textarea-bordered h-24 font-mono flex-1" placeholder="/home&#10;/etc&#10;/var/www">{{ target.folders }}</textarea>
                     <button type="button" class="btn btn-outline btn-sm mt-1"
-                            x-show="sourceType === 'local'"
-                            onclick="document.getElementById('folder_browser_modal_folders').showModal()"
-                            hx-get="{{ url_for('api.browse', path='/', target='folders') }}"
-                            hx-target="#folder-browser-box-folders"
-                            hx-swap="innerHTML">
+                            x-show="sourceType === 'local' || sourceType === 'ssh'"
+                            @click="
+                                let url;
+                                if (sourceType === 'ssh') {
+                                    let params = new URLSearchParams({
+                                        path: '/',
+                                        target: 'folders',
+                                        host: document.querySelector('[name=source_host]').value,
+                                        port: document.querySelector('[name=source_port]').value || '22',
+                                        user: document.querySelector('[name=source_user]').value || 'root',
+                                        key: document.querySelector('[name=source_key]')?.value || '',
+                                        password: document.querySelector('[name=source_password]')?.value || ''
+                                    });
+                                    url = '{{ url_for('api.browse_ssh') }}?' + params.toString();
+                                } else {
+                                    url = '{{ url_for('api.browse', path='/', target='folders') }}';
+                                }
+                                htmx.ajax('GET', url, '#folder-browser-box-folders');
+                                document.getElementById('folder_browser_modal_folders').showModal();
+                            ">
                         Browse
                     </button>
                 </div>

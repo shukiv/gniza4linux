@@ -1,6 +1,8 @@
 import os
+import shlex
+import subprocess
 
-from flask import Blueprint, request, render_template
+from flask import Blueprint, jsonify, request, render_template
 
 from web.app import login_required
 
@@ -62,3 +64,98 @@ def browse_children():
     dirs = _list_dirs(path)
     return render_template("components/folder_browser_children.html",
                            parent_path=path, target=target, dirs=dirs)
+
+
+# ── SSH remote browsing ──────────────────────────────────────
+
+def _ssh_cmd(host, port="22", user="root", key="", password=""):
+    """Build an SSH command list."""
+    ssh_opts = [
+        "ssh",
+        "-o", "BatchMode=yes",
+        "-o", "StrictHostKeyChecking=accept-new",
+        "-o", "ConnectTimeout=10",
+        "-p", port or "22",
+    ]
+    if key:
+        ssh_opts += ["-i", key]
+    ssh_opts.append(f"{user}@{host}")
+    if password:
+        return ["sshpass", "-p", password] + ssh_opts
+    return ssh_opts
+
+
+def _ssh_list_dirs(host, path, port="22", user="root", key="", password=""):
+    """List directories on a remote SSH host."""
+    cmd = _ssh_cmd(host, port, user, key, password) + [
+        f"find {shlex.quote(path)} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        if result.returncode != 0:
+            return None, result.stderr.strip() or "Connection failed"
+        dirs = []
+        for line in result.stdout.strip().splitlines():
+            line = line.strip()
+            if line and line != path:
+                name = line.rstrip("/").rsplit("/", 1)[-1]
+                if not name.startswith("."):
+                    dirs.append(name)
+        return dirs, None
+    except subprocess.TimeoutExpired:
+        return None, "Connection timed out"
+    except OSError as e:
+        return None, str(e)
+
+
+@bp.route("/browse/ssh")
+@login_required
+def browse_ssh():
+    """Browse directories on a remote SSH host."""
+    host = request.args.get("host", "")
+    port = request.args.get("port", "22")
+    user = request.args.get("user", "root")
+    key = request.args.get("key", "")
+    password = request.args.get("password", "")
+    path = request.args.get("path", "/")
+    target = request.args.get("target", "")
+
+    if not host:
+        return '<div class="alert alert-error text-sm">No host specified</div>'
+
+    if not os.path.isabs(path):
+        path = "/"
+
+    dirs, err = _ssh_list_dirs(host, path, port, user, key, password)
+    if err:
+        return f'<div class="alert alert-error text-sm">{err}</div>'
+
+    return render_template("components/folder_browser.html",
+                           current_path=path, target=target, dirs=dirs,
+                           ssh=True, ssh_host=host, ssh_port=port,
+                           ssh_user=user, ssh_key=key, ssh_password=password)
+
+
+@bp.route("/browse/ssh/children")
+@login_required
+def browse_ssh_children():
+    """Return child folders on an SSH host for lazy loading."""
+    host = request.args.get("host", "")
+    port = request.args.get("port", "22")
+    user = request.args.get("user", "root")
+    key = request.args.get("key", "")
+    password = request.args.get("password", "")
+    path = request.args.get("path", "/")
+    target = request.args.get("target", "")
+
+    if not host or not os.path.isabs(path):
+        return ""
+
+    dirs, err = _ssh_list_dirs(host, path, port, user, key, password)
+    if err or dirs is None:
+        return ""
+
+    return render_template("components/folder_browser_children.html",
+                           parent_path=path, target=target, dirs=dirs,
+                           ssh=True, ssh_host=host, ssh_port=port,
+                           ssh_user=user, ssh_key=key, ssh_password=password)

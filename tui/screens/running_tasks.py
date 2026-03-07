@@ -35,7 +35,7 @@ class RunningTasksScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="running-tasks-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
                     yield Static("Running Tasks", id="screen-title")
                 yield DataTable(id="rt-table")
                 with Horizontal(id="rt-buttons"):

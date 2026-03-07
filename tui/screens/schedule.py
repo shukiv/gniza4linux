@@ -22,7 +22,7 @@ class ScheduleScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="schedule-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
                     yield Static("Schedules", id="screen-title")
                 yield DataTable(id="sched-table")
                 with Horizontal(id="sched-buttons"):

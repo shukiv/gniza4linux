@@ -39,15 +39,14 @@
                                 <a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-primary btn-sm">Edit</a>
                                 <button class="btn btn-success btn-sm"
                                         hx-post="{{ url_for('remotes.test', name=r.name) }}"
-                                        hx-target="#test-result-{{ r.name }}"
-                                        hx-swap="innerHTML">
+                                        hx-target="body"
+                                        hx-swap="beforeend">
                                     Test
                                 </button>
                                 <button class="btn btn-error btn-sm"
                                         @click="deleteName = '{{ r.name }}'; deleteUrl = '{{ url_for('remotes.delete', name=r.name) }}'; showModal = true">
                                     Delete
                                 </button>
-                                <span id="test-result-{{ r.name }}" class="ml-2"></span>
                             </div>
                         </td>
                     </tr>

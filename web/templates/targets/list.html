@@ -32,9 +32,10 @@
                         <td><span class="badge badge-outline badge-md">{{ t.source_type }}</span></td>
                         <td class="max-w-xs truncate text-base-content/60">{{ t.folders }}</td>
                         <td>
-                            <form method="POST" action="{{ url_for('targets.toggle', name=t.name) }}" class="inline">
+                            <form method="POST" action="{{ url_for('targets.toggle', name=t.name) }}" class="inline flex items-center gap-2">
                                 <input type="checkbox" class="toggle toggle-success toggle-sm" {{ 'checked' if t.enabled == 'yes' else '' }}
                                        onchange="this.form.submit()">
+                                <span class="text-sm {{ 'text-success' if t.enabled == 'yes' else 'text-base-content/40' }}">{{ 'Enabled' if t.enabled == 'yes' else 'Disabled' }}</span>
                             </form>
                         </td>
                         <td>

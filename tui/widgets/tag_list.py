@@ -69,15 +69,14 @@ class TagList(Widget):
         self._placeholder = placeholder
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            with Vertical(classes="tag-items", id="tag-items-container"):
-                for i, item in enumerate(self._items):
-                    with Horizontal(classes="tag-row"):
-                        yield Button("✕", classes="tag-remove", id=f"tag-rm-{i}")
-                        yield Static(f"{item}", classes="tag-item", id=f"tag-{i}")
-            with Horizontal(classes="tag-add-row"):
-                yield Input(placeholder=self._placeholder, id="tag-input")
-                yield Button("Add", id="tag-add-btn", variant="default")
+        with Vertical(classes="tag-items", id="tag-items-container"):
+            for i, item in enumerate(self._items):
+                with Horizontal(classes="tag-row"):
+                    yield Button("✕", classes="tag-remove", id=f"tag-rm-{i}")
+                    yield Static(f"{item}", classes="tag-item", id=f"tag-{i}")
+        with Horizontal(classes="tag-add-row"):
+            yield Input(placeholder=self._placeholder, id="tag-input")
+            yield Button("Add", id="tag-add-btn", variant="default")
 
     @property
     def items(self) -> list[str]:

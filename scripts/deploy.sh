@@ -18,8 +18,9 @@ if [[ -d "$INSTALL_DIR" ]]; then
     cp bin/gniza "$INSTALL_DIR/bin/gniza"
     cp -r lib/* "$INSTALL_DIR/lib/"
     cp -r tui/* "$INSTALL_DIR/tui/"
-    mkdir -p "$INSTALL_DIR/web"
+    mkdir -p "$INSTALL_DIR/web" "$INSTALL_DIR/etc"
     cp -r web/* "$INSTALL_DIR/web/"
+    cp -r etc/* "$INSTALL_DIR/etc/"
     echo "Synced to $INSTALL_DIR"
 fi
 

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/pagination.html" import pagination %}
 
 {% block title %}GNIZA - Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
@@ -194,21 +195,7 @@
                 </tbody>
             </table>
         </div>
-        {% if log_total_pages > 1 %}
-        <div class="flex justify-center py-4 border-t border-base-300">
-            <div class="join">
-                {% if log_page > 1 %}
-                <a href="?log_page={{ log_page - 1 }}" class="join-item btn btn-sm">«</a>
-                {% endif %}
-                {% for p in range(1, log_total_pages + 1) %}
-                <a href="?log_page={{ p }}" class="join-item btn btn-sm {{ 'btn-active' if p == log_page else '' }}">{{ p }}</a>
-                {% endfor %}
-                {% if log_page < log_total_pages %}
-                <a href="?log_page={{ log_page + 1 }}" class="join-item btn btn-sm">»</a>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
+        {{ pagination(log_page, log_total_pages, '?log_page=') }}
         {% else %}
         <div class="p-8 text-center text-base-content/40">No log files found</div>
         {% endif %}

@@ -112,12 +112,21 @@ def _load_remotes():
 @bp.route("/")
 @login_required
 def index():
+    page = request.args.get("page", 1, type=int)
+    if page < 1:
+        page = 1
     try:
         targets = _load_targets()
     except Exception:
         targets = []
         flash("Failed to load sources.", "error")
-    return render_template("targets/list.html", targets=targets)
+    total = len(targets)
+    per_page = 20
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page = min(page, total_pages)
+    start = (page - 1) * per_page
+    targets = targets[start:start + per_page]
+    return render_template("targets/list.html", targets=targets, page=page, total_pages=total_pages)
 
 
 @bp.route("/new")

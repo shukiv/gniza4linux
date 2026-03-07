@@ -1,6 +1,7 @@
+{% from "components/pagination.html" import pagination %}
 <div id="jobs-table"
      {% if has_running %}
-     hx-get="{{ url_for('jobs.table') }}"
+     hx-get="{{ url_for('jobs.table', page=page) }}"
      hx-trigger="every 2s"
      hx-swap="outerHTML"
      {% endif %}
@@ -77,6 +78,7 @@
         </tbody>
     </table>
 </div>
+{{ pagination(page, total_pages, url_for('jobs.index') + '?page=') }}
 {% else %}
 <div class="p-8 text-center text-base-content/40">
     <p>No jobs found</p>

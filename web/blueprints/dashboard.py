@@ -111,6 +111,7 @@ def _load_logs(page=1):
     log_files.sort(key=lambda x: x["mtime"], reverse=True)
     total = len(log_files)
     total_pages = max(1, (total + DASH_LOGS_PER_PAGE - 1) // DASH_LOGS_PER_PAGE)
+    page = min(page, total_pages)
     start = (page - 1) * DASH_LOGS_PER_PAGE
     return log_files[start:start + DASH_LOGS_PER_PAGE], page, total_pages
 

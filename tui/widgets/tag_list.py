@@ -23,12 +23,15 @@ class TagList(Widget):
     }
     TagList .tag-items {
         height: auto;
+        layout: vertical;
+    }
+    TagList .tag-row {
+        height: 1;
         layout: horizontal;
-        overflow-x: auto;
     }
     TagList .tag-item {
         height: 1;
-        margin: 0 1 0 0;
+        width: 1fr;
         background: $primary-background;
         color: $text;
         padding: 0 1;
@@ -67,10 +70,11 @@ class TagList(Widget):
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            with Horizontal(classes="tag-items", id="tag-items-container"):
+            with Vertical(classes="tag-items", id="tag-items-container"):
                 for i, item in enumerate(self._items):
-                    yield Static(f" {item} ", classes="tag-item", id=f"tag-{i}")
-                    yield Button("✕", classes="tag-remove", id=f"tag-rm-{i}")
+                    with Horizontal(classes="tag-row"):
+                        yield Button("✕", classes="tag-remove", id=f"tag-rm-{i}")
+                        yield Static(f"{item}", classes="tag-item", id=f"tag-{i}")
             with Horizontal(classes="tag-add-row"):
                 yield Input(placeholder=self._placeholder, id="tag-input")
                 yield Button("Add", id="tag-add-btn", variant="default")
@@ -101,8 +105,10 @@ class TagList(Widget):
         container = self.query_one("#tag-items-container")
         container.remove_children()
         for i, item in enumerate(self._items):
-            container.mount(Static(f" {item} ", classes="tag-item", id=f"tag-{i}"))
-            container.mount(Button("✕", classes="tag-remove", id=f"tag-rm-{i}"))
+            row = Horizontal(classes="tag-row")
+            container.mount(row)
+            row.mount(Button("✕", classes="tag-remove", id=f"tag-rm-{i}"))
+            row.mount(Static(f"{item}", classes="tag-item", id=f"tag-{i}"))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "tag-add-btn":

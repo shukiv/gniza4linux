@@ -305,14 +305,27 @@ class JobManager:
             if pid is None:
                 continue
             alive = False
+            rc_from_wait = None
+            # Try to reap zombie child first (works if we're the parent)
             try:
-                os.kill(pid, 0)
-                alive = True
-            except ProcessLookupError:
-                pass
-            except PermissionError:
-                # Process exists but we can't signal it
-                alive = True
+                wpid, wstatus = os.waitpid(pid, os.WNOHANG)
+                if wpid != 0:
+                    alive = False
+                    if os.WIFEXITED(wstatus):
+                        rc_from_wait = os.WEXITSTATUS(wstatus)
+                    elif os.WIFSIGNALED(wstatus):
+                        rc_from_wait = 1
+                else:
+                    alive = True
+            except ChildProcessError:
+                # Not our child — fall back to kill-0 check
+                try:
+                    os.kill(pid, 0)
+                    alive = True
+                except ProcessLookupError:
+                    pass
+                except PermissionError:
+                    alive = True
             if alive:
                 job = Job(
                     id=job_id,
@@ -325,8 +338,8 @@ class JobManager:
                 job._pgid = entry.get("pgid")
                 job._reconnected = True
             else:
-                # Process finished while TUI was closed — check log for exit info
-                rc = self._detect_return_code(entry.get("log_file"))
+                # Process finished while TUI was closed
+                rc = rc_from_wait if rc_from_wait is not None else self._detect_return_code(entry.get("log_file"))
                 if rc is None:
                     status = "unknown"
                 else:
@@ -370,6 +383,8 @@ class JobManager:
             for line in text.splitlines():
                 if "[FATAL]" in line or "[ERROR]" in line:
                     return 1
+            # Process exited, log has content, no error markers → success
+            return 0
         except OSError:
             return None
         return None

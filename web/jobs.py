@@ -127,17 +127,36 @@ class WebJobManager:
 
             # Check if running process is still alive
             if status == "running" and pid:
+                alive = True
+                rc = None
+                # Try to reap zombie child (works if we're the parent)
                 try:
-                    os.kill(pid, 0)
-                except ProcessLookupError:
-                    rc = self._detect_return_code(entry.get("log_file"))
+                    wpid, wstatus = os.waitpid(pid, os.WNOHANG)
+                    if wpid != 0:
+                        alive = False
+                        if os.WIFEXITED(wstatus):
+                            rc = os.WEXITSTATUS(wstatus)
+                        elif os.WIFSIGNALED(wstatus):
+                            rc = 1
+                        else:
+                            rc = self._detect_return_code(entry.get("log_file"))
+                except ChildProcessError:
+                    # Not our child — fall back to kill-0 check
+                    try:
+                        os.kill(pid, 0)
+                    except ProcessLookupError:
+                        alive = False
+                        rc = self._detect_return_code(entry.get("log_file"))
+                    except PermissionError:
+                        pass  # alive but can't signal
+                if not alive:
+                    if rc is None:
+                        rc = self._detect_return_code(entry.get("log_file"))
                     status = "success" if rc == 0 else "failed" if rc else "unknown"
                     entry["status"] = status
                     entry["return_code"] = rc
                     entry["finished_at"] = now.isoformat()
                     changed = True
-                except PermissionError:
-                    pass  # alive but can't signal
 
             # Skip expired finished jobs
             if status != "running":
@@ -201,6 +220,8 @@ class WebJobManager:
             for line in text.splitlines():
                 if "[FATAL]" in line or "[ERROR]" in line:
                     return 1
+            # Process exited, log has content, no error markers → success
+            return 0
         except OSError:
             return None
         return None

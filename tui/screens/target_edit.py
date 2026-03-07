@@ -77,8 +77,7 @@ class TargetEditScreen(Screen):
                 yield Input(value=target.source_gdrive_root_folder_id, placeholder="folder ID", id="te-source-gdrive-root-folder-id", classes="source-field source-gdrive-field")
                 yield Static("Folders:")
                 folder_items = [f.strip() for f in target.folders.split(",") if f.strip()]
-                yield TagList(items=folder_items, placeholder="/path/to/folder", widget_id="te-folders")
-                yield Button("Browse...", id="btn-browse")
+                yield TagList(items=folder_items, placeholder="/path/to/folder", widget_id="te-folders", show_browse=True)
                 yield Static("Include patterns:")
                 yield Input(value=target.include, placeholder="*.conf,docs/", id="te-include")
                 yield Static("Exclude patterns:")

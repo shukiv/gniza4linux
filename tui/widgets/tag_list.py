@@ -45,15 +45,19 @@ class TagList(Widget):
         color: $error;
         border: none;
     }
-    TagList .tag-add-row {
+    TagList .tag-input-row {
+        height: 3;
+    }
+    TagList .tag-input-row Input {
+        width: 1fr;
+    }
+    TagList .tag-btn-row {
         height: 3;
         layout: horizontal;
     }
-    TagList .tag-add-row Input {
-        width: 1fr;
-    }
-    TagList .tag-add-row Button {
+    TagList .tag-btn-row Button {
         min-width: 10;
+        margin: 0 1 0 0;
     }
     """
 
@@ -62,11 +66,13 @@ class TagList(Widget):
         items: list[str] | None = None,
         placeholder: str = "/path/to/folder",
         widget_id: str | None = None,
+        show_browse: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(id=widget_id, **kwargs)
         self._items: list[str] = list(items or [])
         self._placeholder = placeholder
+        self._show_browse = show_browse
 
     def compose(self) -> ComposeResult:
         with Vertical(classes="tag-items", id="tag-items-container"):
@@ -74,9 +80,11 @@ class TagList(Widget):
                 with Horizontal(classes="tag-row"):
                     yield Button("✕", classes="tag-remove", id=f"tag-rm-{i}")
                     yield Static(f"{item}", classes="tag-item", id=f"tag-{i}")
-        with Horizontal(classes="tag-add-row"):
-            yield Input(placeholder=self._placeholder, id="tag-input")
+        yield Input(placeholder=self._placeholder, id="tag-input", classes="tag-input-row")
+        with Horizontal(classes="tag-btn-row"):
             yield Button("Add", id="tag-add-btn", variant="default")
+            if self._show_browse:
+                yield Button("Browse...", id="btn-browse", variant="default")
 
     @property
     def items(self) -> list[str]:

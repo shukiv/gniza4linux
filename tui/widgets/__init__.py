@@ -5,3 +5,4 @@ from tui.widgets.operation_log import OperationLog
 from tui.widgets.snapshot_browser import SnapshotBrowser
 from tui.widgets.docs_panel import DocsPanel, HelpModal
 from tui.widgets.header import GnizaHeader
+from tui.widgets.remote_folder_picker import RemoteFolderPicker

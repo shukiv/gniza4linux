@@ -38,7 +38,7 @@ class FolderPicker(ModalScreen[str | None]):
         tree = self.query_one("#fp-tree", DirectoryTree)
         node = tree.cursor_node
         if node and node.data and node.data.path:
-            return node.data.path
+            return node.data.path.resolve()
         return None
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -52,6 +52,9 @@ class FolderPicker(ModalScreen[str | None]):
         else:
             self.dismiss(None)
 
+    def on_directory_tree_directory_selected(self, event: DirectoryTree.DirectorySelected) -> None:
+        self.query_one("#fp-search", Input).value = str(event.path.resolve())
+
     def on_input_submitted(self, event: Input.Submitted) -> None:
         if event.input.id == "fp-search":
             self._go_to_path()
@@ -60,7 +63,7 @@ class FolderPicker(ModalScreen[str | None]):
         raw = self.query_one("#fp-search", Input).value.strip()
         if not raw:
             return
-        target = Path(raw).expanduser()
+        target = Path(raw).expanduser().resolve()
         if not target.is_dir():
             self.notify(f"Not a directory: {target}", severity="error")
             return

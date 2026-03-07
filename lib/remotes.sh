@@ -118,7 +118,7 @@ load_remote() {
     REMOTE_PORT="${REMOTE_PORT:-$DEFAULT_REMOTE_PORT}"
     REMOTE_USER="${REMOTE_USER:-$DEFAULT_REMOTE_USER}"
     REMOTE_AUTH_METHOD="${REMOTE_AUTH_METHOD:-$DEFAULT_REMOTE_AUTH_METHOD}"
-    REMOTE_KEY="${REMOTE_KEY:-}"
+    REMOTE_KEY="${REMOTE_KEY:-$HOME/.ssh/id_rsa}"
     REMOTE_PASSWORD="${REMOTE_PASSWORD:-}"
     REMOTE_BASE="${REMOTE_BASE:-$DEFAULT_REMOTE_BASE}"
     BWLIMIT="${BWLIMIT:-$DEFAULT_BWLIMIT}"
@@ -184,10 +184,7 @@ validate_remote() {
                     ((errors++)) || true
                 fi
             else
-                if [[ -z "$REMOTE_KEY" ]]; then
-                    log_error "Remote '$name': REMOTE_KEY is required"
-                    ((errors++)) || true
-                elif [[ ! -f "$REMOTE_KEY" ]]; then
+                if [[ ! -f "$REMOTE_KEY" ]]; then
                     log_error "Remote '$name': REMOTE_KEY file not found: $REMOTE_KEY"
                     ((errors++)) || true
                 fi

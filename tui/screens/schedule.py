@@ -5,6 +5,7 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, DataTable
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
+from textual.events import Click
 from textual import work
 
 from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR
@@ -22,7 +23,7 @@ class ScheduleScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="schedule-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
+                    yield Button("← Back", id="btn-back", classes="back-btn")
                     yield Static("Schedules", id="screen-title")
                 yield DataTable(id="sched-table")
                 with Horizontal(id="sched-buttons"):
@@ -98,9 +99,7 @@ class ScheduleScreen(Screen):
         return None
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-back":
-            self.app.pop_screen()
-        elif event.button.id == "btn-add":
+        if event.button.id == "btn-add":
             from tui.screens.schedule_edit import ScheduleEditScreen
             self.app.push_screen(ScheduleEditScreen(), callback=self._on_schedule_saved)
         elif event.button.id == "btn-edit":
@@ -223,6 +222,10 @@ class ScheduleScreen(Screen):
         if stderr:
             log_screen.write(stderr)
         log_screen.finish()
+
+    def on_click(self, event: Click) -> None:
+        if event.widget.id == "btn-back":
+            self.app.pop_screen()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

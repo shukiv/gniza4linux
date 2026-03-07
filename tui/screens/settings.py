@@ -3,6 +3,7 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Input, Select
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
+from textual.events import Click
 from textual import work
 
 from tui.config import parse_conf, write_conf, CONFIG_DIR
@@ -22,7 +23,7 @@ class SettingsScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="settings-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
+                    yield Button("← Back", id="btn-back", classes="back-btn")
                     yield Static("Settings", id="screen-title")
                 with Vertical(classes="settings-section", id="section-general"):
                     yield Static("Log Level:")
@@ -91,9 +92,7 @@ class SettingsScreen(Screen):
         self.query_one("#section-web").border_title = "Web Dashboard"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-back":
-            self.app.pop_screen()
-        elif event.button.id == "btn-save":
+        if event.button.id == "btn-save":
             self._save()
         elif event.button.id == "btn-test-email":
             self._save()
@@ -140,6 +139,10 @@ class SettingsScreen(Screen):
         if stderr:
             log_screen.write(stderr)
         log_screen.finish()
+
+    def on_click(self, event: Click) -> None:
+        if event.widget.id == "btn-back":
+            self.app.pop_screen()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

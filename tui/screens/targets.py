@@ -3,6 +3,7 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, DataTable
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
+from textual.events import Click
 
 from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
 from tui.widgets import ConfirmDialog, DocsPanel
@@ -17,7 +18,7 @@ class TargetsScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="targets-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
+                    yield Button("← Back", id="btn-back", classes="back-btn")
                     yield Static("Sources", id="screen-title")
                 yield DataTable(id="targets-table")
                 with Horizontal(id="targets-buttons"):
@@ -52,9 +53,7 @@ class TargetsScreen(Screen):
         return None
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-back":
-            self.app.pop_screen()
-        elif event.button.id == "btn-add":
+        if event.button.id == "btn-add":
             self.app.push_screen("target_edit", callback=lambda _: self._refresh_table())
         elif event.button.id == "btn-edit":
             name = self._selected_target()
@@ -79,6 +78,10 @@ class TargetsScreen(Screen):
             conf.unlink()
             self.notify(f"Source '{name}' deleted.")
         self._refresh_table()
+
+    def on_click(self, event: Click) -> None:
+        if event.widget.id == "btn-back":
+            self.app.pop_screen()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

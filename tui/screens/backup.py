@@ -3,6 +3,7 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Select
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
+from textual.events import Click
 from tui.config import list_conf_dir, has_targets, has_remotes
 from tui.jobs import job_manager
 from tui.widgets import ConfirmDialog, DocsPanel
@@ -19,7 +20,7 @@ class BackupScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="backup-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
+                    yield Button("← Back", id="btn-back", classes="back-btn")
                     yield Static("Backup", id="screen-title")
                 if not targets:
                     yield Static("No sources configured. Add a source first.")
@@ -67,9 +68,7 @@ class BackupScreen(Screen):
             pass
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn-back":
-            self.app.pop_screen()
-        elif event.button.id == "btn-backup":
+        if event.button.id == "btn-backup":
             target_sel = self.query_one("#backup-target", Select)
             if not isinstance(target_sel.value, str):
                 self.notify("Please select a source", severity="error")
@@ -102,6 +101,10 @@ class BackupScreen(Screen):
         job = job_manager.create_job("backup", "Backup All Targets")
         job_manager.start_job(self.app, job, "backup", "--all")
         self.app.switch_screen("running_tasks")
+
+    def on_click(self, event: Click) -> None:
+        if event.widget.id == "btn-back":
+            self.app.pop_screen()
 
     def action_go_back(self) -> None:
         self.app.pop_screen()

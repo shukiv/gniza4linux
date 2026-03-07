@@ -22,7 +22,7 @@ class RetentionScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="retention-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
                     yield Static("Retention Cleanup", id="screen-title")
                 if not targets:
                     yield Static("No sources configured.")

@@ -17,7 +17,7 @@ class TargetsScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="targets-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
                     yield Static("Sources", id="screen-title")
                 yield DataTable(id="targets-table")
                 with Horizontal(id="targets-buttons"):

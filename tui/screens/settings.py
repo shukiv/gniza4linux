@@ -22,7 +22,7 @@ class SettingsScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="settings-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
                     yield Static("Settings", id="screen-title")
                 with Vertical(classes="settings-section", id="section-general"):
                     yield Static("Log Level:")

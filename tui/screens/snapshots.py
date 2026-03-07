@@ -33,7 +33,7 @@ class SnapshotsScreen(Screen):
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="snapshots-screen"):
                 with Horizontal(id="title-bar"):
-                    yield Button("← Back", id="btn-back", classes="back-btn")
+                    yield Button("← Back", id="btn-back", classes="back-btn", can_focus=False)
                     yield Static("Snapshots Browser", id="screen-title")
                 if not targets or not remotes:
                     yield Static("Sources and destinations must be configured to browse snapshots.")

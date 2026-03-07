@@ -98,3 +98,12 @@ def has_targets() -> bool:
 
 def has_remotes() -> bool:
     return len(list_conf_dir("remotes.d")) > 0
+
+
+def get_log_retain_days() -> int:
+    """Return LOG_RETAIN from gniza.conf as an int (default 30)."""
+    data = parse_conf(CONFIG_DIR / "gniza.conf")
+    try:
+        return int(data.get("LOG_RETAIN", "90"))
+    except (ValueError, TypeError):
+        return 90

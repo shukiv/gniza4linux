@@ -265,7 +265,7 @@ class AppSettings:
             bwlimit=data.get("BWLIMIT", "0"),
             retention_count=data.get("RETENTION_COUNT", "7"),
             log_level=data.get("LOG_LEVEL", "INFO"),
-            log_retain=data.get("LOG_RETAIN", "30"),
+            log_retain=data.get("LOG_RETAIN", "90"),
             notify_email=data.get("NOTIFY_EMAIL", ""),
             notify_on=data.get("NOTIFY_ON", "failure"),
             smtp_host=data.get("SMTP_HOST", ""),

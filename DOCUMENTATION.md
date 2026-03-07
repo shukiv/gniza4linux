@@ -1130,7 +1130,7 @@ All global settings are in `gniza.conf` in the config directory.
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, or `error` |
-| `LOG_RETAIN` | `90` | Days to keep log files |
+| `LOG_RETAIN` | `90` | Days to keep log files and completed job entries |
 
 Log files are named using local time (e.g., `gniza-20260307-040001.log`) to match cron schedules which also run in local time.
 

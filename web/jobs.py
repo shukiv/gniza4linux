@@ -6,10 +6,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
+from tui.config import get_log_retain_days
 from web.backend import start_cli_background
 
 MAX_OUTPUT_LINES = 10_000
-FINISHED_JOB_TTL_HOURS = 24
 
 
 def _work_dir():
@@ -92,6 +92,12 @@ class WebJobManager:
                 return "failed"
 
     def remove_finished(self):
+        for job in self._jobs.values():
+            if job.status != "running" and job.log_file:
+                try:
+                    Path(job.log_file).unlink(missing_ok=True)
+                except OSError:
+                    pass
         self._jobs = {k: v for k, v in self._jobs.items() if v.status == "running"}
         self._save_registry()
 
@@ -166,8 +172,14 @@ class WebJobManager:
                 fin = entry.get("finished_at")
                 if fin:
                     try:
-                        age = (now - datetime.fromisoformat(fin)).total_seconds() / 3600
-                        if age > FINISHED_JOB_TTL_HOURS:
+                        age_days = (now - datetime.fromisoformat(fin)).total_seconds() / 86400
+                        if age_days > get_log_retain_days():
+                            log_file = entry.get("log_file")
+                            if log_file:
+                                try:
+                                    Path(log_file).unlink(missing_ok=True)
+                                except OSError:
+                                    pass
                             changed = True
                             continue
                     except Exception:

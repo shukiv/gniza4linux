@@ -11,9 +11,9 @@ from pathlib import Path
 from textual.message import Message
 
 from tui.backend import start_cli_background
+from tui.config import get_log_retain_days
 
 MAX_OUTPUT_LINES = 10_000
-FINISHED_JOB_TTL_HOURS = 24
 
 
 def _work_dir() -> Path:
@@ -72,6 +72,12 @@ class JobManager:
         return sum(1 for j in self._jobs.values() if j.status == "running")
 
     def remove_finished(self) -> None:
+        for job in self._jobs.values():
+            if job.status != "running" and job._log_file:
+                try:
+                    Path(job._log_file).unlink(missing_ok=True)
+                except OSError:
+                    pass
         self._jobs = {k: v for k, v in self._jobs.items() if v.status == "running"}
         self._save_registry()
 
@@ -235,10 +241,15 @@ class JobManager:
         entries = []
         now = datetime.now()
         for job in self._jobs.values():
-            # Skip finished jobs older than TTL
+            # Skip finished jobs older than LOG_RETAIN
             if job.status != "running" and job.finished_at:
-                age_hours = (now - job.finished_at).total_seconds() / 3600
-                if age_hours > FINISHED_JOB_TTL_HOURS:
+                age_days = (now - job.finished_at).total_seconds() / 86400
+                if age_days > get_log_retain_days():
+                    if job._log_file:
+                        try:
+                            Path(job._log_file).unlink(missing_ok=True)
+                        except OSError:
+                            pass
                     continue
             pid = job._pid
             if job._proc is not None:
@@ -282,8 +293,14 @@ class JobManager:
             if saved_status != "running":
                 finished_at_str = entry.get("finished_at")
                 finished_at = datetime.fromisoformat(finished_at_str) if finished_at_str else now
-                age_hours = (now - finished_at).total_seconds() / 3600
-                if age_hours > FINISHED_JOB_TTL_HOURS:
+                age_days = (now - finished_at).total_seconds() / 86400
+                if age_days > get_log_retain_days():
+                    log_file = entry.get("log_file")
+                    if log_file:
+                        try:
+                            Path(log_file).unlink(missing_ok=True)
+                        except OSError:
+                            pass
                     continue
                 job = Job(
                     id=job_id,

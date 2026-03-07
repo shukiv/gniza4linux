@@ -56,13 +56,23 @@
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
             <h2 class="card-title text-base mb-4">Source Type</h2>
-            <div class="form-control mb-4">
-                <select x-model="sourceType" name="source_type" class="select select-bordered w-full md:w-64">
-                    <option value="local">Local</option>
-                    <option value="ssh">SSH</option>
-                    <option value="s3">S3</option>
-                    <option value="gdrive">Google Drive</option>
-                </select>
+            <div class="flex flex-wrap gap-4 mb-4">
+                <label class="label cursor-pointer gap-2">
+                    <input type="radio" name="source_type" value="local" class="radio radio-primary" x-model="sourceType">
+                    <span class="label-text">Local</span>
+                </label>
+                <label class="label cursor-pointer gap-2">
+                    <input type="radio" name="source_type" value="ssh" class="radio radio-primary" x-model="sourceType">
+                    <span class="label-text">SSH</span>
+                </label>
+                <label class="label cursor-pointer gap-2">
+                    <input type="radio" name="source_type" value="s3" class="radio radio-primary" x-model="sourceType">
+                    <span class="label-text">S3</span>
+                </label>
+                <label class="label cursor-pointer gap-2">
+                    <input type="radio" name="source_type" value="gdrive" class="radio radio-primary" x-model="sourceType">
+                    <span class="label-text">Google Drive</span>
+                </label>
             </div>
 
             <!-- SSH fields -->

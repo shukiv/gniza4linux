@@ -16,7 +16,7 @@ SCHEDULE_TYPES = [
     ("Daily", "daily"),
     ("Weekly", "weekly"),
     ("Monthly", "monthly"),
-    ("Custom cron", "custom"),
+    ("Custom (Cron)", "custom"),
 ]
 
 HOURLY_INTERVALS = [

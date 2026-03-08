@@ -15,10 +15,10 @@ from tui.widgets.folder_picker import FolderPicker
 
 _NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')
 
-REMOTE_TYPES = [("SSH", "ssh"), ("Local directory", "local"), ("Amazon S3", "s3"), ("Google Drive", "gdrive")]
+REMOTE_TYPES = [("SSH", "ssh"), ("Local", "local"), ("S3", "s3"), ("Google Drive", "gdrive")]
 
 
-_TYPE_MAP = {"SSH": "ssh", "Local directory": "local", "Amazon S3": "s3", "Google Drive": "gdrive"}
+_TYPE_MAP = {"SSH": "ssh", "Local": "local", "S3": "s3", "Google Drive": "gdrive"}
 
 
 class RemoteEditScreen(Screen):
@@ -44,8 +44,8 @@ class RemoteEditScreen(Screen):
                 yield Static("Type:")
                 with RadioSet(id="re-type"):
                     yield RadioButton("SSH", value=remote.type == "ssh")
-                    yield RadioButton("Local directory", value=remote.type == "local")
-                    yield RadioButton("Amazon S3", value=remote.type == "s3")
+                    yield RadioButton("Local", value=remote.type == "local")
+                    yield RadioButton("S3", value=remote.type == "s3")
                     yield RadioButton("Google Drive", value=remote.type == "gdrive")
                 if self._is_new:
                     yield Static("Name:")

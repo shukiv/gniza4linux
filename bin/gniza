@@ -343,7 +343,6 @@ run_cli() {
                     echo "Folders:        $TARGET_FOLDERS"
                     echo "Exclude:        ${TARGET_EXCLUDE:-(none)}"
                     echo "Include:        ${TARGET_INCLUDE:-(none)}"
-                    echo "Destination:    ${TARGET_REMOTE:-(all)}"
                     echo "Pre-hook:       ${TARGET_PRE_HOOK:-(none)}"
                     echo "Post-hook:      ${TARGET_POST_HOOK:-(none)}"
                     echo ""

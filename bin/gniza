@@ -617,6 +617,22 @@ run_cli() {
                     echo "LAST_RUN=\"$(date '+%Y-%m-%d %H:%M')\"" >> "$conf"
                 fi
             fi
+
+            # Send email notification
+            local _status="success"
+            if (( rc != 0 )); then _status="failed"; fi
+            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 -c "
+import sys
+from daemon.notify import send_job_notification
+send_job_notification({
+    'id': 'cron-$sched_name',
+    'label': 'Scheduled: $sched_name',
+    'kind': 'scheduled-run',
+    'status': '$_status',
+    'log_file': '${LOG_FILE:-}',
+})
+" 2>/dev/null || true
+
             exit "$rc"
             ;;
 

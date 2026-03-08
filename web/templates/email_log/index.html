@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "components/pagination.html" import pagination %}
+
+{% block title %}GNIZA - Email Log{% endblock %}
+{% block page_title %}Email Log{% endblock %}
+
+{% block content %}
+<div class="card bg-base-200 shadow">
+    <div class="card-body p-0">
+        {% if entries %}
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Recipients</th>
+                        <th>Subject</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in entries %}
+                    <tr class="hover:bg-base-300">
+                        <td class="whitespace-nowrap">{{ e.date }}</td>
+                        <td>
+                            {% if e.status == 'OK' %}
+                            <span class="badge badge-success badge-md">OK</span>
+                            {% else %}
+                            <span class="badge badge-error badge-md">FAIL</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ e.recipients }}</td>
+                        <td>{{ e.subject }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {{ pagination(page, total_pages, url_for('email_log.index') + '?page=') }}
+        {% else %}
+        <div class="p-8 text-center text-base-content/40">
+            <p>No email log entries found</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Email Log</h3>
+<p class="mb-3 text-base-content/70">Record of all email notifications sent by gniza.</p>
+<h4 class="font-semibold text-sm mb-1">Table columns</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Date</strong> — When the email was sent.</li>
+    <li><strong>Status</strong> — OK (delivered to SMTP) or FAIL (send error).</li>
+    <li><strong>Recipients</strong> — Email address(es).</li>
+    <li><strong>Subject</strong> — Email subject line.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>Use Settings to configure SMTP and send a test email.</li>
+    <li>FAIL entries indicate the SMTP send failed — check SMTP settings and server logs.</li>
+</ul>
+{% endblock %}

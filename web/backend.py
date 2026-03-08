@@ -24,8 +24,10 @@ def run_cli_sync(*args, timeout=300):
 def start_cli_background(*args, log_file):
     cmd = [_gniza_bin(), "--cli"] + list(args)
     fh = open(log_file, "w")
+    env = os.environ.copy()
+    env["GNIZA_DAEMON_TRACKED"] = "1"
     proc = subprocess.Popen(
-        cmd, stdout=fh, stderr=subprocess.STDOUT, start_new_session=True
+        cmd, stdout=fh, stderr=subprocess.STDOUT, start_new_session=True, env=env
     )
     # Child process has its own fd now; close ours to avoid leak
     fh.close()

@@ -226,10 +226,8 @@ SVCEOF
     fi
 fi
 
-# -- Daemon setup --
-enable_daemon="n"
-read -rp "Enable background health daemon? (y/n) [n]: " enable_daemon </dev/tty || true
-if [ "$enable_daemon" = "y" ] || [ "$enable_daemon" = "Y" ]; then
+# -- Daemon setup (always enabled) --
+if true; then
     if [ "$MODE" = "root" ]; then
         if "$INSTALL_DIR/bin/gniza" daemon install-service 2>/dev/null; then
             info "Daemon systemd service installed."

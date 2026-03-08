@@ -8,9 +8,11 @@ declare -g LOCK_FD=""
 declare -gA _TARGET_LOCK_FDS=()
 
 acquire_lock() {
-    local lock_file="${LOCK_FILE:-/var/run/gniza.lock}"
-    local lock_dir; lock_dir=$(dirname "$lock_file")
+    # Use WORK_DIR for locks — it's consistent regardless of how the process
+    # is started (cron lacks XDG_RUNTIME_DIR, causing different LOCK_FILE paths).
+    local lock_dir="${WORK_DIR:-/tmp}"
     mkdir -p "$lock_dir" || die "Cannot create lock directory: $lock_dir"
+    local lock_file="${lock_dir}/gniza.lock"
 
     exec {LOCK_FD}>"$lock_file"
 
@@ -35,8 +37,7 @@ release_lock() {
 # but allows different targets to run concurrently.
 acquire_target_lock() {
     local target_name="$1"
-    local lock_dir
-    lock_dir=$(dirname "${LOCK_FILE:-/var/run/gniza.lock}")
+    local lock_dir="${WORK_DIR:-/tmp}"
     mkdir -p "$lock_dir" || die "Cannot create lock directory: $lock_dir"
 
     local lock_file="${lock_dir}/gniza-target-${target_name}.lock"

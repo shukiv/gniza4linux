@@ -39,10 +39,10 @@ def _save(entries):
     REGISTRY_FILE.write_text(json.dumps(entries, indent=2))
 
 
-def cmd_start(kind, label, log_file=None):
+def cmd_start(kind, label, log_file=None, caller_pid=None):
     entries = _load()
     job_id = uuid.uuid4().hex[:8]
-    pid = os.getppid()  # The bash caller's PID
+    pid = caller_pid or os.getppid()
     try:
         pgid = os.getpgid(pid)
     except OSError:
@@ -91,10 +91,13 @@ def main():
         kind = sys.argv[2]
         label = sys.argv[3]
         log_file = None
+        caller_pid = None
         for arg in sys.argv[4:]:
             if arg.startswith("--log-file="):
                 log_file = arg.split("=", 1)[1]
-        cmd_start(kind, label, log_file)
+            elif arg.startswith("--pid="):
+                caller_pid = int(arg.split("=", 1)[1])
+        cmd_start(kind, label, log_file, caller_pid)
     elif action == "finish":
         if len(sys.argv) < 4:
             print("Usage: job_register.py finish <job_id> <status> [<return_code>]", file=sys.stderr)

@@ -9,8 +9,16 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from tui.config import get_log_retain_days, get_max_concurrent_jobs
+import logging
+import subprocess
+
+from tui.config import (
+    get_log_retain_days, get_max_concurrent_jobs, CONFIG_DIR, parse_conf,
+    list_conf_dir,
+)
 from web.backend import start_cli_background
+
+logger = logging.getLogger(__name__)
 
 MAX_OUTPUT_LINES = 10_000
 
@@ -129,7 +137,6 @@ class WebJobManager:
         """Get all descendant PIDs of a process."""
         descendants = []
         try:
-            import subprocess
             result = subprocess.run(
                 ["ps", "--ppid", str(pid), "-o", "pid=", "--no-headers"],
                 capture_output=True, text=True, timeout=5,
@@ -141,6 +148,60 @@ class WebJobManager:
         except Exception:
             pass
         return descendants
+
+    @staticmethod
+    def _kill_remote_rsync(job):
+        """Kill orphaned rsync processes on remote SSH destinations.
+
+        When a pipelined SSH→SSH backup is killed locally, the rsync running
+        on the destination server keeps going.  We SSH in and pkill it.
+        """
+        if not job.log_file or not Path(job.log_file).is_file():
+            return
+        try:
+            log_text = Path(job.log_file).read_text(errors="replace")
+        except OSError:
+            return
+
+        # Only relevant for pipelined (ssh→ssh) transfers
+        if "Pipelined transfer" not in log_text and "ssh\u2192ssh" not in log_text:
+            return
+
+        # Collect SSH remotes to clean up
+        remotes_to_clean = []
+        for name in list_conf_dir("remotes.d"):
+            conf = parse_conf(CONFIG_DIR / "remotes.d" / f"{name}.conf")
+            if conf.get("REMOTE_TYPE") != "ssh":
+                continue
+            host = conf.get("REMOTE_HOST", "")
+            if not host or host not in log_text:
+                continue
+            remotes_to_clean.append({
+                "user": conf.get("REMOTE_USER", "root"),
+                "host": host,
+                "port": conf.get("REMOTE_PORT", "22"),
+                "key": conf.get("REMOTE_KEY", ""),
+                "auth_method": conf.get("REMOTE_AUTH_METHOD", "key"),
+                "base": conf.get("REMOTE_BASE", ""),
+            })
+
+        for remote in remotes_to_clean:
+            # Use the remote base path to target only gniza rsync processes
+            pkill_pattern = f"rsync.*{remote['base']}" if remote["base"] else "rsync --fake-super"
+            ssh_cmd = ["ssh", "-p", remote["port"],
+                       "-o", "ConnectTimeout=5",
+                       "-o", "StrictHostKeyChecking=accept-new"]
+            if remote["auth_method"] != "password":
+                ssh_cmd += ["-o", "BatchMode=yes"]
+                if remote["key"]:
+                    ssh_cmd += ["-i", remote["key"]]
+            ssh_cmd += [f"{remote['user']}@{remote['host']}",
+                        f"pkill -f '{pkill_pattern}'"]
+            try:
+                subprocess.run(ssh_cmd, capture_output=True, timeout=10)
+                logger.info(f"Killed remote rsync on {remote['user']}@{remote['host']}")
+            except Exception as e:
+                logger.warning(f"Failed to kill remote rsync on {remote['host']}: {e}")
 
     def kill_job(self, job_id):
         job = self._jobs.get(job_id)
@@ -174,6 +235,12 @@ class WebJobManager:
                 os.kill(pid, signal.SIGKILL)
             except (ProcessLookupError, PermissionError, OSError):
                 pass
+
+        # Kill rsync on remote SSH destinations (pipelined transfers)
+        try:
+            self._kill_remote_rsync(job)
+        except Exception:
+            logger.exception("Failed to clean up remote rsync processes")
 
         return "killed"
 

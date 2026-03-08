@@ -1,3 +1,4 @@
+{% set sh = '1' if show_hidden else '' %}
 <div class="flex items-center gap-2 mb-3">
     <div class="text-sm font-mono bg-base-300 px-3 py-2 rounded break-all flex-1"
          id="browse-path-display-{{ target }}">{{ current_path }}</div>
@@ -10,11 +11,11 @@
     </button>
 </div>
 
-{% if current_path != '/' %}
-<div class="mb-2">
+<div class="flex items-center justify-between mb-2">
+    {% if current_path != '/' %}
     {% if ssh %}
     <a class="btn btn-ghost btn-xs font-mono gap-1 cursor-pointer"
-       hx-get="{{ url_for('api.browse_ssh', path=current_path.rsplit('/', 1)[0] or '/', target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password) }}"
+       hx-get="{{ url_for('api.browse_ssh', path=current_path.rsplit('/', 1)[0] or '/', target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password, show_hidden=sh) }}"
        hx-target="closest .folder-browser-box"
        hx-swap="innerHTML">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -22,15 +23,36 @@
     </a>
     {% else %}
     <a class="btn btn-ghost btn-xs font-mono gap-1 cursor-pointer"
-       hx-get="{{ url_for('api.browse', path=current_path.rsplit('/', 1)[0] or '/', target=target) }}"
+       hx-get="{{ url_for('api.browse', path=current_path.rsplit('/', 1)[0] or '/', target=target, show_hidden=sh) }}"
        hx-target="closest .folder-browser-box"
        hx-swap="innerHTML">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         ..
     </a>
     {% endif %}
+    {% else %}
+    <span></span>
+    {% endif %}
+
+    <label class="label cursor-pointer gap-2 text-xs">
+        <span class="label-text text-xs">Show hidden</span>
+        {% if ssh %}
+        <input type="checkbox" class="toggle toggle-xs"
+               {{ 'checked' if show_hidden else '' }}
+               hx-get="{{ url_for('api.browse_ssh', path=current_path, target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password) }}"
+               hx-target="closest .folder-browser-box"
+               hx-swap="innerHTML"
+               hx-vals='js:{show_hidden: event.target.checked ? "1" : ""}'>
+        {% else %}
+        <input type="checkbox" class="toggle toggle-xs"
+               {{ 'checked' if show_hidden else '' }}
+               hx-get="{{ url_for('api.browse', path=current_path, target=target) }}"
+               hx-target="closest .folder-browser-box"
+               hx-swap="innerHTML"
+               hx-vals='js:{show_hidden: event.target.checked ? "1" : ""}'>
+        {% endif %}
+    </label>
 </div>
-{% endif %}
 
 <div class="overflow-y-auto max-h-80 border border-base-300 rounded-lg">
     <ul class="menu menu-xs bg-base-100 rounded-lg w-full [&_li>details]:w-full">
@@ -38,9 +60,9 @@
         {% set child_path = current_path.rstrip('/') + '/' + d %}
         <li>
             {% if ssh %}
-            <details hx-get="{{ url_for('api.browse_ssh_children', path=child_path, target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password) }}"
+            <details hx-get="{{ url_for('api.browse_ssh_children', path=child_path, target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password, show_hidden=sh) }}"
             {% else %}
-            <details hx-get="{{ url_for('api.browse_children', path=child_path, target=target) }}"
+            <details hx-get="{{ url_for('api.browse_children', path=child_path, target=target, show_hidden=sh) }}"
             {% endif %}
                      hx-target="find ul"
                      hx-swap="innerHTML"

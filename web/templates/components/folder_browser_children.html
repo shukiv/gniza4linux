@@ -1,10 +1,11 @@
+{% set sh = '1' if show_hidden else '' %}
 {% for d in dirs %}
 {% set child_path = parent_path.rstrip('/') + '/' + d %}
 <li>
     {% if ssh %}
-    <details hx-get="{{ url_for('api.browse_ssh_children', path=child_path, target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password) }}"
+    <details hx-get="{{ url_for('api.browse_ssh_children', path=child_path, target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password, show_hidden=sh) }}"
     {% else %}
-    <details hx-get="{{ url_for('api.browse_children', path=child_path, target=target) }}"
+    <details hx-get="{{ url_for('api.browse_children', path=child_path, target=target, show_hidden=sh) }}"
     {% endif %}
              hx-target="find ul"
              hx-swap="innerHTML"

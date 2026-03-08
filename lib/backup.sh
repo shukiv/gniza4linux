@@ -12,8 +12,8 @@ backup_target() {
 
     # 0. Per-target lock: prevent same target from running twice
     acquire_target_lock "$target_name" || {
-        log_error "Skipping target '$target_name': already running"
-        return 1
+        log_warn "Skipping target '$target_name': previous backup still running"
+        return 2
     }
 
     # 1. Load and validate target
@@ -338,10 +338,15 @@ backup_all_targets() {
         log_info "=== Backing up target: $target_name ($total) ==="
 
         local target_failed=false
+        local target_skipped=false
         while IFS= read -r rname; do
             [[ -z "$rname" ]] && continue
             log_info "--- Transferring $target_name to remote '$rname' ---"
-            if ! backup_target "$target_name" "$rname"; then
+            local _brc=0
+            backup_target "$target_name" "$rname" || _brc=$?
+            if (( _brc == 2 )); then
+                target_skipped=true
+            elif (( _brc != 0 )); then
                 log_error "Backup to remote '$rname' failed for $target_name"
                 failed_targets+="  - $target_name ($rname: failed)"$'\n'
                 target_failed=true
@@ -350,6 +355,8 @@ backup_all_targets() {
 
         if [[ "$target_failed" == "true" ]]; then
             ((failed++)) || true
+        elif [[ "$target_skipped" == "true" ]]; then
+            log_info "Target '$target_name' skipped: previous backup still running"
         else
             ((succeeded++)) || true
             log_info "Backup completed for $target_name (all remotes)"

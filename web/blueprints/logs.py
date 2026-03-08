@@ -64,6 +64,11 @@ def _detect_status(filepath, has_running=False):
 
     if has_completed and not has_error:
         return "Success"
+
+    # Exit code 141 (SIGPIPE) with no real output = cron pipe noise, not a real failure
+    if has_error and "no other output captured" in tail and "code 141" in tail:
+        return "Skipped"
+
     if has_error:
         return "Failed"
     if "Lock released" in tail:

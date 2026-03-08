@@ -8,6 +8,7 @@ from flask import (
 
 from tui.config import LOG_DIR
 from web.app import login_required
+from web.jobs import web_job_manager
 
 bp = Blueprint("logs", __name__, url_prefix="/logs")
 
@@ -36,9 +37,18 @@ def _parse_log_filename(name):
     return date, time
 
 
-def _detect_status(filepath):
+def _has_running_jobs():
+    """Check if any jobs are currently running."""
     try:
-        size = filepath.stat().st_size
+        return web_job_manager.running_count() > 0
+    except Exception:
+        return False
+
+
+def _detect_status(filepath, has_running=False):
+    try:
+        stat = filepath.stat()
+        size = stat.st_size
         if size == 0:
             return "Empty"
         read_size = min(size, 102400)
@@ -60,6 +70,13 @@ def _detect_status(filepath):
         return "OK"
     if "is disabled, skipping" in tail:
         return "Skipped"
+
+    # If jobs are running and file was modified in the last 5 minutes, it's likely in progress
+    if has_running:
+        import time
+        if time.time() - stat.st_mtime < 300:
+            return "Running"
+
     return "Interrupted"
 
 
@@ -71,13 +88,14 @@ def index():
         page = 1
 
     log_path = Path(LOG_DIR)
+    has_running = _has_running_jobs()
     log_files = []
     if log_path.is_dir():
         for f in log_path.iterdir():
             if f.is_file() and _LOG_FILENAME_RE.match(f.name):
                 stat = f.stat()
                 date, time = _parse_log_filename(f.name)
-                status = _detect_status(f)
+                status = _detect_status(f, has_running)
                 log_files.append({
                     "name": f.name,
                     "size": stat.st_size,

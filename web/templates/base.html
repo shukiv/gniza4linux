@@ -103,7 +103,7 @@
 
 {% if help_content and help_content.strip() %}
 <!-- Right help panel — mirrors left sidebar -->
-<div class="hidden lg:flex fixed top-0 right-0 h-screen z-20 transition-all duration-200"
+<div class="hidden lg:flex fixed top-16 right-0 bottom-0 z-20 transition-all duration-200"
      :class="$store.help.open ? 'w-72' : 'w-12'">
     <div class="min-h-full bg-base-200 text-base-content flex flex-col w-full"
          :class="$store.help.open ? 'p-4' : 'p-2'">

@@ -49,7 +49,7 @@
                             {% set wday_map = {'0':'Sun','1':'Mon','2':'Tue','3':'Wed','4':'Thu','5':'Fri','6':'Sat'} %}
                             {{ wday_map.get(s.day, s.day) }} {{ s.time }}
                             {% elif s.schedule == 'monthly' %}
-                            Day {{ s.day }} {{ s.time }}
+                            {% set d = s.day|int %}{{ d }}{{ 'st' if d in [1,21,31] else ('nd' if d in [2,22] else ('rd' if d in [3,23] else 'th')) }} {{ s.time }}
                             {% else %}
                             {{ s.time }}
                             {% endif %}

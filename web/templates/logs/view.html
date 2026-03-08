@@ -17,7 +17,7 @@
 
         {% if start > 0 %}
         <div class="mb-2">
-            <a href="{{ url_for('logs.view', job_id=job.id, offset=max(0, start - view_lines)) }}"
+            <a href="{{ url_for('logs.view', job_id=job.id, offset=[0, start - view_lines]|max) }}"
                class="btn btn-ghost btn-sm">Load earlier lines</a>
         </div>
         {% endif %}

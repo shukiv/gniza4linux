@@ -66,6 +66,80 @@ def _calc_next_run(s):
     return next_dt.strftime("%Y-%m-%d %H:%M")
 
 
+def _cron_to_text(expr):
+    """Convert a 5-field cron expression to human-readable text."""
+    parts = expr.split()
+    if len(parts) != 5:
+        return expr
+    minute, hour, dom, month, dow = parts
+
+    dow_names = {'0': 'Sun', '1': 'Mon', '2': 'Tue', '3': 'Wed', '4': 'Thu', '5': 'Fri', '6': 'Sat', '7': 'Sun'}
+    month_names = {'1': 'Jan', '2': 'Feb', '3': 'Mar', '4': 'Apr', '5': 'May', '6': 'Jun',
+                   '7': 'Jul', '8': 'Aug', '9': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec'}
+
+    def _ordinal(n):
+        n = int(n)
+        return f"{n}{'st' if n in (1,21,31) else 'nd' if n in (2,22) else 'rd' if n in (3,23) else 'th'}"
+
+    def _fmt_time(h, m):
+        return f"{int(h):02d}:{int(m):02d}"
+
+    def _fmt_dow(val):
+        if val == '*':
+            return None
+        names = []
+        for part in val.split(','):
+            names.append(dow_names.get(part, part))
+        return ', '.join(names)
+
+    # Every minute
+    if all(p == '*' for p in parts):
+        return "Every minute"
+
+    # */N patterns
+    if '/' in minute and hour == '*' and dom == '*' and month == '*' and dow == '*':
+        n = minute.split('/')[1]
+        return f"Every {n} minutes"
+
+    if '/' in hour and dom == '*' and month == '*' and dow == '*':
+        n = hour.split('/')[1]
+        m = minute if minute != '0' else '00'
+        return f"Every {n} hours at :{m.zfill(2)}"
+
+    pieces = []
+
+    # Time part
+    if hour != '*' and minute != '*':
+        time_str = _fmt_time(hour, minute)
+    elif hour != '*':
+        time_str = f"{int(hour):02d}:00"
+    elif minute != '*':
+        time_str = f":{int(minute):02d}"
+    else:
+        time_str = None
+
+    # Day of week
+    dow_str = _fmt_dow(dow)
+
+    # Day of month
+    if dom != '*':
+        dom_parts = [_ordinal(d) for d in dom.split(',')]
+        pieces.append(', '.join(dom_parts))
+
+    # Month
+    if month != '*':
+        m_names = [month_names.get(m, m) for m in month.split(',')]
+        pieces.append(', '.join(m_names))
+
+    if dow_str:
+        pieces.insert(0, dow_str)
+
+    if time_str:
+        pieces.append(time_str)
+
+    return ' '.join(pieces) if pieces else expr
+
+
 def _load_schedules():
     schedules = []
     for name in list_conf_dir("schedules.d"):
@@ -73,6 +147,8 @@ def _load_schedules():
         s = Schedule.from_conf(name, data)
         s._last_run = data.get("LAST_RUN", "") or "never"
         s._next_run = _calc_next_run(s) if s.active == "yes" else "inactive"
+        if s.schedule == "custom" and s.cron:
+            s._cron_text = _cron_to_text(s.cron)
         schedules.append(s)
     return schedules
 

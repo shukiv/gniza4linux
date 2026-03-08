@@ -635,8 +635,10 @@ run_cli() {
             body+=""$'\n'
             body+="If you received this message, your SMTP settings are working correctly."
             if _send_via_smtp "$subject" "$body"; then
+                _log_email "OK" "$NOTIFY_EMAIL" "$subject"
                 echo "Test email sent successfully to $NOTIFY_EMAIL"
             else
+                _log_email "FAIL" "$NOTIFY_EMAIL" "$subject"
                 echo "Failed to send test email. Check your SMTP settings."
                 exit 1
             fi

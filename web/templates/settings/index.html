@@ -94,9 +94,7 @@
                 </fieldset>
             </div>
             <div class="mt-4">
-                <form method="POST" action="{{ url_for('settings.test_email') }}" class="inline">
-                    <button type="submit" class="btn btn-info btn-sm">Send Test Email</button>
-                </form>
+                <button type="button" class="btn btn-info btn-sm" id="btn-test-email">Send Test Email</button>
             </div>
         </div>
 
@@ -161,6 +159,13 @@
         <button type="submit" class="btn btn-primary">Save Settings</button>
     </div>
 </form>
+
+<form id="form-test-email" method="POST" action="{{ url_for('settings.test_email') }}" class="hidden"></form>
+<script>
+document.getElementById('btn-test-email').addEventListener('click', function() {
+    document.getElementById('form-test-email').submit();
+});
+</script>
 {% endblock %}
 
 {% block help_text %}

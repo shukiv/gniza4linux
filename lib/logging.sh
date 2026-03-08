@@ -34,10 +34,11 @@ init_logging() {
 _gniza_log_exit_trap() {
     local rc="${1:-$?}"
     if [[ -n "${LOG_FILE:-}" && -f "$LOG_FILE" && ! -s "$LOG_FILE" ]]; then
-        if [[ $rc -ne 0 ]]; then
-            echo "[$(date -u +"%d/%m/%Y %H:%M:%S")] [ERROR] Process exited with code $rc (no other output captured)" >> "$LOG_FILE"
+        # SIGPIPE (141) with empty log = cron pipe noise; clean up silently
+        if [[ $rc -eq 141 || $rc -eq 0 ]]; then
+            rm -f "$LOG_FILE" 2>/dev/null
         else
-            echo "[$(date -u +"%d/%m/%Y %H:%M:%S")] [INFO] Process exited with code 0 (no log output produced)" >> "$LOG_FILE"
+            echo "[$(date -u +"%d/%m/%Y %H:%M:%S")] [ERROR] Process exited with code $rc (no other output captured)" >> "$LOG_FILE"
         fi
     fi
 }

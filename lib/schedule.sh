@@ -227,11 +227,6 @@ install_schedules() {
         ((count++)) || true
     done <<< "$schedules"
 
-    if (( count == 0 )); then
-        log_warn "No valid schedules found"
-        return 1
-    fi
-
     # Get current crontab, strip old gniza4linux lines
     local current_crontab=""
     current_crontab=$(crontab -l 2>/dev/null) || true
@@ -250,6 +245,16 @@ install_schedules() {
         filtered+="$line"$'\n'
     done <<< "$current_crontab"
 
+    if (( count == 0 )); then
+        # No active schedules — remove stale entries
+        echo "$filtered" | crontab - || {
+            log_error "Failed to update crontab"
+            return 1
+        }
+        echo "No active schedules. Removed stale cron entries."
+        return 0
+    fi
+
     # Append new lines
     local final="${filtered}${new_lines}"
 
@@ -267,6 +272,7 @@ install_schedules() {
         [[ -z "$sname" ]] && continue
         load_schedule "$sname" 2>/dev/null || continue
         [[ -z "${SCHEDULE:-}" ]] && continue
+        [[ "${SCHEDULE_ACTIVE:-yes}" != "yes" ]] && continue
         local cron_line; cron_line=$(build_cron_line "$sname" 2>/dev/null) || continue
         echo "  [$sname] $cron_line"
     done <<< "$schedules"

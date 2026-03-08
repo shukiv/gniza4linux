@@ -68,9 +68,7 @@
                                 <ul x-show="open" x-cloak class="menu bg-base-100 rounded-box w-40 p-2 shadow-lg z-[9999] fixed"
                                     :style="'top:' + pos.top + ';left:' + pos.left">
                                     <li>
-                                        <form method="POST" action="{{ url_for('schedules.run_now', name=s.name) }}">
-                                            <button type="submit" class="w-full text-left">Run Now</button>
-                                        </form>
+                                        <button type="button" @click="open = false; fetch('{{ url_for('schedules.run_now', name=s.name) }}', {method:'POST'}).then(() => location.reload())">Run Now</button>
                                     </li>
                                     <li><a href="{{ url_for('schedules.edit', name=s.name) }}">Edit</a></li>
                                     <li>

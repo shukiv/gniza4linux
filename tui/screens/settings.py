@@ -4,7 +4,7 @@ from pathlib import Path
 
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, Input, Select
+from textual.widgets import Header, Footer, Static, Button, Input, Select, Switch
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
@@ -56,6 +56,8 @@ class SettingsScreen(Screen):
                     yield Input(value=settings.max_concurrent_jobs, id="set-maxjobs")
                     yield Static("Extra rsync options:")
                     yield Input(value=settings.rsync_extra_opts, id="set-rsyncopts")
+                    yield Static("Rsync Compression:")
+                    yield Switch(value=settings.rsync_compress == "yes", id="set-rsynccompress")
                 with Vertical(classes="settings-section", id="section-email"):
                     yield Static("Notification Email:")
                     yield Input(value=settings.notify_email, id="set-email")
@@ -144,6 +146,7 @@ class SettingsScreen(Screen):
             ssh_timeout=self.query_one("#set-sshtimeout", Input).value.strip() or "30",
             ssh_retries=self.query_one("#set-sshretries", Input).value.strip() or "3",
             rsync_extra_opts=self.query_one("#set-rsyncopts", Input).value.strip(),
+            rsync_compress="yes" if self.query_one("#set-rsynccompress", Switch).value else "no",
             disk_usage_threshold=self.query_one("#set-diskthreshold", Input).value.strip() or "95",
             max_concurrent_jobs=self.query_one("#set-maxjobs", Input).value.strip() or "1",
             web_port=self.query_one("#set-web-port", Input).value.strip() or "2323",

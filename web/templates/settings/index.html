@@ -45,9 +45,16 @@
                     <label class="fieldset-label">Simultaneous Jobs (0=unlimited)</label>
                     <input type="text" name="max_concurrent_jobs" value="{{ settings.max_concurrent_jobs }}" class="input">
                 </fieldset>
-                <fieldset class="fieldset md:col-span-2">
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Rsync Compression</label>
+                    <label class="label cursor-pointer justify-start gap-2">
+                        <input type="checkbox" name="rsync_compress" class="toggle toggle-primary" {{ 'checked' if settings.rsync_compress == 'yes' else '' }}>
+                        <span>Enable (-z flag)</span>
+                    </label>
+                </fieldset>
+                <fieldset class="fieldset">
                     <label class="fieldset-label">Extra rsync Options</label>
-                    <input type="text" name="rsync_extra_opts" value="{{ settings.rsync_extra_opts }}" class="input font-mono" placeholder="--compress --partial">
+                    <input type="text" name="rsync_extra_opts" value="{{ settings.rsync_extra_opts }}" class="input font-mono" placeholder="--partial">
                 </fieldset>
             </div>
         </div>
@@ -203,6 +210,7 @@ document.getElementById('btn-update-now').addEventListener('click', function() {
     <li><strong>Log Retention</strong> — Days to keep log files.</li>
     <li><strong>Retention Count</strong> — Default number of snapshots to keep.</li>
     <li><strong>Bandwidth Limit</strong> — Default transfer speed limit in KB/s.</li>
+    <li><strong>Rsync Compression</strong> — Enable -z flag for remote transfers. Saves bandwidth but adds CPU overhead.</li>
     <li><strong>Disk Threshold</strong> — Warn when destination disk usage exceeds this percentage.</li>
     <li><strong>Simultaneous Jobs</strong> — Max concurrent backup/restore jobs (0 = unlimited).</li>
 </ul>

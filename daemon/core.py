@@ -357,6 +357,33 @@ def cleanup_orphan_job_logs():
         logger.info(f"Cleaned up {removed} orphaned job log files")
 
 
+def cleanup_stale_workdir():
+    """Remove stale gniza temp files/dirs from workdir older than 1 day."""
+    work_dir = _work_dir()
+    if not work_dir.is_dir():
+        return
+    cutoff = time.time() - 86400
+    removed = 0
+    patterns = [
+        "gniza-source-*", "gniza-mysql-*", "gniza-mysql-restore-*",
+        "gniza-rclone-*", "gniza-source-rclone-*", "gniza-snaplog-*",
+    ]
+    for pattern in patterns:
+        for entry in work_dir.glob(pattern):
+            try:
+                if entry.stat().st_mtime < cutoff:
+                    if entry.is_dir():
+                        import shutil
+                        shutil.rmtree(entry)
+                    else:
+                        entry.unlink()
+                    removed += 1
+            except OSError:
+                pass
+    if removed > 0:
+        logger.info(f"Cleaned up {removed} stale temp entries from {work_dir}")
+
+
 def enforce_retention():
     """Run snapshot retention cleanup via the CLI."""
     import subprocess
@@ -399,6 +426,7 @@ def run(interval=10):
                 cleanup_old_entries()
                 cleanup_old_logs()
                 cleanup_orphan_job_logs()
+                cleanup_stale_workdir()
                 enforce_retention()
         except Exception:
             logger.exception("Health check error")

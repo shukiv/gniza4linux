@@ -157,19 +157,29 @@ _backup_target_impl() {
         fi
         ((folder_index++)) || true
         if [[ "${TARGET_SOURCE_TYPE:-local}" != "local" ]]; then
-            staging_dir=$(mktemp -d "${WORK_DIR:-/tmp}/gniza-source-XXXXXX")
-            log_info "Pulling from ${TARGET_SOURCE_TYPE} source: $folder"
-            if ! pull_from_source "$folder" "$staging_dir/${folder#/}"; then
-                log_error "Source pull failed for: $folder"
+            if [[ "${TARGET_SOURCE_TYPE}" == "ssh" && "${REMOTE_TYPE:-ssh}" == "ssh" ]]; then
+                # Pipelined: direct SSH source -> SSH destination (no local staging)
+                log_info "Pipelined transfer from ${TARGET_SOURCE_HOST}: $folder"
+                if ! transfer_folder_pipelined "$target_name" "$folder" "$ts" "$prev"; then
+                    log_error "Pipelined transfer failed for folder: $folder"
+                    transfer_failed=true
+                fi
+            else
+                # Two-hop: pull to local staging, then transfer
+                staging_dir=$(mktemp -d "${WORK_DIR:-/tmp}/gniza-source-XXXXXX")
+                log_info "Pulling from ${TARGET_SOURCE_TYPE} source: $folder"
+                if ! pull_from_source "$folder" "$staging_dir/${folder#/}"; then
+                    log_error "Source pull failed for: $folder"
+                    rm -rf "$staging_dir"
+                    transfer_failed=true
+                    continue
+                fi
+                if ! transfer_folder "$target_name" "$staging_dir/${folder#/}" "$ts" "$prev" "${folder#/}"; then
+                    log_error "Transfer failed for folder: $folder"
+                    transfer_failed=true
+                fi
                 rm -rf "$staging_dir"
-                transfer_failed=true
-                continue
             fi
-            if ! transfer_folder "$target_name" "$staging_dir/${folder#/}" "$ts" "$prev" "${folder#/}"; then
-                log_error "Transfer failed for folder: $folder"
-                transfer_failed=true
-            fi
-            rm -rf "$staging_dir"
         else
             if ! transfer_folder "$target_name" "$folder" "$ts" "$prev"; then
                 log_error "Transfer failed for folder: $folder"

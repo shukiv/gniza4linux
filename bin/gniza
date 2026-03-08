@@ -252,6 +252,26 @@ _has_flag() {
 run_cli() {
     case "${SUBCOMMAND:-}" in
         backup)
+            if _has_flag "--help" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" || _has_flag "-h" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" || [[ "${SUBCMD_ARGS[0]:-}" == "help" ]]; then
+                cat <<HELPEOF
+Usage: gniza backup [OPTIONS]
+
+Run a backup job.
+
+Options:
+  --source=NAME         Back up a specific source (comma-separated for multiple)
+  --destination=NAME    Target a specific destination
+  --all                 Back up all sources (default if no --source given)
+  --help                Show this help
+
+Examples:
+  gniza backup                           Back up all sources to default destination
+  gniza backup --source=mysite           Back up 'mysite'
+  gniza backup --source=a,b,c            Back up multiple sources
+  gniza backup --source=mysite --destination=offsite
+HELPEOF
+                exit 0
+            fi
             local target="" remote="" all=false
             target=$(_parse_flag "--source" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
@@ -301,6 +321,28 @@ run_cli() {
             ;;
 
         restore)
+            if _has_flag "--help" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" || _has_flag "-h" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" || [[ "${SUBCMD_ARGS[0]:-}" == "help" ]]; then
+                cat <<HELPEOF
+Usage: gniza restore --source=NAME --snapshot=TS [OPTIONS]
+
+Restore from a backup snapshot.
+
+Options:
+  --source=NAME         Source to restore (required)
+  --snapshot=TS         Snapshot timestamp to restore (required, or 'latest')
+  --destination=NAME    Destination to restore from (default: first configured)
+  --dest=DIR            Custom restore location (default: original path)
+  --folder=PATH         Restore a single directory from the snapshot
+  --skip-mysql          Skip MySQL database restore
+  --help                Show this help
+
+Examples:
+  gniza restore --source=mysite --snapshot=latest
+  gniza restore --source=mysite --snapshot=2025-03-01_120000 --dest=/tmp/restore
+  gniza restore --source=mysite --snapshot=latest --folder=/var/www --skip-mysql
+HELPEOF
+                exit 0
+            fi
             local target="" snapshot="" remote="" dest="" folder=""
             target=$(_parse_flag "--source" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             snapshot=$(_parse_flag "--snapshot" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
@@ -337,6 +379,28 @@ run_cli() {
             folders=$(_parse_flag "--folders" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
 
             case "$action" in
+                help|--help|-h)
+                    cat <<HELPEOF
+Usage: gniza sources <action> [OPTIONS]
+
+Manage backup sources (what to back up).
+
+Actions:
+  list                  List all configured sources (default)
+  add --name=NAME --folders=PATHS
+                        Create a new source
+  delete --name=NAME    Delete a source
+  show --name=NAME      Show full source configuration
+  help                  Show this help
+
+Examples:
+  gniza sources                          List all sources
+  gniza sources add --name=mysite --folders=/var/www
+  gniza sources show --name=mysite
+  gniza sources delete --name=mysite
+HELPEOF
+                    exit 0
+                    ;;
                 list)
                     local targets; targets=$(list_targets)
                     if [[ -z "$targets" ]]; then
@@ -419,6 +483,29 @@ run_cli() {
             name=$(_parse_flag "--name" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
 
             case "$action" in
+                help|--help|-h)
+                    cat <<HELPEOF
+Usage: gniza destinations <action> [OPTIONS]
+
+Manage backup destinations (where to store backups).
+
+Actions:
+  list                          List all configured destinations (default)
+  add --name=NAME               Create a new destination (edit config manually or via TUI)
+  delete --name=NAME            Delete a destination
+  show --name=NAME              Show full destination configuration
+  test --name=NAME              Validate destination connectivity
+  disk-info-short --name=NAME   Show destination disk usage (used/total/free)
+  help                          Show this help
+
+Examples:
+  gniza destinations                     List all destinations
+  gniza destinations show --name=offsite
+  gniza destinations test --name=offsite
+  gniza destinations delete --name=offsite
+HELPEOF
+                    exit 0
+                    ;;
                 list)
                     local remotes; remotes=$(list_remotes)
                     if [[ -z "$remotes" ]]; then
@@ -499,6 +586,26 @@ run_cli() {
             remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
 
             case "$action" in
+                help|--help|-h)
+                    cat <<HELPEOF
+Usage: gniza snapshots <action> [OPTIONS]
+
+List or browse backup snapshots.
+
+Actions:
+  list [--source=NAME] [--destination=NAME]
+                        List available snapshots (default)
+  browse --source=NAME --snapshot=TS [--destination=NAME]
+                        List all files in a specific snapshot
+  help                  Show this help
+
+Examples:
+  gniza snapshots                                    List all snapshots
+  gniza snapshots list --source=mysite               List snapshots for 'mysite'
+  gniza snapshots browse --source=mysite --snapshot=2025-03-01_120000
+HELPEOF
+                    exit 0
+                    ;;
                 list)
                     if [[ -z "$remote" ]]; then
                         remote=$(list_remotes | head -1)
@@ -536,6 +643,27 @@ run_cli() {
             ;;
 
         retention)
+            if _has_flag "--help" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" || _has_flag "-h" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" || [[ "${SUBCMD_ARGS[0]:-}" == "help" ]]; then
+                cat <<HELPEOF
+Usage: gniza retention [OPTIONS]
+
+Enforce snapshot retention policies. Deletes snapshots beyond the configured
+retention count (oldest first, pinned snapshots are preserved).
+
+Options:
+  --source=NAME         Apply retention to a specific source
+  --destination=NAME    Target a specific destination (default: first configured)
+  --count=N             Override the default retention count
+  --all                 Apply to all sources (default if no --source given)
+  --help                Show this help
+
+Examples:
+  gniza retention                            Apply retention to all sources
+  gniza retention --source=mysite            Apply retention to 'mysite'
+  gniza retention --source=mysite --count=5  Keep only 5 snapshots
+HELPEOF
+                exit 0
+            fi
             local target="" remote="" all=false count=""
             target=$(_parse_flag "--source" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
@@ -564,6 +692,25 @@ run_cli() {
         schedule)
             local action="${SUBCMD_ARGS[0]:-show}"
             case "$action" in
+                help|--help|-h)
+                    cat <<HELPEOF
+Usage: gniza schedule <action>
+
+Manage cron schedules for automated backups.
+
+Actions:
+  show                  Show current gniza cron entries (default)
+  install               Install cron entries for all active schedules
+  remove                Remove all gniza cron entries from crontab
+  help                  Show this help
+
+Examples:
+  gniza schedule                         Show current cron entries
+  gniza schedule install                 Install/update cron entries
+  gniza schedule remove                  Remove all gniza cron entries
+HELPEOF
+                    exit 0
+                    ;;
                 install) install_schedules ;;
                 show)    show_schedules ;;
                 remove)  remove_schedules ;;
@@ -572,6 +719,24 @@ run_cli() {
             ;;
 
         logs)
+            if _has_flag "--help" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" || _has_flag "-h" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" || [[ "${SUBCMD_ARGS[0]:-}" == "help" ]]; then
+                cat <<HELPEOF
+Usage: gniza logs [OPTIONS]
+
+View backup logs.
+
+Options:
+  --last                Show the most recent backup log
+  --tail=N              Show last N lines (use with --last)
+  --help                Show this help
+
+Examples:
+  gniza logs                             List all log files
+  gniza logs --last                      Show the most recent log
+  gniza logs --last --tail=50            Show last 50 lines of the most recent log
+HELPEOF
+                exit 0
+            fi
             local last=false tail_n=""
             _has_flag "--last" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && last=true
             tail_n=$(_parse_flag "--tail" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
@@ -711,6 +876,30 @@ exit(0 if ok else 1)
 if [[ "$SUBCOMMAND" == "web" ]]; then
     _web_action="${SUBCMD_ARGS[0]:-start}"
     case "$_web_action" in
+        help|--help|-h)
+            cat <<HELPEOF
+Usage: gniza web <action> [OPTIONS]
+
+Manage the web dashboard.
+
+Actions:
+  start [--port=PORT] [--host=HOST]
+                        Start the web dashboard (default: port 2323, host 0.0.0.0)
+  install-service       Install as a systemd service (auto-starts on boot)
+  remove-service        Stop and remove the systemd service
+  status                Show service status
+  reset-password        Generate a new random login password
+  help                  Show this help
+
+Examples:
+  gniza web                              Start the web dashboard
+  gniza web start --port=8080            Start on a custom port
+  gniza web install-service              Install as systemd service
+  gniza web status                       Check service status
+  gniza web reset-password               Generate a new password
+HELPEOF
+            exit 0
+            ;;
         start)
             _web_port="" _web_host=""
             _web_port=$(_parse_flag "--port" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
@@ -806,6 +995,27 @@ SVCEOF
 elif [[ "$SUBCOMMAND" == "daemon" ]]; then
     _daemon_action="${SUBCMD_ARGS[0]:-start}"
     case "$_daemon_action" in
+        help|--help|-h)
+            cat <<HELPEOF
+Usage: gniza daemon <action> [OPTIONS]
+
+Manage the background health daemon.
+
+Actions:
+  start [--interval=N]  Start the daemon in foreground (default interval: from config or 10s)
+  install-service       Install as a systemd service (auto-starts on boot)
+  remove-service        Stop and remove the systemd service
+  status                Show service status
+  help                  Show this help
+
+Examples:
+  gniza daemon                           Start the daemon
+  gniza daemon start --interval=30       Start with 30s check interval
+  gniza daemon install-service           Install as systemd service
+  gniza daemon status                    Check service status
+HELPEOF
+            exit 0
+            ;;
         start)
             _daemon_interval=""
             _daemon_interval=$(_parse_flag "--interval" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true

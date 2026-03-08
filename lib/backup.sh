@@ -369,9 +369,6 @@ backup_all_targets() {
     fi
     echo "============================================"
 
-    # Send notification
-    send_backup_report "$total" "$succeeded" "$failed" "$duration" "$failed_targets"
-
     if (( failed > 0 && succeeded > 0 )); then
         return "$EXIT_PARTIAL"
     elif (( failed > 0 )); then

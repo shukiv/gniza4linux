@@ -115,10 +115,10 @@ mysql_dump_databases() {
 
     # Determine databases to dump
     local -a databases=()
-    if [[ "${TARGET_MYSQL_MODE:-all}" == "select" ]]; then
+    if [[ "${TARGET_MYSQL_MODE:-all}" == "specific" || "${TARGET_MYSQL_MODE:-all}" == "select" ]]; then
         # Use explicitly listed databases
         if [[ -z "${TARGET_MYSQL_DATABASES:-}" ]]; then
-            log_error "MySQL mode=select but TARGET_MYSQL_DATABASES is empty"
+            log_error "MySQL mode=specific but TARGET_MYSQL_DATABASES is empty"
             return 1
         fi
         local -a db_list

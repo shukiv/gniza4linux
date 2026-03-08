@@ -7,6 +7,7 @@ _GNIZA4LINUX_CONSTANTS_LOADED=1
 
 readonly GNIZA4LINUX_VERSION="0.1.0"
 readonly GNIZA4LINUX_NAME="gniza4linux"
+readonly GNIZA4LINUX_REPO="https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git"
 
 # Exit codes
 readonly EXIT_OK=0

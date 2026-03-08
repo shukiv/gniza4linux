@@ -54,6 +54,7 @@ Commands:
   web               Web dashboard (start, install-service, status)
   daemon            Background health daemon (start, install-service, status)
   uninstall         Uninstall gniza
+  update            Check for and apply updates
 
 Run 'gniza --full-help' for detailed usage of all commands.
 If no command is given, the TUI is launched.
@@ -144,6 +145,10 @@ Background Health Daemon:
 
 System:
   uninstall             Run the uninstall script
+  update [--check] [--force]
+      Check for and apply updates from the git repository.
+      --check   Show available updates without applying
+      --force   Force reinstall even if already up to date
 
 Configuration:
   Sources:       \$CONFIG_DIR/targets.d/<name>.conf
@@ -795,6 +800,13 @@ SVCEOF
             ;;
         *) die "Unknown daemon action: $_daemon_action (expected start|install-service|remove-service|status)" ;;
     esac
+elif [[ "$SUBCOMMAND" == "update" || "$SUBCOMMAND" == "upgrade" ]]; then
+    _update_script="$GNIZA_DIR/scripts/update.sh"
+    if [[ -f "$_update_script" ]]; then
+        exec bash "$_update_script" "${SUBCMD_ARGS[@]}"
+    else
+        die "Update script not found: $_update_script"
+    fi
 elif [[ "$SUBCOMMAND" == "uninstall" ]]; then
     _uninstall_script="$GNIZA_DIR/scripts/uninstall.sh"
     if [[ -f "$_uninstall_script" ]]; then

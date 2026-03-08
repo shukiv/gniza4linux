@@ -105,21 +105,19 @@
 <!-- Right help panel — mirrors left sidebar -->
 <div class="hidden lg:flex fixed top-0 right-0 h-screen z-20 transition-all duration-200"
      :class="$store.help.open ? 'w-72' : 'w-12'">
-    <ul class="menu min-h-full bg-base-200 text-base-content transition-all duration-200 w-full"
-        :class="$store.help.open ? 'p-4' : 'p-2'">
-        <li class="flex-1 overflow-y-auto text-sm" x-show="$store.help.open" x-cloak>
-            <div class="block hover:bg-transparent cursor-default active:!bg-transparent">
-                {{ help_content }}
-            </div>
-        </li>
-        <li class="mt-auto pt-2">
-            <button @click="$store.help.toggle()" class="w-full flex"
+    <div class="min-h-full bg-base-200 text-base-content flex flex-col w-full"
+         :class="$store.help.open ? 'p-4' : 'p-2'">
+        <div class="flex-1 overflow-y-auto text-sm" x-show="$store.help.open" x-cloak>
+            {{ help_content }}
+        </div>
+        <div class="mt-auto pt-2">
+            <button @click="$store.help.toggle()" class="w-full flex items-center gap-1"
                     :class="$store.help.open ? '' : 'justify-center'">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" :class="$store.help.open ? '' : 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7m-8 0l7-7-7-7"/></svg>
                 <span x-show="$store.help.open" x-cloak>Collapse</span>
             </button>
-        </li>
-    </ul>
+        </div>
+    </div>
 </div>
 {% endif %}
 {% endblock %}

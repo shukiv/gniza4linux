@@ -106,7 +106,7 @@ The TUI adapts to terminal width, with an inline documentation panel on wide scr
 
 ## Web Dashboard
 
-Serve the full TUI in a browser via textual-serve with HTTP Basic Auth.
+A full-featured web dashboard built with Flask, DaisyUI, and HTMX. All three interfaces (TUI, Web, CLI) maintain full feature parity.
 
 ```bash
 gniza web install-service   # Install systemd service (port 2323)

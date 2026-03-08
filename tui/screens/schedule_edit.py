@@ -111,6 +111,10 @@ class ScheduleEditScreen(Screen):
                     value=sched.retention_count,
                     placeholder="Leave empty for global default",
                 )
+                yield Static("Active:")
+                with Horizontal(classes="sched-switch-row"):
+                    yield Switch(value=sched.active == "yes", id="sched-active")
+                    yield Static("Enable/disable this schedule", classes="sched-switch-label")
                 yield Static("Sources (off=all):")
                 for tname in list_conf_dir("targets.d"):
                     with Horizontal(classes="sched-switch-row"):
@@ -245,6 +249,7 @@ class ScheduleEditScreen(Screen):
             cron=self.query_one("#sched-cron", Input).value.strip(),
             targets=",".join(selected_targets),
             remotes=",".join(selected_remotes),
+            active="yes" if self.query_one("#sched-active", Switch).value else "no",
             retention_count=self.query_one("#sched-retention", Input).value.strip(),
         )
         conf = CONFIG_DIR / "schedules.d" / f"{name}.conf"

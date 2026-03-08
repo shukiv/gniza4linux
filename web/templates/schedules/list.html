@@ -58,12 +58,24 @@
                             </form>
                         </td>
                         <td>
-                            <div class="flex gap-1">
-                                <a href="{{ url_for('schedules.edit', name=s.name) }}" class="btn btn-primary btn-sm">Edit</a>
-                                <button class="btn btn-error btn-sm"
-                                        @click="deleteName = '{{ s.name }}'; deleteUrl = '{{ url_for('schedules.delete', name=s.name) }}'; showModal = true">
-                                    Delete
-                                </button>
+                            <div class="dropdown dropdown-end">
+                                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01" /></svg>
+                                </div>
+                                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-10 w-40 p-2 shadow">
+                                    <li>
+                                        <form method="POST" action="{{ url_for('schedules.run_now', name=s.name) }}">
+                                            <button type="submit" class="w-full text-left">Run Now</button>
+                                        </form>
+                                    </li>
+                                    <li><a href="{{ url_for('schedules.edit', name=s.name) }}">Edit</a></li>
+                                    <li>
+                                        <button class="text-error"
+                                                @click="deleteName = '{{ s.name }}'; deleteUrl = '{{ url_for('schedules.delete', name=s.name) }}'; showModal = true">
+                                            Delete
+                                        </button>
+                                    </li>
+                                </ul>
                             </div>
                         </td>
                     </tr>

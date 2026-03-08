@@ -23,6 +23,13 @@ def _work_dir() -> Path:
     return Path(state_home) / "gniza" / "workdir"
 
 
+def _log_dir() -> Path:
+    if os.geteuid() == 0:
+        return Path("/var/log/gniza")
+    state_home = os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local" / "state"))
+    return Path(state_home) / "gniza" / "log"
+
+
 REGISTRY_FILE = _work_dir() / "gniza-jobs.json"
 
 
@@ -107,7 +114,7 @@ class JobManager:
             job._tail_task = task
 
     async def run_job(self, app, job: Job, *cli_args: str) -> int:
-        log_path = _work_dir() / f"gniza-job-{job.id}.log"
+        log_path = _log_dir() / f"gniza-job-{job.id}.log"
         job._log_file = str(log_path)
         proc = start_cli_background(*cli_args, log_file=str(log_path))
         job._proc = proc

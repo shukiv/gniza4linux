@@ -20,6 +20,13 @@ def _work_dir():
     return Path(state_home) / "gniza" / "workdir"
 
 
+def _log_dir():
+    if os.geteuid() == 0:
+        return Path("/var/log/gniza")
+    state_home = os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local" / "state"))
+    return Path(state_home) / "gniza" / "log"
+
+
 REGISTRY_FILE = _work_dir() / "gniza-jobs.json"
 
 
@@ -50,7 +57,7 @@ class WebJobManager:
         """Create a job. If under concurrency limit, start it; otherwise queue it."""
         with self._lock:
             job_id = uuid.uuid4().hex[:8]
-            log_path = _work_dir() / f"gniza-job-{job_id}.log"
+            log_path = _log_dir() / f"gniza-job-{job_id}.log"
             log_path.parent.mkdir(parents=True, exist_ok=True)
 
             max_jobs = get_max_concurrent_jobs()

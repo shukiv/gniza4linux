@@ -258,7 +258,7 @@ def dispatch_queue():
 
             log_file = entry.get("log_file")
             if not log_file:
-                log_file = str(_work_dir() / f"gniza-job-{entry['id']}.log")
+                log_file = str(Path(LOG_DIR) / f"gniza-job-{entry['id']}.log")
                 entry["log_file"] = log_file
 
             proc = _start_cli_background(*cli_args, log_file=log_file)
@@ -337,14 +337,14 @@ def cleanup_old_logs():
 
 
 def cleanup_orphan_job_logs():
-    """Remove job log files in workdir that are not referenced by any registry entry."""
-    work_dir = _work_dir()
-    if not work_dir.is_dir():
+    """Remove job log files in log dir that are not referenced by any registry entry."""
+    log_dir = Path(LOG_DIR)
+    if not log_dir.is_dir():
         return
     entries = _load_registry()
     referenced = {e.get("log_file") for e in entries if e.get("log_file")}
     removed = 0
-    for f in work_dir.glob("gniza-job-*.log"):
+    for f in log_dir.glob("gniza-job-*.log"):
         if str(f) not in referenced:
             # Only remove if older than 1 hour (avoid race with just-created jobs)
             try:

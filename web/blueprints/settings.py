@@ -11,6 +11,7 @@ from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import AppSettings
 from web.app import login_required
 from web.backend import run_cli_sync
+from daemon.notify import send_test_email
 
 bp = Blueprint("settings", __name__, url_prefix="/settings")
 
@@ -122,11 +123,8 @@ def apply_update():
 @login_required
 def test_email():
     try:
-        rc, stdout, stderr = run_cli_sync("test-email", timeout=30)
-        if rc == 0:
-            flash(stdout.strip() or "Test email sent successfully.", "success")
-        else:
-            flash(stderr.strip() or stdout.strip() or "Failed to send test email.", "error")
+        ok, msg = send_test_email()
+        flash(msg, "success" if ok else "error")
     except Exception as e:
         flash(f"Error: {e}", "error")
     return redirect(url_for("settings.index"))

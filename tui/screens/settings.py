@@ -1,4 +1,5 @@
 import os
+import subprocess
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -150,8 +151,18 @@ class SettingsScreen(Screen):
             web_api_key=self.query_one("#set-web-key", Input).value,
         )
         conf_path = CONFIG_DIR / "gniza.conf"
+        old_data = parse_conf(conf_path)
+        old_api_key = old_data.get("WEB_API_KEY", "")
         write_conf(conf_path, settings.to_conf())
-        self.notify("Settings saved.")
+
+        if settings.web_api_key != old_api_key:
+            if os.geteuid() == 0:
+                subprocess.run(["systemctl", "restart", "gniza-web"], check=False)
+            else:
+                subprocess.run(["systemctl", "--user", "restart", "gniza-web"], check=False)
+            self.notify("Settings saved. Web service restarted (API key changed).")
+        else:
+            self.notify("Settings saved.")
 
     @work
     async def _send_test_email(self) -> None:

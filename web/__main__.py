@@ -1,6 +1,7 @@
 from tui.config import CONFIG_DIR, parse_conf
 from web.app import create_app
 import sys
+import logging
 
 
 def main():
@@ -15,7 +16,14 @@ def main():
             host = arg.split("=", 1)[1]
 
     app = create_app()
-    app.run(host=host, port=port, debug=False)
+
+    try:
+        from waitress import serve
+        logger = logging.getLogger("gniza-web")
+        logger.info(f"Serving on http://{host}:{port}")
+        serve(app, host=host, port=port, _quiet=True)
+    except ImportError:
+        app.run(host=host, port=port, debug=False)
 
 
 if __name__ == "__main__":

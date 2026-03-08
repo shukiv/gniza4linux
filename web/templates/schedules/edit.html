@@ -23,89 +23,89 @@
         <div class="card-body">
             <h2 class="card-title text-base mb-4">Schedule Settings</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Name</span></label>
-                    <input type="text" name="name" value="{{ schedule.name }}" class="input input-bordered"
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Name</label>
+                    <input type="text" name="name" value="{{ schedule.name }}" class="input"
                            placeholder="nightly-backup" required pattern="[A-Za-z0-9_-]+"
                            {{ 'readonly' if not is_new else '' }}>
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Schedule Type</span></label>
-                    <select x-model="scheduleType" name="schedule" class="select select-bordered">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Schedule Type</label>
+                    <select x-model="scheduleType" name="schedule" class="select">
                         <option value="hourly">Hourly</option>
                         <option value="daily">Daily</option>
                         <option value="weekly">Weekly</option>
                         <option value="monthly">Monthly</option>
                         <option value="custom">Custom (Cron)</option>
                     </select>
-                </div>
+                </fieldset>
 
                 <!-- Hourly: interval -->
-                <div class="form-control" x-show="scheduleType === 'hourly'" x-cloak>
-                    <label class="label"><span class="label-text">Every N Hours</span></label>
-                    <select name="hourly_interval" class="select select-bordered">
+                <fieldset class="fieldset" x-show="scheduleType === 'hourly'" x-cloak>
+                    <label class="fieldset-label">Every N Hours</label>
+                    <select name="hourly_interval" class="select">
                         {% for h in [1, 2, 3, 4, 6, 8, 12] %}
                         <option value="{{ h }}" {{ 'selected' if schedule.schedule == 'hourly' and schedule.day == h|string else '' }}>Every {{ h }} hour{{ 's' if h > 1 else '' }}</option>
                         {% endfor %}
                     </select>
-                </div>
+                </fieldset>
 
                 <!-- Daily / Weekly / Monthly: time field -->
-                <div class="form-control" x-show="scheduleType !== 'custom' && scheduleType !== 'hourly'" x-cloak>
-                    <label class="label"><span class="label-text">Time</span></label>
-                    <input type="time" name="time" value="{{ schedule.time }}" class="input input-bordered">
-                </div>
+                <fieldset class="fieldset" x-show="scheduleType !== 'custom' && scheduleType !== 'hourly'" x-cloak>
+                    <label class="fieldset-label">Time</label>
+                    <input type="time" name="time" value="{{ schedule.time }}" class="input">
+                </fieldset>
 
                 <!-- Daily: day of week checkboxes (multi-select) -->
-                <div class="form-control md:col-span-2" x-show="scheduleType === 'daily'" x-cloak>
-                    <label class="label"><span class="label-text">Days of Week</span></label>
+                <fieldset class="fieldset md:col-span-2" x-show="scheduleType === 'daily'" x-cloak>
+                    <label class="fieldset-label">Days of Week</label>
                     <div class="flex flex-wrap gap-3">
                         {% set day_list = schedule.day.split(',') if schedule.day else [] %}
                         {% for d, label in [('0','Sun'),('1','Mon'),('2','Tue'),('3','Wed'),('4','Thu'),('5','Fri'),('6','Sat')] %}
                         <label class="label cursor-pointer gap-1">
                             <input type="checkbox" name="day" value="{{ d }}" class="checkbox checkbox-primary checkbox-sm"
                                    {{ 'checked' if d in day_list else '' }}>
-                            <span class="label-text">{{ label }}</span>
+                            <span>{{ label }}</span>
                         </label>
                         {% endfor %}
                     </div>
-                </div>
+                </fieldset>
 
                 <!-- Weekly: day of week select -->
-                <div class="form-control" x-show="scheduleType === 'weekly'" x-cloak>
-                    <label class="label"><span class="label-text">Day of Week</span></label>
-                    <select name="weekly_day" class="select select-bordered">
+                <fieldset class="fieldset" x-show="scheduleType === 'weekly'" x-cloak>
+                    <label class="fieldset-label">Day of Week</label>
+                    <select name="weekly_day" class="select">
                         {% for val, label in [('0','Sunday'),('1','Monday'),('2','Tuesday'),('3','Wednesday'),('4','Thursday'),('5','Friday'),('6','Saturday')] %}
                         <option value="{{ val }}" {{ 'selected' if schedule.schedule == 'weekly' and schedule.day == val else '' }}>{{ label }}</option>
                         {% endfor %}
                     </select>
-                </div>
+                </fieldset>
 
                 <!-- Monthly: day of month select (fixed options) -->
-                <div class="form-control" x-show="scheduleType === 'monthly'" x-cloak>
-                    <label class="label"><span class="label-text">Day of Month</span></label>
-                    <select name="monthly_day" class="select select-bordered">
+                <fieldset class="fieldset" x-show="scheduleType === 'monthly'" x-cloak>
+                    <label class="fieldset-label">Day of Month</label>
+                    <select name="monthly_day" class="select">
                         {% for d in [1, 7, 14, 21, 28] %}
                         <option value="{{ d }}" {{ 'selected' if schedule.schedule == 'monthly' and schedule.day == d|string else '' }}>{{ d }}{{ 'st' if d in [1, 21] else ('nd' if d == 2 else 'th') }}</option>
                         {% endfor %}
                     </select>
-                </div>
+                </fieldset>
 
                 <!-- Custom: cron expression -->
-                <div class="form-control md:col-span-2" x-show="scheduleType === 'custom'" x-cloak>
-                    <label class="label"><span class="label-text">Cron Expression</span></label>
-                    <input type="text" name="cron" value="{{ schedule.cron }}" class="input input-bordered font-mono"
+                <fieldset class="fieldset md:col-span-2" x-show="scheduleType === 'custom'" x-cloak>
+                    <label class="fieldset-label">Cron Expression</label>
+                    <input type="text" name="cron" value="{{ schedule.cron }}" class="input font-mono"
                            placeholder="0 2 * * *">
-                    <label class="label"><span class="label-text-alt text-base-content/40">Format: minute hour day month weekday</span></label>
-                </div>
+                    <label class="label"><span class="fieldset-label text-xs text-base-content/40">Format: minute hour day month weekday</span></label>
+                </fieldset>
 
                 <!-- Retention count override -->
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Retention Count</span></label>
-                    <input type="text" name="retention_count" value="{{ schedule.retention_count }}" class="input input-bordered"
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Retention Count</label>
+                    <input type="text" name="retention_count" value="{{ schedule.retention_count }}" class="input"
                            placeholder="Leave empty for global default">
-                    <label class="label"><span class="label-text-alt text-base-content/40">Override global retention count for this schedule</span></label>
-                </div>
+                    <label class="label"><span class="fieldset-label text-xs text-base-content/40">Override global retention count for this schedule</span></label>
+                </fieldset>
             </div>
         </div>
     </div>
@@ -121,7 +121,7 @@
                     <label class="label cursor-pointer gap-3 justify-start p-0">
                         <input type="checkbox" name="targets" value="{{ t }}" class="toggle toggle-primary toggle-sm"
                                {{ 'checked' if t in selected_targets else '' }}>
-                        <span class="label-text">{{ t }}</span>
+                        <span>{{ t }}</span>
                     </label>
                     {% endfor %}
                 </div>
@@ -140,7 +140,7 @@
                     <label class="label cursor-pointer gap-3 justify-start p-0">
                         <input type="checkbox" name="remotes" value="{{ r }}" class="toggle toggle-primary toggle-sm"
                                {{ 'checked' if r in selected_remotes else '' }}>
-                        <span class="label-text">{{ r }}</span>
+                        <span>{{ r }}</span>
                     </label>
                     {% endfor %}
                 </div>
@@ -155,7 +155,7 @@
         <div class="card-body">
             <label class="label cursor-pointer gap-3 justify-start p-0">
                 <input type="checkbox" name="active" class="toggle toggle-success" {{ 'checked' if schedule.active == 'yes' else '' }}>
-                <span class="label-text font-medium">Active</span>
+                <span class="font-medium">Active</span>
             </label>
         </div>
     </div>

@@ -54,7 +54,7 @@
                 </thead>
                 <tbody>
                     {% for t in targets %}
-                    <tr class="hover">
+                    <tr class="hover:bg-base-300">
                         <td class="font-mono font-medium">{{ t.name }}</td>
                         <td>{{ t.source_type }}</td>
                         <td class="max-w-xs truncate text-base-content/60">{{ t.folders }}</td>
@@ -96,7 +96,7 @@
                 </thead>
                 <tbody>
                     {% for r in remotes %}
-                    <tr class="hover">
+                    <tr class="hover:bg-base-300">
                         <td class="font-mono font-medium">{{ r.name }}</td>
                         <td><span class="badge badge-outline badge-md">{{ r.type }}</span></td>
                         <td>{{ r.host or '--' }}</td>
@@ -131,7 +131,7 @@
                 </thead>
                 <tbody>
                     {% for s in schedules %}
-                    <tr class="hover">
+                    <tr class="hover:bg-base-300">
                         <td class="font-mono font-medium">{{ s.name }}</td>
                         <td>{{ s.schedule }}{% if s.time %} @ {{ s.time }}{% endif %}</td>
                         <td class="text-base-content/60">{{ s.targets or '--' }}</td>
@@ -174,7 +174,7 @@
                 </thead>
                 <tbody>
                     {% for log in log_files %}
-                    <tr class="hover">
+                    <tr class="hover:bg-base-300">
                         <td>{{ log.date }}</td>
                         <td class="font-mono">{{ log.time }}</td>
                         <td><a href="{{ url_for('logs.view', filename=log.name) }}" class="link link-primary font-mono text-sm">{{ log.name }}</a></td>

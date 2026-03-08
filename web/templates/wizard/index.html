@@ -23,11 +23,11 @@
                 <p class="text-base-content/60 mb-4">Let's configure your backup system. First, set an API key for web access.</p>
 
                 <form method="POST" action="{{ url_for('wizard.step', n=1) }}">
-                    <div class="form-control mb-4">
-                        <label class="label"><span class="label-text">API Key</span></label>
-                        <input type="text" name="api_key" class="input input-bordered" placeholder="Enter a secure API key" required>
-                        <label class="label"><span class="label-text-alt text-base-content/40">This key is used for web authentication</span></label>
-                    </div>
+                    <fieldset class="fieldset mb-4">
+                        <label class="fieldset-label">API Key</label>
+                        <input type="text" name="api_key" class="input" placeholder="Enter a secure API key" required>
+                        <label class="label"><span class="fieldset-label text-xs text-base-content/40">This key is used for web authentication</span></label>
+                    </fieldset>
                     <div class="card-actions justify-between">
                         <span></span>
                         <button type="submit" class="btn btn-primary">Next</button>
@@ -46,25 +46,25 @@
 
                 <form method="POST" action="{{ url_for('wizard.step', n=2) }}">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Name</span></label>
-                            <input type="text" name="name" class="input input-bordered" placeholder="my-storage" required pattern="[A-Za-z0-9_-]+">
-                        </div>
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Type</span></label>
-                            <select name="type" class="select select-bordered">
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Name</label>
+                            <input type="text" name="name" class="input" placeholder="my-storage" required pattern="[A-Za-z0-9_-]+">
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Type</label>
+                            <select name="type" class="select">
                                 <option value="local">Local</option>
                                 <option value="ssh">SSH</option>
                             </select>
-                        </div>
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Base Path</span></label>
-                            <input type="text" name="base" class="input input-bordered" value="/backups" placeholder="/backups">
-                        </div>
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Host (SSH only)</span></label>
-                            <input type="text" name="host" class="input input-bordered" placeholder="192.168.1.100">
-                        </div>
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Base Path</label>
+                            <input type="text" name="base" class="input" value="/backups" placeholder="/backups">
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Host (SSH only)</label>
+                            <input type="text" name="host" class="input" placeholder="192.168.1.100">
+                        </fieldset>
                     </div>
                     <div class="card-actions justify-between">
                         <button type="button" class="btn btn-ghost" @click="step = 1">Back</button>
@@ -84,24 +84,24 @@
 
                 <form method="POST" action="{{ url_for('wizard.step', n=3) }}">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Name</span></label>
-                            <input type="text" name="name" class="input input-bordered" placeholder="my-server" required pattern="[A-Za-z0-9_-]+">
-                        </div>
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Destination</span></label>
-                            <select name="remote" class="select select-bordered">
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Name</label>
+                            <input type="text" name="name" class="input" placeholder="my-server" required pattern="[A-Za-z0-9_-]+">
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Destination</label>
+                            <select name="remote" class="select">
                                 <option value="">-- None --</option>
                                 {% for r in remotes %}
                                 <option value="{{ r }}">{{ r }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
+                        </fieldset>
                     </div>
-                    <div class="form-control mb-4">
-                        <label class="label"><span class="label-text">Folders (one per line)</span></label>
-                        <textarea name="folders" class="textarea textarea-bordered h-24 font-mono" placeholder="/home&#10;/etc&#10;/var/www"></textarea>
-                    </div>
+                    <fieldset class="fieldset mb-4">
+                        <label class="fieldset-label">Folders (one per line)</label>
+                        <textarea name="folders" class="textarea h-24 font-mono" placeholder="/home&#10;/etc&#10;/var/www"></textarea>
+                    </fieldset>
                     <div class="card-actions justify-between">
                         <button type="button" class="btn btn-ghost" @click="step = 2">Back</button>
                         <button type="submit" class="btn btn-primary">Next</button>
@@ -120,32 +120,32 @@
 
                 <form method="POST" action="{{ url_for('wizard.step', n=4) }}">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Name</span></label>
-                            <input type="text" name="name" class="input input-bordered" placeholder="nightly" required pattern="[A-Za-z0-9_-]+">
-                        </div>
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Schedule</span></label>
-                            <select name="schedule" class="select select-bordered">
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Name</label>
+                            <input type="text" name="name" class="input" placeholder="nightly" required pattern="[A-Za-z0-9_-]+">
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Schedule</label>
+                            <select name="schedule" class="select">
                                 <option value="daily">Daily</option>
                                 <option value="weekly">Weekly</option>
                                 <option value="monthly">Monthly</option>
                             </select>
-                        </div>
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Time</span></label>
-                            <input type="time" name="time" class="input input-bordered" value="02:00">
-                        </div>
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Time</label>
+                            <input type="time" name="time" class="input" value="02:00">
+                        </fieldset>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Targets</span></label>
-                            <input type="text" name="targets" class="input input-bordered" placeholder="all" value="all">
-                        </div>
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Remotes</span></label>
-                            <input type="text" name="remotes" class="input input-bordered" placeholder="all" value="all">
-                        </div>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Targets</label>
+                            <input type="text" name="targets" class="input" placeholder="all" value="all">
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Remotes</label>
+                            <input type="text" name="remotes" class="input" placeholder="all" value="all">
+                        </fieldset>
                     </div>
                     <div class="card-actions justify-between">
                         <button type="button" class="btn btn-ghost" @click="step = 3">Back</button>

@@ -9,71 +9,71 @@
         </div>
     </li>
     <li>
-        <a href="{{ url_for('dashboard.index') }}" class="{{ 'active' if active_page == 'dashboard' else '' }}">
+        <a href="{{ url_for('dashboard.index') }}" class="{{ 'menu-active' if active_page == 'dashboard' else '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             Dashboard
         </a>
     </li>
     <li class="menu-title mt-2">Configuration</li>
     <li>
-        <a href="{{ url_for('targets.index') }}" class="{{ 'active' if active_page == 'sources' else '' }}">
+        <a href="{{ url_for('targets.index') }}" class="{{ 'menu-active' if active_page == 'sources' else '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
             Sources
         </a>
     </li>
     <li>
-        <a href="{{ url_for('remotes.index') }}" class="{{ 'active' if active_page == 'destinations' else '' }}">
+        <a href="{{ url_for('remotes.index') }}" class="{{ 'menu-active' if active_page == 'destinations' else '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="6" cy="18" r="1" fill="currentColor"/></svg>
             Destinations
         </a>
     </li>
     <li>
-        <a href="{{ url_for('schedules.index') }}" class="{{ 'active' if active_page == 'schedules' else '' }}">
+        <a href="{{ url_for('schedules.index') }}" class="{{ 'menu-active' if active_page == 'schedules' else '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Schedules
         </a>
     </li>
     <li class="menu-title mt-2">Operations</li>
     <li>
-        <a href="{{ url_for('backup.index') }}" class="{{ 'active' if active_page == 'backup' else '' }}">
+        <a href="{{ url_for('backup.index') }}" class="{{ 'menu-active' if active_page == 'backup' else '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
             Backup
         </a>
     </li>
     <li>
-        <a href="{{ url_for('restore.index') }}" class="{{ 'active' if active_page == 'restore' else '' }}">
+        <a href="{{ url_for('restore.index') }}" class="{{ 'menu-active' if active_page == 'restore' else '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             Restore
         </a>
     </li>
     <li>
-        <a href="{{ url_for('jobs.index') }}" class="{{ 'active' if active_page == 'running tasks' else '' }}">
+        <a href="{{ url_for('jobs.index') }}" class="{{ 'menu-active' if active_page == 'running tasks' else '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             Running Tasks
         </a>
     </li>
     <li class="menu-title mt-2">Data</li>
     <li>
-        <a href="{{ url_for('snapshots.index') }}" class="{{ 'active' if active_page == 'snapshots' else '' }}">
+        <a href="{{ url_for('snapshots.index') }}" class="{{ 'menu-active' if active_page == 'snapshots' else '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/></svg>
             Snapshots
         </a>
     </li>
     <li>
-        <a href="{{ url_for('retention.index') }}" class="{{ 'active' if active_page == 'retention' else '' }}">
+        <a href="{{ url_for('retention.index') }}" class="{{ 'menu-active' if active_page == 'retention' else '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             Retention
         </a>
     </li>
     <li class="menu-title mt-2">System</li>
     <li>
-        <a href="{{ url_for('logs.index') }}" class="{{ 'active' if active_page == 'logs' else '' }}">
+        <a href="{{ url_for('logs.index') }}" class="{{ 'menu-active' if active_page == 'logs' else '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             Logs
         </a>
     </li>
     <li>
-        <a href="{{ url_for('settings.index') }}" class="{{ 'active' if active_page == 'settings' else '' }}">
+        <a href="{{ url_for('settings.index') }}" class="{{ 'menu-active' if active_page == 'settings' else '' }}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
             Settings
         </a>

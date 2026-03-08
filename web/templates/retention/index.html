@@ -10,9 +10,9 @@
             <h2 class="card-title">Default Retention Count</h2>
             <p class="text-base-content/60 mb-4">Number of snapshots to keep by default.</p>
             <form method="POST" action="{{ url_for('retention.save_default') }}" class="flex gap-2 items-end">
-                <div class="form-control">
-                    <input type="number" name="retention_count" value="{{ retention_count }}" class="input input-bordered w-32" min="1" required>
-                </div>
+                <fieldset class="fieldset">
+                    <input type="number" name="retention_count" value="{{ retention_count }}" class="input w-32" min="1" required>
+                </fieldset>
                 <button type="submit" class="btn btn-primary">Save</button>
             </form>
         </div>
@@ -24,15 +24,15 @@
             <p class="text-base-content/60 mb-4">Remove old snapshots based on retention policies.</p>
 
             <form method="POST" action="{{ url_for('retention.run') }}">
-                <div class="form-control mb-6">
-                    <label class="label"><span class="label-text">Source (optional)</span></label>
-                    <select name="target" class="select select-bordered">
+                <fieldset class="fieldset mb-6">
+                    <label class="fieldset-label">Source (optional)</label>
+                    <select name="target" class="select">
                         <option value="">All sources</option>
                         {% for t in targets %}
                         <option value="{{ t }}">{{ t }}</option>
                         {% endfor %}
                     </select>
-                </div>
+                </fieldset>
 
                 <div class="card-actions justify-end">
                     <button type="submit" class="btn btn-primary" onclick="return confirm('Run retention cleanup?')">Run Cleanup</button>

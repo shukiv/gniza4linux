@@ -23,9 +23,19 @@ init_logging() {
     LOG_FILE="$log_dir/gniza-$(date +%Y%m%d-%H%M%S).log"
     touch "$LOG_FILE" || die "Cannot write to log file: $LOG_FILE"
 
+    # On unexpected exit, ensure the log captures why
+    trap '_gniza_log_exit_trap' EXIT
+
     # Clean old logs
     local retain="${LOG_RETAIN:-$DEFAULT_LOG_RETAIN}"
     find "$log_dir" -name "gniza-*.log" -mtime +"$retain" -delete 2>/dev/null || true
+}
+
+_gniza_log_exit_trap() {
+    local rc=$?
+    if [[ $rc -ne 0 && -n "${LOG_FILE:-}" && -f "$LOG_FILE" && ! -s "$LOG_FILE" ]]; then
+        echo "[$(date -u +"%d/%m/%Y %H:%M:%S")] [ERROR] Process exited with code $rc (no other output captured)" >> "$LOG_FILE"
+    fi
 }
 
 _log() {

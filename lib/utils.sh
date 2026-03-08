@@ -6,6 +6,9 @@ _GNIZA4LINUX_UTILS_LOADED=1
 
 die() {
     local code="${2:-$EXIT_FATAL}"
+    if [[ -n "${LOG_FILE:-}" ]]; then
+        echo "[$(date -u +"%d/%m/%Y %H:%M:%S")] [FATAL] $1" >> "$LOG_FILE"
+    fi
     echo "${C_RED}FATAL: $1${C_RESET}" >&2
     exit "$code"
 }

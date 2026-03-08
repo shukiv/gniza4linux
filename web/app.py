@@ -55,7 +55,6 @@ def create_app():
         {"name": "Running Tasks", "endpoint": "jobs.index", "active": False},
         {"name": "Schedules", "endpoint": "schedules.index", "active": False},
         {"name": "Snapshots", "endpoint": "snapshots.index", "active": False},
-        {"name": "Retention", "endpoint": "retention.index", "active": False},
         {"name": "Logs", "endpoint": "logs.index", "active": False},
         {"name": "Settings", "endpoint": "settings.index", "active": False},
     ]
@@ -80,8 +79,6 @@ def create_app():
                 active_page = "schedules"
             elif request.endpoint.startswith("snapshots"):
                 active_page = "snapshots"
-            elif request.endpoint.startswith("retention"):
-                active_page = "retention"
             elif request.endpoint.startswith("logs"):
                 active_page = "logs"
             elif request.endpoint.startswith("settings"):
@@ -102,7 +99,6 @@ def create_app():
     from web.blueprints.restore import bp as restore_bp
     from web.blueprints.schedules import bp as schedules_bp
     from web.blueprints.snapshots import bp as snapshots_bp
-    from web.blueprints.retention import bp as retention_bp
     from web.blueprints.logs import bp as logs_bp
     from web.blueprints.wizard import bp as wizard_bp
     from web.blueprints.api import bp as api_bp
@@ -117,7 +113,6 @@ def create_app():
     app.register_blueprint(restore_bp)
     app.register_blueprint(schedules_bp)
     app.register_blueprint(snapshots_bp)
-    app.register_blueprint(retention_bp)
     app.register_blueprint(logs_bp)
     app.register_blueprint(wizard_bp)
     app.register_blueprint(api_bp)

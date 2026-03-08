@@ -2,6 +2,8 @@
 set -eo pipefail
 
 REPO_URL="https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git"
+DEBUG=false
+[[ "${1:-}" == "--debug" ]] && DEBUG=true
 
 # Colors - force enable when piped (curl | bash), since output still goes to terminal
 C_GREEN=$'\033[0;32m'

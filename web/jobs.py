@@ -1,6 +1,7 @@
 import fcntl
 import json
 import os
+import re
 import signal
 import tempfile
 import threading
@@ -254,6 +255,23 @@ class WebJobManager:
             return last_lines, total
         except (OSError, FileNotFoundError):
             return [], 0
+
+    def get_progress(self, job_id):
+        """Read rsync progress from the separate progress file."""
+        job = self._jobs.get(job_id)
+        if not job or job.status != "running" or not job.pid:
+            return None
+        progress_file = WORK_DIR / f"gniza-progress-{job.pid}.txt"
+        try:
+            line = progress_file.read_text().strip()
+            if not line:
+                return None
+            m = re.search(r"(\d+)%", line)
+            if m:
+                return {"pct": int(m.group(1)), "line": line}
+        except (OSError, FileNotFoundError):
+            pass
+        return None
 
     def _flock_read(self):
         """Read registry under flock."""

@@ -4,18 +4,26 @@
 [[ -n "${_GNIZA4LINUX_SNAPLOG_LOADED:-}" ]] && return 0
 _GNIZA4LINUX_SNAPLOG_LOADED=1
 
-# Tee helper: copies stdin to the transfer log, app log, and stderr (TUI).
-# Used as process substitution target: cmd > >(_snaplog_tee) 2>&1
-# The raw transfer log gets everything; LOG_FILE only gets structured
-# log lines — skips rsync progress percentages and verbose file listings
-# to keep the app log small and readable.
+# Tee helper: filters rsync output, sending progress to a separate file
+# and non-progress lines to stderr (which flows to LOG_FILE or job log).
+# Usage: rsync ... 2>&1 | _snaplog_tee
+# Per-file details go to _TRANSFER_LOG via rsync --log-file.
+# Progress lines go to a small .progress file (for the TUI/web progress bar).
+# Everything else (stats, errors) goes to stderr.
 _snaplog_tee() {
     # With --log-file, rsync writes per-file details directly to _TRANSFER_LOG.
-    # Stdout only has --info=progress2 lines and stats.
-    # Everything goes to stderr (→ LOG_FILE) so the progress bar can read it.
-    # Progress lines are stripped from LOG_FILE after the job finishes
-    # (see _gniza_strip_progress_lines).
-    cat >&2
+    # Stdout only has --info=progress2 lines and stats/errors.
+    # Progress lines go to a small .progress file (for the TUI/web progress bar).
+    # Everything else (stats, errors) goes to stderr → LOG_FILE / job log.
+    local progress_file="${WORK_DIR}/gniza-progress-$$.txt"
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ "$line" =~ [0-9]+% ]] && [[ "$line" == *xfr#* || "$line" == *to-chk=* || "$line" == *B/s* ]]; then
+            printf '%s\n' "$line" > "$progress_file"
+        else
+            [[ -n "$line" ]] && echo "$line" >&2
+        fi
+    done
+    rm -f "$progress_file" 2>/dev/null
 }
 
 # Initialize snapshot log directory and transfer log file.

@@ -79,6 +79,7 @@ class RunningTasksScreen(Screen):
         self._refresh_table()
 
     def _refresh_table(self) -> None:
+        job_manager.reload_registry()
         job_manager.check_reconnected()
         table = self.query_one("#rt-table", DataTable)
         old_row = table.cursor_coordinate.row if table.row_count > 0 else 0

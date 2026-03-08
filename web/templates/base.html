@@ -30,7 +30,9 @@
           cbs.forEach(function(cb) { cb.checked = saved === cb.value; });
           document.addEventListener('change', function(e) {
             if (e.target.classList.contains('theme-controller')) {
-              localStorage.setItem('theme', e.target.checked ? e.target.value : 'dark');
+              var theme = e.target.checked ? e.target.value : 'dark';
+              document.documentElement.setAttribute('data-theme', theme);
+              localStorage.setItem('theme', theme);
             }
           });
         });

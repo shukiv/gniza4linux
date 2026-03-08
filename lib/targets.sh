@@ -174,15 +174,14 @@ validate_target() {
 # ── CRUD ──────────────────────────────────────────────────────
 
 # Write a target .conf file.
-# Usage: create_target <name> <folders> [exclude] [remote] [pre_hook] [post_hook] [enabled]
+# Usage: create_target <name> <folders> [exclude] [pre_hook] [post_hook] [enabled]
 create_target() {
     local name="$1"
     local folders="$2"
     local exclude="${3:-}"
-    local remote="${4:-}"
-    local pre_hook="${5:-}"
-    local post_hook="${6:-}"
-    local enabled="${7:-yes}"
+    local pre_hook="${4:-}"
+    local post_hook="${5:-}"
+    local enabled="${6:-yes}"
 
     validate_target_name "$name" || return 1
 
@@ -192,7 +191,6 @@ create_target() {
 TARGET_NAME="$name"
 TARGET_FOLDERS="$folders"
 TARGET_EXCLUDE="$exclude"
-TARGET_REMOTE="$remote"
 TARGET_PRE_HOOK="$pre_hook"
 TARGET_POST_HOOK="$post_hook"
 TARGET_ENABLED="$enabled"

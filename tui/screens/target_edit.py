@@ -101,7 +101,7 @@ class TargetEditScreen(Screen):
                 )
                 yield Static("MySQL Mode:", classes="mysql-field")
                 yield Select(
-                    [("All databases", "all"), ("Select databases", "select")],
+                    [("All databases", "all"), ("Specific databases", "specific")],
                     value=target.mysql_mode,
                     id="te-mysql-mode",
                     classes="mysql-field",
@@ -151,7 +151,7 @@ class TargetEditScreen(Screen):
         if is_enabled:
             mode = str(self.query_one("#te-mysql-mode", Select).value)
             for w in self.query(".mysql-select-field"):
-                w.display = mode == "select"
+                w.display = mode == "specific"
             for w in self.query(".mysql-all-field"):
                 w.display = mode == "all"
 

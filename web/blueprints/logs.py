@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 from flask import (
-    Blueprint, render_template, request, abort,
+    Blueprint, render_template, request, abort, redirect, url_for, flash,
 )
 
 from tui.config import LOG_DIR
@@ -101,6 +101,23 @@ def index():
         page=page,
         total_pages=total_pages,
     )
+
+
+@bp.route("/clear", methods=["POST"])
+@login_required
+def clear():
+    log_path = Path(LOG_DIR)
+    removed = 0
+    if log_path.is_dir():
+        for f in log_path.iterdir():
+            if f.is_file() and _LOG_FILENAME_RE.match(f.name):
+                try:
+                    f.unlink()
+                    removed += 1
+                except OSError:
+                    pass
+    flash(f"Cleared {removed} log file(s)", "success")
+    return redirect(url_for("logs.index"))
 
 
 @bp.route("/<filename>")

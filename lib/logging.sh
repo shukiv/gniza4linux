@@ -32,9 +32,13 @@ init_logging() {
 }
 
 _gniza_log_exit_trap() {
-    local rc=$?
-    if [[ $rc -ne 0 && -n "${LOG_FILE:-}" && -f "$LOG_FILE" && ! -s "$LOG_FILE" ]]; then
-        echo "[$(date -u +"%d/%m/%Y %H:%M:%S")] [ERROR] Process exited with code $rc (no other output captured)" >> "$LOG_FILE"
+    local rc="${1:-$?}"
+    if [[ -n "${LOG_FILE:-}" && -f "$LOG_FILE" && ! -s "$LOG_FILE" ]]; then
+        if [[ $rc -ne 0 ]]; then
+            echo "[$(date -u +"%d/%m/%Y %H:%M:%S")] [ERROR] Process exited with code $rc (no other output captured)" >> "$LOG_FILE"
+        else
+            echo "[$(date -u +"%d/%m/%Y %H:%M:%S")] [INFO] Process exited with code 0 (no log output produced)" >> "$LOG_FILE"
+        fi
     fi
 }
 

@@ -257,7 +257,7 @@ run_cli() {
             remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
 
-            trap release_all_target_locks EXIT
+            trap '_gniza_exit_rc=$?; release_all_target_locks; _gniza_log_exit_trap $_gniza_exit_rc' EXIT
 
             if [[ "$all" == "true" || -z "$target" ]]; then
                 backup_all_targets "$remote"
@@ -590,7 +590,7 @@ run_cli() {
                 fi
             fi
 
-            trap release_all_target_locks EXIT
+            trap '_gniza_exit_rc=$?; release_all_target_locks; _gniza_log_exit_trap $_gniza_exit_rc' EXIT
 
             local rc=0
             if [[ -n "$target" && "$target" == *,* ]]; then

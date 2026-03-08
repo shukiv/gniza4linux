@@ -119,9 +119,9 @@ if command -v python3 &>/dev/null; then
     info "Installing Python dependencies..."
     _pip_quiet="--quiet"
     $DEBUG && _pip_quiet=""
-    if python3 -m pip install --break-system-packages $_pip_quiet textual textual-serve flask 2>/dev/null; then
+    if python3 -m pip install --break-system-packages $_pip_quiet textual textual-serve flask waitress 2>/dev/null; then
         info "Python dependencies installed."
-    elif python3 -m pip install $_pip_quiet textual textual-serve flask 2>/dev/null; then
+    elif python3 -m pip install $_pip_quiet textual textual-serve flask waitress 2>/dev/null; then
         info "Python dependencies installed."
     else
         warn "Could not install Python TUI dependencies. TUI/web mode may not work."

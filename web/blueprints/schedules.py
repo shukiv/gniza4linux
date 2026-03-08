@@ -305,6 +305,12 @@ def run_now(name):
         args.append(f"--source={schedule.targets}")
     if schedule.remotes:
         args.append(f"--destination={schedule.remotes}")
-    web_job_manager.create_and_start("backup", f"Schedule: {name}", *args)
+    label = f"Scheduled: {name}"
+    if schedule.targets:
+        label += f" ({schedule.targets}"
+        if schedule.remotes:
+            label += f" → {schedule.remotes}"
+        label += ")"
+    web_job_manager.create_and_start("backup", label, *args)
     flash(f"Schedule '{name}' started.", "success")
     return redirect(url_for("jobs.index"))

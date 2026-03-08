@@ -53,6 +53,14 @@ class GnizaApp(App):
         # Start tailing log files for any jobs that were running
         # when the TUI was last closed
         job_manager.start_tailing_reconnected(self)
+        # Periodic health check: detect dead jobs, dispatch queue, sync registry
+        self.set_interval(3, self._job_health_check)
+
+    def _job_health_check(self) -> None:
+        """App-level periodic job health check. Runs on all screens."""
+        job_manager.reload_registry()
+        job_manager.check_reconnected()
+        job_manager._dispatch_queue(self)
 
     def on_job_finished(self, message: JobFinished) -> None:
         job = job_manager.get_job(message.job_id)

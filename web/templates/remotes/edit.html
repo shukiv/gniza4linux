@@ -39,6 +39,44 @@
         </div>
     </div>
 
+    <!-- SSH fields -->
+    <div x-show="remoteType === 'ssh'" x-cloak>
+        <div class="card bg-base-200 shadow mb-6">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-4">SSH Connection</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Host</label>
+                        <input type="text" name="host" value="{{ remote.host }}" class="input" placeholder="192.168.1.1">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Port</label>
+                        <input type="text" name="port" value="{{ remote.port }}" class="input" placeholder="22">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">User</label>
+                        <input type="text" name="user" value="{{ remote.user }}" class="input" placeholder="root">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Auth Method</label>
+                        <select name="auth_method" class="select" x-model="authMethod">
+                            <option value="key" {{ 'selected' if remote.auth_method == 'key' else '' }}>SSH Key</option>
+                            <option value="password" {{ 'selected' if remote.auth_method == 'password' else '' }}>Password</option>
+                        </select>
+                    </fieldset>
+                    <fieldset class="fieldset" x-show="authMethod === 'key'" x-cloak>
+                        <label class="fieldset-label">SSH Key Path</label>
+                        <input type="text" name="key" value="{{ remote.key }}" class="input" placeholder="~/.ssh/id_rsa">
+                    </fieldset>
+                    <fieldset class="fieldset" x-show="authMethod === 'password'" x-cloak>
+                        <label class="fieldset-label">Password</label>
+                        <input type="password" name="password" value="{{ remote.password }}" class="input">
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Basic Settings -->
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
@@ -90,44 +128,6 @@
                     <label class="fieldset-label">Bandwidth Limit (KB/s, 0=unlimited)</label>
                     <input type="text" name="bwlimit" value="{{ remote.bwlimit }}" class="input" placeholder="0">
                 </fieldset>
-            </div>
-        </div>
-    </div>
-
-    <!-- SSH fields -->
-    <div x-show="remoteType === 'ssh'" x-cloak>
-        <div class="card bg-base-200 shadow mb-6">
-            <div class="card-body">
-                <h2 class="card-title text-base mb-4">SSH Connection</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Host</label>
-                        <input type="text" name="host" value="{{ remote.host }}" class="input" placeholder="192.168.1.1">
-                    </fieldset>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Port</label>
-                        <input type="text" name="port" value="{{ remote.port }}" class="input" placeholder="22">
-                    </fieldset>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">User</label>
-                        <input type="text" name="user" value="{{ remote.user }}" class="input" placeholder="root">
-                    </fieldset>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Auth Method</label>
-                        <select name="auth_method" class="select" x-model="authMethod">
-                            <option value="key" {{ 'selected' if remote.auth_method == 'key' else '' }}>SSH Key</option>
-                            <option value="password" {{ 'selected' if remote.auth_method == 'password' else '' }}>Password</option>
-                        </select>
-                    </fieldset>
-                    <fieldset class="fieldset" x-show="authMethod === 'key'" x-cloak>
-                        <label class="fieldset-label">SSH Key Path</label>
-                        <input type="text" name="key" value="{{ remote.key }}" class="input" placeholder="~/.ssh/id_rsa">
-                    </fieldset>
-                    <fieldset class="fieldset" x-show="authMethod === 'password'" x-cloak>
-                        <label class="fieldset-label">Password</label>
-                        <input type="password" name="password" value="{{ remote.password }}" class="input">
-                    </fieldset>
-                </div>
             </div>
         </div>
     </div>

@@ -57,9 +57,8 @@
     <input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
 
     <!-- Main content area -->
-    <div class="drawer-content flex flex-col transition-[margin] duration-200"
-         {% if help_content and help_content.strip() %}:class="$store.help.open ? 'lg:mr-72' : 'lg:mr-12'"{% endif %}>
-        <!-- Header -->
+    <div class="drawer-content flex flex-col">
+        <!-- Header — always full width -->
         <div class="navbar bg-base-200 border-b border-base-300 sticky top-0 z-30">
             <div class="flex-none lg:hidden">
                 <label for="sidebar-toggle" class="btn btn-square btn-ghost">
@@ -86,8 +85,9 @@
             </div>
         </div>
 
-        <!-- Page content -->
-        <main class="p-4 md:p-6 w-full mx-auto flex-1">
+        <!-- Page content — shifts for help panel -->
+        <main class="p-4 md:p-6 w-full mx-auto flex-1 transition-[margin] duration-200"
+              {% if help_content and help_content.strip() %}:class="$store.help.open ? 'lg:mr-72' : 'lg:mr-12'"{% endif %}>
             <div class="max-w-7xl mx-auto">
                 {% block content %}{% endblock %}
             </div>

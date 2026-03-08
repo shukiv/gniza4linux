@@ -133,9 +133,11 @@ def _is_skipped(log_file):
         return False
     try:
         text = Path(log_file).read_text()
+        if "Backup completed" in text or "Backup Summary" in text:
+            return False
         return ("is disabled, skipping" in text
-                and "Backup completed" not in text
-                and "Backup Summary" not in text)
+                or "previous backup still running" in text
+                or "nothing to do" in text)
     except OSError:
         return False
 

@@ -822,6 +822,12 @@ HELPEOF
                 backup_all_targets "$remote" || rc=$?
             fi
 
+            # rc=2 means all targets were skipped (already running) — treat as success
+            if (( rc == 2 )); then
+                log_info "All targets already running, nothing to do"
+                rc=0
+            fi
+
             # Stamp LAST_RUN on success
             if (( rc == 0 )); then
                 local conf="$CONFIG_DIR/schedules.d/${sched_name}.conf"

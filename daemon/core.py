@@ -189,26 +189,35 @@ def check_jobs():
             pid = entry.get("pid")
             if not pid:
                 continue
-            if _is_pid_alive(pid):
-                continue
 
-            # Process is dead — try to reap via Popen if we have it
+            # Try to reap via Popen if we have it
             rc = None
+            alive = True
             if pid in _child_procs:
-                proc = _child_procs.pop(pid)
-                rc = proc.wait()
+                proc = _child_procs[pid]
+                ret = proc.poll()
+                if ret is not None:
+                    _child_procs.pop(pid)
+                    rc = ret
+                    alive = False
 
-            # Fallback: try waitpid
-            if rc is None:
+            # Try waitpid to detect zombies (kill-0 returns True for zombies)
+            if alive:
                 try:
                     wpid, wstatus = os.waitpid(pid, os.WNOHANG)
                     if wpid != 0:
+                        alive = False
                         if os.WIFEXITED(wstatus):
                             rc = os.WEXITSTATUS(wstatus)
                         elif os.WIFSIGNALED(wstatus):
                             rc = 1
                 except ChildProcessError:
-                    pass
+                    # Not our child — fall back to kill-0
+                    if not _is_pid_alive(pid):
+                        alive = False
+
+            if alive:
+                continue
 
             if rc is None:
                 rc = _detect_return_code(entry.get("log_file"))

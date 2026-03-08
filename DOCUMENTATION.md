@@ -473,6 +473,17 @@ BWLIMIT=5000               # 5 MB/s — overrides global
 
 Value is in KB/s. Set to `0` for unlimited.
 
+### Rsync Compression
+
+Enable rsync's `-z` flag to compress data during transfer:
+
+```ini
+# Global (gniza.conf)
+RSYNC_COMPRESS="yes"
+```
+
+Compression reduces bandwidth usage but adds CPU overhead. It is most effective for text-heavy data (code, logs, SQL dumps) and has little effect on already-compressed files (images, videos, archives). Only applies to remote transfers (SSH, S3) — local transfers skip compression automatically.
+
 ### Retry Logic
 
 SSH connections are automatically retried on failure with exponential backoff:
@@ -1037,7 +1048,7 @@ The Settings screen organizes options into four bordered sections:
 
 | Section | Contents |
 |---------|----------|
-| **General** | Log level, log retention, retention count, bandwidth limit, disk threshold, rsync options |
+| **General** | Log level, log retention, retention count, bandwidth limit, disk threshold, rsync compression, rsync options |
 | **Email Notifications** | Email address, notify mode, SMTP host/port/user/password/from/security, Send Test Email button |
 | **SSH** | SSH timeout, SSH retries |
 | **Web Dashboard** | Port, host, API key |
@@ -1195,6 +1206,7 @@ All global settings are in `gniza.conf` in the config directory.
 | `DISK_USAGE_THRESHOLD` | `95` | Abort if destination >= this % (0 = disabled) |
 | `MAX_CONCURRENT_JOBS` | `1` | Max simultaneous jobs (0 = unlimited) |
 | `DAEMON_INTERVAL` | `10` | Health daemon check interval in seconds |
+| `RSYNC_COMPRESS` | `no` | Enable rsync compression (-z) for remote transfers |
 | `RSYNC_EXTRA_OPTS` | (empty) | Additional rsync flags |
 | `WORK_DIR` | `/tmp` | Temp directory for staging and dumps |
 

@@ -39,8 +39,15 @@
                         <td>
                             {% if s.schedule == 'custom' %}
                             <span class="font-mono text-sm">{{ s.cron }}</span>
+                            {% elif s.schedule == 'hourly' %}
+                            Every {{ s.day or '1' }} hour{{ 's' if (s.day or '1') != '1' }}
+                            {% elif s.schedule == 'daily' %}
+                            {% set day_map = {'0':'Sun','1':'Mon','2':'Tue','3':'Wed','4':'Thu','5':'Fri','6':'Sat'} %}
+                            {% set days = s.day.split(',') if s.day else [] %}
+                            {% if days|length == 7 or not days %}Every day{% else %}{% for d in days %}{% if not loop.first %}, {% endif %}{{ day_map.get(d, d) }}{% endfor %}{% endif %} {{ s.time }}
                             {% elif s.schedule == 'weekly' %}
-                            {{ s.day }} {{ s.time }}
+                            {% set wday_map = {'0':'Sun','1':'Mon','2':'Tue','3':'Wed','4':'Thu','5':'Fri','6':'Sat'} %}
+                            {{ wday_map.get(s.day, s.day) }} {{ s.time }}
                             {% elif s.schedule == 'monthly' %}
                             Day {{ s.day }} {{ s.time }}
                             {% else %}

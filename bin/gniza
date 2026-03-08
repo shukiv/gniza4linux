@@ -258,13 +258,16 @@ run_cli() {
             _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
 
             # Register in job registry so web/TUI can track CLI-started backups
-            local _job_label="Backup"
-            [[ -n "$target" ]] && _job_label+=" $target"
-            [[ -n "$remote" ]] && _job_label+=" → $remote"
-            [[ "$all" == "true" ]] && _job_label="Backup all"
+            # Skip if daemon already tracks this process
             local _job_id=""
-            _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
-                start "backup" "$_job_label" --log-file="${LOG_FILE:-}" --pid=$$ 2>/dev/null) || true
+            if [[ -z "${GNIZA_DAEMON_TRACKED:-}" ]]; then
+                local _job_label="Backup"
+                [[ -n "$target" ]] && _job_label+=" $target"
+                [[ -n "$remote" ]] && _job_label+=" → $remote"
+                [[ "$all" == "true" ]] && _job_label="Backup all"
+                _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
+                    start "backup" "$_job_label" --log-file="${LOG_FILE:-}" --pid=$$ 2>/dev/null) || true
+            fi
 
             _finish_job_reg() {
                 local _rc=$1
@@ -614,13 +617,16 @@ run_cli() {
             fi
 
             # Register job in shared registry so web/TUI can track it
-            local _job_label="Scheduled: $sched_name"
-            [[ -n "$target" ]] && _job_label+=" ($target"
-            [[ -n "$remote" ]] && _job_label+=" → $remote"
-            [[ -n "$target" ]] && _job_label+=")"
+            # Skip if daemon already tracks this process
             local _job_id=""
-            _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
-                start "scheduled-run" "$_job_label" --log-file="${LOG_FILE:-}" --pid=$$ 2>/dev/null) || true
+            if [[ -z "${GNIZA_DAEMON_TRACKED:-}" ]]; then
+                local _job_label="Scheduled: $sched_name"
+                [[ -n "$target" ]] && _job_label+=" ($target"
+                [[ -n "$remote" ]] && _job_label+=" → $remote"
+                [[ -n "$target" ]] && _job_label+=")"
+                _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
+                    start "scheduled-run" "$_job_label" --log-file="${LOG_FILE:-}" --pid=$$ 2>/dev/null) || true
+            fi
 
             _finish_job_reg() {
                 local _rc=$1

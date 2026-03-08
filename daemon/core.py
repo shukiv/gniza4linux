@@ -149,12 +149,15 @@ def _start_cli_background(*args, log_file=None):
     fh = None
     try:
         fh = open(log_file, "a") if log_file else None
+        env = os.environ.copy()
+        env["GNIZA_DAEMON_TRACKED"] = "1"
         proc = subprocess.Popen(
             cmd,
             stdout=fh if fh else subprocess.DEVNULL,
             stderr=subprocess.STDOUT if fh else subprocess.DEVNULL,
             stdin=subprocess.DEVNULL,
             start_new_session=True,
+            env=env,
         )
         return proc
     except Exception:

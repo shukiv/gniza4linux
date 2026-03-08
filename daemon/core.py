@@ -347,6 +347,30 @@ def cleanup_orphan_job_logs():
         logger.info(f"Cleaned up {removed} orphaned job log files")
 
 
+def enforce_retention():
+    """Run snapshot retention cleanup via the CLI."""
+    import subprocess
+    gniza_dir = Path(__file__).resolve().parent.parent
+    gniza_bin = gniza_dir / "bin" / "gniza"
+    try:
+        result = subprocess.run(
+            [str(gniza_bin), "--cli", "retention", "--all"],
+            capture_output=True, text=True, timeout=600,
+        )
+        if result.returncode == 0:
+            output = result.stdout.strip()
+            if output:
+                logger.info(f"Retention cleanup: {output}")
+        else:
+            stderr = result.stderr.strip()
+            if stderr:
+                logger.warning(f"Retention cleanup failed: {stderr}")
+    except subprocess.TimeoutExpired:
+        logger.warning("Retention cleanup timed out (10 min)")
+    except OSError as e:
+        logger.error(f"Retention cleanup error: {e}")
+
+
 def run(interval=10):
     """Main daemon loop."""
     signal.signal(signal.SIGTERM, _handle_signal)
@@ -365,6 +389,7 @@ def run(interval=10):
                 cleanup_old_entries()
                 cleanup_old_logs()
                 cleanup_orphan_job_logs()
+                enforce_retention()
         except Exception:
             logger.exception("Health check error")
         time.sleep(interval)

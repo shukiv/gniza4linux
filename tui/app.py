@@ -11,7 +11,6 @@ from tui.screens.target_edit import TargetEditScreen
 from tui.screens.remotes import RemotesScreen
 from tui.screens.remote_edit import RemoteEditScreen
 from tui.screens.snapshots import SnapshotsScreen
-from tui.screens.retention import RetentionScreen
 from tui.screens.schedule import ScheduleScreen
 from tui.screens.schedule_edit import ScheduleEditScreen
 from tui.screens.logs import LogsScreen
@@ -37,7 +36,6 @@ class GnizaApp(App):
         "remotes": RemotesScreen,
         "remote_edit": RemoteEditScreen,
         "snapshots": SnapshotsScreen,
-        "retention": RetentionScreen,
         "schedule": ScheduleScreen,
         "schedule_edit": ScheduleEditScreen,
         "logs": LogsScreen,

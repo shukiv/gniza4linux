@@ -60,7 +60,11 @@ if [[ -z "$SOURCE_DIR" ]]; then
     TMPDIR=$(mktemp -d)
     trap 'rm -rf "$TMPDIR"' EXIT
     info "Cloning from $REPO_URL..."
-    git clone --depth 1 "$REPO_URL" "$TMPDIR/gniza4linux" || die "Failed to clone repository"
+    if $DEBUG; then
+        git clone --depth 1 "$REPO_URL" "$TMPDIR/gniza4linux" || die "Failed to clone repository"
+    else
+        git clone --depth 1 --quiet "$REPO_URL" "$TMPDIR/gniza4linux" || die "Failed to clone repository"
+    fi
     SOURCE_DIR="$TMPDIR/gniza4linux"
 fi
 
@@ -112,11 +116,13 @@ chmod +x "$INSTALL_DIR/bin/gniza"
 
 # -- Install Python TUI dependencies -------------------------
 if command -v python3 &>/dev/null; then
-    info "Installing Python TUI dependencies (textual, textual-serve, flask)..."
-    if python3 -m pip install --break-system-packages textual textual-serve flask 2>/dev/null; then
-        info "Python TUI dependencies installed."
-    elif python3 -m pip install textual textual-serve flask 2>/dev/null; then
-        info "Python TUI dependencies installed."
+    info "Installing Python dependencies..."
+    _pip_quiet="--quiet"
+    $DEBUG && _pip_quiet=""
+    if python3 -m pip install --break-system-packages $_pip_quiet textual textual-serve flask 2>/dev/null; then
+        info "Python dependencies installed."
+    elif python3 -m pip install $_pip_quiet textual textual-serve flask 2>/dev/null; then
+        info "Python dependencies installed."
     else
         warn "Could not install Python TUI dependencies. TUI/web mode may not work."
         warn "Install manually: pip3 install textual textual-serve flask"

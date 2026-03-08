@@ -80,7 +80,7 @@ rsync_to_remote() {
         local rc=0
         if [[ -n "${_TRANSFER_LOG:-}" ]]; then
             echo "=== rsync: $source_dir -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
-            "${rsync_cmd[@]}" 2>&1 | _snaplog_tee || rc=$?
+            "${rsync_cmd[@]}" 2>&1 | _snaplog_tee; rc=${PIPESTATUS[0]}
         else
             "${rsync_cmd[@]}" || rc=$?
         fi
@@ -97,7 +97,7 @@ rsync_to_remote() {
             local rc2=0
             if [[ -n "${_TRANSFER_LOG:-}" ]]; then
                 echo "=== rsync (retry): $source_dir -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
-                "${rsync_cmd[@]}" 2>&1 | _snaplog_tee || rc2=$?
+                "${rsync_cmd[@]}" 2>&1 | _snaplog_tee; rc2=${PIPESTATUS[0]}
             else
                 "${rsync_cmd[@]}" || rc2=$?
             fi
@@ -180,7 +180,7 @@ rsync_local() {
         local rc=0
         if [[ -n "${_TRANSFER_LOG:-}" ]]; then
             echo "=== rsync (local): $source_dir -> $local_dest ===" >> "$_TRANSFER_LOG"
-            rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" 2>&1 | _snaplog_tee || rc=$?
+            rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" 2>&1 | _snaplog_tee; rc=${PIPESTATUS[0]}
         else
             rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" || rc=$?
         fi
@@ -195,7 +195,7 @@ rsync_local() {
             local rc2=0
             if [[ -n "${_TRANSFER_LOG:-}" ]]; then
                 echo "=== rsync (local retry): $source_dir -> $local_dest ===" >> "$_TRANSFER_LOG"
-                rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" 2>&1 | _snaplog_tee || rc2=$?
+                rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" 2>&1 | _snaplog_tee; rc2=${PIPESTATUS[0]}
             else
                 rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" || rc2=$?
             fi

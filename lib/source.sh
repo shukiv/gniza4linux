@@ -84,7 +84,7 @@ _rsync_from_source_ssh() {
         local rc=0
         if [[ -n "${_TRANSFER_LOG:-}" ]]; then
             echo "=== rsync (source pull): $source_spec -> $local_dir ===" >> "$_TRANSFER_LOG"
-            "${rsync_cmd[@]}" 2>&1 | _snaplog_tee || rc=$?
+            "${rsync_cmd[@]}" 2>&1 | _snaplog_tee; rc=${PIPESTATUS[0]}
         else
             "${rsync_cmd[@]}" || rc=$?
         fi
@@ -101,7 +101,7 @@ _rsync_from_source_ssh() {
             local rc2=0
             if [[ -n "${_TRANSFER_LOG:-}" ]]; then
                 echo "=== rsync (source pull retry): $source_spec -> $local_dir ===" >> "$_TRANSFER_LOG"
-                "${rsync_cmd[@]}" 2>&1 | _snaplog_tee || rc2=$?
+                "${rsync_cmd[@]}" 2>&1 | _snaplog_tee; rc2=${PIPESTATUS[0]}
             else
                 "${rsync_cmd[@]}" || rc2=$?
             fi

@@ -20,6 +20,7 @@ class _SafeRichLog(RichLog):
         return super().render_line(y)
 
 from tui.jobs import job_manager
+from tui.config import WORK_DIR
 from tui.widgets import ConfirmDialog, DocsPanel
 
 _PROGRESS_RE = re.compile(r"(\d+)%")
@@ -167,18 +168,13 @@ class RunningTasksScreen(Screen):
             self._log_timer = self.set_interval(0.3, self._poll_log)
 
     def _process_log_content(self, content: str, log_viewer: RichLog) -> None:
-        """Process log content, extracting rsync progress and writing log lines."""
-        # Split on both \n and \r to handle rsync --info=progress2 output
+        """Process log content and write log lines."""
         parts = re.split(r"[\r\n]+", content)
         for part in parts:
             part = part.strip()
             if not part:
                 continue
-            m = _PROGRESS_RE.search(part)
-            if m and ("xfr#" in part or "to-chk=" in part or "MB/s" in part or "kB/s" in part or "GB/s" in part):
-                self._update_progress(part)
-            else:
-                log_viewer.write(part)
+            log_viewer.write(part)
 
     def _update_progress(self, text: str) -> None:
         """Parse rsync progress2 line and update progress bar."""
@@ -217,6 +213,15 @@ class RunningTasksScreen(Screen):
                         new_data = new_raw.decode(errors="replace")
                         self._process_log_content(new_data, log_viewer)
             except OSError:
+                pass
+        # Read progress from separate file
+        if job._pid:
+            progress_file = WORK_DIR / f"gniza-progress-{job._pid}.txt"
+            try:
+                line = progress_file.read_text().strip()
+                if line:
+                    self._update_progress(line)
+            except (OSError, FileNotFoundError):
                 pass
         if job.status != "running":
             self.query_one("#rt-progress", ProgressBar).display = False

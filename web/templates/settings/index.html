@@ -157,7 +157,7 @@
             <form method="POST" action="{{ url_for('settings.check_update') }}">
                 <button type="submit" class="btn btn-info btn-sm">Check for Updates</button>
             </form>
-            <form method="POST" action="{{ url_for('settings.apply_update') }}">
+            <form method="POST" action="{{ url_for('settings.apply_update') }}" onsubmit="return confirm('This will update gniza and restart services. Continue?')">
                 <button type="submit" class="btn btn-warning btn-sm">Update Now</button>
             </form>
         </div>
@@ -186,6 +186,8 @@
 </ul>
 <h4 class="font-semibold text-sm mb-1">Web Dashboard</h4>
 <p class="mb-3 text-base-content/70">Port, host, and API key for the web interface.</p>
+<h4 class="font-semibold text-sm mb-1">Update</h4>
+<p class="mb-3 text-base-content/70">Check for new versions and apply updates from the git repository. Services will restart automatically after update.</p>
 <h4 class="font-semibold text-sm mb-1">Tips</h4>
 <ul class="list-disc list-inside text-base-content/70 space-y-0.5">
     <li>Per-schedule settings can override the default retention count.</li>

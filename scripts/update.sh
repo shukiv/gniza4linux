@@ -20,10 +20,12 @@ die()   { error "$1"; exit 1; }
 # Parse flags
 CHECK_ONLY=false
 FORCE=false
+NO_RESTART=false
 for arg in "$@"; do
     case "$arg" in
         --check) CHECK_ONLY=true ;;
         --force) FORCE=true ;;
+        --no-restart) NO_RESTART=true ;;
     esac
 done
 
@@ -47,14 +49,19 @@ CURRENT_VERSION="${CURRENT_VERSION:-unknown}"
 command -v git &>/dev/null || die "git is required for updates"
 
 # Clone latest to temp dir
-REPO_URL="https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git"
-TMPDIR=$(mktemp -d)
-trap 'rm -rf "$TMPDIR"' EXIT
+# Source repo URL from constants if available, else use default
+REPO_URL=""
+if [[ -f "$INSTALL_DIR/lib/constants.sh" ]]; then
+    REPO_URL=$(grep '^readonly GNIZA4LINUX_REPO=' "$INSTALL_DIR/lib/constants.sh" | sed 's/.*="\(.*\)"/\1/')
+fi
+REPO_URL="${REPO_URL:-https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git}"
+UPDATE_TMPDIR=$(mktemp -d)
+trap 'rm -rf "$UPDATE_TMPDIR"' EXIT
 info "Checking for updates..."
-git clone --depth 1 --quiet "$REPO_URL" "$TMPDIR/gniza4linux" || die "Failed to fetch latest version"
+git clone --depth 1 --quiet "$REPO_URL" "$UPDATE_TMPDIR/gniza4linux" || die "Failed to fetch latest version"
 
 # Read remote version
-REMOTE_VERSION=$(grep '^readonly GNIZA4LINUX_VERSION=' "$TMPDIR/gniza4linux/lib/constants.sh" | sed 's/.*="\(.*\)"/\1/')
+REMOTE_VERSION=$(grep '^readonly GNIZA4LINUX_VERSION=' "$UPDATE_TMPDIR/gniza4linux/lib/constants.sh" | sed 's/.*="\(.*\)"/\1/')
 REMOTE_VERSION="${REMOTE_VERSION:-unknown}"
 
 info "Installed: v${CURRENT_VERSION}"
@@ -80,7 +87,7 @@ if [[ "$CHECK_ONLY" == "true" ]]; then
 fi
 
 # Apply update
-SOURCE_DIR="$TMPDIR/gniza4linux"
+SOURCE_DIR="$UPDATE_TMPDIR/gniza4linux"
 info "Updating gniza v${CURRENT_VERSION} → v${REMOTE_VERSION}..."
 
 # Copy project files (same dirs as install.sh)
@@ -93,22 +100,26 @@ done
 # Ensure entrypoint is executable
 chmod +x "$INSTALL_DIR/bin/gniza"
 
-# Restart running services
-info "Restarting services..."
-if [[ "$MODE" == "root" ]]; then
-    if systemctl is-active gniza-web &>/dev/null; then
-        systemctl restart gniza-web && info "Web service restarted." || warn "Failed to restart web service."
-    fi
-    if systemctl is-active gniza-daemon &>/dev/null; then
-        systemctl restart gniza-daemon && info "Daemon service restarted." || warn "Failed to restart daemon."
+# Restart running services (skip if --no-restart, e.g. when called from web/TUI)
+if [[ "$NO_RESTART" == "false" ]]; then
+    info "Restarting services..."
+    if [[ "$MODE" == "root" ]]; then
+        if systemctl is-active gniza-web &>/dev/null; then
+            systemctl restart gniza-web && info "Web service restarted." || warn "Failed to restart web service."
+        fi
+        if systemctl is-active gniza-daemon &>/dev/null; then
+            systemctl restart gniza-daemon && info "Daemon service restarted." || warn "Failed to restart daemon."
+        fi
+    else
+        if systemctl --user is-active gniza-web &>/dev/null; then
+            systemctl --user restart gniza-web && info "Web service restarted." || warn "Failed to restart web service."
+        fi
+        if systemctl --user is-active gniza-daemon &>/dev/null; then
+            systemctl --user restart gniza-daemon && info "Daemon service restarted." || warn "Failed to restart daemon."
+        fi
     fi
 else
-    if systemctl --user is-active gniza-web &>/dev/null; then
-        systemctl --user restart gniza-web && info "Web service restarted." || warn "Failed to restart web service."
-    fi
-    if systemctl --user is-active gniza-daemon &>/dev/null; then
-        systemctl --user restart gniza-daemon && info "Daemon service restarted." || warn "Failed to restart daemon."
-    fi
+    info "Skipping service restart (--no-restart). Restart services manually to apply changes."
 fi
 
 echo ""

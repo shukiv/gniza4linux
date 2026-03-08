@@ -52,11 +52,13 @@
 {% include "components/flash.html" %}
 
 {% block body %}
+{% set help_content %}{% block help_text %}{% endblock %}{% endset %}
 <div class="drawer lg:drawer-open">
     <input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
 
     <!-- Main content area -->
-    <div class="drawer-content flex flex-col">
+    <div class="drawer-content flex flex-col transition-[margin] duration-200"
+         {% if help_content and help_content.strip() %}:class="$store.help.open ? 'lg:mr-72' : 'lg:mr-12'"{% endif %}>
         <!-- Header -->
         <div class="navbar bg-base-200 border-b border-base-300 sticky top-0 z-30">
             <div class="flex-none lg:hidden">
@@ -73,7 +75,6 @@
                       hx-trigger="load, every 3s"
                       hx-swap="outerHTML">
                 </span>
-                {% set help_content %}{% block help_text %}{% endblock %}{% endset %}
                 <label class="swap swap-rotate">
                     <input type="checkbox" class="theme-controller" value="corporate" />
                     <!-- sun icon (corporate/light) -->
@@ -87,33 +88,8 @@
 
         <!-- Page content -->
         <main class="p-4 md:p-6 w-full mx-auto flex-1">
-            <div class="max-w-7xl mx-auto flex"
-                 :class="{% if help_content and help_content.strip() %}$store.help.open ? 'gap-4' : 'gap-0'{% else %}''{% endif %}">
-                <div class="flex-1 min-w-0">
-                    {% block content %}{% endblock %}
-                </div>
-                {% if help_content and help_content.strip() %}
-                <div class="hidden lg:block shrink-0 transition-all duration-200"
-                     :class="$store.help.open ? 'w-72' : 'w-10'">
-                    <div class="bg-base-200 rounded-lg flex flex-col sticky top-20 max-h-[calc(100vh-6rem)]"
-                         :class="$store.help.open ? 'p-4' : 'p-2'">
-                        <div class="flex-1 overflow-y-auto text-sm" x-show="$store.help.open" x-cloak>
-                            {{ help_content }}
-                        </div>
-                        <div class="mt-auto pt-2 border-t border-base-300"
-                             x-show="$store.help.open" x-cloak>
-                            <button @click="$store.help.toggle()" class="w-full flex items-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7m-8 0l7-7-7-7"/></svg>
-                                Collapse
-                            </button>
-                        </div>
-                        <button @click="$store.help.toggle()" class="flex justify-center"
-                                x-show="!$store.help.open">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
-                        </button>
-                    </div>
-                </div>
-                {% endif %}
+            <div class="max-w-7xl mx-auto">
+                {% block content %}{% endblock %}
             </div>
         </main>
     </div>
@@ -124,6 +100,28 @@
         {% include "components/navbar.html" %}
     </div>
 </div>
+
+{% if help_content and help_content.strip() %}
+<!-- Right help panel — mirrors left sidebar -->
+<div class="hidden lg:flex fixed top-0 right-0 h-screen z-20 transition-all duration-200"
+     :class="$store.help.open ? 'w-72' : 'w-12'">
+    <ul class="menu min-h-full bg-base-200 text-base-content transition-all duration-200 w-full"
+        :class="$store.help.open ? 'p-4' : 'p-2'">
+        <li class="flex-1 overflow-y-auto text-sm" x-show="$store.help.open" x-cloak>
+            <div class="block hover:bg-transparent cursor-default active:!bg-transparent">
+                {{ help_content }}
+            </div>
+        </li>
+        <li class="mt-auto pt-2">
+            <button @click="$store.help.toggle()" class="w-full flex"
+                    :class="$store.help.open ? '' : 'justify-center'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" :class="$store.help.open ? '' : 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7m-8 0l7-7-7-7"/></svg>
+                <span x-show="$store.help.open" x-cloak>Collapse</span>
+            </button>
+        </li>
+    </ul>
+</div>
+{% endif %}
 {% endblock %}
 
 </body>

@@ -542,6 +542,102 @@ class JobManager:
         finally:
             job._tail_task = None
 
+    def reload_registry(self) -> None:
+        """Re-read the registry file to pick up jobs created externally."""
+        if not REGISTRY_FILE.is_file():
+            return
+        try:
+            entries = json.loads(REGISTRY_FILE.read_text())
+        except (json.JSONDecodeError, OSError):
+            return
+        now = datetime.now()
+        registry_ids = set()
+        for entry in entries:
+            job_id = entry["id"]
+            registry_ids.add(job_id)
+            existing = self._jobs.get(job_id)
+
+            # Skip jobs we're actively managing (have a live proc or tail task)
+            if existing and (existing._proc is not None or existing._tail_task is not None):
+                continue
+
+            saved_status = entry.get("status", "running")
+            pid = entry.get("pid")
+
+            # New job not in our dict — add it
+            if not existing:
+                if saved_status == "queued":
+                    job = Job(
+                        id=job_id,
+                        kind=entry.get("kind", "backup"),
+                        label=entry.get("label", "Job"),
+                        status="queued",
+                        started_at=datetime.fromisoformat(entry["started_at"]),
+                    )
+                    job._log_file = entry.get("log_file")
+                    cli_args = entry.get("cli_args")
+                    if cli_args:
+                        job._cli_args = tuple(cli_args)
+                    self._jobs[job.id] = job
+                    continue
+
+                if saved_status == "running" and pid:
+                    # Check if process is alive
+                    alive = False
+                    try:
+                        os.kill(pid, 0)
+                        alive = True
+                    except ProcessLookupError:
+                        pass
+                    except PermissionError:
+                        alive = True
+
+                    if alive:
+                        job = Job(
+                            id=job_id,
+                            kind=entry.get("kind", "backup"),
+                            label=entry.get("label", f"Job (PID {pid})"),
+                            status="running",
+                            started_at=datetime.fromisoformat(entry["started_at"]),
+                        )
+                        job._pid = pid
+                        job._pgid = entry.get("pgid")
+                        job._reconnected = True
+                        job._log_file = entry.get("log_file")
+                        self._jobs[job.id] = job
+                        continue
+                    else:
+                        saved_status = "unknown"  # will be refined below
+
+                # Finished job (or running that died)
+                if saved_status not in ("running", "queued"):
+                    finished_at_str = entry.get("finished_at")
+                    finished_at = datetime.fromisoformat(finished_at_str) if finished_at_str else now
+                    age_days = (now - finished_at).total_seconds() / 86400
+                    if age_days > get_log_retain_days():
+                        continue
+                    job = Job(
+                        id=job_id,
+                        kind=entry.get("kind", "backup"),
+                        label=entry.get("label", "Job"),
+                        status=saved_status,
+                        started_at=datetime.fromisoformat(entry["started_at"]),
+                        finished_at=finished_at,
+                        return_code=entry.get("return_code"),
+                    )
+                    job._log_file = entry.get("log_file")
+                    self._jobs[job.id] = job
+                    continue
+
+            # Existing job — update status if changed externally
+            if existing and existing.status != saved_status:
+                if saved_status not in ("running", "queued"):
+                    existing.status = saved_status
+                    existing.return_code = entry.get("return_code")
+                    finished_at_str = entry.get("finished_at")
+                    if finished_at_str:
+                        existing.finished_at = datetime.fromisoformat(finished_at_str)
+
     def check_reconnected(self) -> None:
         changed = False
         for job in list(self._jobs.values()):

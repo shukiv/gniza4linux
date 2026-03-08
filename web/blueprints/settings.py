@@ -97,9 +97,20 @@ def check_update():
 @login_required
 def apply_update():
     try:
-        rc, stdout, stderr = run_cli_sync("update", timeout=120)
+        rc, stdout, stderr = run_cli_sync("update", "--no-restart", timeout=120)
         if rc == 0:
-            flash(stdout.strip() or "Update applied successfully.", "success")
+            flash(stdout.strip() or "Update applied. Restarting services...", "success")
+            # Defer service restart so the HTTP response is sent first
+            def _delayed_restart():
+                import time
+                time.sleep(1)
+                if os.geteuid() == 0:
+                    subprocess.run(["systemctl", "restart", "gniza-web"], check=False)
+                    subprocess.run(["systemctl", "restart", "gniza-daemon"], check=False)
+                else:
+                    subprocess.run(["systemctl", "--user", "restart", "gniza-web"], check=False)
+                    subprocess.run(["systemctl", "--user", "restart", "gniza-daemon"], check=False)
+            threading.Thread(target=_delayed_restart, daemon=True).start()
         else:
             flash(stderr.strip() or stdout.strip() or "Update failed.", "error")
     except Exception as e:

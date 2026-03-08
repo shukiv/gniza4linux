@@ -93,6 +93,10 @@ if [[ -d "$SOURCE_DIR/web" ]]; then
     cp -r "$SOURCE_DIR/web" "$INSTALL_DIR/"
 fi
 
+if [[ -d "$SOURCE_DIR/daemon" ]]; then
+    cp -r "$SOURCE_DIR/daemon" "$INSTALL_DIR/"
+fi
+
 if [[ -d "$SOURCE_DIR/scripts" ]]; then
     cp -r "$SOURCE_DIR/scripts" "$INSTALL_DIR/"
 fi
@@ -220,6 +224,48 @@ SVCEOF
             warn "Could not start user service. Start manually: gniza web start"
         fi
     fi
+fi
+
+# -- Daemon setup --
+enable_daemon="n"
+read -rp "Enable background health daemon? (y/n) [n]: " enable_daemon </dev/tty || true
+if [ "$enable_daemon" = "y" ] || [ "$enable_daemon" = "Y" ]; then
+    if [ "$MODE" = "root" ]; then
+        if "$INSTALL_DIR/bin/gniza" daemon install-service 2>/dev/null; then
+            info "Daemon systemd service installed."
+        else
+            warn "Failed to install daemon service. Start manually: gniza daemon start"
+        fi
+    else
+        _user_service_dir="$HOME/.config/systemd/user"
+        mkdir -p "$_user_service_dir"
+        cat > "$_user_service_dir/gniza-daemon.service" <<SVCEOF
+[Unit]
+Description=GNIZA Background Health Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=$(command -v python3) -m daemon
+WorkingDirectory=$INSTALL_DIR
+Environment=GNIZA_DIR=$INSTALL_DIR
+Environment=PYTHONPATH=$INSTALL_DIR
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+SVCEOF
+        systemctl --user daemon-reload 2>/dev/null || true
+        systemctl --user enable gniza-daemon 2>/dev/null || true
+        systemctl --user restart gniza-daemon 2>/dev/null || true
+        if systemctl --user is-active gniza-daemon &>/dev/null; then
+            info "Daemon user service installed and started."
+        else
+            warn "Could not start daemon service. Start manually: gniza daemon start"
+        fi
+    fi
+    DAEMON_INSTALLED="yes"
 fi
 
 # -- Done -----------------------------------------------------

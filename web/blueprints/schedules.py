@@ -9,6 +9,7 @@ from flask import (
 from tui.config import CONFIG_DIR, parse_conf, write_conf, list_conf_dir
 from tui.models import Schedule
 from web.app import login_required
+from web.jobs import web_job_manager
 
 bp = Blueprint("schedules", __name__, url_prefix="/schedules")
 
@@ -197,3 +198,25 @@ def toggle(name):
     write_conf(conf_path, schedule.to_conf())
     flash(f"Schedule '{name}' {'activated' if schedule.active == 'yes' else 'deactivated'}.", "success")
     return redirect(url_for("schedules.index"))
+
+
+@bp.route("/<name>/run", methods=["POST"])
+@login_required
+def run_now(name):
+    if not _VALID_NAME_RE.match(name):
+        flash("Invalid name.", "error")
+        return redirect(url_for("schedules.index"))
+    conf_path = CONFIG_DIR / "schedules.d" / f"{name}.conf"
+    if not conf_path.is_file():
+        flash("Schedule not found.", "error")
+        return redirect(url_for("schedules.index"))
+    data = parse_conf(conf_path)
+    schedule = Schedule.from_conf(name, data)
+    args = ["scheduled-run", f"--schedule={name}"]
+    if schedule.targets:
+        args.append(f"--source={schedule.targets}")
+    if schedule.remotes:
+        args.append(f"--destination={schedule.remotes}")
+    web_job_manager.create_and_start("backup", f"Schedule: {name}", *args)
+    flash(f"Schedule '{name}' started.", "success")
+    return redirect(url_for("jobs.index"))

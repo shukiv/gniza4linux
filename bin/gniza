@@ -717,8 +717,10 @@ SVCEOF
             ;;
         reset-password)
             _conf="$CONFIG_DIR/gniza.conf"
-            [[ -f "$_conf" ]] || die "Config not found: $_conf"
             _new_key=$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')
+            # Create config file if it doesn't exist
+            mkdir -p "$(dirname "$_conf")"
+            touch "$_conf"
             if grep -q "^WEB_API_KEY=" "$_conf" 2>/dev/null; then
                 sed -i "s|^WEB_API_KEY=.*|WEB_API_KEY=\"${_new_key}\"|" "$_conf"
             else

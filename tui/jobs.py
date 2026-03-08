@@ -638,6 +638,14 @@ class JobManager:
                     if finished_at_str:
                         existing.finished_at = datetime.fromisoformat(finished_at_str)
 
+        # Remove jobs that are no longer in the registry (cleared externally)
+        # but only if they're not actively managed by this TUI instance
+        for job_id in list(self._jobs):
+            if job_id not in registry_ids:
+                job = self._jobs[job_id]
+                if job._proc is None and job._tail_task is None:
+                    del self._jobs[job_id]
+
     def check_reconnected(self) -> None:
         changed = False
         for job in list(self._jobs.values()):

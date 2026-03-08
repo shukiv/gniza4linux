@@ -3,16 +3,34 @@
     <span>{{ error }}</span>
 </div>
 {% elif snapshots %}
-<div class="space-y-1">
-    {% for s in snapshots %}
-    <button class="btn btn-ghost btn-sm btn-block justify-start font-mono"
-            hx-get="/snapshots/browse/{{ target }}/{{ remote }}/{{ s }}"
-            hx-target="#snapshot-browser"
-            hx-swap="innerHTML">
-        {{ s }}
-    </button>
-    {% endfor %}
+<div class="overflow-x-auto">
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Snapshot</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in snapshots %}
+            <tr class="hover:bg-base-300">
+                <td class="text-base-content/50">{{ loop.index }}</td>
+                <td class="font-mono">{{ s }}</td>
+                <td class="text-right">
+                    <button class="btn btn-ghost btn-xs"
+                            hx-get="/snapshots/browse/{{ target }}/{{ remote }}/{{ s }}"
+                            hx-target="#snapshot-browser"
+                            hx-swap="innerHTML">
+                        Browse
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
+<p class="text-base-content/40 text-sm mt-2">{{ snapshots|length }} snapshot{{ 's' if snapshots|length != 1 }}</p>
 {% else %}
 <p class="text-base-content/40">No snapshots found for this combination.</p>
 {% endif %}

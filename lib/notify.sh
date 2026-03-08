@@ -4,6 +4,15 @@
 [[ -n "${_GNIZA4LINUX_NOTIFY_LOADED:-}" ]] && return 0
 _GNIZA4LINUX_NOTIFY_LOADED=1
 
+_log_email() {
+    local status="$1"
+    local recipients="$2"
+    local subject="$3"
+    local email_log="${LOG_DIR:-/var/log/gniza}/email.log"
+    local timestamp; timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    echo "${timestamp} | ${status} | ${recipients} | ${subject}" >> "$email_log" 2>/dev/null
+}
+
 _send_via_smtp() {
     local subject="$1"
     local body="$2"
@@ -132,6 +141,9 @@ send_notification() {
     local rc=$?
     if (( rc == 0 )); then
         log_debug "Notification sent"
+        _log_email "OK" "$NOTIFY_EMAIL" "$full_subject"
+    else
+        _log_email "FAIL" "$NOTIFY_EMAIL" "$full_subject"
     fi
     return $rc
 }

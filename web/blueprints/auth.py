@@ -7,17 +7,28 @@ from flask import (
     session, flash, current_app,
 )
 
+from tui.config import CONFIG_DIR, parse_conf
+
 bp = Blueprint("auth", __name__)
 
 # Brute-force protection: track failed attempts per IP
 _failed_attempts = defaultdict(list)  # ip -> [timestamp, ...]
-_MAX_ATTEMPTS = 5
-_LOCKOUT_SECONDS = 300  # 5 minutes
 
 
-def _clean_old_attempts(ip):
+def _get_limits():
+    """Read login limits from config (cached per request via app config)."""
+    try:
+        conf = parse_conf(CONFIG_DIR / "gniza.conf")
+        max_attempts = max(1, int(conf.get("LOGIN_MAX_ATTEMPTS", "5")))
+        lockout_seconds = max(10, int(conf.get("LOGIN_LOCKOUT_SECONDS", "300")))
+    except (ValueError, TypeError):
+        max_attempts, lockout_seconds = 5, 300
+    return max_attempts, lockout_seconds
+
+
+def _clean_old_attempts(ip, lockout_seconds):
     """Remove attempts older than the lockout window."""
-    cutoff = time.monotonic() - _LOCKOUT_SECONDS
+    cutoff = time.monotonic() - lockout_seconds
     _failed_attempts[ip] = [t for t in _failed_attempts[ip] if t > cutoff]
     if not _failed_attempts[ip]:
         _failed_attempts.pop(ip, None)
@@ -25,11 +36,12 @@ def _clean_old_attempts(ip):
 
 def _is_locked(ip):
     """Check if IP is locked out. Returns (locked, seconds_remaining)."""
-    _clean_old_attempts(ip)
+    max_attempts, lockout_seconds = _get_limits()
+    _clean_old_attempts(ip, lockout_seconds)
     attempts = _failed_attempts.get(ip, [])
-    if len(attempts) >= _MAX_ATTEMPTS:
+    if len(attempts) >= max_attempts:
         oldest = attempts[0]
-        remaining = int(_LOCKOUT_SECONDS - (time.monotonic() - oldest))
+        remaining = int(lockout_seconds - (time.monotonic() - oldest))
         return True, max(1, remaining)
     return False, 0
 
@@ -67,7 +79,8 @@ def login():
             flash(f"Too many failed attempts. Try again in {remaining} seconds.", "error")
             return render_template("auth/login.html", lockout_remaining=remaining)
 
-        attempts_left = _MAX_ATTEMPTS - len(_failed_attempts.get(ip, []))
+        max_attempts, _ = _get_limits()
+        attempts_left = max_attempts - len(_failed_attempts.get(ip, []))
         flash(f"Invalid API key. {attempts_left} attempt{'s' if attempts_left != 1 else ''} remaining.", "error")
 
     return render_template("auth/login.html", lockout_remaining=remaining if locked else 0)

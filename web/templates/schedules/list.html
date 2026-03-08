@@ -38,7 +38,7 @@
                         <td><span class="badge badge-outline badge-md">{{ s.schedule }}</span></td>
                         <td>
                             {% if s.schedule == 'custom' %}
-                            <span class="font-mono text-sm">{{ s.cron }}</span>
+                            {{ s._cron_text or s.cron }}
                             {% elif s.schedule == 'hourly' %}
                             Every {{ s.day or '1' }} hour{{ 's' if (s.day or '1') != '1' }}
                             {% elif s.schedule == 'daily' %}

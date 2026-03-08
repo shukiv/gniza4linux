@@ -2,19 +2,54 @@
 <div class="alert alert-error">
     <span>{{ error }}</span>
 </div>
-{% elif files %}
-<div class="overflow-x-auto max-h-96 overflow-y-auto">
-    <table class="table table-xs font-mono">
-        <tbody>
-            {% for f in files %}
-            <tr class="hover:bg-base-300">
-                <td>{{ f }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+{% elif dirs or files %}
+<div class="text-sm font-mono bg-base-300 px-3 py-2 rounded mb-3 break-all">
+    /{{ subpath }}
 </div>
-<p class="text-base-content/40 text-sm mt-2">{{ files|length }} entries</p>
+
+{% if subpath %}
+<div class="mb-2">
+    {% set parent = subpath.rsplit('/', 1)[0] if '/' in subpath else '' %}
+    <button class="btn btn-ghost btn-xs font-mono gap-1"
+            hx-get="{{ url_for('snapshots.browse', target=target, remote=remote, snapshot=snapshot, path=parent) }}"
+            hx-target="#snapshot-browser"
+            hx-swap="innerHTML">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        ..
+    </button>
+</div>
+{% endif %}
+
+<div class="overflow-y-auto max-h-[32rem] border border-base-300 rounded-lg">
+    <ul class="menu menu-xs bg-base-100 rounded-lg w-full [&_li>details]:w-full">
+        {% for d in dirs %}
+        {% set child_path = (subpath + '/' + d).strip('/') %}
+        <li>
+            <details hx-get="{{ url_for('snapshots.browse_children', target=target, remote=remote, snapshot=snapshot, path=child_path) }}"
+                     hx-target="find ul"
+                     hx-swap="innerHTML"
+                     hx-trigger="toggle once">
+                <summary class="font-mono">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>
+                    {{ d }}
+                </summary>
+                <ul>
+                    <li><span class="text-base-content/40 text-xs"><span class="loading loading-dots loading-xs"></span></span></li>
+                </ul>
+            </details>
+        </li>
+        {% endfor %}
+        {% for f in files %}
+        <li>
+            <span class="font-mono">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                {{ f }}
+            </span>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+<p class="text-base-content/40 text-sm mt-2">{{ dirs|length }} folder{{ 's' if dirs|length != 1 }}, {{ files|length }} file{{ 's' if files|length != 1 }}</p>
 {% else %}
-<p class="text-base-content/40">No files found in this snapshot.</p>
+<p class="text-base-content/40">Empty directory.</p>
 {% endif %}

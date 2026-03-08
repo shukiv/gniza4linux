@@ -205,7 +205,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$(command -v python3) -m tui --web --host 0.0.0.0 --port 2323
+ExecStart=$(command -v python3) -m web --host=0.0.0.0 --port=2323
 WorkingDirectory=$INSTALL_DIR
 Environment=GNIZA_DIR=$INSTALL_DIR
 Environment=PYTHONPATH=$INSTALL_DIR

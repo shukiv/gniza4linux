@@ -160,3 +160,51 @@ list_remote_targets() {
     local sq_targets; sq_targets="$(shquote "$targets_dir")"
     remote_exec "ls -1 '${sq_targets}' 2>/dev/null" 2>/dev/null || true
 }
+
+# ── Health Check Helpers ─────────────────────────────────────
+
+# Find target names that have snapshots on the remote but no
+# corresponding config in targets.d/.
+# Outputs one orphan name per line. Returns 0 even if none found.
+find_orphaned_targets() {
+    local remote_targets; remote_targets=$(list_remote_targets) || true
+    [[ -z "$remote_targets" ]] && return 0
+
+    local configured; configured=$(list_targets) || true
+    while IFS= read -r rt; do
+        [[ -z "$rt" ]] && continue
+        if ! echo "$configured" | grep -qxF "$rt"; then
+            echo "$rt"
+        fi
+    done <<< "$remote_targets"
+}
+
+# Count partial (incomplete) snapshots for a target.
+# Outputs the count (integer). Does NOT delete anything.
+count_partial_snapshots() {
+    local target_name="$1"
+    local count=0
+
+    if _is_rclone_mode; then
+        local snap_subpath="targets/${target_name}/snapshots"
+        local all_dirs; all_dirs=$(rclone_list_dirs "$snap_subpath") || true
+        [[ -z "$all_dirs" ]] && { echo "0"; return 0; }
+        while IFS= read -r dir; do
+            [[ -z "$dir" ]] && continue
+            if ! rclone_exists "${snap_subpath}/${dir}/.complete"; then
+                ((count++)) || true
+            fi
+        done <<< "$all_dirs"
+    elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+        local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
+        local partials; partials=$(ls -1d "$snap_dir"/*.partial 2>/dev/null | wc -l) || true
+        count="${partials:-0}"
+    else
+        local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
+        local sq_snap; sq_snap="$(shquote "$snap_dir")"
+        local partials; partials=$(remote_exec "ls -1d '${sq_snap}'/*.partial 2>/dev/null | wc -l" 2>/dev/null) || true
+        count="${partials:-0}"
+    fi
+
+    echo "$count"
+}

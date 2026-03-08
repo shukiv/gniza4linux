@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Health{% endblock %}
+{% block page_title %}Health{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-xl font-semibold">Destination Health</h2>
+    <button class="btn btn-primary btn-sm" onclick="document.querySelectorAll('[data-health-check]').forEach(el => htmx.trigger(el, 'load'))">
+        Refresh All
+    </button>
+</div>
+
+{% if remotes %}
+<div class="space-y-4">
+    {% for r in remotes %}
+    <div class="card bg-base-200 shadow">
+        <div class="card-body p-4">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                    <h3 class="font-mono font-bold text-lg">{{ r.name }}</h3>
+                    <span class="badge badge-outline badge-md">{{ r.type }}</span>
+                </div>
+            </div>
+            <div data-health-check
+                 hx-get="{{ url_for('health.check', name=r.name) }}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+                <div class="flex items-center gap-2 text-base-content/40">
+                    <span class="loading loading-spinner loading-sm"></span>
+                    <span>Checking health...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card bg-base-200 shadow">
+    <div class="card-body text-center text-base-content/40 py-12">
+        <p>No destinations configured</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Health Check</h3>
+<p class="mb-3 text-base-content/70">Monitor the health of all backup destinations.</p>
+<h4 class="font-semibold text-sm mb-1">Checks performed</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Connectivity</strong> — Verifies the destination is reachable.</li>
+    <li><strong>Disk/Quota</strong> — Shows storage usage and warns at 90%.</li>
+    <li><strong>Snapshots</strong> — Counts backups per source.</li>
+    <li><strong>Stale partials</strong> — Detects incomplete backups.</li>
+    <li><strong>Orphaned targets</strong> — Finds backups for deleted sources.</li>
+</ul>
+{% endblock %}

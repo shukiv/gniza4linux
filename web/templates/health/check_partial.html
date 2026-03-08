@@ -1,0 +1,94 @@
+{% if error %}
+<div class="alert alert-error text-sm">
+    <span>{{ error }}</span>
+</div>
+{% elif data %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <!-- Connectivity -->
+    <div class="flex items-center gap-2">
+        {% if data.connectivity %}
+        <span class="badge badge-success badge-sm gap-1">Connected</span>
+        {% else %}
+        <span class="badge badge-error badge-sm gap-1">Unreachable</span>
+        {% endif %}
+    </div>
+
+    <!-- Disk -->
+    <div>
+        <div class="text-xs text-base-content/50 mb-0.5">Disk</div>
+        <div class="text-sm font-mono">{{ data.disk.info }}</div>
+        {% if data.disk.pct >= 90 %}
+        <div class="text-xs text-warning">{{ data.disk.pct }}% used</div>
+        {% endif %}
+    </div>
+
+    <!-- Snapshots -->
+    <div>
+        <div class="text-xs text-base-content/50 mb-0.5">Snapshots</div>
+        <div class="text-sm">{{ data.snapshots }} total</div>
+        {% if data.partials > 0 %}
+        <div class="text-xs text-warning">{{ data.partials }} stale partial{{ 's' if data.partials != 1 else '' }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Orphans -->
+    <div>
+        <div class="text-xs text-base-content/50 mb-0.5">Orphaned</div>
+        {% if data.orphans %}
+        <div class="text-sm text-warning">{{ data.orphans|length }} target{{ 's' if data.orphans|length != 1 else '' }}</div>
+        <div class="text-xs text-base-content/50">{{ data.orphans|join(', ') }}</div>
+        {% else %}
+        <div class="text-sm text-success">None</div>
+        {% endif %}
+    </div>
+</div>
+
+{% if data.targets %}
+<div class="mt-3">
+    <details class="collapse collapse-arrow bg-base-300/50">
+        <summary class="collapse-title text-sm font-medium py-2 min-h-0">
+            Source details ({{ data.targets|length }} source{{ 's' if data.targets|length != 1 else '' }})
+        </summary>
+        <div class="collapse-content">
+            <table class="table table-xs">
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Snapshots</th>
+                        <th>Latest</th>
+                        <th>Partials</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in data.targets %}
+                    <tr>
+                        <td class="font-mono">{{ t.name }}</td>
+                        <td>{{ t.snapshots }}</td>
+                        <td class="font-mono text-xs">{{ t.latest or '--' }}</td>
+                        <td>
+                            {% if t.partials > 0 %}
+                            <span class="text-warning">{{ t.partials }}</span>
+                            {% else %}
+                            0
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </details>
+</div>
+{% endif %}
+
+<!-- Status badge -->
+<div class="mt-2 flex justify-end">
+    {% if data.status == 'healthy' %}
+    <span class="badge badge-success badge-sm">Healthy</span>
+    {% elif data.status == 'warning' %}
+    <span class="badge badge-warning badge-sm">Warning</span>
+    {% else %}
+    <span class="badge badge-error badge-sm">Error</span>
+    {% endif %}
+</div>
+{% endif %}

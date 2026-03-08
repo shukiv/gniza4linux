@@ -235,6 +235,45 @@ validate_remote() {
     return 0
 }
 
+# ── Live connectivity test ────────────────────────────────────
+
+# Test actual connectivity to the current remote.
+# Assumes load_remote() has already been called.
+test_remote_connection() {
+    case "${REMOTE_TYPE:-ssh}" in
+        ssh)
+            test_ssh_connection
+            ;;
+        local)
+            _test_local_connection
+            ;;
+        s3|gdrive)
+            test_rclone_connection
+            ;;
+        *)
+            log_error "Unknown remote type: ${REMOTE_TYPE:-ssh}"
+            return 1
+            ;;
+    esac
+}
+
+_test_local_connection() {
+    local base="${REMOTE_BASE:-/backups}"
+    if [[ ! -d "$base" ]]; then
+        log_error "Base directory does not exist: $base"
+        return 1
+    fi
+    local testfile="$base/.gniza_write_test_$$"
+    if echo "gniza validation" > "$testfile" 2>/dev/null; then
+        rm -f "$testfile"
+        log_info "Local connection test passed: $base"
+        return 0
+    else
+        log_error "Cannot write to base directory: $base"
+        return 1
+    fi
+}
+
 # Resolve which remotes to operate on.
 # - If --remote=NAME was given, return just that name.
 # - Otherwise return all remotes from remotes.d/.
@@ -289,6 +328,9 @@ remote_disk_usage_pct() {
         local)
             df_line=$({ df "$base" 2>/dev/null || df / 2>/dev/null; } | tail -1) || return 1
             ;;
+        s3|gdrive)
+            rclone_disk_usage_pct
+            ;;
         *)
             echo "0"
             return 0
@@ -328,6 +370,9 @@ remote_disk_info_short() {
             ;;
         local)
             df_out=$(df -h "$base" 2>/dev/null || df -h / 2>/dev/null) || return 1
+            ;;
+        s3|gdrive)
+            rclone_disk_info_short
             ;;
         *)
             echo "N/A"

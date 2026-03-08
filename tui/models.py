@@ -122,7 +122,7 @@ class Target:
 @dataclass
 class Remote:
     name: str = ""
-    type: str = "ssh"
+    type: str = "local"
     host: str = ""
     port: str = "22"
     user: str = "root"

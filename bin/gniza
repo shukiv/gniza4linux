@@ -264,7 +264,7 @@ run_cli() {
             [[ "$all" == "true" ]] && _job_label="Backup all"
             local _job_id=""
             _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
-                start "backup" "$_job_label" --log-file="${LOG_FILE:-}" 2>/dev/null) || true
+                start "backup" "$_job_label" --log-file="${LOG_FILE:-}" --pid=$$ 2>/dev/null) || true
 
             _finish_job_reg() {
                 local _rc=$1
@@ -620,7 +620,7 @@ run_cli() {
             [[ -n "$target" ]] && _job_label+=")"
             local _job_id=""
             _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
-                start "scheduled-run" "$_job_label" --log-file="${LOG_FILE:-}" 2>/dev/null) || true
+                start "scheduled-run" "$_job_label" --log-file="${LOG_FILE:-}" --pid=$$ 2>/dev/null) || true
 
             _finish_job_reg() {
                 local _rc=$1

@@ -163,7 +163,7 @@ def save():
 
     remote = Remote(
         name=name,
-        type=form.get("type", "ssh"),
+        type=form.get("type", "local"),
         host=form.get("host", ""),
         port=form.get("port", "22"),
         user=form.get("user", "root"),

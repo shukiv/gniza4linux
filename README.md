@@ -255,7 +255,9 @@ MAX_CONCURRENT_JOBS=1           # Max simultaneous jobs (0 = unlimited)
 DAEMON_INTERVAL=10              # Health daemon check interval in seconds
 SSH_TIMEOUT=30                  # SSH connection timeout in seconds
 SSH_RETRIES=3                   # Number of retry attempts
-RSYNC_COMPRESS="no"             # Enable rsync compression (-z) for remote transfers
+RSYNC_COMPRESS="no"             # Compression: no, zlib, zstd
+RSYNC_PARTIAL="no"              # Resume interrupted transfers (--partial)
+RSYNC_CHECKSUM="no"             # Detect changes by content (--checksum)
 RSYNC_EXTRA_OPTS=""             # Additional rsync flags
 WORK_DIR="/tmp"                 # Temp directory for staging
 

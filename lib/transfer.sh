@@ -36,8 +36,17 @@ rsync_to_remote() {
         rsync_opts+=(--bwlimit="$BWLIMIT")
     fi
 
-    if [[ "${RSYNC_COMPRESS:-no}" == "yes" ]]; then
-        rsync_opts+=(-z)
+    case "${RSYNC_COMPRESS:-no}" in
+        yes|zlib) rsync_opts+=(-z) ;;
+        zstd)     rsync_opts+=(-z --compress-choice=zstd) ;;
+    esac
+
+    if [[ "${RSYNC_PARTIAL:-no}" == "yes" ]]; then
+        rsync_opts+=(--partial)
+    fi
+
+    if [[ "${RSYNC_CHECKSUM:-no}" == "yes" ]]; then
+        rsync_opts+=(--checksum)
     fi
 
     if [[ -n "${RSYNC_EXTRA_OPTS:-}" ]]; then
@@ -144,6 +153,14 @@ rsync_local() {
         rsync_opts+=(--bwlimit="$BWLIMIT")
     fi
 
+    if [[ "${RSYNC_PARTIAL:-no}" == "yes" ]]; then
+        rsync_opts+=(--partial)
+    fi
+
+    if [[ "${RSYNC_CHECKSUM:-no}" == "yes" ]]; then
+        rsync_opts+=(--checksum)
+    fi
+
     if [[ -n "${RSYNC_EXTRA_OPTS:-}" ]]; then
         # shellcheck disable=SC2206
         rsync_opts+=($RSYNC_EXTRA_OPTS)
@@ -243,8 +260,17 @@ rsync_ssh_to_ssh() {
         ropts+=(--bwlimit="$BWLIMIT")
     fi
 
-    if [[ "${RSYNC_COMPRESS:-no}" == "yes" ]]; then
-        ropts+=(-z)
+    case "${RSYNC_COMPRESS:-no}" in
+        yes|zlib) ropts+=(-z) ;;
+        zstd)     ropts+=(-z --compress-choice=zstd) ;;
+    esac
+
+    if [[ "${RSYNC_PARTIAL:-no}" == "yes" ]]; then
+        ropts+=(--partial)
+    fi
+
+    if [[ "${RSYNC_CHECKSUM:-no}" == "yes" ]]; then
+        ropts+=(--checksum)
     fi
 
     if [[ -n "${RSYNC_EXTRA_OPTS:-}" ]]; then

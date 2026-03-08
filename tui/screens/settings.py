@@ -57,7 +57,15 @@ class SettingsScreen(Screen):
                     yield Static("Extra rsync options:")
                     yield Input(value=settings.rsync_extra_opts, id="set-rsyncopts")
                     yield Static("Rsync Compression:")
-                    yield Switch(value=settings.rsync_compress == "yes", id="set-rsynccompress")
+                    yield Select(
+                        [("Off", "no"), ("zlib (default)", "zlib"), ("zstd (faster)", "zstd")],
+                        id="set-rsynccompress",
+                        value=settings.rsync_compress if settings.rsync_compress in ("no", "zlib", "zstd") else "no",
+                    )
+                    yield Static("Rsync Partial (resume interrupted transfers):")
+                    yield Switch(value=settings.rsync_partial == "yes", id="set-rsyncpartial")
+                    yield Static("Rsync Checksum (detect changes by content):")
+                    yield Switch(value=settings.rsync_checksum == "yes", id="set-rsyncchecksum")
                 with Vertical(classes="settings-section", id="section-email"):
                     yield Static("Notification Email:")
                     yield Input(value=settings.notify_email, id="set-email")
@@ -146,7 +154,9 @@ class SettingsScreen(Screen):
             ssh_timeout=self.query_one("#set-sshtimeout", Input).value.strip() or "30",
             ssh_retries=self.query_one("#set-sshretries", Input).value.strip() or "3",
             rsync_extra_opts=self.query_one("#set-rsyncopts", Input).value.strip(),
-            rsync_compress="yes" if self.query_one("#set-rsynccompress", Switch).value else "no",
+            rsync_compress=self._get_select_val("#set-rsynccompress", "no"),
+            rsync_partial="yes" if self.query_one("#set-rsyncpartial", Switch).value else "no",
+            rsync_checksum="yes" if self.query_one("#set-rsyncchecksum", Switch).value else "no",
             disk_usage_threshold=self.query_one("#set-diskthreshold", Input).value.strip() or "95",
             max_concurrent_jobs=self.query_one("#set-maxjobs", Input).value.strip() or "1",
             web_port=self.query_one("#set-web-port", Input).value.strip() or "2323",

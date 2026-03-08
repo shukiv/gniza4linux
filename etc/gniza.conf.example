@@ -33,8 +33,14 @@ SSH_RETRIES=3
 # Extra rsync options (careful: validated for safe characters)
 RSYNC_EXTRA_OPTS=""
 
-# Enable rsync compression (-z). Useful for slow links, adds CPU overhead on fast LANs.
+# Rsync compression: no, zlib, zstd (rsync 3.2.3+ for zstd)
 RSYNC_COMPRESS="no"
+
+# Keep partial files so interrupted transfers can resume
+RSYNC_PARTIAL="no"
+
+# Use checksums instead of mtime+size to detect changes (slower but more accurate)
+RSYNC_CHECKSUM="no"
 
 # Disk usage threshold (%). Backups abort if destination disk usage >= this value.
 # Set to 0 to disable the check.

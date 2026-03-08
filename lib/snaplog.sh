@@ -10,13 +10,11 @@ _GNIZA4LINUX_SNAPLOG_LOADED=1
 # log lines — skips rsync progress percentages and verbose file listings
 # to keep the app log small and readable.
 _snaplog_tee() {
-    if [[ -n "${LOG_FILE:-}" ]]; then
-        tee -a "${_TRANSFER_LOG}" >(
-            grep --line-buffered -E '^\[|^(sent |total size |Total |rsync |Number of |===)' >> "${LOG_FILE}"
-        ) >&2
-    else
-        tee -a "${_TRANSFER_LOG}" >&2
-    fi
+    # Write all rsync output to the transfer log and stderr.
+    # When the exec redirect is active (init_logging), stderr goes to LOG_FILE,
+    # giving the web UI full rsync output including per-file listings.
+    # When tracked by daemon/web (GNIZA_DAEMON_TRACKED), stderr goes to Popen's log.
+    tee -a "${_TRANSFER_LOG}" >&2
 }
 
 # Initialize snapshot log directory and transfer log file.

@@ -48,6 +48,8 @@ gniza provides three interfaces:
 | **Web** | `gniza web start` | Remote browser access |
 | **CLI** | `gniza --cli <command>` | Scripting and cron |
 
+All three interfaces provide the same capabilities. When adding a new feature, implement it across CLI, TUI, and Web to maintain parity.
+
 ---
 
 ## Installation
@@ -874,7 +876,7 @@ sudo systemctl restart gniza-web.service     # root mode
 
 ### Web Screens
 
-The web dashboard has full feature parity with the TUI:
+All three interfaces (TUI, Web, CLI) maintain full feature parity:
 
 | Screen | Description |
 |--------|-------------|
@@ -1198,6 +1200,10 @@ This script:
 1. Commits and pushes all changes to git
 2. Syncs updated files to the local install directory (`~/.local/share/gniza`)
 3. Restarts the web dashboard service if running
+
+### Feature Parity
+
+gniza provides three interfaces: CLI, TUI, and Web. All three must offer the same capabilities. When adding or modifying a feature, update all three interfaces to keep them in sync.
 
 ---
 

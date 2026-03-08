@@ -2,6 +2,7 @@ import os
 import subprocess
 
 from textual.app import ComposeResult
+from web.ssh_utils import ssh_cmd
 from textual.screen import ModalScreen
 from textual.widgets import Tree, Static, Button, Input
 from textual.containers import Horizontal, Vertical
@@ -49,23 +50,10 @@ class RemoteFolderPicker(ModalScreen[str | None]):
         tree.root.allow_expand = True
         self._load_children(tree.root, "/")
 
-    def _ssh_cmd(self) -> list[str]:
-        ssh_opts = [
-            "ssh",
-            "-o", "BatchMode=yes",
-            "-o", "StrictHostKeyChecking=accept-new",
-            "-o", "ConnectTimeout=10",
-            "-p", self._port,
-        ]
-        if self._auth_method == "key" and self._key:
-            ssh_opts += ["-i", self._key]
-        ssh_opts.append(f"{self._user}@{self._host}")
-        if self._auth_method == "password" and self._password:
-            return ["sshpass", "-e"] + ssh_opts
-        return ssh_opts
-
     def _list_dirs(self, path: str) -> list[str]:
-        cmd = self._ssh_cmd() + [
+        key = self._key if self._auth_method == "key" else ""
+        password = self._password if self._auth_method == "password" else ""
+        cmd = ssh_cmd(self._host, self._port, self._user, key, password) + [
             f"find {path!r} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
         ]
         env = None

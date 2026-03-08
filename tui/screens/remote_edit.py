@@ -10,6 +10,7 @@ from textual.containers import Vertical, Horizontal
 
 from tui.config import parse_conf, write_conf, CONFIG_DIR
 from tui.models import Remote
+from web.ssh_utils import ssh_cmd
 from tui.widgets import FilePicker, DocsPanel, RemoteFolderPicker
 from tui.widgets.folder_picker import FolderPicker
 
@@ -232,21 +233,6 @@ class RemoteEditScreen(Screen):
         self.notify(f"Destination '{name}' saved.")
         self.dismiss(name)
 
-    def _ssh_cmd(self, host, port="22", user="root", key="", password=""):
-        ssh_opts = [
-            "ssh",
-            "-o", "BatchMode=yes",
-            "-o", "StrictHostKeyChecking=accept-new",
-            "-o", "ConnectTimeout=10",
-            "-p", port or "22",
-        ]
-        if key:
-            ssh_opts += ["-i", key]
-        ssh_opts.append(f"{user}@{host}")
-        if password:
-            return ["sshpass", "-e"] + ssh_opts
-        return ssh_opts
-
     def _test_remote(self, remote: Remote) -> bool:
         if remote.type == "local":
             base = remote.base or "/backups"
@@ -261,7 +247,7 @@ class RemoteEditScreen(Screen):
             self.notify("Testing SSH connection...")
             key = remote.key if remote.auth_method == "key" else ""
             password = remote.password if remote.auth_method == "password" else ""
-            cmd = self._ssh_cmd(remote.host, remote.port, remote.user, key, password)
+            cmd = ssh_cmd(remote.host, remote.port, remote.user, key, password)
             env = None
             if password:
                 env = os.environ.copy()

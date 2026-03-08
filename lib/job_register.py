@@ -16,15 +16,9 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
+from tui.config import WORK_DIR
 
-def _work_dir():
-    if os.geteuid() == 0:
-        return Path("/usr/local/gniza/workdir")
-    state_home = os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local" / "state"))
-    return Path(state_home) / "gniza" / "workdir"
-
-
-REGISTRY_FILE = _work_dir() / "gniza-jobs.json"
+REGISTRY_FILE = WORK_DIR / "gniza-jobs.json"
 
 
 def _load():

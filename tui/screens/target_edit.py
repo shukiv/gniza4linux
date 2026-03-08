@@ -7,7 +7,8 @@ from textual.widgets import Header, Footer, Static, Button, Input, Select, Radio
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
-from tui.config import parse_conf, write_conf, CONFIG_DIR, list_conf_dir
+from tui.config import parse_conf, write_conf, CONFIG_DIR
+from web.ssh_utils import ssh_cmd
 from tui.models import Target
 from tui.widgets import FolderPicker, RemoteFolderPicker, DocsPanel, TagList
 
@@ -284,21 +285,6 @@ class TargetEditScreen(Screen):
         self.notify(f"Target '{name}' saved.")
         self.dismiss(name)
 
-    def _ssh_cmd(self, host, port="22", user="root", key="", password=""):
-        ssh_opts = [
-            "ssh",
-            "-o", "BatchMode=yes",
-            "-o", "StrictHostKeyChecking=accept-new",
-            "-o", "ConnectTimeout=10",
-            "-p", port or "22",
-        ]
-        if key:
-            ssh_opts += ["-i", key]
-        ssh_opts.append(f"{user}@{host}")
-        if password:
-            return ["sshpass", "-e"] + ssh_opts
-        return ssh_opts
-
     def _test_source(self, target: Target) -> bool:
         if target.source_type == "local":
             if target.folders:
@@ -315,7 +301,7 @@ class TargetEditScreen(Screen):
             user = target.source_user or "root"
             key = target.source_key if target.source_auth_method == "key" else ""
             password = target.source_password if target.source_auth_method == "password" else ""
-            cmd = self._ssh_cmd(host, port, user, key, password)
+            cmd = ssh_cmd(host, port, user, key, password)
             env = None
             if password:
                 env = os.environ.copy()

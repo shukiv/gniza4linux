@@ -3,29 +3,14 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, flash, request
 
 from tui.config import CONFIG_DIR, parse_conf, list_conf_dir
-from tui.models import Target, Remote, Schedule
+from tui.models import Schedule
 from web.app import login_required
+from web.helpers import load_targets, load_remotes
 from web.jobs import web_job_manager
 
 DASH_LOGS_PER_PAGE = 10
 
 bp = Blueprint("dashboard", __name__)
-
-
-def _load_targets():
-    targets = []
-    for name in list_conf_dir("targets.d"):
-        data = parse_conf(CONFIG_DIR / "targets.d" / f"{name}.conf")
-        targets.append(Target.from_conf(name, data))
-    return targets
-
-
-def _load_remotes():
-    remotes = []
-    for name in list_conf_dir("remotes.d"):
-        data = parse_conf(CONFIG_DIR / "remotes.d" / f"{name}.conf")
-        remotes.append(Remote.from_conf(name, data))
-    return remotes
 
 
 def _load_schedules():
@@ -64,11 +49,11 @@ def index():
     targets, remotes, schedules = [], [], []
     log_files, log_page, log_total_pages = [], 1, 1
     try:
-        targets = _load_targets()
+        targets = load_targets()
     except Exception:
         flash("Failed to load sources.", "error")
     try:
-        remotes = _load_remotes()
+        remotes = load_remotes()
     except Exception:
         flash("Failed to load destinations.", "error")
     try:

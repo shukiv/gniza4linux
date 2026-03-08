@@ -5,6 +5,7 @@ import subprocess
 from flask import Blueprint, jsonify, request, render_template
 
 from web.app import login_required
+from web.ssh_utils import ssh_cmd
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -72,26 +73,9 @@ def browse_children():
 
 # ── SSH remote browsing ──────────────────────────────────────
 
-def _ssh_cmd(host, port="22", user="root", key="", password=""):
-    """Build an SSH command list."""
-    ssh_opts = [
-        "ssh",
-        "-o", "BatchMode=yes",
-        "-o", "StrictHostKeyChecking=accept-new",
-        "-o", "ConnectTimeout=10",
-        "-p", port or "22",
-    ]
-    if key:
-        ssh_opts += ["-i", key]
-    ssh_opts.append(f"{user}@{host}")
-    if password:
-        return ["sshpass", "-e"] + ssh_opts
-    return ssh_opts
-
-
 def _ssh_list_dirs(host, path, port="22", user="root", key="", password="", show_hidden=False):
     """List directories on a remote SSH host."""
-    cmd = _ssh_cmd(host, port, user, key, password) + [
+    cmd = ssh_cmd(host, port, user, key, password) + [
         f"find {shlex.quote(path)} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
     ]
     env = None

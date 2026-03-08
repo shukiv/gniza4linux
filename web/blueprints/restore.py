@@ -1,3 +1,4 @@
+import os
 import re
 
 from flask import (
@@ -12,7 +13,22 @@ from web.jobs import web_job_manager
 bp = Blueprint("restore", __name__, url_prefix="/restore")
 
 _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
-_VALID_SNAPSHOT_RE = re.compile(r'^[A-Za-z0-9_.\-]+$')
+_VALID_SNAPSHOT_RE = re.compile(r'^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*$')
+
+_FORBIDDEN_DEST_PREFIXES = ("/bin", "/sbin", "/usr/bin", "/usr/sbin", "/usr/lib", "/boot", "/dev", "/proc", "/sys", "/etc", "/lib", "/lib64")
+
+
+def _validate_dest(dest):
+    """Validate restore destination path. Returns (ok, error_msg)."""
+    if not os.path.isabs(dest):
+        return False, "Destination must be an absolute path."
+    if ".." in dest.split(os.sep):
+        return False, "Destination must not contain '..' components."
+    resolved = os.path.realpath(dest)
+    for prefix in _FORBIDDEN_DEST_PREFIXES:
+        if resolved == prefix or resolved.startswith(prefix + "/"):
+            return False, f"Destination must not point to system directory '{prefix}'."
+    return True, None
 
 
 @bp.route("/")
@@ -65,6 +81,12 @@ def run():
     if not _VALID_NAME_RE.match(target_name) or not _VALID_NAME_RE.match(remote_name) or not _VALID_SNAPSHOT_RE.match(snapshot):
         flash("Invalid input.", "error")
         return redirect(url_for("restore.index"))
+
+    if dest:
+        ok, err = _validate_dest(dest)
+        if not ok:
+            flash(err, "error")
+            return redirect(url_for("restore.index"))
 
     args = ["restore", f"--source={target_name}", f"--destination={remote_name}", f"--snapshot={snapshot}"]
     if dest:

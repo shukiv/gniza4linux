@@ -244,7 +244,7 @@ class RemoteEditScreen(Screen):
             ssh_opts += ["-i", key]
         ssh_opts.append(f"{user}@{host}")
         if password:
-            return ["sshpass", "-p", password] + ssh_opts
+            return ["sshpass", "-e"] + ssh_opts
         return ssh_opts
 
     def _test_remote(self, remote: Remote) -> bool:
@@ -262,9 +262,13 @@ class RemoteEditScreen(Screen):
             key = remote.key if remote.auth_method == "key" else ""
             password = remote.password if remote.auth_method == "password" else ""
             cmd = self._ssh_cmd(remote.host, remote.port, remote.user, key, password)
+            env = None
+            if password:
+                env = os.environ.copy()
+                env["SSHPASS"] = password
             base = remote.base or "/backups"
             try:
-                result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15)
+                result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
                 if result.returncode != 0:
                     self.notify(f"SSH connection failed: {result.stderr.strip() or 'unknown error'}", severity="error")
                     return False
@@ -275,7 +279,7 @@ class RemoteEditScreen(Screen):
                 self.notify(f"SSH connection failed: {e}", severity="error")
                 return False
             try:
-                result = subprocess.run(cmd + ["mkdir", "-p", base], capture_output=True, text=True, timeout=15)
+                result = subprocess.run(cmd + ["mkdir", "-p", base], capture_output=True, text=True, timeout=15, env=env)
                 if result.returncode != 0:
                     self.notify(f"Failed to create base path: {result.stderr.strip()}", severity="error")
                     return False
@@ -286,7 +290,7 @@ class RemoteEditScreen(Screen):
                 test_file = f"{base}/validation_success.txt"
                 result = subprocess.run(
                     cmd + ["sh", "-c", f'echo "gniza validation" > {test_file}'],
-                    capture_output=True, text=True, timeout=15,
+                    capture_output=True, text=True, timeout=15, env=env,
                 )
                 if result.returncode != 0:
                     self.notify(f"Failed to write test file: {result.stderr.strip()}", severity="error")

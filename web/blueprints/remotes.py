@@ -28,7 +28,7 @@ def _ssh_cmd(host, port="22", user="root", key="", password=""):
         ssh_opts += ["-i", key]
     ssh_opts.append(f"{user}@{host}")
     if password:
-        return ["sshpass", "-p", password] + ssh_opts
+        return ["sshpass", "-e"] + ssh_opts
     return ssh_opts
 
 
@@ -45,9 +45,13 @@ def _test_remote(remote):
         key = remote.key if remote.auth_method == "key" else ""
         password = remote.password if remote.auth_method == "password" else ""
         cmd = _ssh_cmd(remote.host, remote.port, remote.user, key, password)
+        env = None
+        if password:
+            env = os.environ.copy()
+            env["SSHPASS"] = password
         base = remote.base or "/backups"
         try:
-            result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15)
+            result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
                 return False, f"SSH connection failed: {result.stderr.strip() or 'unknown error'}"
         except subprocess.TimeoutExpired:
@@ -55,7 +59,7 @@ def _test_remote(remote):
         except OSError as e:
             return False, f"SSH connection failed: {e}"
         try:
-            result = subprocess.run(cmd + ["mkdir", "-p", base], capture_output=True, text=True, timeout=15)
+            result = subprocess.run(cmd + ["mkdir", "-p", base], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
                 return False, f"Failed to create base path: {result.stderr.strip()}"
         except (subprocess.TimeoutExpired, OSError) as e:
@@ -64,7 +68,7 @@ def _test_remote(remote):
             test_file = f"{base}/validation_success.txt"
             result = subprocess.run(
                 cmd + ["sh", "-c", f'echo "gniza validation" > {test_file}'],
-                capture_output=True, text=True, timeout=15,
+                capture_output=True, text=True, timeout=15, env=env,
             )
             if result.returncode != 0:
                 return False, f"Failed to write test file: {result.stderr.strip()}"

@@ -57,8 +57,11 @@ def _sanitize_value(value: str) -> str:
 
 def write_conf(filepath: Path, data: dict[str, str]) -> None:
     filepath.parent.mkdir(parents=True, exist_ok=True)
+    # Merge: preserve existing keys not in the new data
+    existing = parse_conf(filepath) if filepath.is_file() else {}
+    merged = {**existing, **data}
     lines = []
-    for key, value in data.items():
+    for key, value in merged.items():
         lines.append(f'{key}="{_sanitize_value(value)}"')
     filepath.write_text("\n".join(lines) + "\n")
     filepath.chmod(0o600)

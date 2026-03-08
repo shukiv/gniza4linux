@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 from textual.app import ComposeResult
@@ -60,16 +61,20 @@ class RemoteFolderPicker(ModalScreen[str | None]):
             ssh_opts += ["-i", self._key]
         ssh_opts.append(f"{self._user}@{self._host}")
         if self._auth_method == "password" and self._password:
-            return ["sshpass", "-p", self._password] + ssh_opts
+            return ["sshpass", "-e"] + ssh_opts
         return ssh_opts
 
     def _list_dirs(self, path: str) -> list[str]:
         cmd = self._ssh_cmd() + [
             f"find {path!r} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
         ]
+        env = None
+        if self._auth_method == "password" and self._password:
+            env = os.environ.copy()
+            env["SSHPASS"] = self._password
         try:
             result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=15,
+                cmd, capture_output=True, text=True, timeout=15, env=env,
             )
             if result.returncode != 0:
                 return []

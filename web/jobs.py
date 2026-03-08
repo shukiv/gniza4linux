@@ -1,6 +1,8 @@
+import fcntl
 import json
 import os
 import signal
+import tempfile
 import threading
 import uuid
 from dataclasses import dataclass, field
@@ -171,13 +173,25 @@ class WebJobManager:
         except (OSError, FileNotFoundError):
             return [], 0
 
+    def _flock_read(self):
+        """Read registry under flock."""
+        REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
+        lock_path = REGISTRY_FILE.with_suffix(".lock")
+        with open(lock_path, "w") as lock_fh:
+            fcntl.flock(lock_fh, fcntl.LOCK_SH)
+            try:
+                if not REGISTRY_FILE.is_file():
+                    return []
+                return json.loads(REGISTRY_FILE.read_text())
+            except Exception:
+                return []
+            finally:
+                fcntl.flock(lock_fh, fcntl.LOCK_UN)
+
     def load_registry(self):
         """Load jobs from shared JSON registry."""
-        if not REGISTRY_FILE.is_file():
-            return
-        try:
-            entries = json.loads(REGISTRY_FILE.read_text())
-        except Exception:
+        entries = self._flock_read()
+        if not entries:
             return
         now = datetime.now()
         changed = False
@@ -290,7 +304,19 @@ class WebJobManager:
             entries.append(entry)
         try:
             REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
-            REGISTRY_FILE.write_text(json.dumps(entries, indent=2))
+            lock_path = REGISTRY_FILE.with_suffix(".lock")
+            with open(lock_path, "w") as lock_fh:
+                fcntl.flock(lock_fh, fcntl.LOCK_EX)
+                try:
+                    fd, tmp = tempfile.mkstemp(dir=str(REGISTRY_FILE.parent), suffix=".tmp")
+                    try:
+                        os.write(fd, json.dumps(entries, indent=2).encode())
+                        os.fsync(fd)
+                    finally:
+                        os.close(fd)
+                    os.rename(tmp, str(REGISTRY_FILE))
+                finally:
+                    fcntl.flock(lock_fh, fcntl.LOCK_UN)
         except OSError:
             pass
 

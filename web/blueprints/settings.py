@@ -36,6 +36,8 @@ def index():
 @login_required
 def save():
     form = request.form
+    import logging
+    logging.getLogger("gniza-web").warning(f"FORM DATA: {dict(form)}")
     settings = AppSettings(
         bwlimit=form.get("bwlimit", "0"),
         retention_count=form.get("retention_count", "7"),

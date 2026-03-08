@@ -1,3 +1,4 @@
+import re
 import time
 
 from flask import (
@@ -8,6 +9,22 @@ from web.app import login_required
 from web.jobs import web_job_manager
 
 bp = Blueprint("jobs", __name__, url_prefix="/jobs")
+
+_PROGRESS_RE = re.compile(r"(\d+)%")
+_RSYNC_MARKERS = ("xfr#", "to-chk=", "MB/s", "kB/s", "GB/s", "B/s")
+
+
+def _extract_progress(lines):
+    """Extract the last rsync progress2 line from log output."""
+    for line in reversed(lines):
+        m = _PROGRESS_RE.search(line)
+        if m and any(marker in line for marker in _RSYNC_MARKERS):
+            return {"pct": int(m.group(1)), "line": line.strip()}
+    return None
+
+
+def _is_progress_line(line):
+    return _PROGRESS_RE.search(line) and any(mk in line for mk in _RSYNC_MARKERS)
 
 
 @bp.route("/")
@@ -63,7 +80,9 @@ def running_badge():
 def log(job_id):
     lines, total = web_job_manager.get_log_lines(job_id)
     job = web_job_manager.get_job(job_id)
-    return render_template("jobs/log_partial.html", lines=lines, total=total, job=job)
+    progress = _extract_progress(lines) if job and job.status == "running" else None
+    display_lines = [l for l in lines if not _is_progress_line(l)] if progress else lines
+    return render_template("jobs/log_partial.html", lines=display_lines, total=total, job=job, progress=progress)
 
 
 @bp.route("/<job_id>/stream")

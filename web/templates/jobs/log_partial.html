@@ -1,3 +1,14 @@
+{% if progress %}
+<div class="mb-3 space-y-1">
+    <div class="flex items-center gap-3">
+        <progress class="progress progress-primary flex-1" value="{{ progress.pct }}" max="100"></progress>
+        <span class="font-mono text-sm font-bold min-w-[3ch] text-right">{{ progress.pct }}%</span>
+    </div>
+    <div class="font-mono text-xs text-base-content/60">
+        {{ progress.line }}
+    </div>
+</div>
+{% endif %}
 <pre class="whitespace-pre-wrap break-all">{% for line in lines %}{{ line }}
 {% endfor %}</pre>
 {% if job and job.status != "running" %}

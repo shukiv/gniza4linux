@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}GNIZA - {{ filename }}{% endblock %}
-{% block page_title %}Log: {{ filename }}{% endblock %}
+{% block title %}GNIZA - {{ job.label }}{% endblock %}
+{% block page_title %}Log: {{ job.label }} ({{ job.id }}){% endblock %}
 
 {% block content %}
 <div class="mb-4">
@@ -11,13 +11,13 @@
 <div class="card bg-base-200 shadow">
     <div class="card-body">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="card-title text-base font-mono">{{ filename }}</h2>
+            <h2 class="card-title text-base font-mono">{{ job.label }} ({{ job.id }})</h2>
             <span class="text-sm text-base-content/40">Lines {{ start + 1 }}-{{ end }} of {{ total_lines }}</span>
         </div>
 
         {% if start > 0 %}
         <div class="mb-2">
-            <a href="{{ url_for('logs.view', filename=filename, offset=max(0, start - view_lines)) }}"
+            <a href="{{ url_for('logs.view', job_id=job.id, offset=max(0, start - view_lines)) }}"
                class="btn btn-ghost btn-sm">Load earlier lines</a>
         </div>
         {% endif %}
@@ -29,7 +29,7 @@
 
         {% if end < total_lines %}
         <div class="mt-2">
-            <a href="{{ url_for('logs.view', filename=filename, offset=end) }}"
+            <a href="{{ url_for('logs.view', job_id=job.id, offset=end) }}"
                class="btn btn-ghost btn-sm">Load later lines</a>
         </div>
         {% endif %}

@@ -17,6 +17,13 @@ _log_level_num() {
 }
 
 init_logging() {
+    # When tracked by daemon/web job system, don't create a separate log file
+    # (all output is already captured in the job's log file)
+    if [[ -n "${GNIZA_DAEMON_TRACKED:-}" ]]; then
+        LOG_FILE=""
+        return 0
+    fi
+
     local log_dir="${LOG_DIR:-/var/log/gniza}"
     mkdir -p "$log_dir" || die "Cannot create log directory: $log_dir"
 

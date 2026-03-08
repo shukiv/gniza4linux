@@ -46,7 +46,9 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if f.status in ('Success', 'OK') %}
+                            {% if f.status == 'Running' %}
+                            <span class="badge badge-info badge-md">{{ f.status }}</span>
+                            {% elif f.status in ('Success', 'OK') %}
                             <span class="badge badge-success badge-md">{{ f.status }}</span>
                             {% elif f.status == 'Failed' %}
                             <span class="badge badge-error badge-md">{{ f.status }}</span>

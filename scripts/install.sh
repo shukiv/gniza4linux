@@ -198,9 +198,22 @@ if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
     else
         echo "WEB_API_KEY=\"${api_key}\"" >> "$CONFIG_DIR/gniza.conf"
     fi
+    # Ask about network access
+    web_host="0.0.0.0"
+    echo ""
+    echo "  1) ${C_BOLD}Network${C_RESET}   — accessible from other machines (0.0.0.0)"
+    echo "  2) ${C_BOLD}Localhost${C_RESET}  — only this machine (127.0.0.1)"
+    echo ""
+    read -rp "Listen on [1]: " _listen_choice </dev/tty || true
+    _listen_choice="${_listen_choice:-1}"
+    if [ "$_listen_choice" = "2" ]; then
+        web_host="127.0.0.1"
+    fi
+
     WEB_INSTALLED="yes"
     WEB_USER="$web_user"
     WEB_PASS="$api_key"
+    WEB_HOST="$web_host"
     # Install systemd service
     if [ "$MODE" = "root" ]; then
         if "$INSTALL_DIR/bin/gniza" web install-service 2>/dev/null; then
@@ -219,7 +232,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$(command -v python3) -m web --host=0.0.0.0 --port=2323
+ExecStart=$(command -v python3) -m web --host=$web_host --port=2323
 WorkingDirectory=$INSTALL_DIR
 Environment=GNIZA_DIR=$INSTALL_DIR
 Environment=PYTHONPATH=$INSTALL_DIR
@@ -291,7 +304,11 @@ echo "  Work dir: $WORK_DIR"
 echo ""
 if [ "${WEB_INSTALLED:-}" = "yes" ]; then
     echo "${C_GREEN}Web Dashboard:${C_RESET}"
-    echo "  URL:      http://$(hostname -I 2>/dev/null | awk '{print $1}'):2323"
+    if [ "$WEB_HOST" = "127.0.0.1" ]; then
+        echo "  URL:      http://127.0.0.1:2323"
+    else
+        echo "  URL:      http://$(hostname -I 2>/dev/null | awk '{print $1}'):2323"
+    fi
     echo "  User:     $WEB_USER"
     echo "  Password: $WEB_PASS"
     echo ""

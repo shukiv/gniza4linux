@@ -5,17 +5,18 @@
 {% block page_title %}Schedules{% endblock %}
 
 {% block content %}
-<div x-data="{ showModal: false, deleteUrl: '', deleteName: '' }">
+<div x-data="{ showModal: false, deleteUrl: '', deleteName: '' }"
+     @open-delete.window="deleteName = $event.detail.name; deleteUrl = $event.detail.url; showModal = true">
 
 <div class="flex items-center justify-between mb-6">
     <h2 class="text-xl font-semibold">Backup Schedules</h2>
     <a href="{{ url_for('schedules.new') }}" class="btn btn-primary btn-sm">+ Add Schedule</a>
 </div>
 
-<div class="card bg-base-200 shadow overflow-visible">
-    <div class="card-body p-0 overflow-visible">
+<div class="card bg-base-200 shadow">
+    <div class="card-body p-0">
         {% if schedules %}
-        <div class="overflow-x-auto overflow-y-visible">
+        <div class="overflow-x-auto">
             <table class="table">
                 <thead>
                     <tr>
@@ -57,12 +58,15 @@
                                 <span class="text-sm {{ 'text-success' if s.active == 'yes' else 'text-base-content/50' }}">{{ 'Enabled' if s.active == 'yes' else 'Disabled' }}</span>
                             </form>
                         </td>
-                        <td>
-                            <div class="dropdown dropdown-end">
-                                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01" /></svg>
-                                </div>
-                                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-10 w-40 p-2 shadow">
+                        <td x-data="{ open: false, pos: {} }" class="relative">
+                            <button class="btn btn-ghost btn-sm btn-square" x-ref="btn"
+                                    @click="let r = $refs.btn.getBoundingClientRect(); pos = { top: r.bottom + 'px', left: (r.right - 160) + 'px' }; open = !open"
+                                    @click.outside="open = false">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01" /></svg>
+                            </button>
+                            <template x-teleport="body">
+                                <ul x-show="open" x-cloak class="menu bg-base-100 rounded-box w-40 p-2 shadow-lg z-[9999] fixed"
+                                    :style="'top:' + pos.top + ';left:' + pos.left">
                                     <li>
                                         <form method="POST" action="{{ url_for('schedules.run_now', name=s.name) }}">
                                             <button type="submit" class="w-full text-left">Run Now</button>
@@ -71,12 +75,12 @@
                                     <li><a href="{{ url_for('schedules.edit', name=s.name) }}">Edit</a></li>
                                     <li>
                                         <button class="text-error"
-                                                @click="deleteName = '{{ s.name }}'; deleteUrl = '{{ url_for('schedules.delete', name=s.name) }}'; showModal = true">
+                                                @click="open = false; $dispatch('open-delete', { name: '{{ s.name }}', url: '{{ url_for('schedules.delete', name=s.name) }}' })">
                                             Delete
                                         </button>
                                     </li>
                                 </ul>
-                            </div>
+                            </template>
                         </td>
                     </tr>
                     {% endfor %}

@@ -162,12 +162,8 @@
                 <span class="text-lg font-semibold">gniza v{{ version }}</span>
             </div>
             <div class="flex gap-2">
-                <form method="POST" action="{{ url_for('settings.check_update') }}">
-                    <button type="submit" class="btn btn-info btn-sm">Check for Updates</button>
-                </form>
-                <form method="POST" action="{{ url_for('settings.apply_update') }}" onsubmit="return confirm('This will update gniza and restart services. Continue?')">
-                    <button type="submit" class="btn btn-warning btn-sm">Update Now</button>
-                </form>
+                <button type="button" class="btn btn-info btn-sm" id="btn-check-update">Check for Updates</button>
+                <button type="button" class="btn btn-warning btn-sm" id="btn-update-now">Update Now</button>
             </div>
         </div>
 
@@ -181,9 +177,19 @@
 </form>
 
 <form id="form-test-email" method="POST" action="{{ url_for('settings.test_email') }}" class="hidden"></form>
+<form id="form-check-update" method="POST" action="{{ url_for('settings.check_update') }}" class="hidden"></form>
+<form id="form-update-now" method="POST" action="{{ url_for('settings.apply_update') }}" class="hidden"></form>
 <script>
 document.getElementById('btn-test-email').addEventListener('click', function() {
     document.getElementById('form-test-email').submit();
+});
+document.getElementById('btn-check-update').addEventListener('click', function() {
+    document.getElementById('form-check-update').submit();
+});
+document.getElementById('btn-update-now').addEventListener('click', function() {
+    if (confirm('This will update gniza and restart services. Continue?')) {
+        document.getElementById('form-update-now').submit();
+    }
 });
 </script>
 {% endblock %}

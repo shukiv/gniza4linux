@@ -11,6 +11,7 @@ from pathlib import Path
 from tui.config import (
     get_log_retain_days, get_max_concurrent_jobs, LOG_DIR
 )
+from daemon.notify import send_job_notification
 
 logger = logging.getLogger("gniza-daemon")
 
@@ -169,6 +170,7 @@ _child_procs = {}
 
 def check_jobs():
     """Main health check: detect dead jobs, update registry."""
+    completed = []
 
     def _check(entries):
         if not entries:
@@ -220,11 +222,19 @@ def check_jobs():
             entry.pop("pid", None)
             entry.pop("pgid", None)
             changed = True
+            completed.append(dict(entry))
             logger.info(f"Job {entry['id']} ({entry['label']}): detected dead PID {pid} → {entry['status']}")
 
         return changed
 
     _locked_update(_check)
+
+    # Send email notifications outside the lock (SMTP can be slow)
+    for entry in completed:
+        try:
+            send_job_notification(entry)
+        except Exception:
+            logger.exception(f"Failed to send notification for job {entry.get('id')}")
 
 
 def dispatch_queue():

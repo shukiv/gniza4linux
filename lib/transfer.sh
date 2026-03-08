@@ -212,6 +212,236 @@ rsync_local() {
     return 1
 }
 
+# Pipelined SSH→SSH rsync: SSH into the destination and run rsync there,
+# pulling directly from the SSH source.  Data flows source→destination
+# without touching local disk.
+# Usage: rsync_ssh_to_ssh <source_path> <remote_dest> <link_dest> [extra_filter_opts...]
+rsync_ssh_to_ssh() {
+    local source_path="$1"
+    local remote_dest="$2"
+    local link_dest="${3:-}"
+    shift 3 || true
+    local -a extra_filter_opts=("$@")
+    local attempt=0
+    local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
+    local _added_key=""
+
+    # --- Build the rsync command string to run ON the destination ---
+    # --fake-super on source side (rsync-path) AND locally on dest (--fake-super flag)
+    local -a ropts=(-aHAX --numeric-ids --delete --sparse --fake-super)
+    ropts+=(--rsync-path="rsync --fake-super")
+
+    if [[ -n "$link_dest" ]]; then
+        ropts+=(--link-dest="$link_dest")
+    fi
+
+    if [[ "${BWLIMIT:-0}" -gt 0 ]]; then
+        ropts+=(--bwlimit="$BWLIMIT")
+    fi
+
+    if [[ -n "${RSYNC_EXTRA_OPTS:-}" ]]; then
+        # shellcheck disable=SC2206
+        ropts+=($RSYNC_EXTRA_OPTS)
+    fi
+
+    if [[ ${#extra_filter_opts[@]} -gt 0 ]]; then
+        ropts+=("${extra_filter_opts[@]}")
+    fi
+
+    if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+        ropts+=(--verbose --stats)
+    fi
+
+    ropts+=(--info=progress2 --no-inc-recursive)
+
+    # Build the SSH command the remote rsync will use to reach the source
+    local src_ssh_e="ssh"
+    src_ssh_e+=" -p ${TARGET_SOURCE_PORT:-22}"
+    src_ssh_e+=" -o StrictHostKeyChecking=accept-new"
+    src_ssh_e+=" -o ConnectTimeout=${SSH_TIMEOUT:-${DEFAULT_SSH_TIMEOUT:-30}}"
+    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" != "password" ]]; then
+        src_ssh_e+=" -o BatchMode=yes"
+    fi
+
+    # Ensure source_path ends with /
+    [[ "$source_path" != */ ]] && source_path="$source_path/"
+
+    local source_spec="${TARGET_SOURCE_USER:-root}@${TARGET_SOURCE_HOST}:${source_path}"
+
+    # Assemble the remote command string with safe quoting
+    local remote_cmd="rsync"
+    for opt in "${ropts[@]}"; do
+        remote_cmd+=" $(printf '%q' "$opt")"
+    done
+    remote_cmd+=" -e $(printf '%q' "$src_ssh_e")"
+    remote_cmd+=" $(printf '%q' "$source_spec") $(printf '%q' "$remote_dest")"
+
+    # Source password auth: write password to a temp file on destination,
+    # use sshpass -f to read it, then clean up
+    local _src_is_password=false
+    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
+        _src_is_password=true
+        local _pw_escaped; _pw_escaped=$(printf '%q' "$TARGET_SOURCE_PASSWORD")
+        remote_cmd="_GNIZA_PW=\$(mktemp /tmp/.gniza-pw-XXXXXX) && chmod 600 \"\$_GNIZA_PW\" && printf '%s' ${_pw_escaped} > \"\$_GNIZA_PW\" && sshpass -f \"\$_GNIZA_PW\" ${remote_cmd}; _rc=\$?; rm -f \"\$_GNIZA_PW\"; exit \$_rc"
+    fi
+
+    # Source key auth: add key to local agent for forwarding, track for cleanup
+    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" && -n "${TARGET_SOURCE_KEY:-}" ]]; then
+        if ssh-add "$TARGET_SOURCE_KEY" 2>/dev/null; then
+            _added_key="$TARGET_SOURCE_KEY"
+        fi
+    fi
+
+    # --- Build the SSH command to the destination ---
+    local -a dst_ssh=()
+    if _is_password_mode; then
+        dst_ssh+=(sshpass -e)
+        export SSHPASS="$REMOTE_PASSWORD"
+    fi
+    dst_ssh+=(ssh)
+    # Only enable agent forwarding when source uses key auth (needs the agent)
+    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" ]]; then
+        dst_ssh+=(-A)
+    fi
+    if ! _is_password_mode; then
+        dst_ssh+=(-i "$REMOTE_KEY" -o BatchMode=yes)
+    fi
+    dst_ssh+=(-p "$REMOTE_PORT")
+    dst_ssh+=(-o "StrictHostKeyChecking=yes")
+    dst_ssh+=(-o "ConnectTimeout=${SSH_TIMEOUT:-${DEFAULT_SSH_TIMEOUT:-30}}")
+    dst_ssh+=(-o "ServerAliveInterval=60" -o "ServerAliveCountMax=3")
+    dst_ssh+=("${REMOTE_USER}@${REMOTE_HOST}")
+    dst_ssh+=("$remote_cmd")
+
+    # Cleanup helper: remove agent key and unset SSHPASS
+    _ssh_to_ssh_cleanup() {
+        [[ -n "$_added_key" ]] && ssh-add -d "$_added_key" 2>/dev/null || true
+        unset SSHPASS
+    }
+
+    while (( attempt < max_retries )); do
+        ((attempt++)) || true
+        log_debug "rsync (ssh→ssh) attempt $attempt/$max_retries: $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}"
+
+        if _is_password_mode; then
+            export SSHPASS="$REMOTE_PASSWORD"
+        fi
+
+        local rc=0
+        if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+            echo "=== rsync (ssh→ssh): $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
+            "${dst_ssh[@]}" > >(_snaplog_tee) 2>&1 || rc=$?
+        else
+            "${dst_ssh[@]}" || rc=$?
+        fi
+        unset SSHPASS
+
+        if (( rc == 0 )); then
+            log_debug "rsync (ssh→ssh) succeeded on attempt $attempt"
+            _ssh_to_ssh_cleanup
+            return 0
+        fi
+
+        if (( rc == 23 )); then
+            log_warn "rsync (ssh→ssh) partial transfer (exit 23): retrying to pick up failed files..."
+            sleep 2
+            if _is_password_mode; then export SSHPASS="$REMOTE_PASSWORD"; fi
+            local rc2=0
+            if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+                echo "=== rsync (ssh→ssh retry): $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
+                "${dst_ssh[@]}" > >(_snaplog_tee) 2>&1 || rc2=$?
+            else
+                "${dst_ssh[@]}" || rc2=$?
+            fi
+            unset SSHPASS
+            if (( rc2 == 0 )); then
+                log_info "rsync (ssh→ssh) retry succeeded — all files transferred"
+                _ssh_to_ssh_cleanup
+                return 0
+            fi
+            log_warn "rsync (ssh→ssh) retry completed (exit $rc2): some files could not be transferred"
+            _ssh_to_ssh_cleanup
+            return 0
+        fi
+        if (( rc == 24 )); then
+            log_warn "rsync (ssh→ssh) completed with warnings (exit $rc): vanished source files"
+            _ssh_to_ssh_cleanup
+            return 0
+        fi
+
+        # SSH connection failure (255) — retry with backoff
+        if (( rc == 255 )); then
+            log_warn "rsync (ssh→ssh) SSH connection failed (exit 255), attempt $attempt/$max_retries"
+        else
+            log_warn "rsync (ssh→ssh) failed (exit $rc), attempt $attempt/$max_retries"
+        fi
+        _check_disk_space_or_abort || { _ssh_to_ssh_cleanup; return 1; }
+
+        if (( attempt < max_retries )); then
+            local backoff=$(( attempt * 10 ))
+            log_info "Retrying in ${backoff}s..."
+            sleep "$backoff"
+        fi
+    done
+
+    _ssh_to_ssh_cleanup
+    log_error "rsync (ssh→ssh) failed after $max_retries attempts"
+    return 1
+}
+
+# Pipelined folder transfer: SSH source → SSH destination (no local staging).
+# Usage: transfer_folder_pipelined <target_name> <source_remote_path> <timestamp> [prev_snapshot] [dest_name]
+transfer_folder_pipelined() {
+    local target_name="$1"
+    local source_remote_path="$2"
+    local timestamp="$3"
+    local prev_snapshot="${4:-}"
+    local dest_name="${5:-}"
+
+    # Strip leading / to create relative subpath in snapshot
+    local rel_path="${dest_name:-${source_remote_path#/}}"
+
+    # Build include/exclude filter args for rsync
+    local -a filter_opts=()
+    if [[ -n "${TARGET_INCLUDE:-}" ]]; then
+        filter_opts+=(--include="*/")
+        local -a inc_patterns
+        IFS=',' read -ra inc_patterns <<< "$TARGET_INCLUDE"
+        for pat in "${inc_patterns[@]}"; do
+            pat="${pat#"${pat%%[![:space:]]*}"}"
+            pat="${pat%"${pat##*[![:space:]]}"}"
+            [[ -z "$pat" ]] && continue
+            filter_opts+=(--include="$pat")
+            if [[ "$pat" == */ ]]; then
+                filter_opts+=(--include="${pat}**")
+            fi
+        done
+        filter_opts+=(--exclude="*")
+        filter_opts+=(--prune-empty-dirs)
+    elif [[ -n "${TARGET_EXCLUDE:-}" ]]; then
+        local -a exc_patterns
+        IFS=',' read -ra exc_patterns <<< "$TARGET_EXCLUDE"
+        for pat in "${exc_patterns[@]}"; do
+            pat="${pat#"${pat%%[![:space:]]*}"}"
+            pat="${pat%"${pat##*[![:space:]]}"}"
+            [[ -n "$pat" ]] && filter_opts+=(--exclude="$pat")
+        done
+    fi
+
+    local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
+    local dest="$snap_dir/${timestamp}.partial/${rel_path}/"
+    local link_dest=""
+
+    if [[ -n "$prev_snapshot" ]]; then
+        link_dest="$snap_dir/$prev_snapshot/${rel_path}"
+    fi
+
+    ensure_remote_dir "$dest" || return 1
+
+    log_info "Transferring $source_remote_path for $target_name (ssh→ssh pipeline)..."
+    rsync_ssh_to_ssh "$source_remote_path" "$dest" "$link_dest" "${filter_opts[@]}"
+}
+
 # Transfer a single folder to a remote snapshot.
 # Usage: transfer_folder <target_name> <folder_path> <timestamp> [prev_snapshot] [dest_name]
 # If dest_name is given, use it as the remote subpath instead of deriving from folder_path.

@@ -75,11 +75,11 @@
                 </span>
                 {% set help_content %}{% block help_text %}{% endblock %}{% endset %}
                 {% if help_content and help_content.strip() %}
-                <button type="button" class="btn btn-ghost btn-sm gap-1 hidden xl:inline-flex"
+                <button type="button" class="btn btn-ghost btn-sm gap-1"
                         @click="$store.help.toggle()"
                         :class="$store.help.open ? 'btn-active' : ''">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M12 18h.01" /></svg>
-                    Help
+                    <span class="hidden sm:inline">Help</span>
                 </button>
                 {% endif %}
                 <label class="swap swap-rotate">
@@ -95,20 +95,29 @@
 
         <!-- Page content -->
         <main class="p-4 md:p-6 w-full mx-auto">
-            <div class="flex gap-6 max-w-7xl mx-auto">
-                <div class="flex-1 min-w-0">
-                    {% block content %}{% endblock %}
-                </div>
-                {% if help_content and help_content.strip() %}
-                <aside class="hidden xl:block w-72 shrink-0" x-show="$store.help.open" x-transition.opacity x-cloak>
-                    <div class="sticky top-20 bg-base-200 rounded-lg p-4 text-sm max-h-[calc(100vh-6rem)] overflow-y-auto">
-                        {{ help_content }}
-                    </div>
-                </aside>
-                {% endif %}
+            <div class="max-w-7xl mx-auto">
+                {% block content %}{% endblock %}
             </div>
         </main>
     </div>
+
+    {% if help_content and help_content.strip() %}
+    <!-- Help drawer (right side) -->
+    <div class="fixed top-0 right-0 h-full z-50 pointer-events-none" x-cloak>
+        <div class="h-full flex transition-transform duration-200 pointer-events-auto"
+             :class="$store.help.open ? 'translate-x-0' : 'translate-x-full'">
+            <div class="w-72 h-full bg-base-200 border-l border-base-300 overflow-y-auto p-5 text-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-base">Help</h3>
+                    <button class="btn btn-ghost btn-sm btn-square" @click="$store.help.toggle()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                {{ help_content }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Sidebar -->
     <div class="drawer-side z-40">

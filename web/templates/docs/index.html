@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}GNIZA - Documentation{% endblock %}
+{% block page_title %}Documentation{% endblock %}
+
+{% block content %}
+<style>
+    .doc-content h1 { font-size: 2em; font-weight: 700; margin: 1.5em 0 0.5em; padding-bottom: 0.3em; border-bottom: 1px solid oklch(var(--bc) / 0.2); }
+    .doc-content h2 { font-size: 1.5em; font-weight: 600; margin: 1.5em 0 0.5em; padding-bottom: 0.3em; border-bottom: 1px solid oklch(var(--bc) / 0.1); }
+    .doc-content h3 { font-size: 1.25em; font-weight: 600; margin: 1.2em 0 0.4em; }
+    .doc-content h4 { font-size: 1.1em; font-weight: 600; margin: 1em 0 0.3em; }
+    .doc-content p { margin: 0.75em 0; line-height: 1.7; }
+    .doc-content ul, .doc-content ol { margin: 0.75em 0; padding-left: 2em; }
+    .doc-content li { margin: 0.25em 0; line-height: 1.6; }
+    .doc-content ul { list-style-type: disc; }
+    .doc-content ol { list-style-type: decimal; }
+    .doc-content code { background: oklch(var(--b2)); padding: 0.15em 0.4em; border-radius: 0.25em; font-size: 0.9em; }
+    .doc-content pre { background: oklch(var(--b2)); padding: 1em; border-radius: 0.5em; overflow-x: auto; margin: 1em 0; }
+    .doc-content pre code { background: none; padding: 0; font-size: 0.85em; }
+    .doc-content table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+    .doc-content th, .doc-content td { border: 1px solid oklch(var(--bc) / 0.2); padding: 0.5em 0.75em; text-align: left; }
+    .doc-content th { background: oklch(var(--b2)); font-weight: 600; }
+    .doc-content blockquote { border-left: 4px solid oklch(var(--p)); padding: 0.5em 1em; margin: 1em 0; background: oklch(var(--b2)); border-radius: 0 0.25em 0.25em 0; }
+    .doc-content hr { border: none; border-top: 1px solid oklch(var(--bc) / 0.2); margin: 2em 0; }
+    .doc-content a { color: oklch(var(--p)); text-decoration: underline; }
+    .doc-content a:hover { opacity: 0.8; }
+    .doc-content strong { font-weight: 600; }
+    .doc-content > h1:first-child { margin-top: 0; }
+    .doc-toc ul { list-style: none; padding-left: 0; }
+    .doc-toc ul ul { padding-left: 1em; }
+    .doc-toc li { margin: 0.15em 0; }
+    .doc-toc a { color: oklch(var(--bc) / 0.7); text-decoration: none; font-size: 0.85em; display: block; padding: 0.15em 0.5em; border-radius: 0.25em; transition: all 0.15s; }
+    .doc-toc a:hover { color: oklch(var(--bc)); background: oklch(var(--bc) / 0.1); }
+</style>
+
+<!-- Mobile TOC -->
+<div class="xl:hidden mb-4">
+    <div class="collapse collapse-arrow bg-base-200 rounded-box">
+        <input type="checkbox" />
+        <div class="collapse-title font-semibold text-sm">Table of Contents</div>
+        <div class="collapse-content doc-toc">
+            {{ toc_html|safe }}
+        </div>
+    </div>
+</div>
+
+<div class="flex gap-6">
+    <!-- TOC sidebar — xl screens only -->
+    <nav class="doc-toc hidden xl:block w-64 shrink-0">
+        <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+            <h3 class="font-semibold text-sm uppercase tracking-wider opacity-60 mb-2">Contents</h3>
+            {{ toc_html|safe }}
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="doc-content min-w-0 flex-1">
+        {{ doc_html|safe }}
+    </div>
+</div>
+{% endblock %}

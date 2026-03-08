@@ -58,6 +58,7 @@ def create_app():
         {"name": "Logs", "endpoint": "logs.index", "active": False},
         {"name": "Email Log", "endpoint": "email_log.index", "active": False},
         {"name": "Settings", "endpoint": "settings.index", "active": False},
+        {"name": "Docs", "endpoint": "docs.index", "active": False},
     ]
 
     @app.context_processor
@@ -86,6 +87,8 @@ def create_app():
                 active_page = "logs"
             elif request.endpoint.startswith("settings"):
                 active_page = "settings"
+            elif request.endpoint.startswith("docs"):
+                active_page = "docs"
         return {
             "nav_items": nav_items,
             "active_page": active_page,
@@ -106,6 +109,7 @@ def create_app():
     from web.blueprints.email_log import bp as email_log_bp
     from web.blueprints.wizard import bp as wizard_bp
     from web.blueprints.api import bp as api_bp
+    from web.blueprints.docs import bp as docs_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -121,5 +125,6 @@ def create_app():
     app.register_blueprint(email_log_bp)
     app.register_blueprint(wizard_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(docs_bp)
 
     return app

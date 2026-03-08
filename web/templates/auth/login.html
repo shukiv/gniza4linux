@@ -19,14 +19,22 @@
                 <h2 class="card-title text-2xl font-bold">GNIZA</h2>
                 <p class="text-xs text-base-content/50 -mt-1">Linux Backup Manager</p>
             </div>
-            <form method="POST">
+            <form method="POST" x-data="{ locked: {{ lockout_remaining|default(0) }}, timer: null }"
+                  x-init="if (locked > 0) { timer = setInterval(() => { locked--; if (locked <= 0) { clearInterval(timer); locked = 0; } }, 1000); }">
                 <fieldset class="fieldset">
                     <label class="fieldset-label" for="token">API Key</label>
                     <input type="password" name="token" id="token" placeholder="Enter your API key"
-                           class="input w-full" autofocus />
+                           class="input w-full" autofocus :disabled="locked > 0" />
                 </fieldset>
                 <fieldset class="fieldset mt-6">
-                    <button type="submit" class="btn btn-primary w-full">Sign In</button>
+                    <button type="submit" class="btn btn-primary w-full" :disabled="locked > 0">
+                        <template x-if="locked > 0">
+                            <span>Locked (<span x-text="locked"></span>s)</span>
+                        </template>
+                        <template x-if="locked <= 0">
+                            <span>Sign In</span>
+                        </template>
+                    </button>
                 </fieldset>
             </form>
             <p class="text-center text-sm text-base-content/50 mt-4">GNIZA Backup Manager</p>

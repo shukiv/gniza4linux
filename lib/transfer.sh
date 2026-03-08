@@ -41,10 +41,6 @@ rsync_to_remote() {
         zstd)     rsync_opts+=(-z --compress-choice=zstd) ;;
     esac
 
-    if [[ "${RSYNC_PARTIAL:-no}" == "yes" ]]; then
-        rsync_opts+=(--partial)
-    fi
-
     if [[ "${RSYNC_CHECKSUM:-no}" == "yes" ]]; then
         rsync_opts+=(--checksum)
     fi
@@ -151,10 +147,6 @@ rsync_local() {
 
     if [[ "${BWLIMIT:-0}" -gt 0 ]]; then
         rsync_opts+=(--bwlimit="$BWLIMIT")
-    fi
-
-    if [[ "${RSYNC_PARTIAL:-no}" == "yes" ]]; then
-        rsync_opts+=(--partial)
     fi
 
     if [[ "${RSYNC_CHECKSUM:-no}" == "yes" ]]; then
@@ -264,10 +256,6 @@ rsync_ssh_to_ssh() {
         yes|zlib) ropts+=(-z) ;;
         zstd)     ropts+=(-z --compress-choice=zstd) ;;
     esac
-
-    if [[ "${RSYNC_PARTIAL:-no}" == "yes" ]]; then
-        ropts+=(--partial)
-    fi
 
     if [[ "${RSYNC_CHECKSUM:-no}" == "yes" ]]; then
         ropts+=(--checksum)

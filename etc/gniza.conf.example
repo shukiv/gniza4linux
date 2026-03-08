@@ -36,9 +36,6 @@ RSYNC_EXTRA_OPTS=""
 # Rsync compression: no, zlib, zstd (rsync 3.2.3+ for zstd)
 RSYNC_COMPRESS="no"
 
-# Keep partial files so interrupted transfers can resume
-RSYNC_PARTIAL="no"
-
 # Use checksums instead of mtime+size to detect changes (slower but more accurate)
 RSYNC_CHECKSUM="no"
 

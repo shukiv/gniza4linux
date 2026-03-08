@@ -53,7 +53,6 @@ def save():
         ssh_retries=form.get("ssh_retries", "3"),
         rsync_extra_opts=form.get("rsync_extra_opts", ""),
         rsync_compress=form.get("rsync_compress", "no"),
-        rsync_partial="yes" if form.get("rsync_partial") else "no",
         rsync_checksum="yes" if form.get("rsync_checksum") else "no",
         disk_usage_threshold=form.get("disk_usage_threshold", "95"),
         max_concurrent_jobs=form.get("max_concurrent_jobs", "1"),

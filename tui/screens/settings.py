@@ -62,8 +62,6 @@ class SettingsScreen(Screen):
                         id="set-rsynccompress",
                         value=settings.rsync_compress if settings.rsync_compress in ("no", "zlib", "zstd") else "no",
                     )
-                    yield Static("Rsync Partial (resume interrupted transfers):")
-                    yield Switch(value=settings.rsync_partial == "yes", id="set-rsyncpartial")
                     yield Static("Rsync Checksum (detect changes by content):")
                     yield Switch(value=settings.rsync_checksum == "yes", id="set-rsyncchecksum")
                 with Vertical(classes="settings-section", id="section-email"):
@@ -155,7 +153,6 @@ class SettingsScreen(Screen):
             ssh_retries=self.query_one("#set-sshretries", Input).value.strip() or "3",
             rsync_extra_opts=self.query_one("#set-rsyncopts", Input).value.strip(),
             rsync_compress=self._get_select_val("#set-rsynccompress", "no"),
-            rsync_partial="yes" if self.query_one("#set-rsyncpartial", Switch).value else "no",
             rsync_checksum="yes" if self.query_one("#set-rsyncchecksum", Switch).value else "no",
             disk_usage_threshold=self.query_one("#set-diskthreshold", Input).value.strip() or "95",
             max_concurrent_jobs=self.query_one("#set-maxjobs", Input).value.strip() or "1",

@@ -24,12 +24,12 @@
     </div>
     <div class="stat">
         <div class="stat-title">Last Backup</div>
-        {% if log_files %}
-        <div class="stat-value {{ 'text-success' if log_files[0].status == 'Success' else 'text-error' if log_files[0].status in ('Failed', 'Interrupted') else 'text-warning' }}">{{ log_files[0].status|upper }}</div>
+        {% if recent_jobs %}
+        <div class="stat-value {{ 'text-success' if recent_jobs[0].status == 'success' else 'text-error' if recent_jobs[0].status == 'failed' else 'text-warning' }}">{{ recent_jobs[0].status|upper }}</div>
         <div class="stat-desc">{% if errors_past_month %}{{ errors_past_month }} error{{ 's' if errors_past_month != 1 else '' }} in past month{% else %}no errors in past month{% endif %}</div>
         {% else %}
         <div class="stat-value">N/A</div>
-        <div class="stat-desc">no logs found</div>
+        <div class="stat-desc">no jobs found</div>
         {% endif %}
     </div>
 </div>
@@ -153,41 +153,46 @@
     </div>
 </div>
 
-<!-- Recent Logs -->
+<!-- Recent Jobs -->
 <div class="card bg-base-200 shadow mb-6">
     <div class="card-body p-0">
         <div class="flex items-center justify-between px-6 py-4 border-b border-base-300">
-            <h2 class="card-title text-base">Recent Logs</h2>
+            <h2 class="card-title text-base">Recent Jobs</h2>
             <a href="{{ url_for('logs.index') }}" class="btn btn-ghost btn-sm">View all</a>
         </div>
-        {% if log_files %}
+        {% if recent_jobs %}
         <div class="overflow-x-auto">
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>File</th>
-                        <th>Size</th>
+                        <th>Label</th>
+                        <th>Started</th>
+                        <th>Duration</th>
                         <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for log in log_files %}
+                    {% for job in recent_jobs %}
                     <tr class="hover:bg-base-300">
-                        <td>{{ log.date }}</td>
-                        <td class="font-mono">{{ log.time }}</td>
-                        <td><a href="{{ url_for('logs.view', filename=log.name) }}" class="link link-primary font-mono text-sm">{{ log.name }}</a></td>
-                        <td class="text-base-content/60">{{ "%.1f KB"|format(log.size / 1024) }}</td>
+                        <td><a href="{{ url_for('logs.view', job_id=job.id) }}" class="link link-primary">{{ job.label }}</a></td>
+                        <td class="font-mono text-sm">{{ job.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="text-base-content/60">
+                            {% if job.finished_at and job.started_at %}
+                                {% set dur = (job.finished_at - job.started_at).total_seconds()|int %}
+                                {% if dur >= 3600 %}{{ dur // 3600 }}h {{ (dur % 3600) // 60 }}m
+                                {% elif dur >= 60 %}{{ dur // 60 }}m {{ dur % 60 }}s
+                                {% else %}{{ dur }}s{% endif %}
+                            {% else %}--{% endif %}
+                        </td>
                         <td>
-                            {% if log.status == 'Success' %}
+                            {% if job.status == 'success' %}
                             <span class="badge badge-success badge-md gap-1">Success</span>
-                            {% elif log.status == 'Failed' %}
+                            {% elif job.status == 'failed' %}
                             <span class="badge badge-error badge-md gap-1">Failed</span>
-                            {% elif log.status == 'Skipped' %}
+                            {% elif job.status == 'skipped' %}
                             <span class="badge badge-warning badge-md gap-1">Skipped</span>
                             {% else %}
-                            <span class="badge badge-ghost badge-md gap-1">{{ log.status }}</span>
+                            <span class="badge badge-ghost badge-md gap-1">{{ job.status|capitalize }}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -197,7 +202,7 @@
         </div>
         {{ pagination(log_page, log_total_pages, '?log_page=') }}
         {% else %}
-        <div class="p-8 text-center text-base-content/40">No log files found</div>
+        <div class="p-8 text-center text-base-content/40">No completed jobs found</div>
         {% endif %}
     </div>
 </div>

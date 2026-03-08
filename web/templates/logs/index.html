@@ -5,9 +5,9 @@
 {% block page_title %}Logs{% endblock %}
 
 {% block content %}
-{% if log_files %}
+{% if jobs %}
 <div class="flex justify-end mb-4">
-    <form method="POST" action="{{ url_for('logs.clear') }}" onsubmit="return confirm('Delete all backup log files?')">
+    <form method="POST" action="{{ url_for('logs.clear') }}" onsubmit="return confirm('Clear all finished job history?')">
         <button type="submit" class="btn btn-error btn-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             Clear Logs
@@ -17,47 +17,54 @@
 {% endif %}
 <div class="card bg-base-200 shadow">
     <div class="card-body p-0">
-        {% if log_files %}
+        {% if jobs %}
         <div class="overflow-x-auto">
             <table class="table">
                 <thead>
                     <tr>
-                        <th>File</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Size</th>
+                        <th>ID</th>
+                        <th>Label</th>
                         <th>Status</th>
+                        <th>Started</th>
+                        <th>Ended</th>
+                        <th>Duration</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for f in log_files %}
+                    {% for job in jobs %}
                     <tr class="hover:bg-base-300">
-                        <td class="font-mono font-medium">{{ f.name }}</td>
-                        <td>{{ f.date }}</td>
-                        <td>{{ f.time }}</td>
+                        <td class="font-mono">{{ job.id }}</td>
+                        <td class="font-medium">{{ job.label }}</td>
                         <td>
-                            {% if f.size < 1024 %}
-                            {{ f.size }} B
-                            {% elif f.size < 1048576 %}
-                            {{ "%.1f"|format(f.size / 1024) }} KB
+                            {% if job.status == 'success' %}
+                            <span class="badge badge-success badge-md">Success</span>
+                            {% elif job.status == 'failed' %}
+                            <span class="badge badge-error badge-md">Failed</span>
+                            {% elif job.status == 'skipped' %}
+                            <span class="badge badge-warning badge-md">Skipped</span>
                             {% else %}
-                            {{ "%.1f"|format(f.size / 1048576) }} MB
+                            <span class="badge badge-ghost badge-md">{{ job.status|capitalize }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ job.started_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ job.finished_at.strftime('%Y-%m-%d %H:%M:%S') if job.finished_at else '--' }}</td>
+                        <td>
+                            {% if job.finished_at and job.started_at %}
+                                {% set dur = (job.finished_at - job.started_at).total_seconds()|int %}
+                                {% if dur >= 3600 %}
+                                    {{ dur // 3600 }}h {{ (dur % 3600) // 60 }}m {{ dur % 60 }}s
+                                {% elif dur >= 60 %}
+                                    {{ dur // 60 }}m {{ dur % 60 }}s
+                                {% else %}
+                                    {{ dur }}s
+                                {% endif %}
+                            {% else %}
+                                --
                             {% endif %}
                         </td>
                         <td>
-                            {% if f.status == 'Running' %}
-                            <span class="badge badge-info badge-md">{{ f.status }}</span>
-                            {% elif f.status in ('Success', 'OK') %}
-                            <span class="badge badge-success badge-md">{{ f.status }}</span>
-                            {% elif f.status == 'Failed' %}
-                            <span class="badge badge-error badge-md">{{ f.status }}</span>
-                            {% else %}
-                            <span class="badge badge-warning badge-md">{{ f.status }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{{ url_for('logs.view', filename=f.name) }}" class="btn btn-primary btn-sm">View</a>
+                            <a href="{{ url_for('logs.view', job_id=job.id) }}" class="btn btn-primary btn-sm">View</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -68,7 +75,7 @@
         {{ pagination(page, total_pages, url_for('logs.index') + '?page=') }}
         {% else %}
         <div class="p-8 text-center text-base-content/40">
-            <p>No log files found</p>
+            <p>No completed jobs found</p>
         </div>
         {% endif %}
     </div>
@@ -77,23 +84,26 @@
 
 {% block help_text %}
 <h3 class="font-bold text-base mb-2">Logs</h3>
-<p class="mb-3 text-base-content/70">View backup operation logs.</p>
+<p class="mb-3 text-base-content/70">View completed job history from the job registry.</p>
 <h4 class="font-semibold text-sm mb-1">Table columns</h4>
 <ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
-    <li><strong>Status</strong> — Outcome (Success, Failed, Skipped, Interrupted, Empty).</li>
-    <li><strong>Date/Time</strong> — When the operation ran.</li>
-    <li><strong>Size</strong> — Log file size.</li>
+    <li><strong>ID</strong> — Unique job identifier.</li>
+    <li><strong>Label</strong> — Description of the job (e.g. target name).</li>
+    <li><strong>Status</strong> — Outcome: Success, Failed, Skipped, or Unknown.</li>
+    <li><strong>Started / Ended</strong> — When the job ran.</li>
+    <li><strong>Duration</strong> — How long the job took.</li>
 </ul>
-<h4 class="font-semibold text-sm mb-1">Status detection</h4>
+<h4 class="font-semibold text-sm mb-1">Status meanings</h4>
 <ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
-    <li><span class="text-success">Success</span> — 'Backup completed' found, no errors.</li>
-    <li><span class="text-error">Failed</span> — ERROR or FATAL entries found.</li>
+    <li><span class="text-success">Success</span> — Job completed with exit code 0.</li>
+    <li><span class="text-error">Failed</span> — Job exited with a non-zero code.</li>
     <li><span class="text-warning">Skipped</span> — All targets were disabled.</li>
-    <li><span class="text-warning">Interrupted</span> — Log exists but backup did not complete.</li>
+    <li>Unknown — Job finished but exit code could not be determined.</li>
 </ul>
 <h4 class="font-semibold text-sm mb-1">Tips</h4>
 <ul class="list-disc list-inside text-base-content/70 space-y-0.5">
-    <li>The 20 most recent logs are shown.</li>
-    <li>Check logs after scheduled backups to verify they ran successfully.</li>
+    <li>The 20 most recent completed jobs are shown per page.</li>
+    <li>Running and queued jobs appear on the Running Tasks page.</li>
+    <li>Clear Logs removes all finished jobs and their log files.</li>
 </ul>
 {% endblock %}

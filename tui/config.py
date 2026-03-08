@@ -116,3 +116,12 @@ def get_max_concurrent_jobs() -> int:
         return max(0, int(data.get("MAX_CONCURRENT_JOBS", "1")))
     except (ValueError, TypeError):
         return 1
+
+
+def get_daemon_interval() -> int:
+    """Return DAEMON_INTERVAL from gniza.conf as an int (default 10)."""
+    data = parse_conf(CONFIG_DIR / "gniza.conf")
+    try:
+        return max(1, int(data.get("DAEMON_INTERVAL", "10")))
+    except (ValueError, TypeError):
+        return 10

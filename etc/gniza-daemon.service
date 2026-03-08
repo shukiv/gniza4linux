@@ -1,0 +1,15 @@
+[Unit]
+Description=GNIZA Background Health Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m daemon
+WorkingDirectory=/usr/local/gniza
+Environment=GNIZA_DIR=/usr/local/gniza
+Environment=PYTHONPATH=/usr/local/gniza
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

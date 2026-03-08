@@ -52,6 +52,7 @@ Commands:
   schedule          Manage cron schedules (install, show, remove)
   logs              View backup logs
   web               Web dashboard (start, install-service, status)
+  daemon            Background health daemon (start, install-service, status)
   uninstall         Uninstall gniza
 
 Run 'gniza --full-help' for detailed usage of all commands.
@@ -131,6 +132,15 @@ Web Dashboard:
   web install-service   Install as a systemd service (auto-starts on boot)
   web remove-service    Stop and remove the systemd service
   web status            Show service status
+
+Background Health Daemon:
+  daemon start [--interval=N]
+      Start the background health daemon in foreground (default interval: from config or 10s).
+      Monitors jobs, dispatches queued jobs, and cleans up old entries/logs.
+
+  daemon install-service   Install as a systemd service (auto-starts on boot)
+  daemon remove-service    Stop and remove the systemd service
+  daemon status            Show service status
 
 System:
   uninstall             Run the uninstall script
@@ -714,6 +724,76 @@ SVCEOF
             fi
             ;;
         *) die "Unknown web action: $_web_action (expected start|install-service|remove-service|status)" ;;
+    esac
+elif [[ "$SUBCOMMAND" == "daemon" ]]; then
+    _daemon_action="${SUBCMD_ARGS[0]:-start}"
+    case "$_daemon_action" in
+        start)
+            _daemon_interval=""
+            _daemon_interval=$(_parse_flag "--interval" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            _daemon_args=(--foreground)
+            [[ -n "$_daemon_interval" ]] && _daemon_args+=(--interval="$_daemon_interval")
+            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m daemon "${_daemon_args[@]}"
+            ;;
+        install-service)
+            if [[ $EUID -eq 0 ]]; then
+                _service_src="$GNIZA_DIR/etc/gniza-daemon.service"
+                _service_dst="/etc/systemd/system/gniza-daemon.service"
+                if [[ ! -f "$_service_src" ]]; then
+                    die "Service file not found: $_service_src"
+                fi
+                cp "$_service_src" "$_service_dst"
+                systemctl daemon-reload
+                systemctl enable gniza-daemon
+                systemctl restart gniza-daemon
+            else
+                _user_service_dir="$HOME/.config/systemd/user"
+                mkdir -p "$_user_service_dir"
+                cat > "$_user_service_dir/gniza-daemon.service" <<SVCEOF
+[Unit]
+Description=GNIZA Background Health Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=$(command -v python3) -m daemon
+WorkingDirectory=$GNIZA_DIR
+Environment=GNIZA_DIR=$GNIZA_DIR
+Environment=PYTHONPATH=$GNIZA_DIR
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+SVCEOF
+                systemctl --user daemon-reload
+                systemctl --user enable gniza-daemon
+                systemctl --user restart gniza-daemon
+            fi
+            echo "GNIZA daemon service installed and started."
+            ;;
+        remove-service)
+            if [[ $EUID -eq 0 ]]; then
+                systemctl stop gniza-daemon 2>/dev/null || true
+                systemctl disable gniza-daemon 2>/dev/null || true
+                rm -f /etc/systemd/system/gniza-daemon.service
+                systemctl daemon-reload
+            else
+                systemctl --user stop gniza-daemon 2>/dev/null || true
+                systemctl --user disable gniza-daemon 2>/dev/null || true
+                rm -f "$HOME/.config/systemd/user/gniza-daemon.service"
+                systemctl --user daemon-reload 2>/dev/null || true
+            fi
+            echo "GNIZA daemon service removed."
+            ;;
+        status)
+            if [[ $EUID -eq 0 ]]; then
+                systemctl status gniza-daemon 2>/dev/null || echo "GNIZA daemon service is not installed."
+            else
+                systemctl --user status gniza-daemon 2>/dev/null || echo "GNIZA daemon service is not installed."
+            fi
+            ;;
+        *) die "Unknown daemon action: $_daemon_action (expected start|install-service|remove-service|status)" ;;
     esac
 elif [[ "$SUBCOMMAND" == "uninstall" ]]; then
     _uninstall_script="$GNIZA_DIR/scripts/uninstall.sh"

@@ -87,22 +87,24 @@
 
         <!-- Page content -->
         <main class="p-4 md:p-6 w-full mx-auto flex-1">
-            <div class="max-w-7xl mx-auto flex gap-4">
+            <div class="max-w-7xl mx-auto flex"
+                 :class="{% if help_content and help_content.strip() %}$store.help.open ? 'gap-4' : 'gap-0'{% else %}''{% endif %}">
                 <div class="flex-1 min-w-0">
                     {% block content %}{% endblock %}
                 </div>
                 {% if help_content and help_content.strip() %}
                 <div class="hidden lg:flex shrink-0 transition-all duration-200"
-                     :class="$store.help.open ? 'w-72' : 'w-10'">
-                    <div class="w-full bg-base-200 rounded-lg flex flex-col sticky top-20 max-h-[calc(100vh-6rem)]">
+                     :class="$store.help.open ? 'w-72' : 'w-8'">
+                    <div class="w-full flex flex-col sticky top-20 max-h-[calc(100vh-6rem)]"
+                         :class="$store.help.open ? 'bg-base-200 rounded-lg' : ''">
                         <div class="flex-1 overflow-y-auto text-sm" x-show="$store.help.open" x-cloak>
                             <div class="p-4">
                                 {{ help_content }}
                             </div>
                         </div>
-                        <div class="pt-2">
-                            <button @click="$store.help.toggle()" class="w-full flex"
-                                    :class="$store.help.open ? '' : 'justify-center'">
+                        <div class="pt-2" :class="$store.help.open ? '' : 'flex justify-end'">
+                            <button @click="$store.help.toggle()" class="flex items-center"
+                                    :class="$store.help.open ? 'w-full' : 'justify-center'">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform" :class="$store.help.open ? '' : 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7m-8 0l7-7-7-7"/></svg>
                                 <span x-show="$store.help.open" x-cloak>Collapse</span>
                             </button>

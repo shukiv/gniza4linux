@@ -95,15 +95,13 @@ detect_mode() {
         CONFIG_DIR="/etc/gniza"
         LOG_DIR="/var/log/gniza"
         WORK_DIR="/usr/local/gniza/workdir"
-        LOCK_FILE="/var/run/gniza.lock"
     else
         GNIZA_MODE="user"
         CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gniza"
         LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gniza/log"
         WORK_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/gniza/workdir"
-        LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/gniza-${EUID}.lock"
     fi
-    export GNIZA_MODE CONFIG_DIR LOG_DIR WORK_DIR LOCK_FILE
+    export GNIZA_MODE CONFIG_DIR LOG_DIR WORK_DIR
 }
 
 ensure_dirs() {

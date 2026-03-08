@@ -96,9 +96,128 @@ def _list_dir_ssh(remote_conf, path):
         return None, str(e)
 
 
+def _build_rclone_conf(remote_conf):
+    """Build a temporary rclone config file from remote config dict."""
+    import tempfile
+    rtype = remote_conf.get("REMOTE_TYPE", "ssh")
+    fd, path = tempfile.mkstemp(suffix=".conf", prefix="gniza-rclone-")
+    os.fchmod(fd, 0o600)
+    try:
+        if rtype == "s3":
+            content = (
+                "[remote]\n"
+                "type = s3\n"
+                "provider = AWS\n"
+                f"access_key_id = {remote_conf.get('S3_ACCESS_KEY_ID', '')}\n"
+                f"secret_access_key = {remote_conf.get('S3_SECRET_ACCESS_KEY', '')}\n"
+                f"region = {remote_conf.get('S3_REGION', 'us-east-1')}\n"
+            )
+            endpoint = remote_conf.get("S3_ENDPOINT", "")
+            if endpoint:
+                content += f"endpoint = {endpoint}\n"
+        elif rtype == "gdrive":
+            content = (
+                "[remote]\n"
+                "type = drive\n"
+                "scope = drive\n"
+                f"service_account_file = {remote_conf.get('GDRIVE_SERVICE_ACCOUNT_FILE', '')}\n"
+            )
+            root_folder = remote_conf.get("GDRIVE_ROOT_FOLDER_ID", "")
+            if root_folder:
+                content += f"root_folder_id = {root_folder}\n"
+        else:
+            os.close(fd)
+            os.unlink(path)
+            return None
+        os.write(fd, content.encode())
+        os.close(fd)
+        os.chmod(path, 0o600)
+    except Exception:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+        return None
+    return path
+
+
+def _rclone_remote_path(remote_conf, subpath=""):
+    """Build the rclone remote path including hostname prefix."""
+    rtype = remote_conf.get("REMOTE_TYPE", "ssh")
+    base = remote_conf.get("REMOTE_BASE", "/backups").rstrip("/")
+    hostname = socket.getfqdn()
+    if rtype == "s3":
+        bucket = remote_conf.get("S3_BUCKET", "")
+        return f"remote:{bucket}{base}/{hostname}" + (f"/{subpath}" if subpath else "")
+    elif rtype == "gdrive":
+        return f"remote:{base}/{hostname}" + (f"/{subpath}" if subpath else "")
+    return ""
+
+
+def _list_dir_rclone(remote_conf, target, snapshot, subpath=""):
+    """List dirs and files at a path on an S3/gdrive remote. Returns ((dirs, files), None) or (None, error)."""
+    conf_path = _build_rclone_conf(remote_conf)
+    if not conf_path:
+        return None, "Failed to build rclone configuration"
+
+    snap_subpath = f"targets/{target}/snapshots/{snapshot}"
+    if subpath:
+        snap_subpath += f"/{subpath.strip('/')}"
+
+    rpath = _rclone_remote_path(remote_conf, snap_subpath)
+
+    try:
+        # List directories
+        dir_result = subprocess.run(
+            ["rclone", "lsf", "--config", conf_path, "--dirs-only", rpath],
+            capture_output=True, text=True, timeout=30,
+        )
+        dirs = []
+        if dir_result.returncode == 0:
+            dirs = [d.rstrip("/") for d in dir_result.stdout.strip().splitlines() if d.strip()]
+            # Filter out the .complete marker directory if present
+            dirs = [d for d in dirs if d != ".complete"]
+
+        # List files
+        file_result = subprocess.run(
+            ["rclone", "lsf", "--config", conf_path, "--files-only", rpath],
+            capture_output=True, text=True, timeout=30,
+        )
+        files = []
+        if file_result.returncode == 0:
+            files = [f.strip() for f in file_result.stdout.strip().splitlines() if f.strip()]
+            # Filter out internal markers
+            files = [f for f in files if f not in (".complete",)]
+
+        if dir_result.returncode != 0 and file_result.returncode != 0:
+            err = dir_result.stderr.strip() or "Failed to list remote path"
+            return None, err
+
+        return (sorted(dirs), sorted(files)), None
+    except FileNotFoundError:
+        return None, "rclone is not installed"
+    except subprocess.TimeoutExpired:
+        return None, "Connection timed out"
+    except OSError as e:
+        return None, str(e)
+    finally:
+        try:
+            os.unlink(conf_path)
+        except OSError:
+            pass
+
+
 def _list_snapshot_dir(remote_conf, target, snapshot, subpath=""):
     """List dirs and files at a subpath within a snapshot."""
     rtype = remote_conf.get("REMOTE_TYPE", "ssh")
+
+    if rtype in ("s3", "gdrive"):
+        return _list_dir_rclone(remote_conf, target, snapshot, subpath)
+
     base = _snapshot_base(remote_conf, target, snapshot)
     full_path = base if not subpath else f"{base}/{subpath.strip('/')}"
 

@@ -395,3 +395,70 @@ test_rclone_connection() {
         return 1
     fi
 }
+
+# ── Disk/Quota Info ──────────────────────────────────────────
+
+# Return disk usage percentage for rclone remotes.
+# gdrive: computed from about --json. s3: returns 0 (no quota concept).
+rclone_disk_usage_pct() {
+    case "${REMOTE_TYPE}" in
+        gdrive)
+            local about_json
+            about_json=$(_rclone_cmd about "remote:" --json 2>/dev/null) || { echo "0"; return 0; }
+            python3 -c "
+import json, sys
+d = json.loads(sys.stdin.read())
+total = d.get('total', 0)
+used = d.get('used', 0)
+print(int(used * 100 / total) if total > 0 else 0)
+" <<< "$about_json" 2>/dev/null || echo "0"
+            ;;
+        s3)
+            # S3 has no quota concept
+            echo "0"
+            ;;
+    esac
+}
+
+# Compact one-line disk info for rclone remotes.
+# gdrive: "USED/TOTAL (FREE free) PCT%". s3: "SIZE used (no quota)".
+rclone_disk_info_short() {
+    case "${REMOTE_TYPE}" in
+        gdrive)
+            local about_json
+            about_json=$(_rclone_cmd about "remote:" --json 2>/dev/null) || { echo "N/A"; return 0; }
+            python3 -c "
+import json, sys
+def fmt(b):
+    for u in ['B','K','M','G','T']:
+        if b < 1024: return f'{b:.1f}{u}'
+        b /= 1024
+    return f'{b:.1f}P'
+d = json.loads(sys.stdin.read())
+total = d.get('total', 0)
+used = d.get('used', 0)
+free = d.get('free', total - used)
+pct = int(used * 100 / total) if total > 0 else 0
+print(f'{fmt(used)}/{fmt(total)} ({fmt(free)} free) {pct}%')
+" <<< "$about_json" 2>/dev/null || echo "N/A"
+            ;;
+        s3)
+            local bucket_path
+            bucket_path="remote:${S3_BUCKET}${REMOTE_BASE}"
+            local size_json
+            size_json=$(_rclone_cmd size --json "$bucket_path" 2>/dev/null) || { echo "N/A"; return 0; }
+            python3 -c "
+import json, sys
+def fmt(b):
+    for u in ['B','K','M','G','T']:
+        if b < 1024: return f'{b:.1f}{u}'
+        b /= 1024
+    return f'{b:.1f}P'
+d = json.loads(sys.stdin.read())
+total_bytes = d.get('bytes', 0)
+count = d.get('count', 0)
+print(f'{fmt(total_bytes)} used, {count} objects (no quota)')
+" <<< "$size_json" 2>/dev/null || echo "N/A"
+            ;;
+    esac
+}

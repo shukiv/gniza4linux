@@ -26,6 +26,7 @@ source "$GNIZA_DIR/lib/snapshot.sh"
 source "$GNIZA_DIR/lib/transfer.sh"
 source "$GNIZA_DIR/lib/snaplog.sh"
 source "$GNIZA_DIR/lib/source.sh"
+source "$GNIZA_DIR/lib/health.sh"
 
 # ── Help ─────────────────────────────────────────────────────
 show_help() {
@@ -53,6 +54,7 @@ Commands:
   logs              View backup logs
   web               Web dashboard (start, install-service, status)
   daemon            Background health daemon (start, install-service, status)
+  health            Health check for all destinations
   uninstall         Uninstall gniza
   update            Check for and apply updates
 
@@ -143,6 +145,13 @@ Background Health Daemon:
   daemon install-service   Install as a systemd service (auto-starts on boot)
   daemon remove-service    Stop and remove the systemd service
   daemon status            Show service status
+
+Health Check:
+  health [--destination=NAME] [--json]
+      Run comprehensive health check on all (or a specific) destination.
+      Checks connectivity, disk space, snapshot counts, stale partials,
+      and orphaned targets.
+      Use --json for machine-readable output.
 
 System:
   uninstall             Run the uninstall script
@@ -566,7 +575,8 @@ HELPEOF
                 test)
                     [[ -z "$name" ]] && die "destinations test requires --name=NAME"
                     validate_remote "$name"
-                    echo "Destination '$name' is valid."
+                    test_remote_connection
+                    echo "Destination '$name' is valid and reachable."
                     ;;
                 disk-info-short)
                     [[ -z "$name" ]] && die "destinations disk-info-short requires --name=NAME"
@@ -853,6 +863,31 @@ send_job_notification({
 " 2>/dev/null || true
 
             exit "$rc"
+            ;;
+
+        health)
+            local dest_flag="" json_flag=false
+            dest_flag=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            for arg in "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}"; do
+                [[ "$arg" == "--json" ]] && json_flag=true
+            done
+
+            if [[ -n "$dest_flag" ]]; then
+                _save_remote_globals
+                load_remote "$dest_flag" || die "Failed to load destination: $dest_flag"
+                if [[ "$json_flag" == "true" ]]; then
+                    health_check_destination_json "$dest_flag"
+                else
+                    health_check_destination "$dest_flag"
+                fi
+                _restore_remote_globals
+            else
+                if [[ "$json_flag" == "true" ]]; then
+                    health_check_all_json
+                else
+                    health_check_all
+                fi
+            fi
             ;;
 
         test-email)

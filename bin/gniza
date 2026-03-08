@@ -785,10 +785,7 @@ HELPEOF
             # Skip if daemon already tracks this process
             local _job_id=""
             if [[ -z "${GNIZA_DAEMON_TRACKED:-}" ]]; then
-                local _job_label="Scheduled: $sched_name"
-                [[ -n "$target" ]] && _job_label+=" ($target"
-                [[ -n "$remote" ]] && _job_label+=" → $remote"
-                [[ -n "$target" ]] && _job_label+=")"
+                local _job_label="Schedule: $sched_name"
                 _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
                     start "scheduled-run" "$_job_label" --log-file="${LOG_FILE:-}" --pid=$$ 2>/dev/null) || true
             fi

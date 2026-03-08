@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 from tui.config import (
-    get_log_retain_days, get_max_concurrent_jobs, LOG_DIR
+    get_log_retain_days, get_max_concurrent_jobs, LOG_DIR, WORK_DIR
 )
 from daemon.notify import send_job_notification
 
@@ -24,15 +24,8 @@ def _handle_signal(signum, frame):
     _shutdown = True
 
 
-def _work_dir():
-    if os.geteuid() == 0:
-        return Path("/usr/local/gniza/workdir")
-    state_home = os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local" / "state"))
-    return Path(state_home) / "gniza" / "workdir"
-
-
 def _registry_path():
-    return _work_dir() / "gniza-jobs.json"
+    return WORK_DIR / "gniza-jobs.json"
 
 
 def _load_registry():
@@ -101,7 +94,7 @@ def _valid_log_path(log_file):
         return False
     try:
         resolved = Path(log_file).resolve()
-        work = _work_dir().resolve()
+        work = WORK_DIR.resolve()
         log_dir = Path(LOG_DIR).resolve()
         return resolved.is_relative_to(work) or resolved.is_relative_to(log_dir)
     except (OSError, ValueError):
@@ -372,7 +365,7 @@ def cleanup_orphan_job_logs():
 
 def cleanup_stale_workdir():
     """Remove stale gniza temp files/dirs from workdir older than 1 day."""
-    work_dir = _work_dir()
+    work_dir = WORK_DIR
     if not work_dir.is_dir():
         return
     cutoff = time.time() - 86400

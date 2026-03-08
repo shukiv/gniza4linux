@@ -7,8 +7,10 @@ from flask import (
 )
 
 from tui.config import CONFIG_DIR, parse_conf, write_conf, list_conf_dir
-from tui.models import Target, Remote
+from tui.models import Target
 from web.app import login_required
+from web.helpers import load_targets
+from web.ssh_utils import ssh_cmd
 
 bp = Blueprint("targets", __name__, url_prefix="/sources")
 
@@ -18,22 +20,6 @@ _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 def _lines_to_csv(text: str) -> str:
     """Convert newline-separated textarea input to comma-separated config value."""
     return ",".join(line.strip().strip('"') for line in text.splitlines() if line.strip())
-
-
-def _ssh_cmd(host, port="22", user="root", key="", password=""):
-    ssh_opts = [
-        "ssh",
-        "-o", "BatchMode=yes",
-        "-o", "StrictHostKeyChecking=accept-new",
-        "-o", "ConnectTimeout=10",
-        "-p", port or "22",
-    ]
-    if key:
-        ssh_opts += ["-i", key]
-    ssh_opts.append(f"{user}@{host}")
-    if password:
-        return ["sshpass", "-e"] + ssh_opts
-    return ssh_opts
 
 
 def _test_source(target):
@@ -51,7 +37,7 @@ def _test_source(target):
         user = target.source_user or "root"
         key = target.source_key if target.source_auth_method == "key" else ""
         password = target.source_password if target.source_auth_method == "password" else ""
-        cmd = _ssh_cmd(host, port, user, key, password)
+        cmd = ssh_cmd(host, port, user, key, password)
         env = None
         if password:
             env = os.environ.copy()
@@ -97,22 +83,6 @@ def _test_source(target):
     return True, None
 
 
-def _load_targets():
-    targets = []
-    for name in list_conf_dir("targets.d"):
-        data = parse_conf(CONFIG_DIR / "targets.d" / f"{name}.conf")
-        targets.append(Target.from_conf(name, data))
-    return targets
-
-
-def _load_remotes():
-    remotes = []
-    for name in list_conf_dir("remotes.d"):
-        data = parse_conf(CONFIG_DIR / "remotes.d" / f"{name}.conf")
-        remotes.append(Remote.from_conf(name, data))
-    return remotes
-
-
 @bp.route("/")
 @login_required
 def index():
@@ -120,7 +90,7 @@ def index():
     if page < 1:
         page = 1
     try:
-        targets = _load_targets()
+        targets = load_targets()
     except Exception:
         targets = []
         flash("Failed to load sources.", "error")

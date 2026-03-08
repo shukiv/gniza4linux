@@ -11,6 +11,7 @@ from flask import (
 from tui.config import CONFIG_DIR, list_conf_dir, parse_conf
 from web.app import login_required
 from web.backend import run_cli_sync
+from web.ssh_utils import ssh_cmd_from_conf
 
 bp = Blueprint("snapshots", __name__, url_prefix="/snapshots")
 
@@ -33,30 +34,6 @@ def _snapshot_base(remote_conf, target, snapshot):
     base = remote_conf.get("REMOTE_BASE", "/backups").rstrip("/")
     hostname = socket.getfqdn()
     return f"{base}/{hostname}/targets/{target}/snapshots/{snapshot}"
-
-
-def _ssh_cmd(remote_conf):
-    """Build SSH command prefix from remote config."""
-    host = remote_conf.get("REMOTE_HOST", "")
-    port = remote_conf.get("REMOTE_PORT", "22")
-    user = remote_conf.get("REMOTE_USER", "root")
-    key = remote_conf.get("REMOTE_KEY", "")
-    password = remote_conf.get("REMOTE_PASSWORD", "")
-    auth = remote_conf.get("REMOTE_AUTH_METHOD", "key")
-
-    ssh_opts = [
-        "ssh",
-        "-o", "BatchMode=yes",
-        "-o", "StrictHostKeyChecking=accept-new",
-        "-o", "ConnectTimeout=10",
-        "-p", port or "22",
-    ]
-    if key and auth == "key":
-        ssh_opts += ["-i", key]
-    ssh_opts.append(f"{user}@{host}")
-    if password and auth == "password":
-        return ["sshpass", "-e"] + ssh_opts, password
-    return ssh_opts, None
 
 
 def _list_dir_local(path):
@@ -92,7 +69,7 @@ def _list_dir_ssh(remote_conf, path):
         f"  done | sort; "
         f"else echo 'ERROR:not_found'; fi"
     )
-    cmd, sshpass_pw = _ssh_cmd(remote_conf)
+    cmd, sshpass_pw = ssh_cmd_from_conf(remote_conf)
     cmd = cmd + [cmd_str]
     env = None
     if sshpass_pw:

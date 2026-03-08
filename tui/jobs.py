@@ -11,26 +11,12 @@ from pathlib import Path
 from textual.message import Message
 
 from tui.backend import start_cli_background
-from tui.config import get_log_retain_days, get_max_concurrent_jobs
+from tui.config import get_log_retain_days, get_max_concurrent_jobs, WORK_DIR, LOG_DIR
 
 MAX_OUTPUT_LINES = 10_000
 
 
-def _work_dir() -> Path:
-    if os.geteuid() == 0:
-        return Path("/usr/local/gniza/workdir")
-    state_home = os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local" / "state"))
-    return Path(state_home) / "gniza" / "workdir"
-
-
-def _log_dir() -> Path:
-    if os.geteuid() == 0:
-        return Path("/var/log/gniza")
-    state_home = os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local" / "state"))
-    return Path(state_home) / "gniza" / "log"
-
-
-REGISTRY_FILE = _work_dir() / "gniza-jobs.json"
+REGISTRY_FILE = WORK_DIR / "gniza-jobs.json"
 
 
 class JobFinished(Message):
@@ -114,7 +100,7 @@ class JobManager:
             job._tail_task = task
 
     async def run_job(self, app, job: Job, *cli_args: str) -> int:
-        log_path = _log_dir() / f"gniza-job-{job.id}.log"
+        log_path = LOG_DIR / f"gniza-job-{job.id}.log"
         job._log_file = str(log_path)
         proc = start_cli_background(*cli_args, log_file=str(log_path))
         job._proc = proc
@@ -474,7 +460,6 @@ class JobManager:
             return None
         except OSError:
             return None
-        return None
 
     def start_tailing_reconnected(self, app) -> None:
         """Start log file tailing tasks for all reconnected running jobs."""

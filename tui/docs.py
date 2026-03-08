@@ -135,26 +135,6 @@ SCREEN_DOCS = {
         "  - Loading may take a moment for SSH destinations.\n"
         "  - Use the Restore screen to actually restore files from a snapshot."
     ),
-    "retention-screen": (
-        "[bold]Retention Cleanup[/bold]\n"
-        "\n"
-        "Remove old snapshots based on retention count.\n"
-        "\n"
-        "[bold]Fields:[/bold]\n"
-        "  [bold]Source[/bold] - Run cleanup for a specific source.\n"
-        "  [bold]Default retention count[/bold] - Number of snapshots to keep per source/destination pair.\n"
-        "\n"
-        "[bold]Buttons:[/bold]\n"
-        "  [bold]Run Cleanup[/bold] - Clean old snapshots for the selected source.\n"
-        "  [bold]Cleanup All[/bold] - Clean old snapshots for all sources.\n"
-        "  [bold]Save[/bold] - Save the default retention count.\n"
-        "\n"
-        "[bold]How it works:[/bold]\n"
-        "  Retention keeps the N most recent snapshots and deletes the rest. Per-schedule overrides take priority over the default count.\n"
-        "\n"
-        "[bold]Warning:[/bold]\n"
-        "  Deleted snapshots cannot be recovered."
-    ),
     "schedule-screen": (
         "[bold]Schedules Screen[/bold]\n"
         "\n"

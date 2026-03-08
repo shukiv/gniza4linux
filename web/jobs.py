@@ -14,7 +14,7 @@ import subprocess
 
 from tui.config import (
     get_log_retain_days, get_max_concurrent_jobs, CONFIG_DIR, parse_conf,
-    list_conf_dir,
+    list_conf_dir, WORK_DIR, LOG_DIR,
 )
 from web.backend import start_cli_background
 
@@ -23,21 +23,7 @@ logger = logging.getLogger(__name__)
 MAX_OUTPUT_LINES = 10_000
 
 
-def _work_dir():
-    if os.geteuid() == 0:
-        return Path("/usr/local/gniza/workdir")
-    state_home = os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local" / "state"))
-    return Path(state_home) / "gniza" / "workdir"
-
-
-def _log_dir():
-    if os.geteuid() == 0:
-        return Path("/var/log/gniza")
-    state_home = os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local" / "state"))
-    return Path(state_home) / "gniza" / "log"
-
-
-REGISTRY_FILE = _work_dir() / "gniza-jobs.json"
+REGISTRY_FILE = WORK_DIR / "gniza-jobs.json"
 
 
 @dataclass
@@ -67,7 +53,7 @@ class WebJobManager:
         """Create a job. If under concurrency limit, start it; otherwise queue it."""
         with self._lock:
             job_id = uuid.uuid4().hex[:8]
-            log_path = _log_dir() / f"gniza-job-{job_id}.log"
+            log_path = LOG_DIR / f"gniza-job-{job_id}.log"
             log_path.parent.mkdir(parents=True, exist_ok=True)
 
             max_jobs = get_max_concurrent_jobs()
@@ -446,7 +432,6 @@ class WebJobManager:
             return None
         except OSError:
             return None
-        return None
 
 
 # Module-level singleton

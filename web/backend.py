@@ -1,34 +1,9 @@
 import subprocess
-from pathlib import Path
-import os
 
-
-def _gniza_bin():
-    env = os.environ.get("GNIZA_DIR")
-    if env:
-        p = Path(env) / "bin" / "gniza"
-        if p.exists():
-            return str(p)
-    rel = Path(__file__).resolve().parent.parent / "bin" / "gniza"
-    if rel.exists():
-        return str(rel)
-    return "gniza"
+from lib.cli_runner import gniza_bin, start_cli_background  # noqa: F401
 
 
 def run_cli_sync(*args, timeout=300):
-    cmd = [_gniza_bin(), "--cli"] + list(args)
+    cmd = [gniza_bin(), "--cli"] + list(args)
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     return result.returncode, result.stdout, result.stderr
-
-
-def start_cli_background(*args, log_file):
-    cmd = [_gniza_bin(), "--cli"] + list(args)
-    fh = open(log_file, "w")
-    env = os.environ.copy()
-    env["GNIZA_DAEMON_TRACKED"] = "1"
-    proc = subprocess.Popen(
-        cmd, stdout=fh, stderr=subprocess.STDOUT, start_new_session=True, env=env
-    )
-    # Child process has its own fd now; close ours to avoid leak
-    fh.close()
-    return proc

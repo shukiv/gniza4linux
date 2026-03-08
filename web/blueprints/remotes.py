@@ -10,26 +10,12 @@ from tui.config import CONFIG_DIR, parse_conf, write_conf, list_conf_dir
 from tui.models import Remote
 from web.app import login_required
 from web.backend import run_cli_sync
+from web.helpers import load_remotes
+from web.ssh_utils import ssh_cmd
 
 bp = Blueprint("remotes", __name__, url_prefix="/destinations")
 
 _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
-
-
-def _ssh_cmd(host, port="22", user="root", key="", password=""):
-    ssh_opts = [
-        "ssh",
-        "-o", "BatchMode=yes",
-        "-o", "StrictHostKeyChecking=accept-new",
-        "-o", "ConnectTimeout=10",
-        "-p", port or "22",
-    ]
-    if key:
-        ssh_opts += ["-i", key]
-    ssh_opts.append(f"{user}@{host}")
-    if password:
-        return ["sshpass", "-e"] + ssh_opts
-    return ssh_opts
 
 
 def _test_remote(remote):
@@ -44,7 +30,7 @@ def _test_remote(remote):
     if remote.type == "ssh":
         key = remote.key if remote.auth_method == "key" else ""
         password = remote.password if remote.auth_method == "password" else ""
-        cmd = _ssh_cmd(remote.host, remote.port, remote.user, key, password)
+        cmd = ssh_cmd(remote.host, remote.port, remote.user, key, password)
         env = None
         if password:
             env = os.environ.copy()
@@ -96,14 +82,6 @@ def _test_remote(remote):
     return True, None
 
 
-def _load_remotes():
-    remotes = []
-    for name in list_conf_dir("remotes.d"):
-        data = parse_conf(CONFIG_DIR / "remotes.d" / f"{name}.conf")
-        remotes.append(Remote.from_conf(name, data))
-    return remotes
-
-
 @bp.route("/")
 @login_required
 def index():
@@ -111,7 +89,7 @@ def index():
     if page < 1:
         page = 1
     try:
-        remotes = _load_remotes()
+        remotes = load_remotes()
     except Exception:
         remotes = []
         flash("Failed to load destinations.", "error")

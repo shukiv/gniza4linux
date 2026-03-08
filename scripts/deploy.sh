@@ -21,6 +21,13 @@ if [[ -d "$INSTALL_DIR" ]]; then
     mkdir -p "$INSTALL_DIR/web" "$INSTALL_DIR/etc"
     cp -r web/* "$INSTALL_DIR/web/"
     cp -r etc/* "$INSTALL_DIR/etc/"
+    # Sync user service file if systemd user dir exists
+    if [[ -d "${HOME}/.config/systemd/user" ]]; then
+        sed -e "s|/usr/local/gniza|${INSTALL_DIR}|g" \
+            -e "s|WantedBy=multi-user.target|WantedBy=default.target|" \
+            etc/gniza-web.service > "${HOME}/.config/systemd/user/gniza-web.service"
+        systemctl --user daemon-reload 2>/dev/null || true
+    fi
     echo "Synced to $INSTALL_DIR"
 fi
 

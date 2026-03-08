@@ -37,7 +37,7 @@
     </div>
 
     <!-- Snapshot list -->
-    <div class="card bg-base-200 shadow mb-6">
+    <div class="card bg-base-200 shadow">
         <div class="card-body">
             <h3 class="card-title text-base">Snapshots</h3>
             <div id="snapshot-list">
@@ -45,17 +45,21 @@
             </div>
         </div>
     </div>
+</div>
 
-    <!-- File browser -->
-    <div class="card bg-base-200 shadow">
-        <div class="card-body">
-            <h3 class="card-title text-base">File Browser</h3>
-            <div id="snapshot-browser">
-                <p class="text-base-content/40">Select a snapshot above to browse its contents.</p>
-            </div>
+<!-- File browser modal -->
+<dialog id="browse-modal" class="modal">
+    <div class="modal-box w-11/12 max-w-3xl max-h-[85vh]">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4" id="browse-modal-title">File Browser</h3>
+        <div id="snapshot-browser" class="overflow-y-auto max-h-[65vh]">
+            <span class="loading loading-dots loading-md"></span>
         </div>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
 {% endblock %}
 
 {% block help_text %}

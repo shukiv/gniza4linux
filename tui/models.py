@@ -254,7 +254,6 @@ class AppSettings:
     ssh_retries: str = "3"
     rsync_extra_opts: str = ""
     rsync_compress: str = "no"
-    rsync_partial: str = "no"
     rsync_checksum: str = "no"
     disk_usage_threshold: str = "95"
     max_concurrent_jobs: str = "1"
@@ -282,7 +281,6 @@ class AppSettings:
             ssh_retries=data.get("SSH_RETRIES", "3"),
             rsync_extra_opts=data.get("RSYNC_EXTRA_OPTS", ""),
             rsync_compress=data.get("RSYNC_COMPRESS", "no"),
-            rsync_partial=data.get("RSYNC_PARTIAL", "no"),
             rsync_checksum=data.get("RSYNC_CHECKSUM", "no"),
             disk_usage_threshold=data.get("DISK_USAGE_THRESHOLD", "95"),
             max_concurrent_jobs=data.get("MAX_CONCURRENT_JOBS", "1"),
@@ -310,7 +308,6 @@ class AppSettings:
             "SSH_RETRIES": self.ssh_retries,
             "RSYNC_EXTRA_OPTS": self.rsync_extra_opts,
             "RSYNC_COMPRESS": self.rsync_compress,
-            "RSYNC_PARTIAL": self.rsync_partial,
             "RSYNC_CHECKSUM": self.rsync_checksum,
             "DISK_USAGE_THRESHOLD": self.disk_usage_threshold,
             "MAX_CONCURRENT_JOBS": self.max_concurrent_jobs,

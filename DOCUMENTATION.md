@@ -479,16 +479,11 @@ Value is in KB/s. Set to `0` for unlimited.
 # Compression: no, zlib, zstd (rsync 3.2.3+ for zstd)
 RSYNC_COMPRESS="zstd"
 
-# Resume interrupted transfers
-RSYNC_PARTIAL="yes"
-
 # Detect changes by content instead of mtime+size
 RSYNC_CHECKSUM="no"
 ```
 
 **Compression** reduces bandwidth but adds CPU overhead. zstd is ~3x faster than zlib at similar compression ratios. Most effective for text-heavy data (code, logs, SQL dumps) — has little effect on already-compressed files (images, videos, archives). Only applies to remote transfers — local transfers skip compression automatically.
-
-**Partial** keeps partially transferred files on the destination so interrupted backups can resume from where they left off instead of retransferring the entire file.
 
 **Checksum** uses file content checksums instead of modification time and size to detect changes. Slower but more accurate — useful after clock skew, filesystem migration, or when files are touched without content changes.
 
@@ -1215,7 +1210,6 @@ All global settings are in `gniza.conf` in the config directory.
 | `MAX_CONCURRENT_JOBS` | `1` | Max simultaneous jobs (0 = unlimited) |
 | `DAEMON_INTERVAL` | `10` | Health daemon check interval in seconds |
 | `RSYNC_COMPRESS` | `no` | Compression algorithm: no, zlib, zstd |
-| `RSYNC_PARTIAL` | `no` | Resume interrupted transfers (--partial) |
 | `RSYNC_CHECKSUM` | `no` | Detect changes by content (--checksum) |
 | `RSYNC_EXTRA_OPTS` | (empty) | Additional rsync flags |
 | `WORK_DIR` | `/tmp` | Temp directory for staging and dumps |

@@ -57,10 +57,6 @@
                     <label class="fieldset-label">Rsync Options</label>
                     <div class="flex flex-col gap-1">
                         <label class="label cursor-pointer justify-start gap-2">
-                            <input type="checkbox" name="rsync_partial" class="toggle toggle-primary toggle-sm" {{ 'checked' if settings.rsync_partial == 'yes' else '' }}>
-                            <span>Partial (--partial) — resume interrupted transfers</span>
-                        </label>
-                        <label class="label cursor-pointer justify-start gap-2">
                             <input type="checkbox" name="rsync_checksum" class="toggle toggle-primary toggle-sm" {{ 'checked' if settings.rsync_checksum == 'yes' else '' }}>
                             <span>Checksum (--checksum) — detect changes by content, not mtime</span>
                         </label>
@@ -225,7 +221,6 @@ document.getElementById('btn-update-now').addEventListener('click', function() {
     <li><strong>Retention Count</strong> — Default number of snapshots to keep.</li>
     <li><strong>Bandwidth Limit</strong> — Default transfer speed limit in KB/s.</li>
     <li><strong>Rsync Compression</strong> — Compress data during transfer. zstd is faster than zlib with similar ratios. Only applies to remote transfers.</li>
-    <li><strong>Partial</strong> — Keep partially transferred files so interrupted transfers can resume.</li>
     <li><strong>Checksum</strong> — Use file checksums instead of mtime+size to detect changes. Slower but more accurate after clock skew or filesystem migration.</li>
     <li><strong>Disk Threshold</strong> — Warn when destination disk usage exceeds this percentage.</li>
     <li><strong>Simultaneous Jobs</strong> — Max concurrent backup/restore jobs (0 = unlimited).</li>

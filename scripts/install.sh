@@ -172,8 +172,14 @@ for example in target.conf.example remote.conf.example schedule.conf.example; do
 done
 
 # -- Web dashboard setup --
-enable_web="n"
-read -rp "Enable web dashboard (TUI in browser)? (y/n) [n]: " enable_web </dev/tty || true
+echo ""
+echo "${C_BOLD}${C_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
+echo "${C_BOLD}  Web Dashboard${C_RESET} — manage backups from your browser"
+echo "${C_BOLD}${C_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
+echo ""
+enable_web="y"
+read -rp "Enable web dashboard? (y/n) [y]: " enable_web </dev/tty || true
+enable_web="${enable_web:-y}"
 if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
     # Set up web credentials (preserve existing values)
     web_user="$(grep '^WEB_USER=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_USER="//' | sed 's/"$//' || true)"

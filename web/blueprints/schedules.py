@@ -9,11 +9,20 @@ from flask import (
 from tui.config import CONFIG_DIR, parse_conf, write_conf, list_conf_dir
 from tui.models import Schedule
 from web.app import login_required
+from web.backend import run_cli_sync
 from web.jobs import web_job_manager
 
 bp = Blueprint("schedules", __name__, url_prefix="/schedules")
 
 _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
+
+
+def _reinstall_cron():
+    """Reinstall cron entries so they reflect current schedule configs."""
+    try:
+        run_cli_sync("schedule", "install", timeout=30)
+    except Exception:
+        pass
 
 
 def _calc_next_run(s):
@@ -163,6 +172,7 @@ def save():
     conf_dir = CONFIG_DIR / "schedules.d"
     conf_dir.mkdir(parents=True, exist_ok=True)
     write_conf(conf_dir / f"{schedule.name}.conf", schedule.to_conf())
+    _reinstall_cron()
     flash(f"Schedule '{schedule.name}' saved.", "success")
     return redirect(url_for("schedules.index"))
 
@@ -176,6 +186,7 @@ def delete(name):
     conf_path = CONFIG_DIR / "schedules.d" / f"{name}.conf"
     if conf_path.is_file():
         os.unlink(conf_path)
+        _reinstall_cron()
         flash(f"Schedule '{name}' deleted.", "success")
     else:
         flash("Schedule not found.", "error")
@@ -196,6 +207,7 @@ def toggle(name):
     schedule = Schedule.from_conf(name, data)
     schedule.active = "no" if schedule.active == "yes" else "yes"
     write_conf(conf_path, schedule.to_conf())
+    _reinstall_cron()
     flash(f"Schedule '{name}' {'activated' if schedule.active == 'yes' else 'deactivated'}.", "success")
     return redirect(url_for("schedules.index"))
 

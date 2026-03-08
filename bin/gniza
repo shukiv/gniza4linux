@@ -257,12 +257,30 @@ run_cli() {
             remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
 
-            trap '_gniza_exit_rc=$?; release_all_target_locks; _gniza_log_exit_trap $_gniza_exit_rc' EXIT
+            # Register in job registry so web/TUI can track CLI-started backups
+            local _job_label="Backup"
+            [[ -n "$target" ]] && _job_label+=" $target"
+            [[ -n "$remote" ]] && _job_label+=" → $remote"
+            [[ "$all" == "true" ]] && _job_label="Backup all"
+            local _job_id=""
+            _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
+                start "backup" "$_job_label" --log-file="${LOG_FILE:-}" 2>/dev/null) || true
+
+            _finish_job_reg() {
+                local _rc=$1
+                local _st="success"
+                (( _rc != 0 )) && _st="failed"
+                if [[ -n "$_job_id" ]]; then
+                    PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
+                        finish "$_job_id" "$_st" "$_rc" 2>/dev/null || true
+                fi
+            }
+
+            trap '_gniza_exit_rc=$?; release_all_target_locks; _finish_job_reg $_gniza_exit_rc; _gniza_log_exit_trap $_gniza_exit_rc' EXIT
 
             if [[ "$all" == "true" || -z "$target" ]]; then
                 backup_all_targets "$remote"
             elif [[ "$target" == *,* ]]; then
-                # Comma-separated targets (e.g. from schedule --target=web,db)
                 local IFS=','
                 local names
                 read -ra names <<< "$target"
@@ -579,9 +597,15 @@ run_cli() {
             remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             [[ -z "$sched_name" ]] && die "scheduled-run requires --schedule=NAME"
 
-            # Load schedule config and export retention override if set
+            # Load schedule config and check if active
             local sched_conf="$CONFIG_DIR/schedules.d/${sched_name}.conf"
             if [[ -f "$sched_conf" ]]; then
+                local _sched_active=""
+                _sched_active=$(grep -oP '^SCHEDULE_ACTIVE=["\x27]?\K[^"\x27]*' "$sched_conf" 2>/dev/null) || true
+                if [[ "$_sched_active" == "no" ]]; then
+                    log_info "Schedule '$sched_name' is inactive, skipping"
+                    exit 0
+                fi
                 local _sched_retention=""
                 _sched_retention=$(grep -oP '^RETENTION_COUNT=["\x27]?\K[^"\x27]*' "$sched_conf" 2>/dev/null) || true
                 if [[ -n "$_sched_retention" ]]; then
@@ -589,7 +613,26 @@ run_cli() {
                 fi
             fi
 
-            trap '_gniza_exit_rc=$?; release_all_target_locks; _gniza_log_exit_trap $_gniza_exit_rc' EXIT
+            # Register job in shared registry so web/TUI can track it
+            local _job_label="Scheduled: $sched_name"
+            [[ -n "$target" ]] && _job_label+=" ($target"
+            [[ -n "$remote" ]] && _job_label+=" → $remote"
+            [[ -n "$target" ]] && _job_label+=")"
+            local _job_id=""
+            _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
+                start "scheduled-run" "$_job_label" --log-file="${LOG_FILE:-}" 2>/dev/null) || true
+
+            _finish_job_reg() {
+                local _rc=$1
+                local _st="success"
+                (( _rc != 0 )) && _st="failed"
+                if [[ -n "$_job_id" ]]; then
+                    PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
+                        finish "$_job_id" "$_st" "$_rc" 2>/dev/null || true
+                fi
+            }
+
+            trap '_gniza_exit_rc=$?; release_all_target_locks; _finish_job_reg $_gniza_exit_rc; _gniza_log_exit_trap $_gniza_exit_rc' EXIT
 
             local rc=0
             if [[ -n "$target" && "$target" == *,* ]]; then

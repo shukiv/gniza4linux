@@ -1,3 +1,8 @@
+import os
+import subprocess
+import threading
+from pathlib import Path
+
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
 )
@@ -15,7 +20,15 @@ bp = Blueprint("settings", __name__, url_prefix="/settings")
 def index():
     data = parse_conf(CONFIG_DIR / "gniza.conf")
     settings = AppSettings.from_conf(data)
-    return render_template("settings/index.html", settings=settings)
+    version = "unknown"
+    gniza_dir = os.environ.get("GNIZA_DIR", str(Path(__file__).resolve().parent.parent.parent))
+    constants_path = Path(gniza_dir) / "lib" / "constants.sh"
+    if constants_path.exists():
+        for line in constants_path.read_text().splitlines():
+            if line.startswith("readonly GNIZA4LINUX_VERSION="):
+                version = line.split('"')[1]
+                break
+    return render_template("settings/index.html", settings=settings, version=version)
 
 
 @bp.route("/", methods=["POST"])
@@ -44,8 +57,53 @@ def save():
         web_host=form.get("web_host", "0.0.0.0"),
         web_api_key=form.get("web_api_key", ""),
     )
+    old_data = parse_conf(CONFIG_DIR / "gniza.conf")
+    old_api_key = old_data.get("WEB_API_KEY", "")
     write_conf(CONFIG_DIR / "gniza.conf", settings.to_conf())
-    flash("Settings saved.", "success")
+
+    if settings.web_api_key != old_api_key:
+        flash("Settings saved. API key changed — restarting web service...", "success")
+
+        def _delayed_restart():
+            import time
+            time.sleep(1)
+            if os.geteuid() == 0:
+                subprocess.run(["systemctl", "restart", "gniza-web"], check=False)
+            else:
+                subprocess.run(["systemctl", "--user", "restart", "gniza-web"], check=False)
+
+        threading.Thread(target=_delayed_restart, daemon=True).start()
+    else:
+        flash("Settings saved.", "success")
+
+    return redirect(url_for("settings.index"))
+
+
+@bp.route("/check-update", methods=["POST"])
+@login_required
+def check_update():
+    try:
+        rc, stdout, stderr = run_cli_sync("update", "--check", timeout=60)
+        if rc == 0:
+            flash(stdout.strip() or "Already up to date.", "success")
+        else:
+            flash(stderr.strip() or stdout.strip() or "Update check failed.", "error")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
+    return redirect(url_for("settings.index"))
+
+
+@bp.route("/apply-update", methods=["POST"])
+@login_required
+def apply_update():
+    try:
+        rc, stdout, stderr = run_cli_sync("update", timeout=120)
+        if rc == 0:
+            flash(stdout.strip() or "Update applied successfully.", "success")
+        else:
+            flash(stderr.strip() or stdout.strip() or "Update failed.", "error")
+    except Exception as e:
+        flash(f"Error: {e}", "error")
     return redirect(url_for("settings.index"))
 
 

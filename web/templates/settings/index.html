@@ -145,6 +145,24 @@
         <button type="submit" class="btn btn-primary">Save Settings</button>
     </div>
 </form>
+
+<!-- Update Section -->
+<div class="tabs tabs-lift mt-6">
+    <input type="radio" name="update_tabs" class="tab" aria-label="Update" checked="checked" />
+    <div class="tab-content bg-base-100 border-base-300 p-6">
+        <div class="flex items-center gap-4 mb-4">
+            <span class="text-lg font-semibold">gniza v{{ version }}</span>
+        </div>
+        <div class="flex gap-2">
+            <form method="POST" action="{{ url_for('settings.check_update') }}">
+                <button type="submit" class="btn btn-info btn-sm">Check for Updates</button>
+            </form>
+            <form method="POST" action="{{ url_for('settings.apply_update') }}">
+                <button type="submit" class="btn btn-warning btn-sm">Update Now</button>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block help_text %}

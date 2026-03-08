@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Input, Select
@@ -20,6 +23,14 @@ class SettingsScreen(Screen):
         yield Header(show_clock=True)
         conf = parse_conf(CONFIG_DIR / "gniza.conf")
         settings = AppSettings.from_conf(conf)
+        self._version = "unknown"
+        gniza_dir = os.environ.get("GNIZA_DIR", str(Path(__file__).resolve().parent.parent.parent))
+        constants_path = Path(gniza_dir) / "lib" / "constants.sh"
+        if constants_path.exists():
+            for line in constants_path.read_text().splitlines():
+                if line.startswith("readonly GNIZA4LINUX_VERSION="):
+                    self._version = line.split('"')[1]
+                    break
         with Horizontal(classes="screen-with-docs"):
             with Vertical(id="settings-screen"):
                 with Horizontal(id="title-bar"):
@@ -81,6 +92,10 @@ class SettingsScreen(Screen):
                     yield Input(value=settings.web_host, id="set-web-host")
                     yield Static("API Key:")
                     yield Input(value=settings.web_api_key, password=True, id="set-web-key")
+                with Vertical(classes="settings-section", id="section-update"):
+                    yield Static(f"gniza v{self._version}")
+                    yield Button("Check for Updates", id="btn-check-update")
+                    yield Button("Update Now", variant="warning", id="btn-update-now")
                 with Horizontal(id="set-buttons"):
                     yield Button("Save", variant="primary", id="btn-save")
                     yield Button("Send Test Email", id="btn-test-email")
@@ -92,6 +107,7 @@ class SettingsScreen(Screen):
         self.query_one("#section-email").border_title = "Email Notifications"
         self.query_one("#section-ssh").border_title = "SSH"
         self.query_one("#section-web").border_title = "Web Dashboard"
+        self.query_one("#section-update").border_title = "Update"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-back":
@@ -101,6 +117,10 @@ class SettingsScreen(Screen):
         elif event.button.id == "btn-test-email":
             self._save()
             self._send_test_email()
+        elif event.button.id == "btn-check-update":
+            self._check_for_update()
+        elif event.button.id == "btn-update-now":
+            self._apply_update()
 
     def _get_select_val(self, sel_id: str, default: str) -> str:
         sel = self.query_one(sel_id, Select)
@@ -139,6 +159,30 @@ class SettingsScreen(Screen):
         self.app.push_screen(log_screen)
         log_screen.write("Sending test email...")
         rc, stdout, stderr = await run_cli("test-email")
+        if stdout:
+            log_screen.write(stdout)
+        if stderr:
+            log_screen.write(stderr)
+        log_screen.finish()
+
+    @work
+    async def _check_for_update(self) -> None:
+        log_screen = OperationLog("Check for Updates", show_spinner=True)
+        self.app.push_screen(log_screen)
+        log_screen.write("Checking for updates...")
+        rc, stdout, stderr = await run_cli("update", "--check")
+        if stdout:
+            log_screen.write(stdout)
+        if stderr:
+            log_screen.write(stderr)
+        log_screen.finish()
+
+    @work
+    async def _apply_update(self) -> None:
+        log_screen = OperationLog("Update gniza", show_spinner=True)
+        self.app.push_screen(log_screen)
+        log_screen.write("Applying update...")
+        rc, stdout, stderr = await run_cli("update")
         if stdout:
             log_screen.write(stdout)
         if stderr:

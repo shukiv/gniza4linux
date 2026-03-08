@@ -19,6 +19,7 @@ Complete reference for gniza, a Linux backup manager that works as a stand-alone
 - [MySQL Backup](#mysql-backup)
 - [Notifications](#notifications)
 - [Web Dashboard](#web-dashboard)
+- [Background Daemon](#background-daemon)
 - [Terminal UI](#terminal-ui)
 - [CLI Reference](#cli-reference)
 - [Global Settings](#global-settings)
@@ -943,6 +944,71 @@ The web dashboard is responsive and works on mobile browsers:
 
 ---
 
+## Background Daemon
+
+The gniza daemon is a lightweight Python process that runs periodic health checks independently of the TUI and web dashboard.
+
+### What It Does
+
+| Task | Frequency | Description |
+|------|-----------|-------------|
+| **Dead job detection** | Every cycle | Detects running jobs whose process has died, updates status to success/failed/skipped/unknown |
+| **Queue dispatch** | Every cycle | Starts queued jobs when slots are available (respects `MAX_CONCURRENT_JOBS`) |
+| **Registry cleanup** | Every ~10 min | Removes finished job entries older than `LOG_RETAIN` days |
+| **Log cleanup** | Every ~10 min | Deletes backup log files older than `LOG_RETAIN` days |
+| **Orphan cleanup** | Every ~10 min | Removes unreferenced job log files older than 1 hour |
+
+### Setup
+
+```bash
+# Install as a systemd service (recommended)
+gniza daemon install-service
+
+# Or start manually in foreground
+gniza daemon start
+
+# Custom check interval
+gniza daemon start --interval=5
+```
+
+### Service Management
+
+```bash
+gniza daemon install-service       # Install and start systemd service
+gniza daemon remove-service        # Stop and remove service
+gniza daemon status                # Check service status
+```
+
+Supports both root (system service at `/etc/systemd/system/gniza-daemon.service`) and user (user service at `~/.config/systemd/user/gniza-daemon.service`) modes.
+
+### Configuration
+
+In `gniza.conf`:
+
+```ini
+DAEMON_INTERVAL=10             # Health check interval in seconds (default: 10, minimum: 1)
+```
+
+The daemon also uses these existing settings:
+- `MAX_CONCURRENT_JOBS` — concurrency limit for queue dispatch
+- `LOG_RETAIN` — days to keep log files and finished job entries
+
+### Daemon Log
+
+The daemon logs to `<log_dir>/gniza-daemon.log` with automatic rotation (5 MB max, 3 backups). In foreground mode (`--foreground`), logs go to the console instead.
+
+### How It Works
+
+The daemon shares the same job registry (`gniza-jobs.json`) as the TUI and web dashboard. All three use file locking to prevent concurrent write corruption. The daemon:
+
+1. Reads the registry every cycle
+2. For each "running" job, checks if the PID is still alive
+3. If the process is dead, determines the exit code (via waitpid or log analysis) and updates the status
+4. Starts queued jobs if under the concurrency limit
+5. Periodically cleans up expired entries and old log files
+
+---
+
 ## Terminal UI
 
 Launch with `gniza` (no arguments). Requires Python 3 and Textual.
@@ -1090,6 +1156,16 @@ gniza web remove-service                              # Remove service
 gniza web status                                      # Check status
 ```
 
+### Background Daemon
+
+```bash
+gniza daemon start                                    # Start in foreground
+gniza daemon start --interval=5                       # Custom interval
+gniza daemon install-service                          # Install systemd service
+gniza daemon remove-service                           # Remove service
+gniza daemon status                                   # Check status
+```
+
 ### Notifications
 
 ```bash
@@ -1118,6 +1194,7 @@ All global settings are in `gniza.conf` in the config directory.
 | `RETENTION_COUNT` | `30` | Default snapshots to keep |
 | `DISK_USAGE_THRESHOLD` | `95` | Abort if destination >= this % (0 = disabled) |
 | `MAX_CONCURRENT_JOBS` | `1` | Max simultaneous jobs (0 = unlimited) |
+| `DAEMON_INTERVAL` | `10` | Health daemon check interval in seconds |
 | `RSYNC_EXTRA_OPTS` | (empty) | Additional rsync flags |
 | `WORK_DIR` | `/tmp` | Temp directory for staging and dumps |
 

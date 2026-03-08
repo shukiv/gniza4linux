@@ -24,7 +24,12 @@ def main():
         from pathlib import Path
         log_dir = Path(LOG_DIR)
         log_dir.mkdir(parents=True, exist_ok=True)
-        handler = logging.FileHandler(log_dir / "gniza-daemon.log")
+        from logging.handlers import RotatingFileHandler
+        handler = RotatingFileHandler(
+            log_dir / "gniza-daemon.log",
+            maxBytes=5 * 1024 * 1024,  # 5 MB
+            backupCount=3,
+        )
 
     handler.setFormatter(logging.Formatter(
         "%(asctime)s [%(levelname)s] %(message)s",

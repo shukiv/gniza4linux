@@ -101,7 +101,7 @@ def has_remotes() -> bool:
 
 
 def get_log_retain_days() -> int:
-    """Return LOG_RETAIN from gniza.conf as an int (default 30)."""
+    """Return LOG_RETAIN from gniza.conf as an int (default 90)."""
     data = parse_conf(CONFIG_DIR / "gniza.conf")
     try:
         return int(data.get("LOG_RETAIN", "90"))

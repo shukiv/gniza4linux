@@ -118,6 +118,22 @@ Access at `http://<server-ip>:2323`. Credentials are stored in `gniza.conf` as `
 
 Supports both root (system service) and user (user service) modes.
 
+## Background Daemon
+
+The gniza daemon runs periodic health checks in the background — detecting dead jobs, dispatching queued jobs, and cleaning up old logs and registry entries.
+
+```bash
+gniza daemon install-service   # Install systemd service (auto-starts on boot)
+gniza daemon start             # Start manually in foreground
+gniza daemon status            # Check status
+```
+
+Supports both root (system service) and user (user service) modes. Configure the check interval in `gniza.conf`:
+
+```ini
+DAEMON_INTERVAL=10             # Health check interval in seconds (default: 10)
+```
+
 ## How Incremental Backups Work
 
 gniza uses rsync's `--link-dest` option to create space-efficient incremental backups using **hardlinks**.
@@ -214,6 +230,7 @@ Scheduling:
 Other:
   logs [--last] [--tail=N]
   web start | install-service | remove-service | status [--port=PORT]
+  daemon start | install-service | remove-service | status
   uninstall
 ```
 
@@ -235,6 +252,7 @@ LOG_LEVEL="info"                # info or debug
 LOG_RETAIN=90                   # Days to keep log files
 DISK_USAGE_THRESHOLD=95         # Abort if destination >= this % (0 = disabled)
 MAX_CONCURRENT_JOBS=1           # Max simultaneous jobs (0 = unlimited)
+DAEMON_INTERVAL=10              # Health daemon check interval in seconds
 SSH_TIMEOUT=30                  # SSH connection timeout in seconds
 SSH_RETRIES=3                   # Number of retry attempts
 RSYNC_EXTRA_OPTS=""             # Additional rsync flags

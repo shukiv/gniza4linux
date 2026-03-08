@@ -7,9 +7,11 @@ Usage:
 
 Prints the job_id on 'start'.
 """
+import fcntl
 import json
 import os
 import sys
+import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -36,11 +38,30 @@ def _load():
 
 def _save(entries):
     REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
-    REGISTRY_FILE.write_text(json.dumps(entries, indent=2))
+    fd, tmp = tempfile.mkstemp(dir=str(REGISTRY_FILE.parent), suffix=".tmp")
+    try:
+        os.write(fd, json.dumps(entries, indent=2).encode())
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    os.rename(tmp, str(REGISTRY_FILE))
+
+
+def _locked_update(fn):
+    """Load registry under flock, call fn(entries), save result."""
+    REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = REGISTRY_FILE.with_suffix(".lock")
+    with open(lock_path, "w") as lock_fh:
+        fcntl.flock(lock_fh, fcntl.LOCK_EX)
+        try:
+            entries = _load()
+            fn(entries)
+            _save(entries)
+        finally:
+            fcntl.flock(lock_fh, fcntl.LOCK_UN)
 
 
 def cmd_start(kind, label, log_file=None, caller_pid=None):
-    entries = _load()
     job_id = uuid.uuid4().hex[:8]
     pid = caller_pid or os.getppid()
     try:
@@ -60,22 +81,26 @@ def cmd_start(kind, label, log_file=None, caller_pid=None):
     }
     if log_file:
         entry["log_file"] = log_file
-    entries.append(entry)
-    _save(entries)
+
+    def _append(entries):
+        entries.append(entry)
+
+    _locked_update(_append)
     print(job_id)
 
 
 def cmd_finish(job_id, status, return_code=None):
-    entries = _load()
-    for entry in entries:
-        if entry.get("id") == job_id:
-            entry["status"] = status
-            entry["return_code"] = int(return_code) if return_code is not None else None
-            entry["finished_at"] = datetime.now().isoformat()
-            entry.pop("pid", None)
-            entry.pop("pgid", None)
-            break
-    _save(entries)
+    def _update(entries):
+        for entry in entries:
+            if entry.get("id") == job_id:
+                entry["status"] = status
+                entry["return_code"] = int(return_code) if return_code is not None else None
+                entry["finished_at"] = datetime.now().isoformat()
+                entry.pop("pid", None)
+                entry.pop("pgid", None)
+                break
+
+    _locked_update(_update)
 
 
 def main():

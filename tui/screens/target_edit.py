@@ -296,7 +296,7 @@ class TargetEditScreen(Screen):
             ssh_opts += ["-i", key]
         ssh_opts.append(f"{user}@{host}")
         if password:
-            return ["sshpass", "-p", password] + ssh_opts
+            return ["sshpass", "-e"] + ssh_opts
         return ssh_opts
 
     def _test_source(self, target: Target) -> bool:
@@ -316,8 +316,12 @@ class TargetEditScreen(Screen):
             key = target.source_key if target.source_auth_method == "key" else ""
             password = target.source_password if target.source_auth_method == "password" else ""
             cmd = self._ssh_cmd(host, port, user, key, password)
+            env = None
+            if password:
+                env = os.environ.copy()
+                env["SSHPASS"] = password
             try:
-                result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15)
+                result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
                 if result.returncode != 0:
                     self.notify(f"SSH connection failed: {result.stderr.strip() or 'unknown error'}", severity="error")
                     return False
@@ -332,7 +336,7 @@ class TargetEditScreen(Screen):
                 try:
                     result = subprocess.run(
                         cmd + ["test", "-d", folder_list[0]],
-                        capture_output=True, text=True, timeout=15,
+                        capture_output=True, text=True, timeout=15, env=env,
                     )
                     if result.returncode != 0:
                         self.notify(f"Warning: folder '{folder_list[0]}' not accessible on remote", severity="warning")

@@ -55,8 +55,8 @@ def _ssh_cmd(remote_conf):
         ssh_opts += ["-i", key]
     ssh_opts.append(f"{user}@{host}")
     if password and auth == "password":
-        return ["sshpass", "-p", password] + ssh_opts
-    return ssh_opts
+        return ["sshpass", "-e"] + ssh_opts, password
+    return ssh_opts, None
 
 
 def _list_dir_local(path):
@@ -92,9 +92,14 @@ def _list_dir_ssh(remote_conf, path):
         f"  done | sort; "
         f"else echo 'ERROR:not_found'; fi"
     )
-    cmd = _ssh_cmd(remote_conf) + [cmd_str]
+    cmd, sshpass_pw = _ssh_cmd(remote_conf)
+    cmd = cmd + [cmd_str]
+    env = None
+    if sshpass_pw:
+        env = os.environ.copy()
+        env["SSHPASS"] = sshpass_pw
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15, env=env)
         if result.returncode != 0:
             return None, result.stderr.strip() or "SSH connection failed"
         dirs = []

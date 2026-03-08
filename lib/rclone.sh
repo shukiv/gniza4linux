@@ -89,6 +89,17 @@ _rclone_cmd() {
     local conf
     conf=$(_build_rclone_config) || return 1
 
+    # Ensure temp config is cleaned up on crash/signal (preserve existing traps)
+    local _prev_exit_trap _prev_hup_trap _prev_int_trap _prev_term_trap
+    _prev_exit_trap=$(trap -p EXIT)
+    _prev_hup_trap=$(trap -p HUP)
+    _prev_int_trap=$(trap -p INT)
+    _prev_term_trap=$(trap -p TERM)
+    trap '_cleanup_rclone_config "'"$conf"'"; '"${_prev_exit_trap:+eval \"\$_prev_exit_trap\"}" EXIT
+    trap '_cleanup_rclone_config "'"$conf"'"; '"${_prev_hup_trap:+eval \"\$_prev_hup_trap\"}" HUP
+    trap '_cleanup_rclone_config "'"$conf"'"; '"${_prev_int_trap:+eval \"\$_prev_int_trap\"}" INT
+    trap '_cleanup_rclone_config "'"$conf"'"; '"${_prev_term_trap:+eval \"\$_prev_term_trap\"}" TERM
+
     local rclone_opts=(--config "$conf")
     if [[ "${BWLIMIT:-0}" -gt 0 ]]; then
         rclone_opts+=(--bwlimit "${BWLIMIT}k")
@@ -104,6 +115,11 @@ _rclone_cmd() {
     fi
 
     _cleanup_rclone_config "$conf"
+    # Restore previous traps
+    eval "${_prev_exit_trap:-trap - EXIT}"
+    eval "${_prev_hup_trap:-trap - HUP}"
+    eval "${_prev_int_trap:-trap - INT}"
+    eval "${_prev_term_trap:-trap - TERM}"
     return "$rc"
 }
 

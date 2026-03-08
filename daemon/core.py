@@ -103,7 +103,7 @@ def _valid_log_path(log_file):
         resolved = Path(log_file).resolve()
         work = _work_dir().resolve()
         log_dir = Path(LOG_DIR).resolve()
-        return str(resolved).startswith(str(work)) or str(resolved).startswith(str(log_dir))
+        return resolved.is_relative_to(work) or resolved.is_relative_to(log_dir)
     except (OSError, ValueError):
         return False
 

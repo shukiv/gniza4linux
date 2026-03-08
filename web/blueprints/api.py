@@ -85,7 +85,7 @@ def _ssh_cmd(host, port="22", user="root", key="", password=""):
         ssh_opts += ["-i", key]
     ssh_opts.append(f"{user}@{host}")
     if password:
-        return ["sshpass", "-p", password] + ssh_opts
+        return ["sshpass", "-e"] + ssh_opts
     return ssh_opts
 
 
@@ -94,8 +94,12 @@ def _ssh_list_dirs(host, path, port="22", user="root", key="", password="", show
     cmd = _ssh_cmd(host, port, user, key, password) + [
         f"find {shlex.quote(path)} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
     ]
+    env = None
+    if password:
+        env = os.environ.copy()
+        env["SSHPASS"] = password
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15, env=env)
         if result.returncode != 0:
             return None, result.stderr.strip() or "Connection failed"
         dirs = []

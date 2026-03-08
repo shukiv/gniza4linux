@@ -313,8 +313,8 @@ class WebJobManager:
             for line in text.splitlines():
                 if "[FATAL]" in line or "[ERROR]" in line:
                     return 1
-            # Process exited, log has content, no error markers → success
-            return 0
+            # No completion marker and no error markers — unknown (likely killed)
+            return None
         except OSError:
             return None
         return None

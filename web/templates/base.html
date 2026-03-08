@@ -4,8 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}GNIZA{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="{{ url_for('static', filename='vendor/css/daisyui.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='vendor/css/themes.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='vendor/js/tailwindcss-browser.js') }}"></script>
     <script>
       // Restore saved theme and persist changes
       (function() {
@@ -23,9 +24,9 @@
         });
       })();
     </script>
-    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-    <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
-    <script src="https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js"></script>
+    <script src="{{ url_for('static', filename='vendor/js/htmx.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/js/sse.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/js/idiomorph-ext.min.js') }}"></script>
     <script>
       document.addEventListener('alpine:init', () => {
         Alpine.store('help', {
@@ -44,7 +45,7 @@
         });
       });
     </script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <script defer src="{{ url_for('static', filename='vendor/js/alpine.min.js') }}"></script>
 </head>
 <body class="min-h-screen bg-base-100 text-base">
 

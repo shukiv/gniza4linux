@@ -1,0 +1,8 @@
+<span id="sidebar-running-badge"
+      hx-get="{{ url_for('jobs.sidebar_badge') }}"
+      hx-trigger="every 3s"
+      hx-swap="outerHTML">
+{% if count > 0 %}
+<span class="badge badge-info badge-sm">{{ count }}</span>
+{% endif %}
+</span>

@@ -32,6 +32,12 @@
                         <span class="loading loading-spinner loading-xs"></span>
                         Running
                     </span>
+                    {% if job_progress and job.id in job_progress %}
+                    <div class="flex items-center gap-1 mt-1">
+                        <progress class="progress progress-primary w-20 h-1.5" value="{{ job_progress[job.id].pct }}" max="100"></progress>
+                        <span class="text-xs text-base-content/60">{{ job_progress[job.id].pct }}%</span>
+                    </div>
+                    {% endif %}
                     {% elif job.status == "queued" %}
                     <span class="text-base-content/60 font-medium">Queued</span>
                     {% elif job.status == "skipped" %}

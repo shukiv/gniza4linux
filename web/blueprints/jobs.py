@@ -27,6 +27,18 @@ def _is_progress_line(line):
     return _PROGRESS_RE.search(line) and any(mk in line for mk in _RSYNC_MARKERS)
 
 
+def _build_job_progress(jobs):
+    """Build a dict of job_id -> progress for all running jobs."""
+    result = {}
+    for job in jobs:
+        if job.status == "running":
+            lines, _ = web_job_manager.get_log_lines(job.id)
+            prog = _extract_progress(lines)
+            if prog:
+                result[job.id] = prog
+    return result
+
+
 @bp.route("/")
 @login_required
 def index():
@@ -43,8 +55,10 @@ def index():
     page = min(page, total_pages)
     start = (page - 1) * per_page
     page_jobs = jobs[start:start + per_page]
+    job_progress = _build_job_progress(page_jobs)
     return render_template("jobs/index.html", jobs=page_jobs, has_running=has_running,
-                           has_queued=has_queued, page=page, total_pages=total_pages)
+                           has_queued=has_queued, page=page, total_pages=total_pages,
+                           job_progress=job_progress)
 
 
 @bp.route("/table")
@@ -63,8 +77,10 @@ def table():
     page = min(page, total_pages)
     start = (page - 1) * per_page
     page_jobs = jobs[start:start + per_page]
+    job_progress = _build_job_progress(page_jobs)
     return render_template("jobs/table_partial.html", jobs=page_jobs, has_running=has_running,
-                           has_queued=has_queued, page=page, total_pages=total_pages)
+                           has_queued=has_queued, page=page, total_pages=total_pages,
+                           job_progress=job_progress)
 
 
 @bp.route("/running-badge")

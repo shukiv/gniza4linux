@@ -12,8 +12,8 @@
     <a href="{{ url_for('schedules.new') }}" class="btn btn-primary btn-sm">+ Add Schedule</a>
 </div>
 
-<div class="card bg-base-200 shadow">
-    <div class="card-body p-0">
+<div class="card bg-base-200 shadow overflow-visible">
+    <div class="card-body p-0 overflow-visible">
         {% if schedules %}
         <div class="overflow-x-auto overflow-y-visible">
             <table class="table">

@@ -82,7 +82,16 @@ def log(job_id):
     job = web_job_manager.get_job(job_id)
     progress = _extract_progress(lines) if job and job.status == "running" else None
     display_lines = [l for l in lines if not _is_progress_line(l)] if progress else lines
-    return render_template("jobs/log_partial.html", lines=display_lines, total=total, job=job, progress=progress)
+    return render_template("jobs/log_partial.html", lines=display_lines, total=total, job=job)
+
+
+@bp.route("/<job_id>/progress")
+@login_required
+def progress(job_id):
+    lines, total = web_job_manager.get_log_lines(job_id)
+    job = web_job_manager.get_job(job_id)
+    prog = _extract_progress(lines) if job and job.status == "running" else None
+    return render_template("jobs/progress_partial.html", progress=prog)
 
 
 @bp.route("/<job_id>/stream")

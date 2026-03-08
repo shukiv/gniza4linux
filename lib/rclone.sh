@@ -109,7 +109,7 @@ _rclone_cmd() {
     local rc=0
     if [[ -n "${_TRANSFER_LOG:-}" && "$subcmd" == "copy" ]]; then
         echo "=== rclone copy $* ===" >> "$_TRANSFER_LOG"
-        rclone "$subcmd" "${rclone_opts[@]}" --verbose "$@" > >(_snaplog_tee) 2>&1 || rc=$?
+        rclone "$subcmd" "${rclone_opts[@]}" --verbose --log-file="$_TRANSFER_LOG" "$@" || rc=$?
     else
         rclone "$subcmd" "${rclone_opts[@]}" "$@" || rc=$?
     fi

@@ -133,6 +133,7 @@ Web Dashboard:
   web install-service   Install as a systemd service (auto-starts on boot)
   web remove-service    Stop and remove the systemd service
   web status            Show service status
+  web reset-password    Generate a new random login password
 
 Background Health Daemon:
   daemon start [--interval=N]
@@ -714,7 +715,27 @@ SVCEOF
                 systemctl --user status gniza-web 2>/dev/null || echo "GNIZA web service is not installed."
             fi
             ;;
-        *) die "Unknown web action: $_web_action (expected start|install-service|remove-service|status)" ;;
+        reset-password)
+            _conf="$CONFIG_DIR/gniza.conf"
+            [[ -f "$_conf" ]] || die "Config not found: $_conf"
+            _new_key=$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')
+            if grep -q "^WEB_API_KEY=" "$_conf" 2>/dev/null; then
+                sed -i "s|^WEB_API_KEY=.*|WEB_API_KEY=\"${_new_key}\"|" "$_conf"
+            else
+                echo "WEB_API_KEY=\"${_new_key}\"" >> "$_conf"
+            fi
+            echo "Password reset."
+            echo ""
+            echo "  New password: $_new_key"
+            echo ""
+            # Restart web service if running
+            if [[ $EUID -eq 0 ]]; then
+                systemctl restart gniza-web 2>/dev/null && echo "Web service restarted." || true
+            else
+                systemctl --user restart gniza-web 2>/dev/null && echo "Web service restarted." || true
+            fi
+            ;;
+        *) die "Unknown web action: $_web_action (expected start|install-service|remove-service|reset-password|status)" ;;
     esac
 elif [[ "$SUBCOMMAND" == "daemon" ]]; then
     _daemon_action="${SUBCMD_ARGS[0]:-start}"

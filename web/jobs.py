@@ -124,6 +124,24 @@ class WebJobManager:
             if started:
                 self._save_registry()
 
+    @staticmethod
+    def _get_descendants(pid):
+        """Get all descendant PIDs of a process."""
+        descendants = []
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["ps", "--ppid", str(pid), "-o", "pid=", "--no-headers"],
+                capture_output=True, text=True, timeout=5,
+            )
+            for line in result.stdout.strip().splitlines():
+                child_pid = int(line.strip())
+                descendants.append(child_pid)
+                descendants.extend(WebJobManager._get_descendants(child_pid))
+        except Exception:
+            pass
+        return descendants
+
     def kill_job(self, job_id):
         job = self._jobs.get(job_id)
         if not job:
@@ -138,16 +156,26 @@ class WebJobManager:
             return "cancelled"
         if not job.pid:
             return "not found"
+
+        # Collect all descendant PIDs before killing (tree may disappear)
+        all_pids = self._get_descendants(job.pid)
+        all_pids.append(job.pid)
+
+        # Kill process group first
         try:
             pgid = job.pgid or os.getpgid(job.pid)
             os.killpg(pgid, signal.SIGKILL)
-            return "killed"
         except (ProcessLookupError, PermissionError, OSError):
+            pass
+
+        # Kill all descendants individually (catches processes in different groups)
+        for pid in all_pids:
             try:
-                os.kill(job.pid, signal.SIGKILL)
-                return "killed"
-            except Exception:
-                return "failed"
+                os.kill(pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError, OSError):
+                pass
+
+        return "killed"
 
     def remove_finished(self):
         for job in self._jobs.values():

@@ -5,6 +5,8 @@
 _GNIZA4LINUX_LOGGING_LOADED=1
 
 declare -g LOG_FILE=""
+# fd 3 = original stderr for console output (before any redirect)
+exec 3>&2
 
 _log_level_num() {
     case "$1" in
@@ -29,6 +31,11 @@ init_logging() {
 
     LOG_FILE="$log_dir/gniza-$(date +%Y%m%d-%H%M%S).log"
     touch "$LOG_FILE" || die "Cannot write to log file: $LOG_FILE"
+
+    # Redirect stdout+stderr into the log file so rsync progress output
+    # (and any other subprocess output) is captured for the web UI.
+    # fd 3 (saved above) preserves original stderr for console messages.
+    exec >>"$LOG_FILE" 2>&1
 
     # On unexpected exit, ensure the log captures why
     trap '_gniza_log_exit_trap' EXIT
@@ -72,11 +79,12 @@ _log() {
     # Console: only print if level meets configured threshold
     (( level_num < configured_num )) && return 0
 
+    # Write to fd 3 (original stderr, preserved before redirect)
     case "$level" in
-        error) echo "${C_RED}${line}${C_RESET}" >&2 ;;
-        warn)  echo "${C_YELLOW}${line}${C_RESET}" >&2 ;;
-        info)  echo "${line}" >&2 ;;
-        debug) echo "${C_BLUE}${line}${C_RESET}" >&2 ;;
+        error) echo "${C_RED}${line}${C_RESET}" >&3 ;;
+        warn)  echo "${C_YELLOW}${line}${C_RESET}" >&3 ;;
+        info)  echo "${line}" >&3 ;;
+        debug) echo "${C_BLUE}${line}${C_RESET}" >&3 ;;
     esac
 }
 

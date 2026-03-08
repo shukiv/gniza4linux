@@ -261,9 +261,10 @@ class WebJobManager:
             return [], 0
         try:
             with open(job.log_file) as f:
-                all_lines = f.readlines()
+                # Split on both \n and \r to handle rsync's carriage-return progress updates
+                all_lines = f.read().replace('\r', '\n').splitlines()
             total = len(all_lines)
-            last_lines = [l.rstrip('\n') for l in all_lines[-tail:]]
+            last_lines = [l for l in all_lines[-tail:]]
             return last_lines, total
         except (OSError, FileNotFoundError):
             return [], 0

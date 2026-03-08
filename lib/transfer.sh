@@ -36,6 +36,10 @@ rsync_to_remote() {
         rsync_opts+=(--bwlimit="$BWLIMIT")
     fi
 
+    if [[ "${RSYNC_COMPRESS:-no}" == "yes" ]]; then
+        rsync_opts+=(-z)
+    fi
+
     if [[ -n "${RSYNC_EXTRA_OPTS:-}" ]]; then
         # shellcheck disable=SC2206
         rsync_opts+=($RSYNC_EXTRA_OPTS)
@@ -237,6 +241,10 @@ rsync_ssh_to_ssh() {
 
     if [[ "${BWLIMIT:-0}" -gt 0 ]]; then
         ropts+=(--bwlimit="$BWLIMIT")
+    fi
+
+    if [[ "${RSYNC_COMPRESS:-no}" == "yes" ]]; then
+        ropts+=(-z)
     fi
 
     if [[ -n "${RSYNC_EXTRA_OPTS:-}" ]]; then

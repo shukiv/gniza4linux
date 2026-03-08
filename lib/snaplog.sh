@@ -10,11 +10,12 @@ _GNIZA4LINUX_SNAPLOG_LOADED=1
 # log lines — skips rsync progress percentages and verbose file listings
 # to keep the app log small and readable.
 _snaplog_tee() {
-    # Everything goes to both the raw transfer log and stderr.
-    # stderr feeds LOG_FILE (via exec redirect) or Popen capture.
-    # Progress lines are kept in the log file for the progress bar extractor;
-    # the web UI filters them out when displaying log content.
-    tee -a "${_TRANSFER_LOG}" >&2
+    # With --log-file, rsync writes per-file details directly to _TRANSFER_LOG.
+    # Stdout only has --info=progress2 lines and stats.
+    # Everything goes to stderr (→ LOG_FILE) so the progress bar can read it.
+    # Progress lines are stripped from LOG_FILE after the job finishes
+    # (see _gniza_strip_progress_lines).
+    cat >&2
 }
 
 # Initialize snapshot log directory and transfer log file.

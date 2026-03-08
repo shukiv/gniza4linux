@@ -61,7 +61,7 @@ _rsync_from_source_ssh() {
     rsync_opts+=(--info=progress2 --no-inc-recursive)
 
     if [[ -n "${_TRANSFER_LOG:-}" ]]; then
-        rsync_opts+=(--verbose --stats)
+        rsync_opts+=(--log-file="$_TRANSFER_LOG" --stats)
     fi
 
     # Ensure remote_path ends with /
@@ -84,7 +84,7 @@ _rsync_from_source_ssh() {
         local rc=0
         if [[ -n "${_TRANSFER_LOG:-}" ]]; then
             echo "=== rsync (source pull): $source_spec -> $local_dir ===" >> "$_TRANSFER_LOG"
-            "${rsync_cmd[@]}" > >(_snaplog_tee) 2>&1 || rc=$?
+            "${rsync_cmd[@]}" 2>&1 | _snaplog_tee || rc=$?
         else
             "${rsync_cmd[@]}" || rc=$?
         fi
@@ -101,7 +101,7 @@ _rsync_from_source_ssh() {
             local rc2=0
             if [[ -n "${_TRANSFER_LOG:-}" ]]; then
                 echo "=== rsync (source pull retry): $source_spec -> $local_dir ===" >> "$_TRANSFER_LOG"
-                "${rsync_cmd[@]}" > >(_snaplog_tee) 2>&1 || rc2=$?
+                "${rsync_cmd[@]}" 2>&1 | _snaplog_tee || rc2=$?
             else
                 "${rsync_cmd[@]}" || rc2=$?
             fi

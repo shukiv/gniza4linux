@@ -55,6 +55,17 @@ _gniza_log_exit_trap() {
             echo "[$(date -u +"%d/%m/%Y %H:%M:%S")] [ERROR] Process exited with code $rc (no other output captured)" >> "$LOG_FILE"
         fi
     fi
+    # Strip rsync progress percentage lines from the log file (they were
+    # needed during the run for the real-time progress bar but are noise after).
+    _gniza_strip_progress_lines
+}
+
+_gniza_strip_progress_lines() {
+    [[ -n "${LOG_FILE:-}" && -f "$LOG_FILE" && -s "$LOG_FILE" ]] || return 0
+    # Match lines with percentage + rsync markers (xfr#, to-chk=, B/s)
+    # Use grep -v to remove them in place via a temp file
+    local tmp="${LOG_FILE}.tmp"
+    grep -vE '[0-9]+%.*(\bxfr#|to-chk=|[kMGT]?B/s)' "$LOG_FILE" > "$tmp" 2>/dev/null && mv "$tmp" "$LOG_FILE" || rm -f "$tmp"
 }
 
 _log() {

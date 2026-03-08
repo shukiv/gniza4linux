@@ -215,10 +215,9 @@ def check_jobs():
                 entry["status"] = "skipped"
             elif rc == 0:
                 entry["status"] = "success"
-            elif rc is not None:
-                entry["status"] = "failed"
             else:
-                entry["status"] = "unknown"
+                # rc is non-zero or None (process died without completion marker)
+                entry["status"] = "failed"
 
             entry["return_code"] = rc
             entry["finished_at"] = now.isoformat()

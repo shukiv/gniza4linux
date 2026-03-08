@@ -33,11 +33,14 @@ def start_cli_background(*args: str, log_file: str) -> subprocess.Popen:
     """
     cmd = [_gniza_bin(), "--cli"] + list(args)
     fh = open(log_file, "w")
+    env = os.environ.copy()
+    env["GNIZA_DAEMON_TRACKED"] = "1"
     proc = subprocess.Popen(
         cmd,
         stdout=fh,
         stderr=subprocess.STDOUT,
         start_new_session=True,
+        env=env,
     )
     fh.close()
     return proc

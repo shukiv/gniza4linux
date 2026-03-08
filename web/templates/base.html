@@ -85,13 +85,32 @@
             </div>
         </div>
 
-        <!-- Page content — shifts for help panel -->
-        <main class="p-4 md:p-6 w-full mx-auto flex-1 transition-[margin] duration-200"
-              {% if help_content and help_content.strip() %}:class="$store.help.open ? 'lg:mr-72' : 'lg:mr-12'"{% endif %}>
-            <div class="max-w-7xl mx-auto">
-                {% block content %}{% endblock %}
-            </div>
-        </main>
+        <!-- Page content + help panel side by side -->
+        <div class="flex flex-1 min-h-0">
+            <main class="p-4 md:p-6 flex-1 min-w-0">
+                <div class="max-w-7xl mx-auto">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+
+            {% if help_content and help_content.strip() %}
+            <!-- Right help panel — pushes content -->
+            <aside class="hidden lg:flex flex-col bg-base-200 border-l border-base-300 sticky top-16 h-[calc(100vh-4rem)] transition-all duration-200 shrink-0"
+                   :class="$store.help.open ? 'w-72 p-4' : 'w-12 p-2'">
+                <div class="flex-1 overflow-y-auto text-sm" x-show="$store.help.open" x-cloak>
+                    {{ help_content }}
+                </div>
+                <div class="mt-auto pt-2">
+                    <button @click="$store.help.toggle()" class="w-full flex items-center gap-1"
+                            :class="$store.help.open ? '' : 'justify-center'">
+                        <svg x-show="!$store.help.open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <svg x-show="$store.help.open" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7m-8 0l7-7-7-7"/></svg>
+                        <span x-show="$store.help.open" x-cloak>Collapse</span>
+                    </button>
+                </div>
+            </aside>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Sidebar -->
@@ -100,29 +119,6 @@
         {% include "components/navbar.html" %}
     </div>
 </div>
-
-{% if help_content and help_content.strip() %}
-<!-- Right help panel — mirrors left sidebar -->
-<div class="hidden lg:flex fixed top-16 right-0 bottom-0 z-20 transition-all duration-200"
-     :class="$store.help.open ? 'w-72' : 'w-12'">
-    <div class="min-h-full bg-base-200 text-base-content flex flex-col w-full"
-         :class="$store.help.open ? 'p-4' : 'p-2'">
-        <div class="flex-1 overflow-y-auto text-sm" x-show="$store.help.open" x-cloak>
-            {{ help_content }}
-        </div>
-        <div class="mt-auto pt-2">
-            <button @click="$store.help.toggle()" class="w-full flex items-center gap-1"
-                    :class="$store.help.open ? '' : 'justify-center'">
-                <!-- question mark icon when collapsed -->
-                <svg x-show="!$store.help.open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <!-- chevron + text when expanded -->
-                <svg x-show="$store.help.open" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7m-8 0l7-7-7-7"/></svg>
-                <span x-show="$store.help.open" x-cloak>Collapse</span>
-            </button>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
 
 </body>

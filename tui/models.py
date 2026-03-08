@@ -260,6 +260,8 @@ class AppSettings:
     web_port: str = "2323"
     web_host: str = "0.0.0.0"
     web_api_key: str = ""
+    login_max_attempts: str = "5"
+    login_lockout_seconds: str = "300"
 
     @classmethod
     def from_conf(cls, data: dict[str, str]) -> "AppSettings":
@@ -287,6 +289,8 @@ class AppSettings:
             web_port=data.get("WEB_PORT", "2323"),
             web_host=data.get("WEB_HOST", "0.0.0.0"),
             web_api_key=data.get("WEB_API_KEY", ""),
+            login_max_attempts=data.get("LOGIN_MAX_ATTEMPTS", "5"),
+            login_lockout_seconds=data.get("LOGIN_LOCKOUT_SECONDS", "300"),
         )
 
     def to_conf(self) -> dict[str, str]:
@@ -314,4 +318,6 @@ class AppSettings:
             "WEB_PORT": self.web_port,
             "WEB_HOST": self.web_host,
             "WEB_API_KEY": self.web_api_key,
+            "LOGIN_MAX_ATTEMPTS": self.login_max_attempts,
+            "LOGIN_LOCKOUT_SECONDS": self.login_lockout_seconds,
         }

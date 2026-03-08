@@ -169,6 +169,14 @@
                         <button type="button" class="btn join-item" @click="showApiKey = !showApiKey" x-text="showApiKey ? 'Hide' : 'Show'">Show</button>
                     </div>
                 </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Login Max Attempts</label>
+                    <input type="number" name="login_max_attempts" value="{{ settings.login_max_attempts }}" class="input" min="1" max="100">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Login Lockout (seconds)</label>
+                    <input type="number" name="login_lockout_seconds" value="{{ settings.login_lockout_seconds }}" class="input" min="10" max="86400">
+                </fieldset>
             </div>
         </div>
 
@@ -237,7 +245,12 @@ document.getElementById('btn-update-now').addEventListener('click', function() {
     <li><strong>Retries</strong> — Number of retry attempts.</li>
 </ul>
 <h4 class="font-semibold text-sm mb-1">Web Dashboard</h4>
-<p class="mb-3 text-base-content/70">Port, host, and API key for the web interface.</p>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Port / Host</strong> — Address and port for the web interface.</li>
+    <li><strong>API Key</strong> — Password used to log in.</li>
+    <li><strong>Login Max Attempts</strong> — Failed login attempts before lockout (default: 5).</li>
+    <li><strong>Login Lockout</strong> — Seconds an IP is locked after too many failures (default: 300).</li>
+</ul>
 <h4 class="font-semibold text-sm mb-1">Update</h4>
 <p class="mb-3 text-base-content/70">Check for new versions and apply updates from the git repository. Services will restart automatically after update.</p>
 <h4 class="font-semibold text-sm mb-1">Tips</h4>

@@ -12,39 +12,39 @@
         <input type="radio" name="settings_tabs" class="tab" aria-label="General" checked="checked" />
         <div class="tab-content bg-base-100 border-base-300 p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Bandwidth Limit (KB/s, 0=unlimited)</span></label>
-                    <input type="text" name="bwlimit" value="{{ settings.bwlimit }}" class="input input-bordered">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Default Retention Count</span></label>
-                    <input type="text" name="retention_count" value="{{ settings.retention_count }}" class="input input-bordered">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Log Level</span></label>
-                    <select name="log_level" class="select select-bordered">
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Bandwidth Limit (KB/s, 0=unlimited)</label>
+                    <input type="text" name="bwlimit" value="{{ settings.bwlimit }}" class="input">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Default Retention Count</label>
+                    <input type="text" name="retention_count" value="{{ settings.retention_count }}" class="input">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Log Level</label>
+                    <select name="log_level" class="select">
                         <option value="debug" {{ 'selected' if settings.log_level == 'debug' else '' }}>debug</option>
                         <option value="info" {{ 'selected' if settings.log_level == 'info' else '' }}>info</option>
                         <option value="warn" {{ 'selected' if settings.log_level == 'warn' else '' }}>warn</option>
                         <option value="error" {{ 'selected' if settings.log_level == 'error' else '' }}>error</option>
                     </select>
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Log Retention (days)</span></label>
-                    <input type="text" name="log_retain" value="{{ settings.log_retain }}" class="input input-bordered">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Disk Usage Threshold (%)</span></label>
-                    <input type="text" name="disk_usage_threshold" value="{{ settings.disk_usage_threshold }}" class="input input-bordered">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Simultaneous Jobs (0=unlimited)</span></label>
-                    <input type="text" name="max_concurrent_jobs" value="{{ settings.max_concurrent_jobs }}" class="input input-bordered">
-                </div>
-                <div class="form-control md:col-span-2">
-                    <label class="label"><span class="label-text">Extra rsync Options</span></label>
-                    <input type="text" name="rsync_extra_opts" value="{{ settings.rsync_extra_opts }}" class="input input-bordered font-mono" placeholder="--compress --partial">
-                </div>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Log Retention (days)</label>
+                    <input type="text" name="log_retain" value="{{ settings.log_retain }}" class="input">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Disk Usage Threshold (%)</label>
+                    <input type="text" name="disk_usage_threshold" value="{{ settings.disk_usage_threshold }}" class="input">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Simultaneous Jobs (0=unlimited)</label>
+                    <input type="text" name="max_concurrent_jobs" value="{{ settings.max_concurrent_jobs }}" class="input">
+                </fieldset>
+                <fieldset class="fieldset md:col-span-2">
+                    <label class="fieldset-label">Extra rsync Options</label>
+                    <input type="text" name="rsync_extra_opts" value="{{ settings.rsync_extra_opts }}" class="input font-mono" placeholder="--compress --partial">
+                </fieldset>
             </div>
         </div>
 
@@ -52,46 +52,46 @@
         <input type="radio" name="settings_tabs" class="tab" aria-label="Email Notifications" />
         <div class="tab-content bg-base-100 border-base-300 p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Notify Email</span></label>
-                    <input type="email" name="notify_email" value="{{ settings.notify_email }}" class="input input-bordered" placeholder="admin@example.com">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Notify On</span></label>
-                    <select name="notify_on" class="select select-bordered">
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Notify Email</label>
+                    <input type="email" name="notify_email" value="{{ settings.notify_email }}" class="input" placeholder="admin@example.com">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Notify On</label>
+                    <select name="notify_on" class="select">
                         <option value="failure" {{ 'selected' if settings.notify_on == 'failure' else '' }}>Failure only</option>
                         <option value="always" {{ 'selected' if settings.notify_on == 'always' else '' }}>Always</option>
                         <option value="never" {{ 'selected' if settings.notify_on == 'never' else '' }}>Never</option>
                     </select>
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">SMTP Host</span></label>
-                    <input type="text" name="smtp_host" value="{{ settings.smtp_host }}" class="input input-bordered" placeholder="smtp.gmail.com">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">SMTP Port</span></label>
-                    <input type="text" name="smtp_port" value="{{ settings.smtp_port }}" class="input input-bordered" placeholder="587">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">SMTP User</span></label>
-                    <input type="text" name="smtp_user" value="{{ settings.smtp_user }}" class="input input-bordered">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">SMTP Password</span></label>
-                    <input type="password" name="smtp_password" value="{{ settings.smtp_password }}" class="input input-bordered">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">From Address</span></label>
-                    <input type="email" name="smtp_from" value="{{ settings.smtp_from }}" class="input input-bordered" placeholder="gniza@example.com">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">SMTP Security</span></label>
-                    <select name="smtp_security" class="select select-bordered">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">SMTP Host</label>
+                    <input type="text" name="smtp_host" value="{{ settings.smtp_host }}" class="input" placeholder="smtp.gmail.com">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">SMTP Port</label>
+                    <input type="text" name="smtp_port" value="{{ settings.smtp_port }}" class="input" placeholder="587">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">SMTP User</label>
+                    <input type="text" name="smtp_user" value="{{ settings.smtp_user }}" class="input">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">SMTP Password</label>
+                    <input type="password" name="smtp_password" value="{{ settings.smtp_password }}" class="input">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">From Address</label>
+                    <input type="email" name="smtp_from" value="{{ settings.smtp_from }}" class="input" placeholder="gniza@example.com">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">SMTP Security</label>
+                    <select name="smtp_security" class="select">
                         <option value="tls" {{ 'selected' if settings.smtp_security == 'tls' else '' }}>TLS</option>
                         <option value="ssl" {{ 'selected' if settings.smtp_security == 'ssl' else '' }}>SSL</option>
                         <option value="none" {{ 'selected' if settings.smtp_security == 'none' else '' }}>None</option>
                     </select>
-                </div>
+                </fieldset>
             </div>
             <div class="mt-4">
                 <form method="POST" action="{{ url_for('settings.test_email') }}" class="inline">
@@ -104,14 +104,14 @@
         <input type="radio" name="settings_tabs" class="tab" aria-label="SSH" />
         <div class="tab-content bg-base-100 border-base-300 p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">SSH Timeout (seconds)</span></label>
-                    <input type="text" name="ssh_timeout" value="{{ settings.ssh_timeout }}" class="input input-bordered">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">SSH Retries</span></label>
-                    <input type="text" name="ssh_retries" value="{{ settings.ssh_retries }}" class="input input-bordered">
-                </div>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">SSH Timeout (seconds)</label>
+                    <input type="text" name="ssh_timeout" value="{{ settings.ssh_timeout }}" class="input">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">SSH Retries</label>
+                    <input type="text" name="ssh_retries" value="{{ settings.ssh_retries }}" class="input">
+                </fieldset>
             </div>
         </div>
 
@@ -119,21 +119,21 @@
         <input type="radio" name="settings_tabs" class="tab" aria-label="Web Dashboard" />
         <div class="tab-content bg-base-100 border-base-300 p-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Web Port</span></label>
-                    <input type="text" name="web_port" value="{{ settings.web_port }}" class="input input-bordered">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Web Host</span></label>
-                    <input type="text" name="web_host" value="{{ settings.web_host }}" class="input input-bordered">
-                </div>
-                <div class="form-control md:col-span-2">
-                    <label class="label"><span class="label-text">API Key</span></label>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Web Port</label>
+                    <input type="text" name="web_port" value="{{ settings.web_port }}" class="input">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Web Host</label>
+                    <input type="text" name="web_host" value="{{ settings.web_host }}" class="input">
+                </fieldset>
+                <fieldset class="fieldset md:col-span-2">
+                    <label class="fieldset-label">API Key</label>
                     <div class="join w-full">
-                        <input :type="showApiKey ? 'text' : 'password'" name="web_api_key" value="{{ settings.web_api_key }}" class="input input-bordered join-item w-full font-mono">
+                        <input :type="showApiKey ? 'text' : 'password'" name="web_api_key" value="{{ settings.web_api_key }}" class="input join-item w-full font-mono">
                         <button type="button" class="btn join-item" @click="showApiKey = !showApiKey" x-text="showApiKey ? 'Hide' : 'Show'">Show</button>
                     </div>
-                </div>
+                </fieldset>
             </div>
         </div>
 

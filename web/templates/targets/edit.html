@@ -31,19 +31,19 @@
             <div class="flex flex-wrap gap-4 mb-4">
                 <label class="label cursor-pointer gap-2">
                     <input type="radio" name="source_type" value="local" class="radio radio-primary" x-model="sourceType">
-                    <span class="label-text">Local</span>
+                    <span>Local</span>
                 </label>
                 <label class="label cursor-pointer gap-2">
                     <input type="radio" name="source_type" value="ssh" class="radio radio-primary" x-model="sourceType">
-                    <span class="label-text">SSH</span>
+                    <span>SSH</span>
                 </label>
                 <label class="label cursor-pointer gap-2">
                     <input type="radio" name="source_type" value="s3" class="radio radio-primary" x-model="sourceType">
-                    <span class="label-text">S3</span>
+                    <span>S3</span>
                 </label>
                 <label class="label cursor-pointer gap-2">
                     <input type="radio" name="source_type" value="gdrive" class="radio radio-primary" x-model="sourceType">
-                    <span class="label-text">Google Drive</span>
+                    <span>Google Drive</span>
                 </label>
             </div>
 
@@ -51,33 +51,33 @@
             <div x-show="sourceType === 'ssh'" x-cloak>
                 <div class="divider text-sm">SSH Connection</div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Host</span></label>
-                        <input type="text" name="source_host" value="{{ target.source_host }}" class="input input-bordered" placeholder="192.168.1.1">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Port</span></label>
-                        <input type="text" name="source_port" value="{{ target.source_port }}" class="input input-bordered" placeholder="22">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">User</span></label>
-                        <input type="text" name="source_user" value="{{ target.source_user }}" class="input input-bordered" placeholder="root">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Auth Method</span></label>
-                        <select name="source_auth_method" class="select select-bordered" x-model="sourceAuthMethod">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Host</label>
+                        <input type="text" name="source_host" value="{{ target.source_host }}" class="input" placeholder="192.168.1.1">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Port</label>
+                        <input type="text" name="source_port" value="{{ target.source_port }}" class="input" placeholder="22">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">User</label>
+                        <input type="text" name="source_user" value="{{ target.source_user }}" class="input" placeholder="root">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Auth Method</label>
+                        <select name="source_auth_method" class="select" x-model="sourceAuthMethod">
                             <option value="key" {{ 'selected' if target.source_auth_method == 'key' else '' }}>SSH Key</option>
                             <option value="password" {{ 'selected' if target.source_auth_method == 'password' else '' }}>Password</option>
                         </select>
-                    </div>
-                    <div class="form-control" x-show="sourceAuthMethod === 'key'" x-cloak>
-                        <label class="label"><span class="label-text">SSH Key Path</span></label>
-                        <input type="text" name="source_key" value="{{ target.source_key }}" class="input input-bordered" placeholder="~/.ssh/id_rsa">
-                    </div>
-                    <div class="form-control" x-show="sourceAuthMethod === 'password'" x-cloak>
-                        <label class="label"><span class="label-text">Password</span></label>
-                        <input type="password" name="source_password" value="{{ target.source_password }}" class="input input-bordered">
-                    </div>
+                    </fieldset>
+                    <fieldset class="fieldset" x-show="sourceAuthMethod === 'key'" x-cloak>
+                        <label class="fieldset-label">SSH Key Path</label>
+                        <input type="text" name="source_key" value="{{ target.source_key }}" class="input" placeholder="~/.ssh/id_rsa">
+                    </fieldset>
+                    <fieldset class="fieldset" x-show="sourceAuthMethod === 'password'" x-cloak>
+                        <label class="fieldset-label">Password</label>
+                        <input type="password" name="source_password" value="{{ target.source_password }}" class="input">
+                    </fieldset>
                 </div>
             </div>
 
@@ -85,26 +85,26 @@
             <div x-show="sourceType === 's3'" x-cloak>
                 <div class="divider text-sm">S3 Configuration</div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Bucket</span></label>
-                        <input type="text" name="source_s3_bucket" value="{{ target.source_s3_bucket }}" class="input input-bordered">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Region</span></label>
-                        <input type="text" name="source_s3_region" value="{{ target.source_s3_region }}" class="input input-bordered" placeholder="us-east-1">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Endpoint</span></label>
-                        <input type="text" name="source_s3_endpoint" value="{{ target.source_s3_endpoint }}" class="input input-bordered" placeholder="https://s3.amazonaws.com">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Access Key ID</span></label>
-                        <input type="text" name="source_s3_access_key_id" value="{{ target.source_s3_access_key_id }}" class="input input-bordered">
-                    </div>
-                    <div class="form-control md:col-span-2">
-                        <label class="label"><span class="label-text">Secret Access Key</span></label>
-                        <input type="password" name="source_s3_secret_access_key" value="{{ target.source_s3_secret_access_key }}" class="input input-bordered">
-                    </div>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Bucket</label>
+                        <input type="text" name="source_s3_bucket" value="{{ target.source_s3_bucket }}" class="input">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Region</label>
+                        <input type="text" name="source_s3_region" value="{{ target.source_s3_region }}" class="input" placeholder="us-east-1">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Endpoint</label>
+                        <input type="text" name="source_s3_endpoint" value="{{ target.source_s3_endpoint }}" class="input" placeholder="https://s3.amazonaws.com">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Access Key ID</label>
+                        <input type="text" name="source_s3_access_key_id" value="{{ target.source_s3_access_key_id }}" class="input">
+                    </fieldset>
+                    <fieldset class="fieldset md:col-span-2">
+                        <label class="fieldset-label">Secret Access Key</label>
+                        <input type="password" name="source_s3_secret_access_key" value="{{ target.source_s3_secret_access_key }}" class="input">
+                    </fieldset>
                 </div>
             </div>
 
@@ -112,14 +112,14 @@
             <div x-show="sourceType === 'gdrive'" x-cloak>
                 <div class="divider text-sm">Google Drive Configuration</div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Service Account File</span></label>
-                        <input type="text" name="source_gdrive_sa_file" value="{{ target.source_gdrive_sa_file }}" class="input input-bordered" placeholder="/path/to/sa.json">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Root Folder ID</span></label>
-                        <input type="text" name="source_gdrive_root_folder_id" value="{{ target.source_gdrive_root_folder_id }}" class="input input-bordered">
-                    </div>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Service Account File</label>
+                        <input type="text" name="source_gdrive_sa_file" value="{{ target.source_gdrive_sa_file }}" class="input" placeholder="/path/to/sa.json">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Root Folder ID</label>
+                        <input type="text" name="source_gdrive_root_folder_id" value="{{ target.source_gdrive_root_folder_id }}" class="input">
+                    </fieldset>
                 </div>
             </div>
         </div>
@@ -129,14 +129,14 @@
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
             <h2 class="card-title text-base mb-4">Basic Settings</h2>
-            <div class="form-control max-w-md">
-                <label class="label"><span class="label-text">Name</span></label>
-                <input type="text" name="name" value="{{ target.name }}" class="input input-bordered"
+            <fieldset class="fieldset max-w-md">
+                <label class="fieldset-label">Name</label>
+                <input type="text" name="name" value="{{ target.name }}" class="input"
                        placeholder="my-server" required pattern="[A-Za-z0-9_-]+"
                        {{ 'readonly' if not is_new else '' }}>
-            </div>
-            <div class="form-control mt-2">
-                <label class="label"><span class="label-text">Folders</span></label>
+            </fieldset>
+            <fieldset class="fieldset mt-2">
+                <label class="fieldset-label">Folders</label>
                 <input type="hidden" name="folders" :value="folderList.join('\n')">
                 <div class="flex flex-wrap gap-2 mb-2 min-h-[2rem]">
                     <template x-for="(folder, i) in folderList" :key="i">
@@ -148,7 +148,7 @@
                     <span x-show="folderList.length === 0" class="text-base-content/40 text-sm">No folders added</span>
                 </div>
                 <div class="flex gap-2">
-                    <input type="text" class="input input-bordered input-sm font-mono flex-1" placeholder="/path/to/folder" x-ref="folderInput"
+                    <input type="text" class="input input-sm font-mono flex-1" placeholder="/path/to/folder" x-ref="folderInput"
                            @keydown.enter.prevent="addFolder($refs.folderInput.value); $refs.folderInput.value = ''">
                     <button type="button" class="btn btn-outline btn-sm" @click="addFolder($refs.folderInput.value); $refs.folderInput.value = ''">Add</button>
                     <button type="button" class="btn btn-outline btn-sm"
@@ -183,7 +183,7 @@
                         Browse
                     </button>
                 </div>
-            </div>
+            </fieldset>
 
             <!-- Folder Browser Modal -->
             <dialog id="folder_browser_modal_folders" class="modal"
@@ -203,14 +203,14 @@
                 <div class="modal-backdrop" onclick="document.getElementById('folder_browser_modal_folders').close()"></div>
             </dialog>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Exclude patterns (one per line)</span></label>
-                    <textarea name="exclude" class="textarea textarea-bordered h-20 font-mono" placeholder="*.tmp&#10;.cache/">{{ target.exclude.replace(',', '\n') }}</textarea>
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Include patterns (one per line)</span></label>
-                    <textarea name="include" class="textarea textarea-bordered h-20 font-mono">{{ target.include.replace(',', '\n') }}</textarea>
-                </div>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Exclude patterns (one per line)</label>
+                    <textarea name="exclude" class="textarea h-20 font-mono" placeholder="*.tmp&#10;.cache/">{{ target.exclude.replace(',', '\n') }}</textarea>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Include patterns (one per line)</label>
+                    <textarea name="include" class="textarea h-20 font-mono">{{ target.include.replace(',', '\n') }}</textarea>
+                </fieldset>
             </div>
         </div>
     </div>
@@ -224,47 +224,47 @@
                     <input type="checkbox" name="mysql_enabled" class="toggle toggle-primary toggle-sm"
                            x-model="mysqlEnabled" :true-value="true" :false-value="false"
                            {{ 'checked' if target.mysql_enabled == 'yes' else '' }}>
-                    <span class="label-text">Enable</span>
+                    <span>Enable</span>
                 </label>
             </div>
 
             <div x-show="mysqlEnabled" x-cloak>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Mode</span></label>
-                        <select name="mysql_mode" class="select select-bordered">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Mode</label>
+                        <select name="mysql_mode" class="select">
                             <option value="all" {{ 'selected' if target.mysql_mode == 'all' else '' }}>All databases</option>
                             <option value="specific" {{ 'selected' if target.mysql_mode == 'specific' else '' }}>Specific databases</option>
                         </select>
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Host</span></label>
-                        <input type="text" name="mysql_host" value="{{ target.mysql_host }}" class="input input-bordered" placeholder="localhost">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Port</span></label>
-                        <input type="text" name="mysql_port" value="{{ target.mysql_port }}" class="input input-bordered" placeholder="3306">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">User</span></label>
-                        <input type="text" name="mysql_user" value="{{ target.mysql_user }}" class="input input-bordered" placeholder="root">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Password</span></label>
-                        <input type="password" name="mysql_password" value="{{ target.mysql_password }}" class="input input-bordered">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Databases (comma-separated)</span></label>
-                        <input type="text" name="mysql_databases" value="{{ target.mysql_databases }}" class="input input-bordered" placeholder="db1,db2">
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">Exclude databases</span></label>
-                        <input type="text" name="mysql_exclude" value="{{ target.mysql_exclude }}" class="input input-bordered" placeholder="information_schema,performance_schema">
-                    </div>
-                    <div class="form-control md:col-span-2">
-                        <label class="label"><span class="label-text">Extra mysqldump options</span></label>
-                        <input type="text" name="mysql_extra_opts" value="{{ target.mysql_extra_opts }}" class="input input-bordered">
-                    </div>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Host</label>
+                        <input type="text" name="mysql_host" value="{{ target.mysql_host }}" class="input" placeholder="localhost">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Port</label>
+                        <input type="text" name="mysql_port" value="{{ target.mysql_port }}" class="input" placeholder="3306">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">User</label>
+                        <input type="text" name="mysql_user" value="{{ target.mysql_user }}" class="input" placeholder="root">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Password</label>
+                        <input type="password" name="mysql_password" value="{{ target.mysql_password }}" class="input">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Databases (comma-separated)</label>
+                        <input type="text" name="mysql_databases" value="{{ target.mysql_databases }}" class="input" placeholder="db1,db2">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Exclude databases</label>
+                        <input type="text" name="mysql_exclude" value="{{ target.mysql_exclude }}" class="input" placeholder="information_schema,performance_schema">
+                    </fieldset>
+                    <fieldset class="fieldset md:col-span-2">
+                        <label class="fieldset-label">Extra mysqldump options</label>
+                        <input type="text" name="mysql_extra_opts" value="{{ target.mysql_extra_opts }}" class="input">
+                    </fieldset>
                 </div>
             </div>
         </div>
@@ -275,14 +275,14 @@
         <div class="card-body">
             <h2 class="card-title text-base mb-4">Hooks</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Pre-backup hook</span></label>
-                    <input type="text" name="pre_hook" value="{{ target.pre_hook }}" class="input input-bordered font-mono" placeholder="/path/to/script.sh">
-                </div>
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Post-backup hook</span></label>
-                    <input type="text" name="post_hook" value="{{ target.post_hook }}" class="input input-bordered font-mono" placeholder="/path/to/script.sh">
-                </div>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Pre-backup hook</label>
+                    <input type="text" name="pre_hook" value="{{ target.pre_hook }}" class="input font-mono" placeholder="/path/to/script.sh">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Post-backup hook</label>
+                    <input type="text" name="post_hook" value="{{ target.post_hook }}" class="input font-mono" placeholder="/path/to/script.sh">
+                </fieldset>
             </div>
         </div>
     </div>
@@ -291,7 +291,7 @@
         <div class="card-body">
             <label class="label cursor-pointer gap-3 justify-start p-0">
                 <input type="checkbox" name="enabled" class="toggle toggle-success" {{ 'checked' if target.enabled == 'yes' else '' }}>
-                <span class="label-text font-medium">Enabled</span>
+                <span class="font-medium">Enabled</span>
             </label>
         </div>
     </div>

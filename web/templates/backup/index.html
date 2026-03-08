@@ -11,25 +11,25 @@
             <p class="text-base-content/60 mb-4">Select a source and destination to start a backup job. The backup will run in the background and you can monitor it from the Running Tasks page.</p>
 
             <form method="POST" action="{{ url_for('backup.run') }}">
-                <div class="form-control mb-4">
-                    <label class="label"><span class="label-text">Source</span></label>
-                    <select name="target" class="select select-bordered">
+                <fieldset class="fieldset mb-4">
+                    <label class="fieldset-label">Source</label>
+                    <select name="target" class="select">
                         <option value="">All Sources</option>
                         {% for t in targets %}
                         <option value="{{ t }}">{{ t }}</option>
                         {% endfor %}
                     </select>
-                </div>
+                </fieldset>
 
-                <div class="form-control mb-6">
-                    <label class="label"><span class="label-text">Destination</span></label>
-                    <select name="remote" class="select select-bordered">
+                <fieldset class="fieldset mb-6">
+                    <label class="fieldset-label">Destination</label>
+                    <select name="remote" class="select">
                         <option value="">Default (all)</option>
                         {% for r in remotes %}
                         <option value="{{ r }}">{{ r }}</option>
                         {% endfor %}
                     </select>
-                </div>
+                </fieldset>
 
                 <div class="card-actions justify-end gap-2">
                     <button type="submit" class="btn btn-primary" onclick="return confirm('Run backup?')">Run Backup</button>

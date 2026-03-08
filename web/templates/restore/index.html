@@ -16,9 +16,9 @@
             <p class="text-base-content/60 mb-4">Select a source, destination, and snapshot to restore. The restore job will run in the background.</p>
 
             <form method="POST" action="{{ url_for('restore.run') }}">
-                <div class="form-control mb-4">
-                    <label class="label"><span class="label-text">Source</span></label>
-                    <select name="target" class="select select-bordered" required
+                <fieldset class="fieldset mb-4">
+                    <label class="fieldset-label">Source</label>
+                    <select name="target" class="select" required
                             x-model="target"
                             @change="remote = ''; $nextTick(() => { htmx.ajax('GET', '/restore/destinations/' + target, {target: '#dest-select', swap: 'innerHTML'}) })">
                         <option value="" disabled selected>Select a source...</option>
@@ -26,47 +26,47 @@
                         <option value="{{ t }}">{{ t }}</option>
                         {% endfor %}
                     </select>
-                </div>
+                </fieldset>
 
-                <div class="form-control mb-4">
-                    <label class="label"><span class="label-text">Destination</span></label>
-                    <select name="remote" id="dest-select" class="select select-bordered" required
+                <fieldset class="fieldset mb-4">
+                    <label class="fieldset-label">Destination</label>
+                    <select name="remote" id="dest-select" class="select" required
                             x-model="remote"
                             @change="if (target && remote) { htmx.ajax('GET', '/restore/snapshots/' + target + '/' + remote, {target: '#snap-select', swap: 'innerHTML'}) }">
                         <option value="" disabled selected>Select a source first...</option>
                     </select>
-                </div>
+                </fieldset>
 
-                <div class="form-control mb-4">
-                    <label class="label"><span class="label-text">Snapshot</span></label>
-                    <select name="snapshot" id="snap-select" class="select select-bordered" required>
+                <fieldset class="fieldset mb-4">
+                    <label class="fieldset-label">Snapshot</label>
+                    <select name="snapshot" id="snap-select" class="select" required>
                         <option value="" disabled selected>Select a destination first...</option>
                     </select>
-                </div>
+                </fieldset>
 
-                <div class="form-control mb-4">
-                    <label class="label"><span class="label-text">Restore Location</span></label>
+                <fieldset class="fieldset mb-4">
+                    <label class="fieldset-label">Restore Location</label>
                     <div class="flex flex-col gap-2">
                         <label class="label cursor-pointer gap-2 justify-start">
                             <input type="radio" name="restore_location" value="inplace" class="radio radio-primary" x-model="restoreLocation" checked>
-                            <span class="label-text">In-place (original location)</span>
+                            <span>In-place (original location)</span>
                         </label>
                         <label class="label cursor-pointer gap-2 justify-start">
                             <input type="radio" name="restore_location" value="custom" class="radio radio-primary" x-model="restoreLocation">
-                            <span class="label-text">Custom directory</span>
+                            <span>Custom directory</span>
                         </label>
                     </div>
                     <div x-show="restoreLocation === 'custom'" x-cloak class="mt-2">
-                        <input type="text" name="dest" class="input input-bordered w-full font-mono" placeholder="/path/to/restore/directory">
+                        <input type="text" name="dest" class="input w-full font-mono" placeholder="/path/to/restore/directory">
                     </div>
-                </div>
+                </fieldset>
 
-                <div class="form-control mb-6">
+                <fieldset class="fieldset mb-6">
                     <label class="label cursor-pointer gap-2 justify-start">
                         <input type="checkbox" name="skip_mysql" class="checkbox checkbox-primary">
-                        <span class="label-text">Skip MySQL restore</span>
+                        <span>Skip MySQL restore</span>
                     </label>
-                </div>
+                </fieldset>
 
                 <div class="card-actions justify-end">
                     <button type="submit" class="btn btn-primary" onclick="return confirm('Start restore? This will overwrite existing files.')">Restore</button>

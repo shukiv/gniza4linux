@@ -11,27 +11,27 @@
             <p class="text-base-content/60 mb-4">Select a source and destination to view available snapshots.</p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Source</span></label>
-                    <select class="select select-bordered" x-model="target"
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Source</label>
+                    <select class="select" x-model="target"
                             @change="remote = ''">
                         <option value="" disabled selected>Select a source...</option>
                         {% for t in targets %}
                         <option value="{{ t }}">{{ t }}</option>
                         {% endfor %}
                     </select>
-                </div>
+                </fieldset>
 
-                <div class="form-control">
-                    <label class="label"><span class="label-text">Destination</span></label>
-                    <select class="select select-bordered" x-model="remote"
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Destination</label>
+                    <select class="select" x-model="remote"
                             @change="if (target && remote) { htmx.ajax('GET', '/snapshots/list/' + target + '/' + remote, {target: '#snapshot-list', swap: 'innerHTML'}) }">
                         <option value="" disabled selected>Select a destination...</option>
                         {% for r in remotes %}
                         <option value="{{ r }}">{{ r }}</option>
                         {% endfor %}
                     </select>
-                </div>
+                </fieldset>
             </div>
         </div>
     </div>

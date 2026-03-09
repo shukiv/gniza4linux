@@ -8,4 +8,9 @@
         {% endif %}
     </div>
 </div>
+{% else %}
+<div class="flex items-center gap-3">
+    <progress class="progress progress-primary flex-1"></progress>
+    <span class="font-mono text-sm text-base-content/50">working...</span>
+</div>
 {% endif %}

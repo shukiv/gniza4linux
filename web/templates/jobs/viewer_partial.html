@@ -1,3 +1,4 @@
+<script>document.getElementById('log-viewer-title').textContent = 'Log: {{ job.label }}';</script>
 {% if job.status == "running" %}
 <div hx-get="{{ url_for('jobs.progress', job_id=job.id) }}"
      hx-trigger="every 2s"
@@ -5,7 +6,7 @@
      class="mb-2">
 </div>
 {% endif %}
-<div class="bg-base-300 rounded-lg p-3 max-h-80 overflow-y-auto font-mono text-xs"
+<div class="bg-base-300 rounded-lg p-3 flex-1 overflow-y-auto font-mono text-xs"
      {% if job.status == "running" %}
      hx-get="{{ url_for('jobs.log', job_id=job.id) }}"
      hx-trigger="every 2s"

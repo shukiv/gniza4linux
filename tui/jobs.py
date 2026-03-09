@@ -12,7 +12,7 @@ from textual.message import Message
 
 from lib.job_utils import detect_return_code, is_skipped_job
 from tui.backend import start_cli_background
-from tui.config import get_log_retain_days, get_max_concurrent_jobs, WORK_DIR, LOG_DIR
+from tui.config import get_max_concurrent_jobs, WORK_DIR, LOG_DIR
 
 MAX_OUTPUT_LINES = 10_000
 
@@ -257,18 +257,7 @@ class JobManager:
 
     def _save_registry(self) -> None:
         entries = []
-        now = datetime.now()
         for job in self._jobs.values():
-            # Skip finished jobs older than LOG_RETAIN
-            if job.status not in ("running", "queued") and job.finished_at:
-                age_days = (now - job.finished_at).total_seconds() / 86400
-                if age_days > get_log_retain_days():
-                    if job._log_file:
-                        try:
-                            Path(job._log_file).unlink(missing_ok=True)
-                        except OSError:
-                            pass
-                    continue
             pid = job._pid
             if job._proc is not None:
                 pid = job._proc.pid
@@ -328,15 +317,6 @@ class JobManager:
             if saved_status != "running":
                 finished_at_str = entry.get("finished_at")
                 finished_at = datetime.fromisoformat(finished_at_str) if finished_at_str else now
-                age_days = (now - finished_at).total_seconds() / 86400
-                if age_days > get_log_retain_days():
-                    log_file = entry.get("log_file")
-                    if log_file:
-                        try:
-                            Path(log_file).unlink(missing_ok=True)
-                        except OSError:
-                            pass
-                    continue
                 job = Job(
                     id=job_id,
                     kind=entry.get("kind", "backup"),
@@ -568,9 +548,6 @@ class JobManager:
                 if saved_status not in ("running", "queued"):
                     finished_at_str = entry.get("finished_at")
                     finished_at = datetime.fromisoformat(finished_at_str) if finished_at_str else now
-                    age_days = (now - finished_at).total_seconds() / 86400
-                    if age_days > get_log_retain_days():
-                        continue
                     job = Job(
                         id=job_id,
                         kind=entry.get("kind", "backup"),

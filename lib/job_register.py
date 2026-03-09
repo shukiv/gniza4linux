@@ -14,7 +14,6 @@ import sys
 import tempfile
 import uuid
 from datetime import datetime
-from pathlib import Path
 
 from tui.config import WORK_DIR
 

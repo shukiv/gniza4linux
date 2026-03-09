@@ -8,6 +8,7 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
+from lib.job_utils import detect_return_code, is_skipped_job
 from tui.config import (
     get_log_retain_days, get_max_concurrent_jobs, LOG_DIR, WORK_DIR
 )
@@ -101,40 +102,6 @@ def _valid_log_path(log_file):
         return False
 
 
-def _detect_return_code(log_file):
-    """Determine exit code from log file content."""
-    if not _valid_log_path(log_file) or not Path(log_file).is_file():
-        return None
-    try:
-        text = Path(log_file).read_text()
-        if not text.strip():
-            return None
-        if "Backup completed" in text or "Backup Summary" in text:
-            return 0
-        for line in text.splitlines():
-            if "[FATAL]" in line or "[ERROR]" in line:
-                return 1
-        # No completion marker and no error markers — unknown (likely killed)
-        return None
-    except OSError:
-        return None
-
-
-def _is_skipped(log_file):
-    """Check if all targets were skipped."""
-    if not _valid_log_path(log_file) or not Path(log_file).is_file():
-        return False
-    try:
-        text = Path(log_file).read_text()
-        if "Backup completed" in text or "Backup Summary" in text:
-            return False
-        return ("is disabled, skipping" in text
-                or "previous backup still running" in text
-                or "nothing to do" in text)
-    except OSError:
-        return False
-
-
 def _start_cli_background(*args, log_file=None):
     """Start a gniza CLI command in the background. Returns Popen."""
     import subprocess
@@ -213,9 +180,9 @@ def check_jobs():
                 continue
 
             if rc is None:
-                rc = _detect_return_code(entry.get("log_file"))
+                rc = detect_return_code(entry.get("log_file"))
 
-            if rc == 0 and _is_skipped(entry.get("log_file")):
+            if rc == 0 and is_skipped_job(entry.get("log_file")):
                 entry["status"] = "skipped"
             elif rc == 0:
                 entry["status"] = "success"

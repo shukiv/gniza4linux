@@ -2,7 +2,7 @@ from datetime import datetime
 
 from rich.text import Text
 from textual.reactive import Reactive
-from textual.widgets import Header, Static
+from textual.widgets import Header
 from textual.widgets._header import HeaderIcon, HeaderTitle, HeaderClock, HeaderClockSpace
 
 from tui.jobs import job_manager

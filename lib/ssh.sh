@@ -25,14 +25,6 @@ build_ssh_opts() {
     echo "${opts[*]}"
 }
 
-build_ssh_cmd() {
-    if _is_password_mode; then
-        echo "sshpass -e ssh $(build_ssh_opts)"
-    else
-        echo "ssh $(build_ssh_opts)"
-    fi
-}
-
 remote_exec() {
     local cmd="$1"
     local ssh_opts; ssh_opts=$(build_ssh_opts)
@@ -46,10 +38,6 @@ remote_exec() {
         # shellcheck disable=SC2086
         ssh $ssh_opts "${REMOTE_USER}@${REMOTE_HOST}" "$cmd"
     fi
-}
-
-remote_exec_quiet() {
-    remote_exec "$1" 2>/dev/null
 }
 
 test_ssh_connection() {

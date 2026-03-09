@@ -1,8 +1,6 @@
 """gniza background health daemon."""
 import argparse
 import logging
-import sys
-import os
 
 def main():
     parser = argparse.ArgumentParser(description="gniza background health daemon")

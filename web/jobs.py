@@ -13,6 +13,7 @@ from pathlib import Path
 import logging
 import subprocess
 
+from lib.job_utils import detect_return_code, is_skipped_job
 from tui.config import (
     get_log_retain_days, get_max_concurrent_jobs, CONFIG_DIR, parse_conf,
     list_conf_dir, WORK_DIR, LOG_DIR,
@@ -328,20 +329,20 @@ class WebJobManager:
                         elif os.WIFSIGNALED(wstatus):
                             rc = 1
                         else:
-                            rc = self._detect_return_code(entry.get("log_file"))
+                            rc = detect_return_code(entry.get("log_file"))
                 except ChildProcessError:
                     # Not our child — fall back to kill-0 check
                     try:
                         os.kill(pid, 0)
                     except ProcessLookupError:
                         alive = False
-                        rc = self._detect_return_code(entry.get("log_file"))
+                        rc = detect_return_code(entry.get("log_file"))
                     except PermissionError:
                         pass  # alive but can't signal
                 if not alive:
                     if rc is None:
-                        rc = self._detect_return_code(entry.get("log_file"))
-                    if rc == 0 and self._is_skipped(entry.get("log_file")):
+                        rc = detect_return_code(entry.get("log_file"))
+                    if rc == 0 and is_skipped_job(entry.get("log_file")):
                         status = "skipped"
                     else:
                         status = "success" if rc == 0 else "failed" if rc else "unknown"
@@ -420,36 +421,6 @@ class WebJobManager:
         except OSError:
             pass
 
-    @staticmethod
-    def _is_skipped(log_file):
-        """Check if all targets were skipped (disabled)."""
-        if not log_file or not Path(log_file).is_file():
-            return False
-        try:
-            text = Path(log_file).read_text()
-            return ("is disabled, skipping" in text
-                    and "Backup completed" not in text
-                    and "Backup Summary" not in text)
-        except OSError:
-            return False
-
-    @staticmethod
-    def _detect_return_code(log_file):
-        if not log_file or not Path(log_file).is_file():
-            return None
-        try:
-            text = Path(log_file).read_text()
-            if not text.strip():
-                return None
-            if "Backup completed" in text or "Backup Summary" in text:
-                return 0
-            for line in text.splitlines():
-                if "[FATAL]" in line or "[ERROR]" in line:
-                    return 1
-            # No completion marker and no error markers — unknown (likely killed)
-            return None
-        except OSError:
-            return None
 
 
 # Module-level singleton

@@ -2,6 +2,7 @@ from pathlib import Path
 
 from flask import (
     Blueprint, render_template, request, abort, redirect, url_for, flash,
+    send_file,
 )
 
 from web.app import login_required
@@ -31,11 +32,21 @@ def index():
     end = start + LOGS_PER_PAGE
     page_jobs = finished[start:end]
 
+    # Build log file sizes
+    log_sizes = {}
+    for job in page_jobs:
+        if job.log_file:
+            try:
+                log_sizes[job.id] = Path(job.log_file).stat().st_size
+            except OSError:
+                pass
+
     return render_template(
         "logs/index.html",
         jobs=page_jobs,
         page=page,
         total_pages=total_pages,
+        log_sizes=log_sizes,
     )
 
 
@@ -83,4 +94,23 @@ def view(job_id):
         end=end,
         total_lines=total_lines,
         view_lines=VIEW_LINES,
+    )
+
+
+@bp.route("/<job_id>/download")
+@login_required
+def download(job_id):
+    job = web_job_manager.get_job(job_id)
+    if not job or not job.log_file:
+        abort(404)
+
+    log_path = Path(job.log_file)
+    if not log_path.is_file():
+        abort(404)
+
+    return send_file(
+        log_path,
+        mimetype="text/plain",
+        as_attachment=True,
+        download_name=log_path.name,
     )

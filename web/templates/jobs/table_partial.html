@@ -87,7 +87,7 @@
                 </td>
             </tr>
             <!-- Expandable log viewer row -->
-            <tr x-show="selectedJob === '{{ job.id }}'" x-cloak>
+            <tr x-show="selectedJob === '{{ job.id }}'" style="display:none">
                 <td colspan="7" class="p-0">
                     <div class="p-4" id="log-viewer-{{ job.id }}">
                         <span class="text-base-content/40">Loading log...</span>

@@ -53,8 +53,20 @@ def index():
 @bp.route("/clear", methods=["POST"])
 @login_required
 def clear():
+    """Clear finished job entries and delete their log files."""
+    all_jobs = web_job_manager.list_jobs()
+    deleted = 0
+    for job in all_jobs:
+        if job.status not in ("running", "queued") and job.log_file:
+            try:
+                log_path = Path(job.log_file)
+                if log_path.is_file():
+                    log_path.unlink()
+                    deleted += 1
+            except OSError:
+                pass
     web_job_manager.remove_finished()
-    flash("Cleared finished job history", "success")
+    flash(f"Cleared finished jobs and deleted {deleted} log files", "success")
     return redirect(url_for("logs.index"))
 
 

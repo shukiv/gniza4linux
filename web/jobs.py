@@ -15,7 +15,7 @@ import subprocess
 
 from lib.job_utils import detect_return_code, is_skipped_job
 from tui.config import (
-    get_log_retain_days, get_max_concurrent_jobs, CONFIG_DIR, parse_conf,
+    get_max_concurrent_jobs, CONFIG_DIR, parse_conf,
     list_conf_dir, WORK_DIR, LOG_DIR,
 )
 from web.backend import start_cli_background
@@ -384,24 +384,6 @@ class WebJobManager:
                     entry["return_code"] = rc
                     entry["finished_at"] = now.isoformat()
                     changed = True
-
-            # Skip expired finished jobs
-            if status not in ("running", "queued"):
-                fin = entry.get("finished_at")
-                if fin:
-                    try:
-                        age_days = (now - datetime.fromisoformat(fin)).total_seconds() / 86400
-                        if age_days > get_log_retain_days():
-                            log_file = entry.get("log_file")
-                            if log_file:
-                                try:
-                                    Path(log_file).unlink(missing_ok=True)
-                                except OSError:
-                                    pass
-                            changed = True
-                            continue
-                    except Exception:
-                        pass
 
             job = WebJob(
                 id=job_id,

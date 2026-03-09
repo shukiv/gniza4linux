@@ -269,7 +269,11 @@ class WebJobManager:
                 return None
             m = re.search(r"(\d+)%", line)
             if m:
-                return {"pct": int(m.group(1)), "line": line}
+                speed = ""
+                sm = re.search(r"([\d.]+[KMGT]?B/s)", line)
+                if sm:
+                    speed = sm.group(1)
+                return {"pct": int(m.group(1)), "line": line, "speed": speed}
         except (OSError, FileNotFoundError):
             pass
         return None

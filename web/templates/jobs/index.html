@@ -10,8 +10,12 @@
             htmx.trigger(document.getElementById('jobs-table'), 'jobRefresh');
         }, 3000);
         $watch('selectedJob', (val) => {
+            const modal = document.getElementById('log-modal');
             if (val) {
                 htmx.ajax('GET', '/jobs/' + val + '/viewer', {target: '#log-viewer', swap: 'innerHTML'});
+                modal.showModal();
+            } else {
+                modal.close();
             }
         });
      "
@@ -31,9 +35,9 @@
 </div>
 
 <!-- Log viewer modal -->
-<div x-show="selectedJob" x-cloak
-     class="modal modal-open" @click.self="selectedJob = null"
-     @keydown.escape.window="selectedJob = null">
+<dialog id="log-modal" class="modal"
+        @close="selectedJob = null"
+        @keydown.escape.prevent="selectedJob = null; $el.close()">
     <div class="modal-box max-w-4xl w-11/12 h-[80vh] flex flex-col">
         <div class="flex items-center justify-between mb-3">
             <h3 class="font-bold text-lg" id="log-viewer-title">Job Log</h3>
@@ -43,7 +47,8 @@
             <span class="text-base-content/40">Loading log...</span>
         </div>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop"><button @click="selectedJob = null">close</button></form>
+</dialog>
 
 </div>
 {% endblock %}

@@ -28,6 +28,7 @@
                         <th>Started</th>
                         <th>Ended</th>
                         <th>Duration</th>
+                        <th>Size</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -63,8 +64,27 @@
                                 --
                             {% endif %}
                         </td>
+                        <td class="text-xs text-base-content/60">
+                            {% if job.id in log_sizes %}
+                                {% set size = log_sizes[job.id] %}
+                                {% if size >= 1048576 %}
+                                    {{ "%.1f"|format(size / 1048576) }} MB
+                                {% elif size >= 1024 %}
+                                    {{ "%.1f"|format(size / 1024) }} KB
+                                {% else %}
+                                    {{ size }} B
+                                {% endif %}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </td>
                         <td>
-                            <a href="{{ url_for('logs.view', job_id=job.id) }}" class="btn btn-primary btn-sm">View</a>
+                            <div class="flex gap-1">
+                                <a href="{{ url_for('logs.view', job_id=job.id) }}" class="btn btn-primary btn-sm">View</a>
+                                <a href="{{ url_for('logs.download', job_id=job.id) }}" class="btn btn-ghost btn-sm" title="Download">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

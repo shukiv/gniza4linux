@@ -1,7 +1,3 @@
-<div class="flex items-center justify-between mb-2">
-    <h3 class="card-title text-sm">Log: {{ job.label }}</h3>
-    <button class="btn btn-primary btn-sm" @click="selectedJob = null">Close</button>
-</div>
 {% if job.status == "running" %}
 <div hx-get="{{ url_for('jobs.progress', job_id=job.id) }}"
      hx-trigger="every 2s"
@@ -9,7 +5,7 @@
      class="mb-2">
 </div>
 {% endif %}
-<div class="bg-base-300 rounded-lg p-4 max-h-96 overflow-y-auto font-mono text-xs"
+<div class="bg-base-300 rounded-lg p-3 max-h-80 overflow-y-auto font-mono text-xs"
      {% if job.status == "running" %}
      hx-get="{{ url_for('jobs.log', job_id=job.id) }}"
      hx-trigger="every 2s"

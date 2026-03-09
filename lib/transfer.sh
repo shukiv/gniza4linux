@@ -364,11 +364,13 @@ rsync_ssh_to_ssh() {
         fi
 
         local rc=0
+        # </dev/null prevents SSH from consuming stdin (which may be a
+        # process substitution feeding a while-read loop of folders).
         if [[ -n "${_TRANSFER_LOG:-}" ]]; then
             echo "=== rsync (ssh→ssh): $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
-            "${dst_ssh[@]}" > >(_snaplog_tee) 2>&1 || rc=$?
+            "${dst_ssh[@]}" </dev/null > >(_snaplog_tee) 2>&1 || rc=$?
         else
-            "${dst_ssh[@]}" || rc=$?
+            "${dst_ssh[@]}" </dev/null || rc=$?
         fi
         unset SSHPASS
 
@@ -385,9 +387,9 @@ rsync_ssh_to_ssh() {
             local rc2=0
             if [[ -n "${_TRANSFER_LOG:-}" ]]; then
                 echo "=== rsync (ssh→ssh retry): $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
-                "${dst_ssh[@]}" > >(_snaplog_tee) 2>&1 || rc2=$?
+                "${dst_ssh[@]}" </dev/null > >(_snaplog_tee) 2>&1 || rc2=$?
             else
-                "${dst_ssh[@]}" || rc2=$?
+                "${dst_ssh[@]}" </dev/null || rc2=$?
             fi
             unset SSHPASS
             if (( rc2 == 0 )); then

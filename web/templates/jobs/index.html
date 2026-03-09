@@ -13,10 +13,7 @@
         }, 3000);
         $watch('selectedJob', (val) => {
             if (val) {
-                const target = document.getElementById('log-viewer-' + val);
-                if (target) {
-                    htmx.ajax('GET', '/jobs/' + val + '/viewer', {target: target, swap: 'innerHTML'});
-                }
+                htmx.ajax('GET', '/jobs/' + val + '/viewer', {target: '#log-viewer', swap: 'innerHTML'});
             }
         });
      "
@@ -32,6 +29,18 @@
 <div class="card bg-base-200 shadow mb-6">
     <div class="card-body p-0">
         {% include "jobs/table_partial.html" %}
+    </div>
+</div>
+
+<!-- Log viewer panel — outside the morph zone -->
+<div x-show="selectedJob" x-cloak class="card bg-base-200 shadow mb-6 -mt-4">
+    <div class="card-body pt-3">
+        <div class="flex items-center justify-end mb-1">
+            <button class="btn btn-ghost btn-xs" @click="selectedJob = null">Close</button>
+        </div>
+        <div id="log-viewer">
+            <span class="text-base-content/40">Loading log...</span>
+        </div>
     </div>
 </div>
 

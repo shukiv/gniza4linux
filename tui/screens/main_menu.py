@@ -41,8 +41,6 @@ MENU_ITEMS = [
     ("snapshots", "Snapshots"),
     ("logs", "Logs"),
     ("email_log", "Email Log"),
-    ("health", "Health"),
-    ("retention", "Retention"),
     ("settings", "Settings"),
     None,
     ("quit", "Quit"),

@@ -132,8 +132,34 @@ snaplog_upload() {
     fi
 }
 
+# Append transferred file list from rsync --log-file to the job log.
+# This preserves the per-file details in the permanent log (visible in Logs page).
+_snaplog_append_transfer_log() {
+    [[ -z "${_TRANSFER_LOG:-}" || ! -s "$_TRANSFER_LOG" ]] && return 0
+    [[ -z "${LOG_FILE:-}" ]] && return 0
+    # Extract filenames from rsync log format:
+    # "2026/03/09 05:03:07 [719348] <f+++++++++ path/to/file"
+    local count=0
+    local files=()
+    while IFS= read -r line; do
+        if [[ "$line" =~ \[([0-9]+)\]\ [\<\>][fd][[:alnum:].+]+\ (.+) ]]; then
+            files+=("${BASH_REMATCH[2]}")
+            (( count++ ))
+        fi
+    done < "$_TRANSFER_LOG"
+    if (( count > 0 )); then
+        {
+            echo ""
+            echo "--- Transferred files ($count) ---"
+            printf '%s\n' "${files[@]}"
+            echo "--- End of transferred files ---"
+        } >> "$LOG_FILE"
+    fi
+}
+
 # Clean up temporary snapshot log directory.
 snaplog_cleanup() {
+    _snaplog_append_transfer_log
     [[ -n "${_SNAP_LOG_DIR:-}" && -d "$_SNAP_LOG_DIR" ]] && rm -rf "$_SNAP_LOG_DIR"
     if [[ -n "${GNIZA_JOB_ID:-}" ]]; then
         rm -f "${WORK_DIR}/gniza-transferlog-${GNIZA_JOB_ID}.txt" 2>/dev/null

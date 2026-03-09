@@ -296,13 +296,13 @@ class WebJobManager:
                 sm = re.search(r"([\d.]+[KMGT]?B/s)", line)
                 if sm:
                     speed = sm.group(1)
-                # When byte% is 0, use to-chk file ratio as progress
-                if pct == 0:
-                    cm = re.search(r"to-chk=(\d+)/(\d+)", line)
-                    if cm:
-                        remaining, total = int(cm.group(1)), int(cm.group(2))
-                        if total > 0:
-                            pct = int((total - remaining) / total * 100)
+                # Use to-chk file ratio when it shows better progress than byte%
+                cm = re.search(r"to-chk=(\d+)/(\d+)", line)
+                if cm:
+                    remaining, total = int(cm.group(1)), int(cm.group(2))
+                    if total > 0:
+                        file_pct = int((total - remaining) / total * 100)
+                        pct = max(pct, file_pct)
                 return {"pct": pct, "line": line, "speed": speed}
         except (OSError, FileNotFoundError):
             pass

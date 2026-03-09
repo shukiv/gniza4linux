@@ -27,8 +27,10 @@ def index():
     page = request.args.get("page", 1, type=int)
     if page < 1:
         page = 1
-    jobs = web_job_manager.list_jobs()
-    jobs.sort(key=lambda j: (0 if j.status == "running" else 1 if j.status == "queued" else 2, -j.started_at.timestamp()))
+    all_jobs = web_job_manager.list_jobs()
+    # Running Tasks page shows only active jobs; finished jobs are on the Logs page
+    jobs = [j for j in all_jobs if j.status in ("running", "queued")]
+    jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
     has_running = any(j.status == "running" for j in jobs)
     has_queued = any(j.status == "queued" for j in jobs)
     total = len(jobs)
@@ -49,7 +51,8 @@ def table():
     page = request.args.get("page", 1, type=int)
     if page < 1:
         page = 1
-    jobs = web_job_manager.list_jobs()
+    all_jobs = web_job_manager.list_jobs()
+    jobs = [j for j in all_jobs if j.status in ("running", "queued")]
     jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
     has_running = any(j.status == "running" for j in jobs)
     has_queued = any(j.status == "queued" for j in jobs)
@@ -135,9 +138,3 @@ def kill(job_id):
     return redirect(url_for("jobs.index"))
 
 
-@bp.route("/clear", methods=["POST"])
-@login_required
-def clear():
-    web_job_manager.remove_finished()
-    flash("Finished jobs cleared.", "success")
-    return redirect(url_for("jobs.index"))

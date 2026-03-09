@@ -40,6 +40,7 @@ backup_target() {
 
     if [[ -z "$remote_name" ]]; then
         log_error "No remote specified and none configured"
+        release_target_lock "$target_name"
         return 1
     fi
 
@@ -227,20 +228,21 @@ _backup_target_impl() {
     local total_size=0
 
     local meta_json
-    meta_json=$(cat <<METAEOF
-{
-  "target": "$target_name",
-  "hostname": "$hostname",
-  "timestamp": "$ts",
-  "duration": $duration,
-  "folders": "$(echo "$TARGET_FOLDERS" | sed 's/"/\\"/g')",
-  "mysql_dumps": $([ "${TARGET_MYSQL_ENABLED:-no}" = "yes" ] && echo "true" || echo "false"),
-  "total_size": $total_size,
-  "mode": "${BACKUP_MODE:-$DEFAULT_BACKUP_MODE}",
+    local esc_target; esc_target=$(printf '%s' "$target_name" | sed 's/["\]/\\&/g')
+    local esc_hostname; esc_hostname=$(printf '%s' "$hostname" | sed 's/["\]/\\&/g')
+    local esc_folders; esc_folders=$(printf '%s' "$TARGET_FOLDERS" | sed 's/["\]/\\&/g')
+    local mysql_val; mysql_val=$([ "${TARGET_MYSQL_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
+    meta_json=$(printf '{
+  "target": "%s",
+  "hostname": "%s",
+  "timestamp": "%s",
+  "duration": %d,
+  "folders": "%s",
+  "mysql_dumps": %s,
+  "total_size": %d,
+  "mode": "%s",
   "pinned": false
-}
-METAEOF
-)
+}' "$esc_target" "$esc_hostname" "$ts" "$duration" "$esc_folders" "$mysql_val" "$total_size" "${BACKUP_MODE:-$DEFAULT_BACKUP_MODE}")
 
     if _is_rclone_mode; then
         local meta_subpath="targets/${target_name}/snapshots/${ts}/meta.json"

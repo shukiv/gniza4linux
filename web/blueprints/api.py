@@ -101,15 +101,15 @@ def _ssh_list_dirs(host, path, port="22", user="root", key="", password="", show
         return None, str(e)
 
 
-@bp.route("/browse/ssh")
+@bp.route("/browse/ssh", methods=["GET", "POST"])
 @login_required
 def browse_ssh():
     """Browse directories on a remote SSH host."""
-    host = request.args.get("host", "")
-    port = request.args.get("port", "22")
-    user = request.args.get("user", "root")
-    key = request.args.get("key", "")
-    password = request.args.get("password", "")
+    host = request.values.get("host", "")
+    port = request.values.get("port", "22")
+    user = request.values.get("user", "root")
+    key = request.values.get("key", "")
+    password = request.values.get("password", "")
     path = request.args.get("path", "/")
     target = request.args.get("target", "")
     show_hidden = request.args.get("show_hidden", "") == "1"
@@ -131,15 +131,15 @@ def browse_ssh():
                            ssh_user=user, ssh_key=key, ssh_password=password)
 
 
-@bp.route("/browse/ssh/children")
+@bp.route("/browse/ssh/children", methods=["GET", "POST"])
 @login_required
 def browse_ssh_children():
     """Return child folders on an SSH host for lazy loading."""
-    host = request.args.get("host", "")
-    port = request.args.get("port", "22")
-    user = request.args.get("user", "root")
-    key = request.args.get("key", "")
-    password = request.args.get("password", "")
+    host = request.values.get("host", "")
+    port = request.values.get("port", "22")
+    user = request.values.get("user", "root")
+    key = request.values.get("key", "")
+    password = request.values.get("password", "")
     path = request.args.get("path", "/")
     target = request.args.get("target", "")
     show_hidden = request.args.get("show_hidden", "") == "1"

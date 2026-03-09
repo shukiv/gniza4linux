@@ -12,7 +12,16 @@ def detect_return_code(log_file):
         text = Path(log_file).read_text()
         if not text.strip():
             return None
-        if "Backup completed" in text or "Backup Summary" in text:
+        if "Backup completed" in text:
+            return 0
+        if "Backup Summary" in text:
+            # Check if any failures reported in the summary
+            for line in text.splitlines():
+                if "Failed:" in line:
+                    import re
+                    m = re.search(r'Failed:\s*(\d+)', line)
+                    if m and int(m.group(1)) > 0:
+                        return 1
             return 0
         for line in text.splitlines():
             if "[FATAL]" in line or "[ERROR]" in line:

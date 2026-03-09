@@ -13,6 +13,21 @@ bp = Blueprint("auth", __name__)
 
 # Brute-force protection: track failed attempts per IP
 _failed_attempts = defaultdict(list)  # ip -> [timestamp, ...]
+_last_cleanup = 0.0
+
+
+def _periodic_cleanup():
+    """Remove stale entries from all IPs every 10 minutes."""
+    global _last_cleanup
+    now = time.monotonic()
+    if now - _last_cleanup < 600:
+        return
+    _last_cleanup = now
+    _, lockout_seconds = _get_limits()
+    cutoff = now - lockout_seconds
+    stale = [ip for ip, times in _failed_attempts.items() if all(t <= cutoff for t in times)]
+    for ip in stale:
+        _failed_attempts.pop(ip, None)
 
 
 def _get_limits():
@@ -56,6 +71,7 @@ def _clear_failures(ip):
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
+    _periodic_cleanup()
     ip = request.remote_addr or "unknown"
     locked, remaining = _is_locked(ip)
 
@@ -70,6 +86,7 @@ def login():
             _clear_failures(ip)
             session.clear()
             session["logged_in"] = True
+            session.permanent = True
             return redirect(url_for("dashboard.index"))
 
         _record_failure(ip)

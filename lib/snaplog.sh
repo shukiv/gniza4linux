@@ -16,11 +16,21 @@ _snaplog_tee() {
     # Progress lines go to a small .progress file (for the TUI/web progress bar).
     # Everything else (stats, errors) goes to stderr → LOG_FILE / job log.
     local progress_file="${WORK_DIR}/gniza-progress-${GNIZA_JOB_ID:-$$}.txt"
-    while IFS= read -r line || [[ -n "$line" ]]; do
-        if [[ "$line" =~ [0-9]+% ]] && [[ "$line" == *xfr#* || "$line" == *to-chk=* || "$line" == *B/s* ]]; then
-            printf '%s\n' "$line" > "$progress_file"
+    local buf=""
+    # Read character-by-character to handle \r (rsync --info=progress2) and \n
+    while IFS= read -r -d '' -n 1 ch || [[ -n "$buf" ]]; do
+        if [[ "$ch" == $'\n' || "$ch" == $'\r' || -z "$ch" ]]; then
+            if [[ -n "$buf" ]]; then
+                if [[ "$buf" =~ [0-9]+% ]] && [[ "$buf" == *xfr#* || "$buf" == *to-chk=* || "$buf" == *B/s* ]]; then
+                    printf '%s\n' "$buf" > "$progress_file"
+                else
+                    echo "$buf" >&2
+                fi
+                buf=""
+            fi
+            [[ -z "$ch" ]] && break
         else
-            [[ -n "$line" ]] && echo "$line" >&2
+            buf+="$ch"
         fi
     done
     rm -f "$progress_file" 2>/dev/null

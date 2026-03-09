@@ -306,12 +306,17 @@ rsync_ssh_to_ssh() {
         remote_cmd="_GNIZA_PW=\$(mktemp /tmp/.gniza-pw-XXXXXX) && chmod 600 \"\$_GNIZA_PW\" && printf '%s' ${_pw_escaped} > \"\$_GNIZA_PW\" && sshpass -f \"\$_GNIZA_PW\" ${remote_cmd}; _rc=\$?; rm -f \"\$_GNIZA_PW\"; exit \$_rc"
     fi
 
-    # Source key auth: copy the key to a temp file on the destination,
-    # use -i in the remote rsync's SSH command, then clean up.
-    # This avoids depending on ssh-agent (which cron jobs don't have).
-    local _remote_key_path=""
+    # Source key auth: start an ephemeral ssh-agent so agent forwarding
+    # works even from cron (which has no agent). The key never leaves
+    # the local machine.
+    local _own_agent=""
     if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" && -n "${TARGET_SOURCE_KEY:-}" ]]; then
-        _remote_key_path="/tmp/.gniza-srckey-$$.pem"
+        # Only start our own agent if there isn't one already
+        if ! ssh-add -l &>/dev/null; then
+            eval "$(ssh-agent -s)" >/dev/null 2>&1
+            _own_agent="yes"
+        fi
+        ssh-add "$TARGET_SOURCE_KEY" 2>/dev/null || log_warn "Failed to add source key to agent"
     fi
 
     # --- Build the SSH command to the destination ---
@@ -321,6 +326,10 @@ rsync_ssh_to_ssh() {
         export SSHPASS="$REMOTE_PASSWORD"
     fi
     dst_ssh+=(ssh)
+    # Enable agent forwarding when source uses key auth
+    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" ]]; then
+        dst_ssh+=(-A)
+    fi
     if ! _is_password_mode; then
         dst_ssh+=(-i "$REMOTE_KEY" -o BatchMode=yes)
     fi
@@ -329,25 +338,14 @@ rsync_ssh_to_ssh() {
     dst_ssh+=(-o "ConnectTimeout=${SSH_TIMEOUT:-${DEFAULT_SSH_TIMEOUT:-30}}")
     dst_ssh+=(-o "ServerAliveInterval=60" -o "ServerAliveCountMax=3")
     dst_ssh+=("${REMOTE_USER}@${REMOTE_HOST}")
-
-    # If using key auth, wrap remote_cmd to use the copied key with -i
-    if [[ -n "$_remote_key_path" ]]; then
-        src_ssh_e+=" -i ${_remote_key_path}"
-        # Re-assemble remote_cmd with the updated src_ssh_e
-        remote_cmd="rsync"
-        for opt in "${ropts[@]}"; do
-            remote_cmd+=" $(printf '%q' "$opt")"
-        done
-        remote_cmd+=" -e $(printf '%q' "$src_ssh_e")"
-        remote_cmd+=" $(printf '%q' "$source_spec") $(printf '%q' "$remote_dest")"
-        # Wrap: copy key → rsync → cleanup key
-        remote_cmd="cat > ${_remote_key_path} && chmod 600 ${_remote_key_path} && ${remote_cmd}; _rc=\$?; rm -f ${_remote_key_path}; exit \$_rc"
-    fi
-
     dst_ssh+=("$remote_cmd")
 
-    # Cleanup helper
+    # Cleanup helper: kill ephemeral agent, unset SSHPASS
     _ssh_to_ssh_cleanup() {
+        if [[ -n "$_own_agent" && -n "${SSH_AGENT_PID:-}" ]]; then
+            eval "$(ssh-agent -k)" >/dev/null 2>&1
+            _own_agent=""
+        fi
         unset SSHPASS
     }
 
@@ -362,17 +360,9 @@ rsync_ssh_to_ssh() {
         local rc=0
         if [[ -n "${_TRANSFER_LOG:-}" ]]; then
             echo "=== rsync (ssh→ssh): $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
-            if [[ -n "$_remote_key_path" ]]; then
-                "${dst_ssh[@]}" < "$TARGET_SOURCE_KEY" > >(_snaplog_tee) 2>&1 || rc=$?
-            else
-                "${dst_ssh[@]}" > >(_snaplog_tee) 2>&1 || rc=$?
-            fi
+            "${dst_ssh[@]}" > >(_snaplog_tee) 2>&1 || rc=$?
         else
-            if [[ -n "$_remote_key_path" ]]; then
-                "${dst_ssh[@]}" < "$TARGET_SOURCE_KEY" || rc=$?
-            else
-                "${dst_ssh[@]}" || rc=$?
-            fi
+            "${dst_ssh[@]}" || rc=$?
         fi
         unset SSHPASS
 
@@ -389,17 +379,9 @@ rsync_ssh_to_ssh() {
             local rc2=0
             if [[ -n "${_TRANSFER_LOG:-}" ]]; then
                 echo "=== rsync (ssh→ssh retry): $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
-                if [[ -n "$_remote_key_path" ]]; then
-                    "${dst_ssh[@]}" < "$TARGET_SOURCE_KEY" > >(_snaplog_tee) 2>&1 || rc2=$?
-                else
-                    "${dst_ssh[@]}" > >(_snaplog_tee) 2>&1 || rc2=$?
-                fi
+                "${dst_ssh[@]}" > >(_snaplog_tee) 2>&1 || rc2=$?
             else
-                if [[ -n "$_remote_key_path" ]]; then
-                    "${dst_ssh[@]}" < "$TARGET_SOURCE_KEY" || rc2=$?
-                else
-                    "${dst_ssh[@]}" || rc2=$?
-                fi
+                "${dst_ssh[@]}" || rc2=$?
             fi
             unset SSHPASS
             if (( rc2 == 0 )); then

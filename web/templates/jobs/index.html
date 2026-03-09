@@ -19,13 +19,6 @@
     </div>
 </div>
 
-<!-- Dynamic log viewer panel — loads content via HTMX when a job is selected -->
-<div x-show="selectedJob" x-cloak class="card bg-base-200 shadow mb-4">
-    <div class="card-body" id="log-viewer-content"
-         x-effect="if (selectedJob) { htmx.ajax('GET', '/jobs/' + selectedJob + '/viewer', '#log-viewer-content') }">
-        <span class="text-base-content/40">Select a job to view its log.</span>
-    </div>
-</div>
 
 </div>
 {% endblock %}

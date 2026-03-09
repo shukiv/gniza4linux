@@ -33,7 +33,7 @@ _snaplog_tee() {
             buf+="$ch"
         fi
     done
-    rm -f "$progress_file" 2>/dev/null
+    # Don't delete progress file here — snaplog_cleanup handles it
 }
 
 # Initialize snapshot log directory and transfer log file.
@@ -135,7 +135,10 @@ snaplog_upload() {
 # Clean up temporary snapshot log directory.
 snaplog_cleanup() {
     [[ -n "${_SNAP_LOG_DIR:-}" && -d "$_SNAP_LOG_DIR" ]] && rm -rf "$_SNAP_LOG_DIR"
-    [[ -n "${GNIZA_JOB_ID:-}" ]] && rm -f "${WORK_DIR}/gniza-transferlog-${GNIZA_JOB_ID}.txt" 2>/dev/null
+    if [[ -n "${GNIZA_JOB_ID:-}" ]]; then
+        rm -f "${WORK_DIR}/gniza-transferlog-${GNIZA_JOB_ID}.txt" 2>/dev/null
+        rm -f "${WORK_DIR}/gniza-progress-${GNIZA_JOB_ID}.txt" 2>/dev/null
+    fi
     _SNAP_LOG_DIR=""
     _TRANSFER_LOG=""
 }

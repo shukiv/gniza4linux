@@ -41,6 +41,10 @@ snaplog_init() {
     _SNAP_LOG_DIR=$(mktemp -d "${WORK_DIR}/gniza-snaplog-XXXXXX")
     _TRANSFER_LOG="$_SNAP_LOG_DIR/rsync_raw.log"
     touch "$_TRANSFER_LOG"
+    # Write transfer log path so web/TUI can find it for this job
+    if [[ -n "${GNIZA_JOB_ID:-}" ]]; then
+        printf '%s\n' "$_TRANSFER_LOG" > "${WORK_DIR}/gniza-transferlog-${GNIZA_JOB_ID}.txt"
+    fi
 }
 
 # Generate snapshot log files (log, rsync_error, summary, index).
@@ -131,6 +135,7 @@ snaplog_upload() {
 # Clean up temporary snapshot log directory.
 snaplog_cleanup() {
     [[ -n "${_SNAP_LOG_DIR:-}" && -d "$_SNAP_LOG_DIR" ]] && rm -rf "$_SNAP_LOG_DIR"
+    [[ -n "${GNIZA_JOB_ID:-}" ]] && rm -f "${WORK_DIR}/gniza-transferlog-${GNIZA_JOB_ID}.txt" 2>/dev/null
     _SNAP_LOG_DIR=""
     _TRANSFER_LOG=""
 }

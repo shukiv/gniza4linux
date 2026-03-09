@@ -237,19 +237,47 @@ class WebJobManager:
         self._save_registry()
 
     def get_log_lines(self, job_id, tail=100):
-        """Read last `tail` lines from the job's log file. Returns (lines, total_lines)."""
+        """Read last `tail` lines from the job's log file and transfer log. Returns (lines, total_lines)."""
         job = self._jobs.get(job_id)
         if not job or not job.log_file:
             return [], 0
         try:
             with open(job.log_file) as f:
-                # Split on both \n and \r to handle rsync's carriage-return progress updates
                 all_lines = f.read().replace('\r', '\n').splitlines()
+            # For running jobs, append recent transfer log lines (file-by-file details)
+            if job.status == "running":
+                transfer_lines = self._get_transfer_log_lines(job_id, tail=tail)
+                if transfer_lines:
+                    all_lines.extend(transfer_lines)
             total = len(all_lines)
             last_lines = [l for l in all_lines[-tail:]]
             return last_lines, total
         except (OSError, FileNotFoundError):
             return [], 0
+
+    def _get_transfer_log_lines(self, job_id, tail=50):
+        """Read recent lines from the rsync transfer log for a running job."""
+        pointer_file = WORK_DIR / f"gniza-transferlog-{job_id}.txt"
+        try:
+            transfer_log = pointer_file.read_text().strip()
+            if not transfer_log or not Path(transfer_log).is_file():
+                return []
+            with open(transfer_log) as f:
+                lines = f.readlines()
+            # Return only file transfer lines (skip rsync header/setup lines)
+            result = []
+            for line in lines[-tail:]:
+                line = line.rstrip('\n')
+                if not line:
+                    continue
+                # Extract just the filename from rsync log format:
+                # "2026/03/09 05:03:07 [719348] <f+++++++++ path/to/file"
+                m = re.match(r'\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} \[\d+\] [<>]f[\w.+]+ (.+)', line)
+                if m:
+                    result.append(m.group(1))
+            return result
+        except (OSError, FileNotFoundError):
+            return []
 
     def get_progress(self, job_id):
         """Read rsync progress from the separate progress file."""

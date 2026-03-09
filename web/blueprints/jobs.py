@@ -80,6 +80,15 @@ def sidebar_badge():
     return render_template("jobs/sidebar_badge.html", count=count)
 
 
+@bp.route("/<job_id>/viewer")
+@login_required
+def viewer(job_id):
+    job = web_job_manager.get_job(job_id)
+    if not job:
+        return '<span class="text-error">Job not found</span>'
+    return render_template("jobs/viewer_partial.html", job=job)
+
+
 @bp.route("/<job_id>/log")
 @login_required
 def log(job_id):

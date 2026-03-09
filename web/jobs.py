@@ -327,6 +327,7 @@ class WebJobManager:
         """Load jobs from shared JSON registry."""
         entries = self._flock_read()
         if not entries:
+            self._jobs = {}
             return
         now = datetime.now()
         changed = False

@@ -6,10 +6,14 @@ from textual.containers import Vertical, Horizontal
 
 from textual import work, on
 
+import os
+
 from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
 from tui.backend import run_cli
 from tui.jobs import job_manager
 from tui.widgets import ConfirmDialog, FolderPicker, DocsPanel
+
+_FORBIDDEN_DEST_PREFIXES = ("/", "/root", "/bin", "/sbin", "/usr/bin", "/usr/sbin", "/usr/lib", "/boot", "/dev", "/proc", "/sys", "/etc", "/lib", "/lib64")
 
 
 class RestoreScreen(Screen):
@@ -131,6 +135,18 @@ class RestoreScreen(Screen):
         radio = self.query_one("#restore-location", RadioSet)
         dest_input = self.query_one("#restore-dest", Input)
         dest = "" if radio.pressed_index == 0 else dest_input.value
+        if dest:
+            if not os.path.isabs(dest):
+                self.notify("Destination must be an absolute path.", severity="error")
+                return
+            if ".." in dest.split(os.sep):
+                self.notify("Destination must not contain '..' components.", severity="error")
+                return
+            resolved = os.path.realpath(dest)
+            for prefix in _FORBIDDEN_DEST_PREFIXES:
+                if resolved == prefix or resolved.startswith(prefix + "/"):
+                    self.notify(f"Destination must not point to system directory '{prefix}'.", severity="error")
+                    return
         try:
             restore_mysql = self.query_one("#restore-mysql-switch", Switch).value
         except Exception:

@@ -7,11 +7,25 @@ from flask import (
 
 from web.app import login_required
 from web.jobs import web_job_manager
+from tui.config import LOG_DIR
 
 bp = Blueprint("logs", __name__, url_prefix="/logs")
 
 LOGS_PER_PAGE = 20
 VIEW_LINES = 500
+
+
+def _safe_log_path(job):
+    """Validate log_file is within LOG_DIR. Returns Path or None."""
+    if not job or not job.log_file:
+        return None
+    try:
+        p = Path(job.log_file).resolve()
+        if not str(p).startswith(str(LOG_DIR.resolve())):
+            return None
+        return p
+    except (OSError, ValueError):
+        return None
 
 
 @bp.route("/")
@@ -57,9 +71,11 @@ def clear():
     all_jobs = web_job_manager.list_jobs()
     deleted = 0
     for job in all_jobs:
-        if job.status not in ("running", "queued") and job.log_file:
+        if job.status not in ("running", "queued"):
+            log_path = _safe_log_path(job)
+            if not log_path:
+                continue
             try:
-                log_path = Path(job.log_file)
                 if log_path.is_file():
                     log_path.unlink()
                     deleted += 1
@@ -74,13 +90,13 @@ def clear():
 @login_required
 def view(job_id):
     job = web_job_manager.get_job(job_id)
-    if not job or not job.log_file:
+    log_path = _safe_log_path(job)
+    if not log_path:
         abort(404)
 
     offset = request.args.get("offset", 0, type=int)
 
     try:
-        log_path = Path(job.log_file)
         if not log_path.is_file():
             abort(404)
         with open(log_path) as f:
@@ -113,11 +129,8 @@ def view(job_id):
 @login_required
 def download(job_id):
     job = web_job_manager.get_job(job_id)
-    if not job or not job.log_file:
-        abort(404)
-
-    log_path = Path(job.log_file)
-    if not log_path.is_file():
+    log_path = _safe_log_path(job)
+    if not log_path or not log_path.is_file():
         abort(404)
 
     return send_file(

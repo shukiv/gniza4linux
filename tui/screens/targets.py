@@ -5,7 +5,7 @@ from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
 
-from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
+from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR
 from tui.widgets import ConfirmDialog, DocsPanel
 
 
@@ -24,6 +24,7 @@ class TargetsScreen(Screen):
                 with Horizontal(id="targets-buttons"):
                     yield Button("Add", variant="primary", id="btn-add")
                     yield Button("Edit", id="btn-edit")
+                    yield Button("Toggle", variant="warning", id="btn-toggle")
                     yield Button("Delete", variant="error", id="btn-delete")
             yield DocsPanel.for_screen("targets-screen")
         yield Footer()
@@ -64,6 +65,12 @@ class TargetsScreen(Screen):
                 self.app.push_screen(TargetEditScreen(name), callback=lambda _: self._refresh_table())
             else:
                 self.notify("Select a source first", severity="warning")
+        elif event.button.id == "btn-toggle":
+            name = self._selected_target()
+            if name:
+                self._toggle_enabled(name)
+            else:
+                self.notify("Select a source first", severity="warning")
         elif event.button.id == "btn-delete":
             name = self._selected_target()
             if name:
@@ -73,6 +80,16 @@ class TargetsScreen(Screen):
                 )
             else:
                 self.notify("Select a source first", severity="warning")
+
+    def _toggle_enabled(self, name: str) -> None:
+        conf = CONFIG_DIR / "targets.d" / f"{name}.conf"
+        data = parse_conf(conf)
+        current = data.get("TARGET_ENABLED", "yes")
+        new_val = "no" if current == "yes" else "yes"
+        update_conf_key(conf, "TARGET_ENABLED", new_val)
+        state = "enabled" if new_val == "yes" else "disabled"
+        self.notify(f"Source '{name}' {state}")
+        self._refresh_table()
 
     def _delete_target(self, name: str) -> None:
         conf = CONFIG_DIR / "targets.d" / f"{name}.conf"

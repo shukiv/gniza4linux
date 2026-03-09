@@ -11,6 +11,7 @@ from textual import work
 from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR
 from tui.models import Schedule
 from tui.backend import run_cli
+from tui.jobs import job_manager
 from tui.widgets import ConfirmDialog, OperationLog, DocsPanel
 
 
@@ -31,6 +32,7 @@ class ScheduleScreen(Screen):
                     yield Button("Edit", id="btn-edit")
                     yield Button("Toggle Active", variant="warning", id="btn-toggle")
                     yield Button("Delete", variant="error", id="btn-delete")
+                    yield Button("Run Now", variant="success", id="btn-run-now")
                     yield Button("Show crontab", id="btn-show")
             yield DocsPanel.for_screen("schedule-screen")
         yield Footer()
@@ -127,6 +129,15 @@ class ScheduleScreen(Screen):
                 self._toggle_active(name)
             else:
                 self.notify("Select a schedule first", severity="warning")
+        elif event.button.id == "btn-run-now":
+            name = self._selected_schedule()
+            if name:
+                self.app.push_screen(
+                    ConfirmDialog(f"Run schedule '{name}' now?", "Run Schedule"),
+                    callback=lambda ok: self._run_now(name) if ok else None,
+                )
+            else:
+                self.notify("Select a schedule first", severity="warning")
         elif event.button.id == "btn-show":
             self._show_crontab()
 
@@ -190,6 +201,19 @@ class ScheduleScreen(Screen):
         )
         await proc.wait()
         return proc.returncode == 0
+
+    def _run_now(self, name: str) -> None:
+        data = parse_conf(CONFIG_DIR / "schedules.d" / f"{name}.conf")
+        args = ["scheduled-run", f"--schedule={name}"]
+        targets = data.get("SCHEDULE_TARGETS", "")
+        remotes = data.get("SCHEDULE_REMOTES", "")
+        if targets:
+            args.append(f"--source={targets}")
+        if remotes:
+            args.append(f"--destination={remotes}")
+        job = job_manager.create_job("scheduled-run", f"Schedule: {name}")
+        job_manager.start_job(self.app, job, *args)
+        self.app.switch_screen("running_tasks")
 
     def _delete_schedule(self, name: str) -> None:
         conf = CONFIG_DIR / "schedules.d" / f"{name}.conf"

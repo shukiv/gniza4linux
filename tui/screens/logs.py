@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -8,6 +9,7 @@ from textual.widgets._rich_log import Strip
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
+from tui.jobs import job_manager
 from tui.config import LOG_DIR
 from tui.widgets import DocsPanel
 
@@ -19,49 +21,6 @@ class _SafeRichLog(RichLog):
         if y < 0 or not self.lines:
             return Strip.blank(self.size.width)
         return super().render_line(y)
-
-
-_LOG_NAME_RE = re.compile(r"gniza-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})\.log")
-
-
-def _format_log_name(name: str) -> tuple[str, str]:
-    """Format 'gniza-20260306-144516.log' as ('2026-03-06', '14:45:16')."""
-    m = _LOG_NAME_RE.match(name)
-    if m:
-        return f"{m[1]}-{m[2]}-{m[3]}", f"{m[4]}:{m[5]}:{m[6]}"
-    return name, ""
-
-
-def _detect_log_status(filepath: Path) -> str:
-    """Determine backup status from log file content.
-
-    Only reads last 100 KB for efficiency on large files.
-    """
-    try:
-        size = filepath.stat().st_size
-        if size == 0:
-            return "Empty"
-        with open(filepath, "r") as f:
-            if size > 102400:
-                f.seek(size - 102400)
-                f.readline()
-            tail = f.read()
-    except OSError:
-        return "?"
-    if not tail.strip():
-        return "Empty"
-    has_error = "[ERROR]" in tail or "[FATAL]" in tail
-    has_completed = "Backup completed" in tail or "Restore completed" in tail
-    has_lock_released = "Lock released" in tail
-    if has_completed and not has_error:
-        return "Success"
-    if has_error:
-        return "Failed"
-    if has_lock_released:
-        return "OK"
-    if "is disabled, skipping" in tail:
-        return "Skipped"
-    return "Interrupted"
 
 
 def _build_line_index(filepath: Path) -> list[int]:
@@ -122,27 +81,61 @@ class LogsScreen(Screen):
     def _show_pager(self) -> None:
         self.query_one("#log-pager-buttons").display = self._total_pages > 1
 
+    def _format_duration(self, job) -> str:
+        if not job.finished_at or not job.started_at:
+            return "--"
+        secs = int((job.finished_at - job.started_at).total_seconds())
+        if secs < 60:
+            return f"{secs}s"
+        mins, s = divmod(secs, 60)
+        if mins < 60:
+            return f"{mins}m {s}s"
+        hours, m = divmod(mins, 60)
+        return f"{hours}h {m}m"
+
+    def _format_size(self, job) -> str:
+        if not job._log_file:
+            return "--"
+        try:
+            size = Path(job._log_file).stat().st_size
+        except OSError:
+            return "--"
+        if size >= 1048576:
+            return f"{size / 1048576:.1f} MB"
+        elif size >= 1024:
+            return f"{size / 1024:.1f} KB"
+        return f"{size} B"
+
     def _refresh_table(self) -> None:
+        job_manager.reload_registry()
         table = self.query_one("#logs-table", DataTable)
         table.clear(columns=True)
-        table.add_columns("Status", "Date", "Time", "Size")
-        log_dir = Path(LOG_DIR)
-        if not log_dir.is_dir():
-            return
-        logs = sorted(log_dir.glob("gniza-*.log"), key=lambda p: p.stat().st_mtime, reverse=True)[:20]
-        for f in logs:
-            size = f.stat().st_size
-            if size >= 1048576:
-                size_str = f"{size / 1048576:.1f} MB"
-            elif size >= 1024:
-                size_str = f"{size / 1024:.1f} KB"
-            else:
-                size_str = f"{size} B"
-            date_str, time_str = _format_log_name(f.name)
-            status = _detect_log_status(f)
-            table.add_row(status, date_str, time_str, size_str, key=f.name)
+        table.add_columns("Status", "Label", "Started", "Duration", "Size")
+        table.cursor_type = "row"
 
-    def _selected_log(self) -> str | None:
+        jobs = job_manager.list_jobs()
+        finished = [j for j in jobs if j.status not in ("running", "queued")]
+        finished.sort(key=lambda j: j.finished_at or j.started_at, reverse=True)
+
+        for job in finished[:20]:
+            if job.status == "success":
+                status = "Success"
+            elif job.status == "failed":
+                status = "Failed"
+            elif job.status == "skipped":
+                status = "Skipped"
+            elif job.status == "unknown":
+                status = "Unknown"
+            else:
+                status = job.status.capitalize()
+            started = job.started_at.strftime("%Y-%m-%d %H:%M:%S")
+            table.add_row(
+                status, job.label, started,
+                self._format_duration(job), self._format_size(job),
+                key=job.id,
+            )
+
+    def _selected_job_id(self) -> str | None:
         table = self.query_one("#logs-table", DataTable)
         if table.cursor_row is not None and table.row_count > 0:
             return str(table.coordinate_to_cell_key((table.cursor_row, 0)).row_key.value)
@@ -152,11 +145,11 @@ class LogsScreen(Screen):
         if event.button.id == "btn-back":
             self.app.pop_screen()
         elif event.button.id == "btn-view":
-            name = self._selected_log()
-            if name:
-                self._open_log(name)
+            job_id = self._selected_job_id()
+            if job_id:
+                self._open_log(job_id)
             else:
-                self.notify("Select a log file first", severity="warning")
+                self.notify("Select a job first", severity="warning")
         elif event.button.id == "btn-refresh":
             self._refresh_table()
             self.notify("Log list refreshed")
@@ -169,11 +162,13 @@ class LogsScreen(Screen):
                 self._current_page += 1
                 self._render_page()
 
-    def _open_log(self, name: str) -> None:
-        filepath = (Path(LOG_DIR) / name).resolve()
-        if not filepath.is_relative_to(Path(LOG_DIR).resolve()):
-            self.notify("Invalid log path", severity="error")
+    def _open_log(self, job_id: str) -> None:
+        job = job_manager.get_job(job_id)
+        if not job or not job._log_file:
+            self.notify("Log file not found", severity="warning")
+            self._hide_pager()
             return
+        filepath = Path(job._log_file).resolve()
         if not filepath.is_file():
             viewer = self.query_one("#log-viewer", RichLog)
             viewer.clear()

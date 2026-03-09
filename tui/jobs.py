@@ -10,6 +10,7 @@ from pathlib import Path
 
 from textual.message import Message
 
+from lib.job_utils import detect_return_code, is_skipped_job
 from tui.backend import start_cli_background
 from tui.config import get_log_retain_days, get_max_concurrent_jobs, WORK_DIR, LOG_DIR
 
@@ -151,11 +152,11 @@ class JobManager:
                     pass
             if rc is None:
                 # Fall back to log-based detection
-                rc = self._detect_return_code(str(log_path))
+                rc = detect_return_code(str(log_path))
                 if rc is None:
                     rc = 1
             job.return_code = rc
-            if rc == 0 and self._is_skipped(job.output):
+            if rc == 0 and is_skipped_job(job.output):
                 job.status = "skipped"
             else:
                 job.status = "success" if rc == 0 else "failed"
@@ -399,7 +400,7 @@ class JobManager:
                 job._reconnected = True
             else:
                 # Process finished while TUI was closed
-                rc = rc_from_wait if rc_from_wait is not None else self._detect_return_code(entry.get("log_file"))
+                rc = rc_from_wait if rc_from_wait is not None else detect_return_code(entry.get("log_file"))
                 if rc is None:
                     status = "unknown"
                 elif rc == 0:
@@ -424,42 +425,10 @@ class JobManager:
                 except OSError:
                     pass
             # Detect skipped after loading output
-            if job.status == "success" and self._is_skipped(job.output):
+            if job.status == "success" and is_skipped_job(job.output):
                 job.status = "skipped"
             self._jobs[job.id] = job
         self._save_registry()
-
-    @staticmethod
-    def _is_skipped(output: list[str]) -> bool:
-        """Check if all targets were skipped (disabled)."""
-        text = "\n".join(output)
-        return ("is disabled, skipping" in text
-                and "Backup completed" not in text
-                and "Backup Summary" not in text)
-
-    @staticmethod
-    def _detect_return_code(log_file: str | None) -> int | None:
-        """Try to determine exit code from log file content.
-
-        Returns 0 for success, 1 for detected failure, None if unknown.
-        """
-        if not log_file or not Path(log_file).is_file():
-            return None
-        try:
-            text = Path(log_file).read_text()
-            if not text.strip():
-                return None
-            # Check success markers first — these are definitive
-            if "Backup completed" in text or "Backup Summary" in text:
-                return 0
-            # Only match structured log lines for errors, not rsync file listings
-            for line in text.splitlines():
-                if "[FATAL]" in line or "[ERROR]" in line:
-                    return 1
-            # No completion marker and no error markers — unknown (likely killed)
-            return None
-        except OSError:
-            return None
 
     def start_tailing_reconnected(self, app) -> None:
         """Start log file tailing tasks for all reconnected running jobs."""
@@ -512,7 +481,7 @@ class JobManager:
                             job.output.append(text)
             # Process finished
             if job.status == "running":
-                rc = self._detect_return_code(job._log_file)
+                rc = detect_return_code(job._log_file)
                 job.return_code = rc
                 if rc is None:
                     job.status = "unknown"
@@ -651,7 +620,7 @@ class JobManager:
             try:
                 os.kill(job._pid, 0)
             except ProcessLookupError:
-                rc = self._detect_return_code(job._log_file)
+                rc = detect_return_code(job._log_file)
                 job.return_code = rc
                 if rc is None:
                     job.status = "unknown"

@@ -53,10 +53,6 @@ human_duration() {
     fi
 }
 
-require_cmd() {
-    command -v "$1" &>/dev/null || die "Required command not found: $1"
-}
-
 validate_timestamp() {
     local ts="$1"
     if [[ ! "$ts" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{6}$ ]]; then

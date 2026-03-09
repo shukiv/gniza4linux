@@ -2,7 +2,7 @@ import os
 import shlex
 import subprocess
 
-from flask import Blueprint, jsonify, request, render_template
+from flask import Blueprint, request, render_template
 
 from web.app import login_required
 from web.ssh_utils import ssh_cmd

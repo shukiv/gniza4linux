@@ -6,7 +6,7 @@ from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
 )
 
-from tui.config import CONFIG_DIR, parse_conf, write_conf, list_conf_dir
+from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Remote
 from web.app import login_required
 from web.backend import run_cli_sync

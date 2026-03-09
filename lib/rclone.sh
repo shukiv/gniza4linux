@@ -188,43 +188,6 @@ rclone_from_remote() {
     return 1
 }
 
-# Like rclone_from_remote but passes extra args (e.g. --exclude) to rclone copy.
-# Usage: rclone_from_remote_filtered <remote_subpath> <local_dir> [extra_args...]
-rclone_from_remote_filtered() {
-    local remote_subpath="$1"
-    local local_dir="$2"
-    shift 2
-    local -a extra_args=("$@")
-    local attempt=0
-    local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
-    local remote_src; remote_src=$(_rclone_remote_path "$remote_subpath")
-
-    mkdir -p "$local_dir" || {
-        log_error "Failed to create local dir: $local_dir"
-        return 1
-    }
-
-    while (( attempt < max_retries )); do
-        ((attempt++)) || true
-        log_debug "rclone copy (filtered) attempt $attempt/$max_retries: $remote_src -> $local_dir"
-
-        if _rclone_cmd copy "$remote_src" "$local_dir" "${extra_args[@]}"; then
-            log_debug "rclone download succeeded on attempt $attempt"
-            return 0
-        fi
-
-        log_warn "rclone download failed, attempt $attempt/$max_retries"
-        if (( attempt < max_retries )); then
-            local backoff=$(( attempt * 10 ))
-            log_info "Retrying in ${backoff}s..."
-            sleep "$backoff"
-        fi
-    done
-
-    log_error "rclone download failed after $max_retries attempts"
-    return 1
-}
-
 # ── Snapshot Management ───────────────────────────────────────
 
 rclone_list_dirs() {
@@ -327,12 +290,6 @@ rclone_resolve_snapshot() {
 }
 
 # ── Remote Operations ─────────────────────────────────────────
-
-rclone_ensure_dir() {
-    local remote_subpath="$1"
-    local remote_path; remote_path=$(_rclone_remote_path "$remote_subpath")
-    _rclone_cmd mkdir "$remote_path"
-}
 
 rclone_purge() {
     local remote_subpath="$1"

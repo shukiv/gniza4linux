@@ -1,7 +1,6 @@
 from textual.containers import VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Static, Button
-from textual.containers import Vertical
 from tui.docs import SCREEN_DOCS
 
 

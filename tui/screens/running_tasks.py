@@ -182,13 +182,13 @@ class RunningTasksScreen(Screen):
         if not m:
             return
         pct = int(m.group(1))
-        # When byte% is 0, use to-chk file ratio as progress
-        if pct == 0:
-            cm = re.search(r"to-chk=(\d+)/(\d+)", text)
-            if cm:
-                remaining, total = int(cm.group(1)), int(cm.group(2))
-                if total > 0:
-                    pct = int((total - remaining) / total * 100)
+        # Use to-chk file ratio when it shows better progress than byte%
+        cm = re.search(r"to-chk=(\d+)/(\d+)", text)
+        if cm:
+            remaining, total = int(cm.group(1)), int(cm.group(2))
+            if total > 0:
+                file_pct = int((total - remaining) / total * 100)
+                pct = max(pct, file_pct)
         try:
             progress = self.query_one("#rt-progress", ProgressBar)
             label = self.query_one("#rt-progress-label", Static)

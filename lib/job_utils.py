@@ -49,6 +49,6 @@ def is_skipped_job(log_file_or_output):
     skip_markers = ("is disabled, skipping",
                     "previous backup still running",
                     "nothing to do")
+    active_markers = ("Backup completed", "Backup Summary", "Transferring")
     return (any(m in text for m in skip_markers)
-            and "Backup completed" not in text
-            and "Backup Summary" not in text)
+            and not any(m in text for m in active_markers))

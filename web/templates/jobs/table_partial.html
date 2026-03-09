@@ -1,7 +1,7 @@
 {% from "components/pagination.html" import pagination %}
 <div id="jobs-table"
      hx-get="{{ url_for('jobs.table', page=page) }}"
-     hx-trigger="every 3s"
+     hx-trigger="jobRefresh"
      hx-swap="morph:outerHTML"
      hx-ext="morph"
 >
@@ -89,8 +89,7 @@
             <!-- Expandable log viewer row -->
             <tr x-show="selectedJob === '{{ job.id }}'" x-cloak>
                 <td colspan="7" class="p-0">
-                    <div class="p-4" id="log-viewer-{{ job.id }}"
-                         x-effect="if (selectedJob === '{{ job.id }}') { htmx.ajax('GET', '/jobs/{{ job.id }}/viewer', '#log-viewer-{{ job.id }}') }">
+                    <div class="p-4" id="log-viewer-{{ job.id }}">
                         <span class="text-base-content/40">Loading log...</span>
                     </div>
                 </td>

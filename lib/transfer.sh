@@ -310,13 +310,18 @@ rsync_ssh_to_ssh() {
     # works even from cron (which has no agent). The key never leaves
     # the local machine.
     local _own_agent=""
-    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" && -n "${TARGET_SOURCE_KEY:-}" ]]; then
+    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" ]]; then
         # Only start our own agent if there isn't one already
         if ! ssh-add -l &>/dev/null; then
             eval "$(ssh-agent -s)" >/dev/null 2>&1
             _own_agent="yes"
         fi
-        ssh-add "$TARGET_SOURCE_KEY" 2>/dev/null || log_warn "Failed to add source key to agent"
+        if [[ -n "${TARGET_SOURCE_KEY:-}" ]]; then
+            ssh-add "$TARGET_SOURCE_KEY" 2>/dev/null || log_warn "Failed to add source key to agent"
+        else
+            # No explicit key — add default keys so they can be forwarded
+            ssh-add 2>/dev/null || true
+        fi
     fi
 
     # --- Build the SSH command to the destination ---
@@ -331,7 +336,8 @@ rsync_ssh_to_ssh() {
         dst_ssh+=(-A)
     fi
     if ! _is_password_mode; then
-        dst_ssh+=(-i "$REMOTE_KEY" -o BatchMode=yes)
+        [[ -n "$REMOTE_KEY" ]] && dst_ssh+=(-i "$REMOTE_KEY")
+        dst_ssh+=(-o BatchMode=yes)
     fi
     dst_ssh+=(-p "$REMOTE_PORT")
     dst_ssh+=(-o "StrictHostKeyChecking=yes")

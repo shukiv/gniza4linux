@@ -93,7 +93,8 @@
 {{ pagination(page, total_pages, url_for('jobs.index') + '?page=') }}
 {% else %}
 <div class="p-8 text-center text-base-content/40">
-    <p>No jobs found</p>
+    <p>No running or queued jobs</p>
+    <p class="mt-1"><a href="{{ url_for('logs.index') }}" class="link link-primary">View completed job logs</a></p>
 </div>
 {% endif %}
 </div>

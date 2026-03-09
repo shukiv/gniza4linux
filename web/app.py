@@ -44,6 +44,7 @@ def create_app():
     app.config["API_KEY"] = stored_key
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24 hours
 
     # Navigation items for template context
     nav_items = [

@@ -5,11 +5,12 @@ def ssh_cmd(host, port="22", user="root", key="", password=""):
     """Build an SSH command list."""
     ssh_opts = [
         "ssh",
-        "-o", "BatchMode=yes",
         "-o", "StrictHostKeyChecking=accept-new",
         "-o", "ConnectTimeout=10",
         "-p", port or "22",
     ]
+    if not password:
+        ssh_opts += ["-o", "BatchMode=yes"]
     if key:
         ssh_opts += ["-i", key]
     ssh_opts.append(f"{user}@{host}")
@@ -32,11 +33,12 @@ def ssh_cmd_from_conf(remote_conf):
 
     ssh_opts = [
         "ssh",
-        "-o", "BatchMode=yes",
         "-o", "StrictHostKeyChecking=accept-new",
         "-o", "ConnectTimeout=10",
         "-p", port or "22",
     ]
+    if auth != "password":
+        ssh_opts += ["-o", "BatchMode=yes"]
     if key and auth == "key":
         ssh_opts += ["-i", key]
     ssh_opts.append(f"{user}@{host}")

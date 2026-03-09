@@ -62,7 +62,7 @@ _log() {
     local msg="$*"
 
     local ts; ts=$(date -u +"%d/%m/%Y %H:%M:%S")
-    local upper; upper=$(echo "$level" | tr '[:lower:]' '[:upper:]')
+    local upper="${level^^}"
     local line="[$ts] [$upper] $msg"
 
     local configured_level="${LOG_LEVEL:-$DEFAULT_LOG_LEVEL}"

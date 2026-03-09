@@ -22,35 +22,36 @@ enforce_retention() {
     local pruned=0
     while IFS= read -r snap; do
         [[ -z "$snap" ]] && continue
+
+        # Check if pinned before counting
+        local is_pinned=false
+        if _is_rclone_mode; then
+            local meta; meta=$(rclone_cat "targets/${target_name}/snapshots/${snap}/meta.json" 2>/dev/null) || true
+            if [[ -n "$meta" ]] && echo "$meta" | grep -q '"pinned":\s*true'; then
+                is_pinned=true
+            fi
+        elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+            local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
+            local meta_file="$snap_dir/$snap/meta.json"
+            if [[ -f "$meta_file" ]] && grep -q '"pinned":\s*true' "$meta_file" 2>/dev/null; then
+                is_pinned=true
+            fi
+        else
+            local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
+            local sq_meta; sq_meta="$(shquote "$snap_dir/$snap/meta.json")"
+            local meta_content; meta_content=$(remote_exec "cat '${sq_meta}' 2>/dev/null" 2>/dev/null) || true
+            if [[ -n "$meta_content" ]] && echo "$meta_content" | grep -q '"pinned":\s*true'; then
+                is_pinned=true
+            fi
+        fi
+
+        if [[ "$is_pinned" == "true" ]]; then
+            log_info "Skipping pinned snapshot for $target_name: $snap"
+            continue
+        fi
+
         ((count++)) || true
         if (( count > keep )); then
-            # Skip pinned snapshots
-            local is_pinned=false
-            if _is_rclone_mode; then
-                local meta; meta=$(rclone_cat "targets/${target_name}/snapshots/${snap}/meta.json" 2>/dev/null) || true
-                if [[ -n "$meta" ]] && echo "$meta" | grep -q '"pinned":\s*true'; then
-                    is_pinned=true
-                fi
-            elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
-                local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-                local meta_file="$snap_dir/$snap/meta.json"
-                if [[ -f "$meta_file" ]] && grep -q '"pinned":\s*true' "$meta_file" 2>/dev/null; then
-                    is_pinned=true
-                fi
-            else
-                local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-                local sq_meta; sq_meta="$(shquote "$snap_dir/$snap/meta.json")"
-                local meta_content; meta_content=$(remote_exec "cat '${sq_meta}' 2>/dev/null" 2>/dev/null) || true
-                if [[ -n "$meta_content" ]] && echo "$meta_content" | grep -q '"pinned":\s*true'; then
-                    is_pinned=true
-                fi
-            fi
-
-            if [[ "$is_pinned" == "true" ]]; then
-                log_info "Skipping pinned snapshot for $target_name: $snap"
-                continue
-            fi
-
             log_info "Pruning old snapshot for $target_name: $snap"
             if _is_rclone_mode; then
                 rclone_purge "targets/${target_name}/snapshots/${snap}" || {

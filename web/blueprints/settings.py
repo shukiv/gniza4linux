@@ -36,7 +36,9 @@ def index():
 @login_required
 def save():
     form = request.form
+    old_data = parse_conf(CONFIG_DIR / "gniza.conf")
     settings = AppSettings(
+        backup_mode=old_data.get("BACKUP_MODE", "incremental"),
         bwlimit=form.get("bwlimit", "0"),
         retention_count=form.get("retention_count", "7"),
         log_level=form.get("log_level", "info"),
@@ -62,7 +64,6 @@ def save():
         login_max_attempts=form.get("login_max_attempts", "5"),
         login_lockout_seconds=form.get("login_lockout_seconds", "300"),
     )
-    old_data = parse_conf(CONFIG_DIR / "gniza.conf")
     old_api_key = old_data.get("WEB_API_KEY", "")
     write_conf(CONFIG_DIR / "gniza.conf", settings.to_conf())
 

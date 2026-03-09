@@ -81,6 +81,8 @@ load_schedule() {
     SCHEDULE_TARGETS=""
     SCHEDULE_RETENTION_COUNT=""
 
+    local _saved_retention="${RETENTION_COUNT:-}"
+
     _safe_source_config "$conf" || {
         log_error "Failed to parse schedule config: $conf"
         return 1
@@ -90,6 +92,8 @@ load_schedule() {
     SCHEDULE_REMOTES="${REMOTES:-}"
     SCHEDULE_TARGETS="${TARGETS:-}"
     SCHEDULE_RETENTION_COUNT="${RETENTION_COUNT:-}"
+    # Restore global
+    RETENTION_COUNT="$_saved_retention"
 
     log_debug "Loaded schedule '$name': ${SCHEDULE} at ${SCHEDULE_TIME:-02:00}, remotes=${SCHEDULE_REMOTES:-all}, targets=${SCHEDULE_TARGETS:-all}"
 }

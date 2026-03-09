@@ -55,12 +55,29 @@ def _calc_next_run(s):
             target_dom = int(s.day) if s.day else 1
         except ValueError:
             target_dom = 1
-        next_dt = now.replace(day=target_dom, hour=hour, minute=minute, second=0, microsecond=0)
-        if next_dt <= now:
+        try:
+            next_dt = now.replace(day=target_dom, hour=hour, minute=minute, second=0, microsecond=0)
+        except ValueError:
+            # Day doesn't exist in current month, try next month
             if now.month == 12:
-                next_dt = next_dt.replace(year=now.year + 1, month=1)
+                next_dt = datetime(now.year + 1, 1, min(target_dom, 28), hour, minute)
             else:
-                next_dt = next_dt.replace(month=now.month + 1)
+                import calendar
+                max_day = calendar.monthrange(now.year, now.month + 1)[1]
+                next_dt = datetime(now.year, now.month + 1, min(target_dom, max_day), hour, minute)
+            return next_dt.strftime("%Y-%m-%d %H:%M")
+        if next_dt <= now:
+            try:
+                if now.month == 12:
+                    next_dt = next_dt.replace(year=now.year + 1, month=1)
+                else:
+                    next_dt = next_dt.replace(month=now.month + 1)
+            except ValueError:
+                import calendar
+                next_month = now.month + 1 if now.month < 12 else 1
+                next_year = now.year if now.month < 12 else now.year + 1
+                max_day = calendar.monthrange(next_year, next_month)[1]
+                next_dt = datetime(next_year, next_month, min(target_dom, max_day), hour, minute)
     else:
         return "--"
     return next_dt.strftime("%Y-%m-%d %H:%M")

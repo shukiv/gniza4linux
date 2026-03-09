@@ -15,7 +15,7 @@ _snaplog_tee() {
     # Stdout only has --info=progress2 lines and stats/errors.
     # Progress lines go to a small .progress file (for the TUI/web progress bar).
     # Everything else (stats, errors) goes to stderr → LOG_FILE / job log.
-    local progress_file="${WORK_DIR}/gniza-progress-$$.txt"
+    local progress_file="${WORK_DIR}/gniza-progress-${GNIZA_JOB_ID:-$$}.txt"
     while IFS= read -r line || [[ -n "$line" ]]; do
         if [[ "$line" =~ [0-9]+% ]] && [[ "$line" == *xfr#* || "$line" == *to-chk=* || "$line" == *B/s* ]]; then
             printf '%s\n' "$line" > "$progress_file"

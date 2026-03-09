@@ -214,9 +214,9 @@ class RunningTasksScreen(Screen):
                         self._process_log_content(new_data, log_viewer)
             except OSError:
                 pass
-        # Read progress from separate file
-        if job._pid:
-            progress_file = WORK_DIR / f"gniza-progress-{job._pid}.txt"
+        # Read progress from separate file (keyed by job ID)
+        if job.id:
+            progress_file = WORK_DIR / f"gniza-progress-{job.id}.txt"
             try:
                 line = progress_file.read_text().strip()
                 if line:

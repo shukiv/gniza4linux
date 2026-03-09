@@ -17,11 +17,13 @@ def gniza_bin():
     return "gniza"
 
 
-def start_cli_background(*args, log_file):
+def start_cli_background(*args, log_file, job_id=None):
     cmd = [gniza_bin(), "--cli"] + list(args)
     fh = open(log_file, "w")
     env = os.environ.copy()
     env["GNIZA_DAEMON_TRACKED"] = "1"
+    if job_id:
+        env["GNIZA_JOB_ID"] = job_id
     proc = subprocess.Popen(
         cmd, stdout=fh, stderr=subprocess.STDOUT, start_new_session=True, env=env
     )

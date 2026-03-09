@@ -102,7 +102,7 @@ def _valid_log_path(log_file):
         return False
 
 
-def _start_cli_background(*args, log_file=None):
+def _start_cli_background(*args, log_file=None, job_id=None):
     """Start a gniza CLI command in the background. Returns Popen."""
     import subprocess
     gniza_dir = Path(__file__).resolve().parent.parent
@@ -113,6 +113,8 @@ def _start_cli_background(*args, log_file=None):
         fh = open(log_file, "a") if log_file else None
         env = os.environ.copy()
         env["GNIZA_DAEMON_TRACKED"] = "1"
+        if job_id:
+            env["GNIZA_JOB_ID"] = job_id
         proc = subprocess.Popen(
             cmd,
             stdout=fh if fh else subprocess.DEVNULL,
@@ -234,7 +236,7 @@ def dispatch_queue():
                 log_file = str(Path(LOG_DIR) / f"gniza-job-{entry['id']}.log")
                 entry["log_file"] = log_file
 
-            proc = _start_cli_background(*cli_args, log_file=log_file)
+            proc = _start_cli_background(*cli_args, log_file=log_file, job_id=entry["id"])
             _child_procs[proc.pid] = proc
             entry["status"] = "running"
             entry["pid"] = proc.pid

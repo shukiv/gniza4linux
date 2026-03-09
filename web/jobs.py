@@ -69,7 +69,7 @@ class WebJobManager:
                 self._save_registry()
                 return job
 
-            proc = start_cli_background(*cli_args, log_file=str(log_path))
+            proc = start_cli_background(*cli_args, log_file=str(log_path), job_id=job_id)
             job = WebJob(
                 id=job_id, kind=kind, label=label,
                 pid=proc.pid, log_file=str(log_path)
@@ -108,7 +108,7 @@ class WebJobManager:
                     continue
                 if max_jobs > 0 and self._running_count_internal() >= max_jobs:
                     break
-                proc = start_cli_background(*job.cli_args, log_file=job.log_file)
+                proc = start_cli_background(*job.cli_args, log_file=job.log_file, job_id=job.id)
                 job.status = "running"
                 job.pid = proc.pid
                 try:
@@ -254,9 +254,9 @@ class WebJobManager:
     def get_progress(self, job_id):
         """Read rsync progress from the separate progress file."""
         job = self._jobs.get(job_id)
-        if not job or job.status != "running" or not job.pid:
+        if not job or job.status != "running":
             return None
-        progress_file = WORK_DIR / f"gniza-progress-{job.pid}.txt"
+        progress_file = WORK_DIR / f"gniza-progress-{job_id}.txt"
         try:
             line = progress_file.read_text().strip()
             if not line:

@@ -103,7 +103,7 @@ class JobManager:
     async def run_job(self, app, job: Job, *cli_args: str) -> int:
         log_path = LOG_DIR / f"gniza-job-{job.id}.log"
         job._log_file = str(log_path)
-        proc = start_cli_background(*cli_args, log_file=str(log_path))
+        proc = start_cli_background(*cli_args, log_file=str(log_path), job_id=job.id)
         job._proc = proc
         job._pid = proc.pid
         try:

@@ -15,8 +15,6 @@ from tui.screens.schedule import ScheduleScreen
 from tui.screens.schedule_edit import ScheduleEditScreen
 from tui.screens.logs import LogsScreen
 from tui.screens.email_log import EmailLogScreen
-from tui.screens.health import HealthScreen
-from tui.screens.retention import RetentionScreen
 from tui.screens.settings import SettingsScreen
 from tui.screens.wizard import WizardScreen
 from tui.screens.running_tasks import RunningTasksScreen
@@ -43,8 +41,6 @@ class GnizaApp(App):
         "schedule_edit": ScheduleEditScreen,
         "logs": LogsScreen,
         "email_log": EmailLogScreen,
-        "health": HealthScreen,
-        "retention": RetentionScreen,
         "settings": SettingsScreen,
         "wizard": WizardScreen,
     }

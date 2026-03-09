@@ -67,12 +67,6 @@ class JobManager:
         return sum(1 for j in self._jobs.values() if j.status == "running")
 
     def remove_finished(self) -> None:
-        for job in self._jobs.values():
-            if job.status not in ("running", "queued") and job._log_file:
-                try:
-                    Path(job._log_file).unlink(missing_ok=True)
-                except OSError:
-                    pass
         self._jobs = {k: v for k, v in self._jobs.items() if v.status in ("running", "queued")}
         self._save_registry()
 

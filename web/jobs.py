@@ -233,12 +233,6 @@ class WebJobManager:
         return "killed"
 
     def remove_finished(self):
-        for job in self._jobs.values():
-            if job.status not in ("running", "queued") and job.log_file:
-                try:
-                    Path(job.log_file).unlink(missing_ok=True)
-                except OSError:
-                    pass
         self._jobs = {k: v for k, v in self._jobs.items() if v.status in ("running", "queued")}
         self._save_registry()
 

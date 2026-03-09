@@ -7,9 +7,7 @@
 <div x-data="{ selectedJob: null }"
      x-init="
         setInterval(() => {
-            if (!selectedJob) {
-                htmx.trigger(document.getElementById('jobs-table'), 'jobRefresh');
-            }
+            htmx.trigger(document.getElementById('jobs-table'), 'jobRefresh');
         }, 3000);
         $watch('selectedJob', (val) => {
             if (val) {
@@ -32,13 +30,16 @@
     </div>
 </div>
 
-<!-- Log viewer panel — outside the morph zone -->
-<div x-show="selectedJob" x-cloak class="card bg-base-200 shadow mb-6 -mt-4">
-    <div class="card-body pt-3">
-        <div class="flex items-center justify-end mb-1">
-            <button class="btn btn-ghost btn-xs" @click="selectedJob = null">Close</button>
+<!-- Log viewer modal -->
+<div x-show="selectedJob" x-cloak
+     class="modal modal-open" @click.self="selectedJob = null"
+     @keydown.escape.window="selectedJob = null">
+    <div class="modal-box max-w-4xl w-11/12 h-[80vh] flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-lg" id="log-viewer-title">Job Log</h3>
+            <button class="btn btn-sm btn-circle btn-ghost" @click="selectedJob = null">X</button>
         </div>
-        <div id="log-viewer">
+        <div id="log-viewer" class="flex-1 overflow-hidden">
             <span class="text-base-content/40">Loading log...</span>
         </div>
     </div>

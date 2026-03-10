@@ -11,8 +11,14 @@ DOC_PATH = Path(__file__).resolve().parent.parent.parent / "DOCUMENTATION.md"
 
 @lru_cache(maxsize=1)
 def _render_docs():
+    import re
     import markdown
     text = DOC_PATH.read_text(encoding="utf-8")
+    # Strip the h1 title, description, and manual TOC section
+    text = re.sub(
+        r'^#\s+[^\n]+\n+.*?\n+---\n+##\s+Table of Contents\n+.*?\n+---',
+        '', text, count=1, flags=re.DOTALL
+    ).strip()
     md = markdown.Markdown(extensions=["toc", "fenced_code", "tables"],
                            extension_configs={"toc": {"toc_class": ""}})
     html = md.convert(text)

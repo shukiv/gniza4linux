@@ -25,6 +25,13 @@
     .doc-content a:hover { opacity: 0.8; }
     .doc-content strong { font-weight: 600; }
     .doc-content > h1:first-child { margin-top: 0; }
+    .doc-section { margin: 1em 0; border: 1px solid oklch(var(--bc) / 0.1); border-radius: 0.5em; }
+    .doc-section > *:not(summary) { padding: 0 1em; }
+    .doc-section > *:last-child { padding-bottom: 1em; }
+    .doc-section-title { font-size: 1.5em; font-weight: 600; padding: 0.5em 1em; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.5em; }
+    .doc-section-title::-webkit-details-marker { display: none; }
+    .doc-section-title::before { content: '▶'; font-size: 0.6em; transition: transform 0.2s; }
+    .doc-section[open] > .doc-section-title::before { transform: rotate(90deg); }
     .doc-toc ul { list-style: none; padding-left: 0; }
     .doc-toc ul ul { padding-left: 1em; }
     .doc-toc li { margin: 0.15em 0; }
@@ -47,14 +54,53 @@
     <!-- TOC sidebar — xl screens only -->
     <nav class="doc-toc hidden xl:block w-64 shrink-0">
         <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
-            <h3 class="font-semibold text-sm uppercase tracking-wider opacity-60 mb-2">Contents</h3>
+            <h3 class="font-semibold text-sm uppercase tracking-wider opacity-60 mb-2">CONTENTS</h3>
             {{ toc_html|safe }}
         </div>
     </nav>
 
     <!-- Main content -->
-    <div class="doc-content min-w-0 flex-1">
+    <div class="doc-content min-w-0 flex-1" id="doc-body">
         {{ doc_html|safe }}
     </div>
 </div>
+
+<script>
+// Make h2 sections collapsible
+document.addEventListener('DOMContentLoaded', function() {
+    var container = document.getElementById('doc-body');
+    if (!container) return;
+
+    var children = Array.from(container.children);
+    var i = 0;
+    while (i < children.length) {
+        var el = children[i];
+        if (el.tagName === 'H2') {
+            var details = document.createElement('details');
+            details.open = true;
+            details.className = 'doc-section';
+            var summary = document.createElement('summary');
+            // Move child nodes from h2 into summary (safe — same-origin DOM nodes)
+            while (el.firstChild) summary.appendChild(el.firstChild);
+            summary.id = el.id;
+            summary.className = 'doc-section-title';
+            details.appendChild(summary);
+            container.insertBefore(details, el);
+            el.remove();
+            // Move all siblings until next h1/h2 into the details
+            var next = details.nextSibling;
+            while (next) {
+                var sibling = next;
+                next = sibling.nextSibling;
+                if (sibling.nodeType === 1 && (sibling.tagName === 'H1' || sibling.tagName === 'H2')) break;
+                details.appendChild(sibling);
+            }
+            i = Array.from(container.children).indexOf(details) + 1;
+            children = Array.from(container.children);
+        } else {
+            i++;
+        }
+    }
+});
+</script>
 {% endblock %}

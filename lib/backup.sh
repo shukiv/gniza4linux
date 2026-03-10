@@ -252,20 +252,7 @@ _backup_target_impl() {
         echo "$meta_json" | remote_exec "cat > '${sq_partial}/meta.json'" || log_warn "Failed to write meta.json"
     fi
 
-    # 11. Generate manifest.txt
-    if _is_rclone_mode; then
-        local manifest; manifest=$(rclone_list_files "targets/${target_name}/snapshots/${ts}" 2>/dev/null) || manifest=""
-        if [[ -n "$manifest" ]]; then
-            rclone_rcat "targets/${target_name}/snapshots/${ts}/manifest.txt" "$manifest" || log_warn "Failed to write manifest.txt"
-        fi
-    elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
-        find "$snap_dir/${ts}.partial" -type f 2>/dev/null > "$snap_dir/${ts}.partial/manifest.txt" || log_warn "Failed to write manifest.txt"
-    else
-        local sq_partial; sq_partial="$(shquote "$snap_dir/${ts}.partial")"
-        remote_exec "find '${sq_partial}' -type f > '${sq_partial}/manifest.txt'" 2>/dev/null || log_warn "Failed to write manifest.txt"
-    fi
-
-    # 11.5. Upload snapshot logs
+    # 11. Upload snapshot logs
     snaplog_upload "$target_name" "$ts"
 
     # 12. Finalize snapshot

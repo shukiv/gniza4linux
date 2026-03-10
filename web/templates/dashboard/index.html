@@ -67,7 +67,7 @@
                             <span class="badge badge-error badge-md gap-1">Disabled</span>
                             {% endif %}
                         </td>
-                        <td><a href="{{ url_for('targets.edit', name=t.name) }}" class="btn btn-ghost btn-xs">Edit</a></td>
+                        <td><a href="{{ url_for('targets.edit', name=t.name) }}" class="btn btn-primary btn-xs">Edit</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -104,7 +104,7 @@
                         <td><span class="badge badge-outline badge-md">{{ r.type }}</span></td>
                         <td>{{ r.host or '--' }}</td>
                         <td class="font-mono text-base-content/60">{{ r.base }}</td>
-                        <td><a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-ghost btn-xs">Edit</a></td>
+                        <td><a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-primary btn-xs">Edit</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -147,7 +147,7 @@
                             <span class="badge badge-error badge-md gap-1">Inactive</span>
                             {% endif %}
                         </td>
-                        <td><a href="{{ url_for('schedules.edit', name=s.name) }}" class="btn btn-ghost btn-xs">Edit</a></td>
+                        <td><a href="{{ url_for('schedules.edit', name=s.name) }}" class="btn btn-primary btn-xs">Edit</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>

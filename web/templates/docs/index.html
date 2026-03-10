@@ -66,41 +66,34 @@
 </div>
 
 <script>
-// Make h2 sections collapsible
-document.addEventListener('DOMContentLoaded', function() {
+// Make h2 sections collapsible — run immediately since DOM is already parsed at this point
+(function() {
     var container = document.getElementById('doc-body');
     if (!container) return;
 
-    var children = Array.from(container.children);
-    var i = 0;
-    while (i < children.length) {
-        var el = children[i];
-        if (el.tagName === 'H2') {
-            var details = document.createElement('details');
-            details.open = true;
-            details.className = 'doc-section';
-            var summary = document.createElement('summary');
-            // Move child nodes from h2 into summary (safe — same-origin DOM nodes)
-            while (el.firstChild) summary.appendChild(el.firstChild);
-            summary.id = el.id;
-            summary.className = 'doc-section-title';
-            details.appendChild(summary);
-            container.insertBefore(details, el);
-            el.remove();
-            // Move all siblings until next h1/h2 into the details
-            var next = details.nextSibling;
-            while (next) {
-                var sibling = next;
-                next = sibling.nextSibling;
-                if (sibling.nodeType === 1 && (sibling.tagName === 'H1' || sibling.tagName === 'H2')) break;
-                details.appendChild(sibling);
-            }
-            i = Array.from(container.children).indexOf(details) + 1;
-            children = Array.from(container.children);
-        } else {
-            i++;
+    // Collect all h2 elements first
+    var headings = Array.from(container.querySelectorAll(':scope > h2'));
+    headings.forEach(function(h2) {
+        var details = document.createElement('details');
+        details.open = true;
+        details.className = 'doc-section';
+        var summary = document.createElement('summary');
+        while (h2.firstChild) summary.appendChild(h2.firstChild);
+        summary.id = h2.id;
+        summary.className = 'doc-section-title';
+        details.appendChild(summary);
+        // Insert details before the h2
+        h2.parentNode.insertBefore(details, h2);
+        h2.remove();
+        // Move siblings into details until next h2 or end
+        var next = details.nextSibling;
+        while (next) {
+            if (next.nodeType === 1 && (next.tagName === 'H2' || next.tagName === 'H1' || next.classList.contains('doc-section'))) break;
+            var sibling = next;
+            next = next.nextSibling;
+            details.appendChild(sibling);
         }
-    }
-});
+    });
+})();
 </script>
 {% endblock %}

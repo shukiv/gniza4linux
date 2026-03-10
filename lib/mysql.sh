@@ -7,30 +7,74 @@ _GNIZA4LINUX_MYSQL_LOADED=1
 # System databases always excluded from dumps
 _MYSQL_SYSTEM_DBS="information_schema performance_schema sys"
 
-# Detect the mysqldump binary (MySQL or MariaDB).
-_mysql_find_dump_cmd() {
-    if command -v mysqldump &>/dev/null; then
-        echo "mysqldump"
-    elif command -v mariadb-dump &>/dev/null; then
-        echo "mariadb-dump"
+# Build SSH prefix for remote MySQL operations.
+# Sets _MYSQL_SSH array. Returns 1 if local (no SSH needed).
+_mysql_is_remote() {
+    [[ "${TARGET_SOURCE_TYPE:-local}" == "ssh" ]] || return 1
+    _MYSQL_SSH=(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o "ConnectTimeout=${SSH_TIMEOUT:-30}" -p "${TARGET_SOURCE_PORT:-22}")
+    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" && -n "${TARGET_SOURCE_KEY:-}" ]]; then
+        _MYSQL_SSH+=(-i "$TARGET_SOURCE_KEY")
+    fi
+    _MYSQL_SSH+=("${TARGET_SOURCE_USER:-root}@${TARGET_SOURCE_HOST}")
+    return 0
+}
+
+# Run a command locally or via SSH. For remote, wraps with sshpass if needed.
+# Usage: _mysql_run_cmd "mysql -u root -e 'SHOW DATABASES'"
+_mysql_run_cmd() {
+    local cmd_str="$1"
+    if _mysql_is_remote; then
+        # Prepend MYSQL_PWD on remote side if set
+        if [[ -n "${TARGET_MYSQL_PASSWORD:-}" ]]; then
+            cmd_str="MYSQL_PWD=$(printf '%q' "$TARGET_MYSQL_PASSWORD") $cmd_str"
+        fi
+        if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
+            SSHPASS="$TARGET_SOURCE_PASSWORD" sshpass -e "${_MYSQL_SSH[@]}" "$cmd_str"
+        else
+            "${_MYSQL_SSH[@]}" "$cmd_str"
+        fi
     else
-        return 1
+        # Local: set MYSQL_PWD if needed, then eval
+        if [[ -n "${TARGET_MYSQL_PASSWORD:-}" ]]; then
+            MYSQL_PWD="$TARGET_MYSQL_PASSWORD" eval "$cmd_str"
+        else
+            eval "$cmd_str"
+        fi
     fi
 }
 
-# Detect the mysql client binary.
-_mysql_find_client_cmd() {
-    if command -v mysql &>/dev/null; then
-        echo "mysql"
-    elif command -v mariadb &>/dev/null; then
-        echo "mariadb"
+# Detect the mysqldump binary (MySQL or MariaDB), locally or remotely.
+_mysql_find_dump_cmd() {
+    if _mysql_is_remote; then
+        _mysql_run_cmd "command -v mysqldump || command -v mariadb-dump" 2>/dev/null || return 1
     else
-        return 1
+        if command -v mysqldump &>/dev/null; then
+            echo "mysqldump"
+        elif command -v mariadb-dump &>/dev/null; then
+            echo "mariadb-dump"
+        else
+            return 1
+        fi
+    fi
+}
+
+# Detect the mysql client binary, locally or remotely.
+_mysql_find_client_cmd() {
+    if _mysql_is_remote; then
+        _mysql_run_cmd "command -v mysql || command -v mariadb" 2>/dev/null || return 1
+    else
+        if command -v mysql &>/dev/null; then
+            echo "mysql"
+        elif command -v mariadb &>/dev/null; then
+            echo "mariadb"
+        else
+            return 1
+        fi
     fi
 }
 
 # Build connection arguments from TARGET_MYSQL_* globals into MYSQL_CONN_ARGS array.
-# Sets MYSQL_PWD env var if password is configured.
+# Sets MYSQL_PWD env var if password is configured (local mode only).
 mysql_build_conn_args() {
     MYSQL_CONN_ARGS=()
     if [[ -n "${TARGET_MYSQL_USER:-}" ]]; then
@@ -47,6 +91,22 @@ mysql_build_conn_args() {
     fi
 }
 
+# Build connection arguments as a string for embedding in SSH commands.
+# Returns a string like: -u root -h host -P port
+_mysql_build_conn_str() {
+    local conn_str=""
+    if [[ -n "${TARGET_MYSQL_USER:-}" ]]; then
+        conn_str+="-u $(printf '%q' "$TARGET_MYSQL_USER")"
+    fi
+    if [[ -n "${TARGET_MYSQL_HOST:-}" && "${TARGET_MYSQL_HOST}" != "localhost" ]]; then
+        conn_str+=" -h $(printf '%q' "$TARGET_MYSQL_HOST")"
+    fi
+    if [[ -n "${TARGET_MYSQL_PORT:-}" && "${TARGET_MYSQL_PORT}" != "3306" ]]; then
+        conn_str+=" -P $(printf '%q' "$TARGET_MYSQL_PORT")"
+    fi
+    echo "$conn_str"
+}
+
 # Get list of databases to dump.
 # Outputs one database name per line.
 mysql_get_databases() {
@@ -56,13 +116,21 @@ mysql_get_databases() {
         return 1
     }
 
-    mysql_build_conn_args
-
     local all_dbs
-    all_dbs=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e "SHOW DATABASES" 2>&1) || {
-        log_error "Failed to list databases: $all_dbs"
-        return 1
-    }
+    if _mysql_is_remote; then
+        local conn_str
+        conn_str=$(_mysql_build_conn_str)
+        all_dbs=$(_mysql_run_cmd "$client_cmd $conn_str -N -e 'SHOW DATABASES'" 2>&1) || {
+            log_error "Failed to list databases: $all_dbs"
+            return 1
+        }
+    else
+        mysql_build_conn_args
+        all_dbs=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e "SHOW DATABASES" 2>&1) || {
+            log_error "Failed to list databases: $all_dbs"
+            return 1
+        }
+    fi
 
     # Build exclude list: system dbs + user-specified excludes
     local -a exclude_list=()
@@ -111,7 +179,14 @@ mysql_dump_databases() {
         return 1
     }
 
-    mysql_build_conn_args
+    local is_remote=false
+    local conn_str=""
+    if _mysql_is_remote; then
+        is_remote=true
+        conn_str=$(_mysql_build_conn_str)
+    else
+        mysql_build_conn_args
+    fi
 
     # Determine databases to dump
     local -a databases=()
@@ -146,16 +221,16 @@ mysql_dump_databases() {
         return 0
     fi
 
-    # Create temp directory
+    # Create temp directory (always local)
     MYSQL_DUMP_DIR=$(mktemp -d "${WORK_DIR}/gniza-mysql-XXXXXX")
     mkdir -p "$MYSQL_DUMP_DIR/_mysql"
 
-    # Parse extra opts into array
-    local -a extra_opts_arr=()
+    # Parse extra opts
+    local extra_opts_str=""
     if [[ -n "${TARGET_MYSQL_EXTRA_OPTS:-}" ]]; then
-        read -ra extra_opts_arr <<< "${TARGET_MYSQL_EXTRA_OPTS}"
+        extra_opts_str="${TARGET_MYSQL_EXTRA_OPTS}"
     else
-        extra_opts_arr=(--single-transaction --routines --triggers)
+        extra_opts_str="--single-transaction --routines --triggers"
     fi
     local failed=false
 
@@ -169,15 +244,30 @@ mysql_dump_databases() {
         log_info "Dumping MySQL database: $db"
         local outfile="$MYSQL_DUMP_DIR/_mysql/${db}.sql.gz"
         local errfile="$MYSQL_DUMP_DIR/_mysql/${db}.err"
-        if "$dump_cmd" "${MYSQL_CONN_ARGS[@]}" "${extra_opts_arr[@]}" "$db" 2>"$errfile" | gzip > "$outfile"; then
-            rm -f "$errfile"
-            local size; size=$(stat -c%s "$outfile" 2>/dev/null || echo "?")
-            log_debug "Dumped $db -> ${db}.sql.gz ($size bytes)"
+        if [[ "$is_remote" == "true" ]]; then
+            if _mysql_run_cmd "$dump_cmd $conn_str $extra_opts_str $(printf '%q' "$db") | gzip" > "$outfile" 2>"$errfile"; then
+                rm -f "$errfile"
+                local size; size=$(stat -c%s "$outfile" 2>/dev/null || echo "?")
+                log_debug "Dumped $db -> ${db}.sql.gz ($size bytes)"
+            else
+                log_error "Failed to dump database: $db"
+                [[ -s "$errfile" ]] && log_error "mysqldump: $(cat "$errfile")"
+                rm -f "$errfile"
+                failed=true
+            fi
         else
-            log_error "Failed to dump database: $db"
-            [[ -s "$errfile" ]] && log_error "mysqldump: $(cat "$errfile")"
-            rm -f "$errfile"
-            failed=true
+            local -a extra_opts_arr=()
+            read -ra extra_opts_arr <<< "$extra_opts_str"
+            if "$dump_cmd" "${MYSQL_CONN_ARGS[@]}" "${extra_opts_arr[@]}" "$db" 2>"$errfile" | gzip > "$outfile"; then
+                rm -f "$errfile"
+                local size; size=$(stat -c%s "$outfile" 2>/dev/null || echo "?")
+                log_debug "Dumped $db -> ${db}.sql.gz ($size bytes)"
+            else
+                log_error "Failed to dump database: $db"
+                [[ -s "$errfile" ]] && log_error "mysqldump: $(cat "$errfile")"
+                rm -f "$errfile"
+                failed=true
+            fi
         fi
     done
 
@@ -199,7 +289,14 @@ mysql_dump_grants() {
         return 1
     }
 
-    mysql_build_conn_args
+    local is_remote=false
+    local conn_str=""
+    if _mysql_is_remote; then
+        is_remote=true
+        conn_str=$(_mysql_build_conn_str)
+    else
+        mysql_build_conn_args
+    fi
 
     local grants_file="$MYSQL_DUMP_DIR/_mysql/grants.sql"
 
@@ -215,11 +312,18 @@ mysql_dump_grants() {
 
     # Get all users
     local users_output
-    users_output=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e \
-        "SELECT CONCAT(\"'\", user, \"'@'\", host, \"'\") FROM mysql.user" 2>&1) || {
-        log_error "Failed to list MySQL users: $users_output"
-        return 1
-    }
+    local sql_query="SELECT CONCAT(\"'\", user, \"'@'\", host, \"'\") FROM mysql.user"
+    if [[ "$is_remote" == "true" ]]; then
+        users_output=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "$sql_query")" 2>&1) || {
+            log_error "Failed to list MySQL users: $users_output"
+            return 1
+        }
+    else
+        users_output=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e "$sql_query" 2>&1) || {
+            log_error "Failed to list MySQL users: $users_output"
+            return 1
+        }
+    fi
 
     local count=0
     {
@@ -245,16 +349,24 @@ mysql_dump_grants() {
 
             # Try SHOW CREATE USER (MySQL 5.7+/MariaDB 10.2+)
             local create_user
-            create_user=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e \
-                "SHOW CREATE USER $user_host" 2>/dev/null) || true
+            if [[ "$is_remote" == "true" ]]; then
+                create_user=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "SHOW CREATE USER $user_host")" 2>/dev/null) || true
+            else
+                create_user=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e \
+                    "SHOW CREATE USER $user_host" 2>/dev/null) || true
+            fi
             if [[ -n "$create_user" ]]; then
                 echo "$create_user;"
             fi
 
             # SHOW GRANTS
             local grants
-            grants=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e \
-                "SHOW GRANTS FOR $user_host" 2>/dev/null) || continue
+            if [[ "$is_remote" == "true" ]]; then
+                grants=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "SHOW GRANTS FOR $user_host")" 2>/dev/null) || continue
+            else
+                grants=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e \
+                    "SHOW GRANTS FOR $user_host" 2>/dev/null) || continue
+            fi
             while IFS= read -r grant_line; do
                 [[ -n "$grant_line" ]] && echo "$grant_line;"
             done <<< "$grants"

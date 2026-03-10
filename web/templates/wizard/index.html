@@ -444,8 +444,8 @@
                 </div>
             </div>
 
-            <!-- MySQL Settings -->
-            <div class="card bg-base-200 shadow mb-6">
+            <!-- MySQL Settings (only for local/ssh sources) -->
+            <div class="card bg-base-200 shadow mb-6" x-show="sourceType === 'local' || sourceType === 'ssh'" x-cloak>
                 <div class="card-body">
                     <div class="flex items-center gap-4 mb-4">
                         <h2 class="card-title text-base">MySQL Backup</h2>

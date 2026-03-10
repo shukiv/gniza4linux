@@ -93,12 +93,13 @@ class TargetEditScreen(Screen):
                     value="yes" if target.enabled == "yes" else "no",
                     id="te-enabled",
                 )
-                yield Static("--- MySQL Backup ---", classes="section-label")
-                yield Static("MySQL Enabled:")
+                yield Static("--- MySQL Backup ---", classes="section-label mysql-section")
+                yield Static("MySQL Enabled:", classes="mysql-section")
                 yield Select(
                     [("No", "no"), ("Yes", "yes")],
                     value=target.mysql_enabled,
                     id="te-mysql-enabled",
+                    classes="mysql-section",
                 )
                 yield Static("MySQL Mode:", classes="mysql-field")
                 yield Select(
@@ -183,6 +184,15 @@ class TargetEditScreen(Screen):
         elif source_type == "gdrive":
             for w in self.query(".source-gdrive-field"):
                 w.display = True
+        # Hide MySQL section for S3/GDrive (no MySQL on cloud sources)
+        show_mysql = source_type in ("local", "ssh")
+        for w in self.query(".mysql-section"):
+            w.display = show_mysql
+        if show_mysql:
+            self._update_mysql_visibility()
+        else:
+            for w in self.query(".mysql-field"):
+                w.display = False
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-cancel":

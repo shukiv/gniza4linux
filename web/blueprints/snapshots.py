@@ -5,7 +5,7 @@ import socket
 import subprocess
 
 from flask import (
-    Blueprint, render_template, request,
+    Blueprint, Response, abort, render_template, request, send_file,
 )
 
 from tui.config import CONFIG_DIR, list_conf_dir, parse_conf
@@ -320,3 +320,131 @@ def browse_children(target, remote, snapshot):
     return render_template("snapshots/browse_children.html",
                            dirs=dirs, files=files,
                            target=target, remote=remote, snapshot=snapshot, parent_path=subpath)
+
+
+def _stream_process(proc):
+    """Yield chunks from a subprocess stdout, then wait and close."""
+    try:
+        while True:
+            chunk = proc.stdout.read(65536)
+            if not chunk:
+                break
+            yield chunk
+    finally:
+        proc.stdout.close()
+        proc.wait()
+
+
+@bp.route("/download/<target>/<remote>/<snapshot>")
+@login_required
+def download(target, remote, snapshot):
+    """Download a file or folder from a snapshot."""
+    if not _VALID_NAME_RE.match(target) or not _VALID_NAME_RE.match(remote) or not _VALID_SNAPSHOT_RE.match(snapshot):
+        abort(400, "Invalid input.")
+
+    subpath = request.args.get("path", "").strip("/")
+    if subpath and not _VALID_SUBPATH_RE.match(subpath):
+        abort(400, "Invalid path.")
+    if ".." in subpath:
+        abort(400, "Invalid path.")
+    if not subpath:
+        abort(400, "No path specified.")
+
+    item_type = request.args.get("type", "file")  # "file" or "folder"
+    if item_type not in ("file", "folder"):
+        abort(400, "Invalid type.")
+
+    remote_conf = _get_remote_conf(remote)
+    if not remote_conf:
+        abort(404, "Destination not found.")
+
+    rtype = remote_conf.get("REMOTE_TYPE", "ssh")
+    base = _snapshot_base(remote_conf, target, snapshot)
+    full_path = f"{base}/{subpath}"
+
+    filename = os.path.basename(subpath)
+
+    if rtype == "local":
+        real_path = os.path.realpath(full_path)
+        # Ensure resolved path stays under the snapshot base
+        real_base = os.path.realpath(base)
+        if not real_path.startswith(real_base + "/") and real_path != real_base:
+            abort(400, "Invalid path.")
+        if item_type == "file":
+            if not os.path.isfile(real_path):
+                abort(404, "File not found.")
+            return send_file(real_path, as_attachment=True, download_name=filename)
+        else:
+            if not os.path.isdir(real_path):
+                abort(404, "Directory not found.")
+            proc = subprocess.Popen(
+                ["tar", "czf", "-", "-C", os.path.dirname(real_path), os.path.basename(real_path)],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            )
+            return Response(
+                _stream_process(proc),
+                mimetype="application/gzip",
+                headers={"Content-Disposition": f'attachment; filename="{filename}.tar.gz"'},
+            )
+
+    elif rtype == "ssh":
+        cmd, sshpass_pw = ssh_cmd_from_conf(remote_conf)
+        env = None
+        if sshpass_pw:
+            env = os.environ.copy()
+            env["SSHPASS"] = sshpass_pw
+
+        sq = shlex.quote(full_path)
+        if item_type == "file":
+            remote_cmd = f"cat {sq}"
+            content_type = "application/octet-stream"
+            disp = f'attachment; filename="{filename}"'
+        else:
+            parent = os.path.dirname(full_path)
+            basename = os.path.basename(full_path)
+            remote_cmd = f"tar czf - -C {shlex.quote(parent)} {shlex.quote(basename)}"
+            content_type = "application/gzip"
+            disp = f'attachment; filename="{filename}.tar.gz"'
+
+        proc = subprocess.Popen(
+            cmd + [remote_cmd],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+        )
+        return Response(
+            _stream_process(proc),
+            mimetype=content_type,
+            headers={"Content-Disposition": disp},
+        )
+
+    elif rtype in ("s3", "gdrive"):
+        if item_type == "folder":
+            abort(400, "Folder download is not supported for S3/GDrive destinations.")
+
+        snap_subpath = f"targets/{target}/snapshots/{snapshot}/{subpath}"
+        rpath = _rclone_remote_path(remote_conf, snap_subpath)
+        conf_path = _build_rclone_conf(remote_conf)
+        if not conf_path:
+            abort(500, "Failed to build rclone configuration.")
+
+        proc = subprocess.Popen(
+            ["rclone", "cat", "--config", conf_path, rpath],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+
+        def stream_and_cleanup():
+            try:
+                yield from _stream_process(proc)
+            finally:
+                try:
+                    os.unlink(conf_path)
+                except OSError:
+                    pass
+
+        return Response(
+            stream_and_cleanup(),
+            mimetype="application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    else:
+        abort(400, f"Unsupported destination type: {rtype}")

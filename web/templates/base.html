@@ -94,10 +94,17 @@
 
         <!-- Page content + help panel side by side -->
         <div class="flex flex-1 min-h-0">
-            <main class="p-4 md:p-6 flex-1 min-w-0">
-                <div class="max-w-7xl mx-auto">
+            <main class="p-4 md:p-6 flex-1 min-w-0 flex flex-col">
+                <div class="max-w-7xl mx-auto flex-1 w-full">
                     {% block content %}{% endblock %}
                 </div>
+                <footer class="max-w-7xl mx-auto w-full mt-8 pt-4 border-t border-base-300 text-base-content/40 text-xs flex flex-wrap items-center justify-between gap-2">
+                    <span>GNIZA Backup Manager v{{ app_version }}</span>
+                    <span class="flex items-center gap-3">
+                        <a href="https://github.com/shukiv/gniza4linux" target="_blank" rel="noopener" class="hover:text-base-content/60 transition-colors">GitHub</a>
+                        <span>&copy; {{ current_year }} GNIZA</span>
+                    </span>
+                </footer>
             </main>
 
             {% if help_content and help_content.strip() %}

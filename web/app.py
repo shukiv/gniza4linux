@@ -1,5 +1,6 @@
 import hashlib
 import secrets
+from datetime import datetime
 from functools import wraps
 from pathlib import Path
 
@@ -97,6 +98,8 @@ def create_app():
             "nav_items": nav_items,
             "active_page": active_page,
             "app_name": "GNIZA",
+            "app_version": "0.1.1",
+            "current_year": datetime.now().year,
         }
 
     from web.blueprints.auth import bp as auth_bp

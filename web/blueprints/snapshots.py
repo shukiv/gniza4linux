@@ -21,6 +21,19 @@ _VALID_SNAPSHOT_RE = re.compile(r'^[A-Za-z0-9_.\-]+$')
 _VALID_SUBPATH_RE = re.compile(r'^[A-Za-z0-9_./ -]*$')
 
 
+def _get_hostname():
+    """Get FQDN matching bash 'hostname -f' (used by backup scripts)."""
+    try:
+        result = subprocess.run(
+            ["hostname", "-f"], capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return socket.getfqdn()
+
+
 def _get_remote_conf(remote_name):
     """Load remote config dict."""
     conf = CONFIG_DIR / "remotes.d" / f"{remote_name}.conf"
@@ -32,7 +45,7 @@ def _get_remote_conf(remote_name):
 def _snapshot_base(remote_conf, target, snapshot):
     """Build the snapshot base path on the destination."""
     base = remote_conf.get("REMOTE_BASE", "/backups").rstrip("/")
-    hostname = socket.getfqdn()
+    hostname = _get_hostname()
     return f"{base}/{hostname}/targets/{target}/snapshots/{snapshot}"
 
 
@@ -149,7 +162,7 @@ def _rclone_remote_path(remote_conf, subpath=""):
     """Build the rclone remote path including hostname prefix."""
     rtype = remote_conf.get("REMOTE_TYPE", "ssh")
     base = remote_conf.get("REMOTE_BASE", "/backups").rstrip("/")
-    hostname = socket.getfqdn()
+    hostname = _get_hostname()
     if rtype == "s3":
         bucket = remote_conf.get("S3_BUCKET", "")
         return f"remote:{bucket}{base}/{hostname}" + (f"/{subpath}" if subpath else "")

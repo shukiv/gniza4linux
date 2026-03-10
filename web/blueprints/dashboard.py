@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, flash, request
+from flask import Blueprint, render_template, flash, request, redirect, url_for
 
 from tui.config import CONFIG_DIR, parse_conf, list_conf_dir
 from tui.models import Schedule
@@ -46,6 +46,8 @@ def _load_finished_jobs(page=1):
 @bp.route("/")
 @login_required
 def index():
+    if not list_conf_dir("remotes.d") and not list_conf_dir("targets.d"):
+        return redirect(url_for("wizard.index"))
     targets, remotes, schedules = [], [], []
     log_files, log_page, log_total_pages = [], 1, 1
     try:

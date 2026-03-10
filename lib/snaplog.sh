@@ -70,6 +70,13 @@ snaplog_generate() {
     local mysql_flag="no"
     [[ "${TARGET_MYSQL_ENABLED:-no}" == "yes" ]] && mysql_flag="yes"
 
+    # Extract rsync commands from the transfer log
+    local rsync_cmds=""
+    rsync_cmds=$(grep -oP '(?<=CMD: ).*' "$_TRANSFER_LOG" 2>/dev/null || true)
+    if [[ -z "$rsync_cmds" ]]; then
+        rsync_cmds=$(grep '^=== rsync' "$_TRANSFER_LOG" 2>/dev/null | sed 's/^=== //;s/ ===$//' || true)
+    fi
+
     cat > "$_SNAP_LOG_DIR/summary" <<EOF
 == gniza backup summary ==
 Target:     ${target}
@@ -83,6 +90,14 @@ Status:     ${status}
 Folders:    ${TARGET_FOLDERS}
 MySQL:      ${mysql_flag}
 EOF
+
+    if [[ -n "$rsync_cmds" ]]; then
+        {
+            echo ""
+            echo "== rsync commands =="
+            echo "$rsync_cmds"
+        } >> "$_SNAP_LOG_DIR/summary"
+    fi
 
     # Generate index
     snaplog_generate_index "$target" "$ts"

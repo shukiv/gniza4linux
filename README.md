@@ -1,4 +1,4 @@
-# gniza - Linux Backup Manager
+# GNIZA - Linux Backup Manager
 
 A complete Linux backup solution that works as a **stand-alone backup tool** or a **centralized backup server**. Pull files from local directories, remote SSH servers, S3 buckets, or Google Drive, and push them to any combination of SSH, local, S3, or Google Drive destinations — all with incremental rsync snapshots, hardlink deduplication, and automatic retention.
 

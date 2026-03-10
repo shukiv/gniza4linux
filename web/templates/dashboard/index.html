@@ -7,22 +7,22 @@
 {% block content %}
 <!-- Stats Row -->
 <div class="stats shadow w-full mb-6">
-    <div class="stat">
+    <a href="{{ url_for('targets.index') }}" class="stat cursor-pointer hover:bg-base-200 transition-colors">
         <div class="stat-title">Sources</div>
         <div class="stat-value">{{ targets|length }}</div>
         <div class="stat-desc">{{ targets|selectattr('enabled', 'equalto', 'yes')|list|length }} enabled</div>
-    </div>
-    <div class="stat">
+    </a>
+    <a href="{{ url_for('remotes.index') }}" class="stat cursor-pointer hover:bg-base-200 transition-colors">
         <div class="stat-title">Destinations</div>
         <div class="stat-value">{{ remotes|length }}</div>
         <div class="stat-desc">backup destinations</div>
-    </div>
-    <div class="stat">
+    </a>
+    <a href="{{ url_for('schedules.index') }}" class="stat cursor-pointer hover:bg-base-200 transition-colors">
         <div class="stat-title">Schedules</div>
         <div class="stat-value">{{ schedules|length }}</div>
         <div class="stat-desc">{{ schedules|selectattr('active', 'equalto', 'yes')|list|length }} active</div>
-    </div>
-    <div class="stat">
+    </a>
+    <a href="{{ url_for('logs.index') }}" class="stat cursor-pointer hover:bg-base-200 transition-colors">
         <div class="stat-title">Last Backup</div>
         {% if recent_jobs %}
         <div class="stat-value {{ 'text-success' if recent_jobs[0].status == 'success' else 'text-error' if recent_jobs[0].status == 'failed' else 'text-warning' }}">{{ recent_jobs[0].status|upper }}</div>
@@ -31,14 +31,14 @@
         <div class="stat-value">N/A</div>
         <div class="stat-desc">no jobs found</div>
         {% endif %}
-    </div>
+    </a>
 </div>
 
 <!-- Sources Table -->
 <div class="card bg-base-200 shadow mb-6">
     <div class="card-body p-0">
         <div class="flex items-center justify-between px-6 py-4 border-b border-base-300">
-            <h2 class="card-title text-base">Sources</h2>
+            <a href="{{ url_for('targets.index') }}" class="card-title text-base hover:text-primary transition-colors">Sources</a>
         </div>
         {% if targets %}
         <div class="overflow-x-auto">
@@ -50,6 +50,7 @@
                         <th>Folders</th>
                         <th>Destination</th>
                         <th>Status</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,6 +67,7 @@
                             <span class="badge badge-error badge-md gap-1">Disabled</span>
                             {% endif %}
                         </td>
+                        <td><a href="{{ url_for('targets.edit', name=t.name) }}" class="btn btn-ghost btn-xs">Edit</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -81,7 +83,7 @@
 <div class="card bg-base-200 shadow mb-6">
     <div class="card-body p-0">
         <div class="flex items-center justify-between px-6 py-4 border-b border-base-300">
-            <h2 class="card-title text-base">Destinations</h2>
+            <a href="{{ url_for('remotes.index') }}" class="card-title text-base hover:text-primary transition-colors">Destinations</a>
         </div>
         {% if remotes %}
         <div class="overflow-x-auto">
@@ -92,6 +94,7 @@
                         <th>Type</th>
                         <th>Host</th>
                         <th>Base Path</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -101,6 +104,7 @@
                         <td><span class="badge badge-outline badge-md">{{ r.type }}</span></td>
                         <td>{{ r.host or '--' }}</td>
                         <td class="font-mono text-base-content/60">{{ r.base }}</td>
+                        <td><a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-ghost btn-xs">Edit</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -116,7 +120,7 @@
 <div class="card bg-base-200 shadow mb-6">
     <div class="card-body p-0">
         <div class="flex items-center justify-between px-6 py-4 border-b border-base-300">
-            <h2 class="card-title text-base">Schedules</h2>
+            <a href="{{ url_for('schedules.index') }}" class="card-title text-base hover:text-primary transition-colors">Schedules</a>
         </div>
         {% if schedules %}
         <div class="overflow-x-auto">
@@ -127,6 +131,7 @@
                         <th>Schedule</th>
                         <th>Sources</th>
                         <th>Status</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -142,6 +147,7 @@
                             <span class="badge badge-error badge-md gap-1">Inactive</span>
                             {% endif %}
                         </td>
+                        <td><a href="{{ url_for('schedules.edit', name=s.name) }}" class="btn btn-ghost btn-xs">Edit</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>

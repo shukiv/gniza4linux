@@ -236,7 +236,7 @@ mysql_dump_databases() {
 
     for db in "${databases[@]}"; do
         # Validate database name to prevent path traversal
-        if [[ ! "$db" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        if [[ ! "$db" =~ ^[a-zA-Z0-9._-]+$ ]]; then
             log_error "Invalid database name, skipping: $db"
             failed=true
             continue

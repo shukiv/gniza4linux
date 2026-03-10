@@ -135,10 +135,8 @@ _backup_target_impl() {
             mysql_dump_grants || log_warn "Grants dump failed, continuing with database dumps"
             mysql_dump_dir="${MYSQL_DUMP_DIR:-}"
         else
-            log_error "MySQL dump failed for $target_name"
+            log_warn "MySQL dump failed for $target_name — continuing with file backup"
             mysql_cleanup_dump
-            snaplog_cleanup
-            return 1
         fi
     fi
 

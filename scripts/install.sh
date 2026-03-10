@@ -116,16 +116,36 @@ chmod +x "$INSTALL_DIR/bin/gniza"
 
 # -- Install Python TUI dependencies -------------------------
 if command -v python3 &>/dev/null; then
-    info "Installing Python dependencies..."
-    _pip_quiet="--quiet"
-    $DEBUG && _pip_quiet=""
-    if python3 -m pip install --break-system-packages $_pip_quiet textual textual-serve flask waitress 2>/dev/null; then
-        info "Python dependencies installed."
-    elif python3 -m pip install $_pip_quiet textual textual-serve flask waitress 2>/dev/null; then
-        info "Python dependencies installed."
+    # Ensure pip is available
+    if ! python3 -m pip --version &>/dev/null; then
+        info "pip not found, installing..."
+        if [[ $EUID -eq 0 ]]; then
+            apt-get install -y python3-pip 2>/dev/null \
+                || yum install -y python3-pip 2>/dev/null \
+                || dnf install -y python3-pip 2>/dev/null \
+                || warn "Could not install pip via package manager."
+        else
+            sudo apt-get install -y python3-pip 2>/dev/null \
+                || sudo yum install -y python3-pip 2>/dev/null \
+                || sudo dnf install -y python3-pip 2>/dev/null \
+                || warn "Could not install pip via package manager."
+        fi
+    fi
+    if python3 -m pip --version &>/dev/null; then
+        info "Installing Python dependencies..."
+        _pip_quiet="--quiet"
+        $DEBUG && _pip_quiet=""
+        if python3 -m pip install --break-system-packages $_pip_quiet textual textual-serve flask waitress 2>/dev/null; then
+            info "Python dependencies installed."
+        elif python3 -m pip install $_pip_quiet textual textual-serve flask waitress 2>/dev/null; then
+            info "Python dependencies installed."
+        else
+            warn "Could not install Python dependencies. TUI/web mode may not work."
+            warn "Install manually: pip3 install textual textual-serve flask"
+        fi
     else
-        warn "Could not install Python TUI dependencies. TUI/web mode may not work."
-        warn "Install manually: pip3 install textual textual-serve flask"
+        warn "pip is not available. TUI/web mode may not work."
+        warn "Install pip and run: pip3 install textual textual-serve flask"
     fi
 else
     warn "python3 not found. TUI mode will not be available."

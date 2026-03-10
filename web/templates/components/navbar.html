@@ -1,13 +1,13 @@
 <ul class="menu min-h-full bg-base-200 text-base-content transition-all duration-200"
     :class="$store.sidebar.collapsed ? 'w-16 p-2' : 'w-64 p-4'">
     <li class="mb-4" :class="$store.sidebar.collapsed ? 'flex justify-center' : 'menu-title'">
-        <div class="flex items-center" :class="$store.sidebar.collapsed ? 'justify-center' : 'gap-2 text-primary'">
+        <a href="{{ url_for('dashboard.index') }}" class="flex items-center no-underline" :class="$store.sidebar.collapsed ? 'justify-center' : 'gap-2 text-primary'">
             <img src="{{ url_for('static', filename='gniza.svg') }}" alt="GNIZA" class="w-10 h-10 pt-1" />
             <div x-show="!$store.sidebar.collapsed" x-cloak>
                 <div class="text-3xl font-bold leading-none tracking-[0.2em] text-base-content">GNIZA</div>
                 <div class="text-xs font-normal leading-none text-base-content/50">Linux Backup Manager</div>
             </div>
-        </div>
+        </a>
     </li>
     <li>
         <a href="{{ url_for('dashboard.index') }}" class="{{ 'menu-active' if active_page == 'dashboard' else '' }}"

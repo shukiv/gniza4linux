@@ -129,7 +129,7 @@ _backup_target_impl() {
 
     # 8.5. Dump MySQL databases (if enabled)
     local mysql_dump_dir=""
-    if [[ "${TARGET_MYSQL_ENABLED:-no}" == "yes" ]]; then
+    if [[ "${TARGET_MYSQL_ENABLED:-no}" == "yes" && "${TARGET_SOURCE_TYPE:-local}" != "s3" && "${TARGET_SOURCE_TYPE:-local}" != "gdrive" ]]; then
         log_info "Dumping MySQL databases for $target_name..."
         if mysql_dump_databases; then
             mysql_dump_grants || log_warn "Grants dump failed, continuing with database dumps"

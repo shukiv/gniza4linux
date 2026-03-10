@@ -1,11 +1,12 @@
-# gniza Documentation
+# GNIZA Documentation
 
-Complete reference for gniza, a Linux backup manager that works as a stand-alone backup solution or a centralized backup server.
+Complete reference for GNIZA, a Linux backup manager that works as a stand-alone backup solution or a centralized backup server.
 
 ---
 
 ## Table of Contents
 
+- [Getting Started](#getting-started)
 - [Overview](#overview)
 - [Installation](#installation)
 - [Concepts](#concepts)
@@ -29,9 +30,235 @@ Complete reference for gniza, a Linux backup manager that works as a stand-alone
 
 ---
 
+## Getting Started
+
+This step-by-step guide walks you through setting up GNIZA from scratch — from installation to your first automated backup.
+
+### What is GNIZA?
+
+GNIZA is a complete Linux backup solution that can run as a **stand-alone backup tool** or as a **centralized backup server** managing multiple machines. It is built on top of rsync with `--link-dest` for incremental hardlink deduplication — each snapshot looks like a full backup but only changed files consume extra disk space.
+
+Key features:
+
+- **Agentless** — no software needed on source machines (SSH pull)
+- **Incremental snapshots** with hardlink deduplication
+- **Atomic snapshots** — `.partial` directory renamed on success
+- **Built-in MySQL/MariaDB** dump support
+- **Multiple source types**: local, SSH, S3, Google Drive
+- **Multiple destination types**: local, SSH, S3, Google Drive
+- **Automatic retention** and pruning
+- **Email notifications** on success/failure
+- **Three interfaces**: Web Dashboard, Terminal UI (TUI), and CLI
+
+### Why GNIZA?
+
+If you have ever set up backups with raw rsync, tar, or tools like Dirvish, you know how much manual plumbing is involved — writing wrapper scripts, managing retention, setting up cron jobs, handling MySQL dumps separately, and hoping nothing silently breaks.
+
+| Manual Approach | GNIZA |
+|---|---|
+| Write rsync wrapper scripts | Declarative INI config files |
+| DIY hardlink rotation | Automatic `--link-dest` dedup |
+| Separate mysqldump cron | Built-in MySQL dump before file sync |
+| Manual crontab entries | Schedule management via UI |
+| Custom log parsing | Structured job logs with status |
+| No visibility into progress | Real-time Running Tasks view |
+| Manual cleanup of old backups | Automatic retention with pruning |
+| Hope it works | Email alerts on success/failure |
+
+### Step 1: Installation
+
+GNIZA can be installed with a single command. The installer detects whether you are running as root or a regular user.
+
+**As root (system-wide):**
+
+```
+curl -sL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
+```
+
+Installs to: `/usr/local/gniza` (app), `/etc/gniza/` (config), `/var/log/gniza/` (logs)
+
+**As regular user:**
+
+```
+curl -sL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | bash
+```
+
+Installs to: `~/.local/share/gniza` (app), `~/.config/gniza/` (config), `~/.local/state/gniza/log/` (logs)
+
+**Prerequisites** (installer handles most automatically): rsync, ssh, python3 + pip, curl or wget.
+
+> **Tip:** After installation, access the web dashboard at `http://your-server:2323`. Log in with the API key shown during installation (or set `WEB_API_KEY` in `gniza.conf`).
+
+### Step 2: Setting up SSH Keys
+
+For backing up remote machines or storing backups on a remote server, you need passwordless SSH access.
+
+```
+# Generate a key pair (no passphrase for automated backups)
+ssh-keygen -t ed25519 -C "gniza-backup"
+
+# Copy public key to the remote machine
+ssh-copy-id user@remote-server
+
+# Test — should connect without password prompt
+ssh user@remote-server
+```
+
+> **Tip:** GNIZA also supports password-based SSH via sshpass. Set `SOURCE_AUTH_METHOD=password` in the source config. SSH keys are recommended.
+
+### Step 3: Configure a Source (What to Back Up)
+
+A **source** defines what data GNIZA should back up. Configure via web (Sources > Add), TUI, or config file.
+
+**Local source** — back up folders on the same machine:
+
+```ini
+[target]
+NAME=home
+SOURCE_TYPE=local
+FOLDERS=/home/user
+ENABLED=yes
+```
+
+**Remote SSH source** — pull from a remote server (agentless):
+
+```ini
+[target]
+NAME=webserver
+SOURCE_TYPE=ssh
+SOURCE_HOST=192.168.1.100
+SOURCE_USER=backup
+SOURCE_PORT=22
+SOURCE_AUTH_METHOD=key
+FOLDERS=/var/www,/etc
+ENABLED=yes
+```
+
+### Step 4: Configure a Destination (Where to Store Backups)
+
+A **destination** defines where GNIZA stores snapshots. Configure via web (Destinations > Add), TUI, or config file.
+
+**SSH destination:**
+
+```ini
+[remote]
+NAME=backup-server
+TYPE=ssh
+HOST=backup.example.com
+USER=backup
+PORT=22
+AUTH_METHOD=key
+BASE=/home/backup/gniza
+```
+
+**Local destination** (USB drive, NFS mount):
+
+```ini
+[remote]
+NAME=usb-drive
+TYPE=local
+BASE=/mnt/backup-drive/gniza
+```
+
+S3 and Google Drive destinations are also supported — configure through the web dashboard.
+
+### Step 5: Run Your First Backup
+
+With a source and destination configured:
+
+- **Web:** Backup page > select source > Run Backup
+- **TUI:** `gniza --tui` > Backup screen
+- **CLI:** `gniza --cli --backup home`
+
+What happens during a backup:
+
+1. GNIZA creates a `.partial` snapshot directory on the destination
+2. rsync transfers files using `--link-dest` to hardlink unchanged files from the previous snapshot
+3. If MySQL is enabled, databases are dumped before file transfer
+4. On success, `.partial` is renamed to the final timestamped name (atomic)
+5. A job log entry is recorded
+
+> **Note:** The first backup transfers all files (no previous snapshot to link against). Subsequent runs are incremental — only changed files are transferred.
+
+### Step 6: MySQL / MariaDB Backup
+
+Enable MySQL backup in your source config:
+
+```ini
+[target]
+NAME=webserver
+SOURCE_TYPE=ssh
+SOURCE_HOST=192.168.1.100
+SOURCE_USER=backup
+FOLDERS=/var/www,/etc
+MYSQL_ENABLED=yes
+MYSQL_USER=backup
+MYSQL_PASS=secretpassword
+MYSQL_DATABASES=all
+MYSQL_GRANTS=yes
+ENABLED=yes
+```
+
+For SSH sources, `mysqldump` runs on the **remote machine**. Dumps are stored alongside file snapshots.
+
+> **Tip:** Create a dedicated MySQL user with read-only privileges and `LOCK TABLES` permission.
+
+### Step 7: Schedule Automatic Backups
+
+```ini
+[schedule]
+NAME=nightly
+SCHEDULE=daily
+TIME=02:00
+TARGETS=home,webserver
+ACTIVE=yes
+```
+
+Frequencies: `daily`, `weekly`, `monthly`. Each schedule can have its own `RETENTION_COUNT`.
+
+### Step 8: Retention and Cleanup
+
+GNIZA automatically prunes old snapshots:
+
+- **Global default:** Set `RETENTION_COUNT=7` in `gniza.conf`
+- **Per-schedule override:** Add `RETENTION_COUNT` to any schedule config
+- **Snapshot pinning:** Pin important snapshots to protect them from pruning
+
+### Step 9: Browsing and Restoring
+
+- **Web:** Snapshots page > select source > browse files > download or restore
+- **CLI:** `gniza --cli --restore home --snapshot 2026-03-10_020000 --target /home/user`
+- **Manual:** Snapshots are regular directories — `cp` or `rsync` directly
+
+```
+# Copy a single file from backup
+cp /path/to/backup/home/2026-03-10_020000/home/user/document.txt ~/document.txt
+
+# Restore a full directory
+rsync -avP /path/to/backup/home/2026-03-10_020000/var/www/ /var/www/
+```
+
+### Step 10: Monitoring
+
+- **Logs** — view all job logs with status (success/failure/running)
+- **Email notifications** — configure in Settings
+- **Running Tasks** — real-time progress of active jobs
+- **Health checks** — system state monitoring in Settings
+
+### Best Practices
+
+- **Exclude unnecessary files**: `.cache`, `node_modules`, `__pycache__`, `/proc`
+- **Use SSH keys** over passwords for automated backups
+- **Test restores regularly** — a backup you cannot restore from is not a backup
+- **Monitor disk space** on destinations
+- **Set sensible retention** — daily with 7-day retention, weekly with 4-week retention
+- **Pin important snapshots** before major upgrades
+
+---
+
 ## Overview
 
-gniza backs up files and MySQL databases from **sources** to **destinations** using incremental rsync snapshots with hardlink deduplication.
+GNIZA backs up files and MySQL databases from **sources** to **destinations** using incremental rsync snapshots with hardlink deduplication.
 
 **Stand-alone mode**: Install gniza on any Linux machine. Define local folders as sources and back them up to an SSH server, USB drive, S3 bucket, or Google Drive.
 
@@ -41,7 +268,7 @@ gniza backs up files and MySQL databases from **sources** to **destinations** us
 
 ### Interfaces
 
-gniza provides three interfaces:
+GNIZA provides three interfaces:
 
 | Interface | Launch | Best for |
 |-----------|--------|----------|
@@ -438,7 +665,7 @@ gniza --cli backup --source=mysite,databases
 
 ### Incremental Deduplication
 
-gniza uses rsync's `--link-dest` to create space-efficient incremental backups.
+GNIZA uses rsync's `--link-dest` to create space-efficient incremental backups.
 
 - **First backup**: All files are transferred in full. This is the slowest backup.
 - **Subsequent backups**: Only changed files are transferred. Unchanged files are hardlinked to the previous snapshot, sharing disk blocks.
@@ -656,7 +883,7 @@ Pinned snapshots are never deleted by retention enforcement. Pin a snapshot by s
 
 ## Scheduling
 
-gniza manages cron entries for automated backups.
+GNIZA manages cron entries for automated backups.
 
 ### Creating a Schedule
 
@@ -729,7 +956,7 @@ Scheduled backups log output to `<log_dir>/cron.log`. Each run also creates a ti
 
 ## MySQL Backup
 
-gniza can dump MySQL/MariaDB databases alongside file backups. Auto-detects `mysqldump` or `mariadb-dump`.
+GNIZA can dump MySQL/MariaDB databases alongside file backups. Auto-detects `mysqldump` or `mariadb-dump`.
 
 ### Enabling MySQL Backup
 
@@ -787,7 +1014,7 @@ In the TUI, toggle the "Restore MySQL databases" switch.
 
 ## Notifications
 
-gniza sends email notifications on backup completion.
+GNIZA sends email notifications on backup completion.
 
 ### Configuration
 
@@ -1296,7 +1523,7 @@ This script:
 
 ### Feature Parity
 
-gniza provides three interfaces: CLI, TUI, and Web. All three must offer the same capabilities. When adding or modifying a feature, update all three interfaces to keep them in sync.
+GNIZA provides three interfaces: CLI, TUI, and Web. All three must offer the same capabilities. When adding or modifying a feature, update all three interfaces to keep them in sync.
 
 ---
 

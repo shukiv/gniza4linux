@@ -37,62 +37,41 @@
     .doc-toc li { margin: 0.15em 0; }
     .doc-toc a { color: oklch(var(--bc) / 0.7); text-decoration: none; font-size: 0.85em; display: block; padding: 0.15em 0.5em; border-radius: 0.25em; transition: all 0.15s; }
     .doc-toc a:hover { color: oklch(var(--bc)); background: oklch(var(--bc) / 0.1); }
-    .doc-toc a.active { color: oklch(var(--p)); background: oklch(var(--p) / 0.1); font-weight: 500; }
-    /* Guide-specific styles */
-    .guide-step-badge { display: inline-flex; align-items: center; justify-content: center; width: 2em; height: 2em; border-radius: 9999px; background: oklch(var(--p)); color: oklch(var(--pc)); font-weight: 700; font-size: 0.9em; margin-right: 0.5em; flex-shrink: 0; }
-    .guide-card { background: oklch(var(--b2)); border: 1px solid oklch(var(--bc) / 0.1); border-radius: 0.75em; padding: 1.25em; margin: 1em 0; }
-    .guide-tip { border-left: 4px solid oklch(var(--in)); background: oklch(var(--in) / 0.1); padding: 0.75em 1em; border-radius: 0 0.5em 0.5em 0; margin: 1em 0; }
-    .guide-warning { border-left: 4px solid oklch(var(--wa)); background: oklch(var(--wa) / 0.1); padding: 0.75em 1em; border-radius: 0 0.5em 0.5em 0; margin: 1em 0; }
 </style>
 
-<!-- Tabs -->
-<div x-data="{ tab: (new URLSearchParams(window.location.search).get('tab')) || 'guide' }" x-init="$watch('tab', val => { const url = new URL(window.location); url.searchParams.set('tab', val); history.replaceState(null, '', url); })">
-    <div role="tablist" class="tabs tabs-border mb-6">
-        <a role="tab" class="tab text-base" :class="tab === 'guide' ? 'tab-active' : ''" @click="tab = 'guide'">Getting Started</a>
-        <a role="tab" class="tab text-base" :class="tab === 'reference' ? 'tab-active' : ''" @click="tab = 'reference'">Reference</a>
-    </div>
-
-    <!-- Getting Started tab -->
-    <div x-show="tab === 'guide'" x-cloak>
-        {% include "docs/guide_content.html" %}
-    </div>
-
-    <!-- Reference tab -->
-    <div x-show="tab === 'reference'" x-cloak>
-        <!-- Mobile TOC -->
-        <div class="xl:hidden mb-4">
-            <div class="collapse collapse-arrow bg-base-200 rounded-box">
-                <input type="checkbox" />
-                <div class="collapse-title font-semibold text-sm">Table of Contents</div>
-                <div class="collapse-content doc-toc">
-                    {{ toc_html|safe }}
-                </div>
-            </div>
-        </div>
-
-        <div class="flex gap-6">
-            <!-- TOC sidebar — xl screens only -->
-            <nav class="doc-toc hidden xl:block w-64 shrink-0">
-                <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
-                    <h3 class="font-semibold text-sm uppercase tracking-wider opacity-60 mb-2">CONTENTS</h3>
-                    {{ toc_html|safe }}
-                </div>
-            </nav>
-
-            <!-- Main content -->
-            <div class="doc-content min-w-0 flex-1" id="doc-body">
-                {{ doc_html|safe }}
-            </div>
+<!-- Mobile TOC -->
+<div class="xl:hidden mb-4">
+    <div class="collapse collapse-arrow bg-base-200 rounded-box">
+        <input type="checkbox" />
+        <div class="collapse-title font-semibold text-sm">Table of Contents</div>
+        <div class="collapse-content doc-toc">
+            {{ toc_html|safe }}
         </div>
     </div>
 </div>
 
+<div class="flex gap-6">
+    <!-- TOC sidebar — xl screens only -->
+    <nav class="doc-toc hidden xl:block w-64 shrink-0">
+        <div class="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+            <h3 class="font-semibold text-sm uppercase tracking-wider opacity-60 mb-2">CONTENTS</h3>
+            {{ toc_html|safe }}
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="doc-content min-w-0 flex-1" id="doc-body">
+        {{ doc_html|safe }}
+    </div>
+</div>
+
 <script>
-// Make h2 sections collapsible in the reference tab
+// Make h2 sections collapsible — run immediately since DOM is already parsed at this point
 (function() {
     var container = document.getElementById('doc-body');
     if (!container) return;
 
+    // Collect all h2 elements first
     var headings = Array.from(container.querySelectorAll(':scope > h2'));
     headings.forEach(function(h2) {
         var details = document.createElement('details');
@@ -103,8 +82,10 @@
         summary.id = h2.id;
         summary.className = 'doc-section-title';
         details.appendChild(summary);
+        // Insert details before the h2
         h2.parentNode.insertBefore(details, h2);
         h2.remove();
+        // Move siblings into details until next h2 or end
         var next = details.nextSibling;
         while (next) {
             if (next.nodeType === 1 && (next.tagName === 'H2' || next.tagName === 'H1' || next.classList.contains('doc-section'))) break;
@@ -114,37 +95,5 @@
         }
     });
 })();
-
-// Highlight active TOC link on scroll (guide tab)
-(function() {
-    var toc = document.querySelectorAll('.guide-toc a');
-    var sections = [];
-    toc.forEach(function(a) {
-        var id = a.getAttribute('href');
-        if (id && id.startsWith('#')) {
-            var el = document.getElementById(id.slice(1));
-            if (el) sections.push({ el: el, link: a });
-        }
-    });
-    if (!sections.length) return;
-    function onScroll() {
-        var scrollY = window.scrollY + 100;
-        var active = sections[0];
-        for (var i = 0; i < sections.length; i++) {
-            if (sections[i].el.offsetTop <= scrollY) active = sections[i];
-        }
-        toc.forEach(function(a) { a.classList.remove('active'); });
-        active.link.classList.add('active');
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-})();
 </script>
-{% endblock %}
-
-{% block help_text %}
-<h3 class="font-bold text-sm mb-2">Documentation</h3>
-<p class="text-xs opacity-70 mb-2"><strong>Getting Started</strong> — step-by-step tutorial from installation to your first automated backup.</p>
-<p class="text-xs opacity-70 mb-2"><strong>Reference</strong> — complete technical documentation for all features and settings.</p>
-<p class="text-xs opacity-70">Use the tabs at the top to switch between the guide and reference.</p>
 {% endblock %}

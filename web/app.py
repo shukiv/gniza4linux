@@ -90,8 +90,6 @@ def create_app():
                 active_page = "logs"
             elif request.endpoint.startswith("settings"):
                 active_page = "settings"
-            elif request.endpoint.startswith("guide"):
-                active_page = "guide"
             elif request.endpoint.startswith("docs"):
                 active_page = "docs"
             elif request.endpoint.startswith("health"):
@@ -119,7 +117,6 @@ def create_app():
     from web.blueprints.wizard import bp as wizard_bp
     from web.blueprints.api import bp as api_bp
     from web.blueprints.docs import bp as docs_bp
-    from web.blueprints.guide import bp as guide_bp
     from web.blueprints.health import bp as health_bp
 
     app.register_blueprint(auth_bp)
@@ -137,7 +134,6 @@ def create_app():
     app.register_blueprint(wizard_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(docs_bp)
-    app.register_blueprint(guide_bp)
     app.register_blueprint(health_bp)
 
     return app

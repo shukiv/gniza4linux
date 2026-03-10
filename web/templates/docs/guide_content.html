@@ -1,41 +1,3 @@
-{% extends "base.html" %}
-{% block title %}GNIZA - Getting Started Guide{% endblock %}
-{% block page_title %}Getting Started Guide{% endblock %}
-
-{% block help_text %}
-<h3 class="font-bold text-sm mb-2">Guide</h3>
-<p class="text-xs opacity-70 mb-2">This step-by-step tutorial walks you through setting up GNIZA from scratch.</p>
-<p class="text-xs opacity-70 mb-2">Use the table of contents to jump between sections.</p>
-<p class="text-xs opacity-70">Each section builds on the previous one &mdash; follow them in order for the best experience.</p>
-{% endblock %}
-
-{% block content %}
-<style>
-    .guide-content h2 { font-size: 1.5em; font-weight: 700; margin: 2em 0 0.75em; padding-bottom: 0.3em; border-bottom: 2px solid oklch(var(--p) / 0.3); }
-    .guide-content h3 { font-size: 1.2em; font-weight: 600; margin: 1.5em 0 0.5em; }
-    .guide-content p { margin: 0.75em 0; line-height: 1.7; }
-    .guide-content ul, .guide-content ol { margin: 0.75em 0; padding-left: 2em; }
-    .guide-content li { margin: 0.3em 0; line-height: 1.6; }
-    .guide-content ul { list-style-type: disc; }
-    .guide-content ol { list-style-type: decimal; }
-    .guide-content code { background: oklch(var(--b2)); padding: 0.15em 0.4em; border-radius: 0.25em; font-size: 0.9em; font-family: ui-monospace, monospace; }
-    .guide-content pre { background: oklch(var(--b2)); padding: 1em 1.25em; border-radius: 0.5em; overflow-x: auto; margin: 1em 0; border: 1px solid oklch(var(--bc) / 0.1); }
-    .guide-content pre code { background: none; padding: 0; font-size: 0.85em; }
-    .guide-content a { color: oklch(var(--p)); text-decoration: underline; }
-    .guide-content a:hover { opacity: 0.8; }
-    .guide-content strong { font-weight: 600; }
-    .guide-toc ul { list-style: none; padding-left: 0; }
-    .guide-toc li { margin: 0.2em 0; }
-    .guide-toc a { color: oklch(var(--bc) / 0.7); text-decoration: none; font-size: 0.85em; display: block; padding: 0.2em 0.5em; border-radius: 0.25em; transition: all 0.15s; }
-    .guide-toc a:hover { color: oklch(var(--bc)); background: oklch(var(--bc) / 0.1); }
-    .guide-toc a.active { color: oklch(var(--p)); background: oklch(var(--p) / 0.1); font-weight: 500; }
-    .guide-step { counter-increment: guide-step; }
-    .guide-step-badge { display: inline-flex; align-items: center; justify-content: center; width: 2em; height: 2em; border-radius: 9999px; background: oklch(var(--p)); color: oklch(var(--pc)); font-weight: 700; font-size: 0.9em; margin-right: 0.5em; flex-shrink: 0; }
-    .guide-card { background: oklch(var(--b2)); border: 1px solid oklch(var(--bc) / 0.1); border-radius: 0.75em; padding: 1.25em; margin: 1em 0; }
-    .guide-tip { border-left: 4px solid oklch(var(--in)); background: oklch(var(--in) / 0.1); padding: 0.75em 1em; border-radius: 0 0.5em 0.5em 0; margin: 1em 0; }
-    .guide-warning { border-left: 4px solid oklch(var(--wa)); background: oklch(var(--wa) / 0.1); padding: 0.75em 1em; border-radius: 0 0.5em 0.5em 0; margin: 1em 0; }
-</style>
-
 <!-- Mobile TOC -->
 <div class="xl:hidden mb-4">
     <div class="collapse collapse-arrow bg-base-200 rounded-box">
@@ -85,7 +47,7 @@
     </nav>
 
     <!-- Main content -->
-    <div class="guide-content min-w-0 flex-1">
+    <div class="doc-content min-w-0 flex-1">
 
         <div class="guide-card" style="border-left: 4px solid oklch(var(--p));">
             <p class="text-lg font-semibold" style="margin-top: 0;">Welcome to the GNIZA Getting Started Guide</p>
@@ -519,36 +481,8 @@ rsync -avP /path/to/backup/home/2026-03-10_020000/var/www/ /var/www/</code></pre
 
         <div class="guide-card" style="border-left: 4px solid oklch(var(--su)); margin-top: 2em;">
             <p class="text-lg font-semibold" style="margin-top: 0;">You are all set!</p>
-            <p>You now have everything you need to run a reliable backup system with GNIZA. If you need more detail on any topic, check the <a href="/docs">Documentation</a> page for the full reference.</p>
+            <p>You now have everything you need to run a reliable backup system with GNIZA. For more detail on any topic, switch to the <a href="#" @click.prevent="tab = 'reference'; window.scrollTo(0, 0)">Reference</a> tab for the full technical documentation.</p>
         </div>
 
     </div>
 </div>
-
-<script>
-// Highlight active TOC link on scroll
-(function() {
-    var toc = document.querySelectorAll('.guide-toc a');
-    var sections = [];
-    toc.forEach(function(a) {
-        var id = a.getAttribute('href');
-        if (id && id.startsWith('#')) {
-            var el = document.getElementById(id.slice(1));
-            if (el) sections.push({ el: el, link: a });
-        }
-    });
-    if (!sections.length) return;
-    function onScroll() {
-        var scrollY = window.scrollY + 100;
-        var active = sections[0];
-        for (var i = 0; i < sections.length; i++) {
-            if (sections[i].el.offsetTop <= scrollY) active = sections[i];
-        }
-        toc.forEach(function(a) { a.classList.remove('active'); });
-        active.link.classList.add('active');
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-})();
-</script>
-{% endblock %}

@@ -149,9 +149,9 @@ snaplog_upload() {
 
 # Append transferred file list from rsync --log-file to the job log.
 # This preserves the per-file details in the permanent log (visible in Logs page).
+# When GNIZA_DAEMON_TRACKED=1, LOG_FILE is empty but stdout goes to the job log.
 _snaplog_append_transfer_log() {
     [[ -z "${_TRANSFER_LOG:-}" || ! -s "$_TRANSFER_LOG" ]] && return 0
-    [[ -z "${LOG_FILE:-}" ]] && return 0
     # Extract filenames from rsync log format:
     # "2026/03/09 05:03:07 [719348] <f+++++++++ path/to/file"
     local count=0
@@ -163,12 +163,14 @@ _snaplog_append_transfer_log() {
         fi
     done < "$_TRANSFER_LOG"
     if (( count > 0 )); then
-        {
-            echo ""
-            echo "--- Transferred files ($count) ---"
-            printf '%s\n' "${files[@]}"
-            echo "--- End of transferred files ---"
-        } >> "$LOG_FILE"
+        local output
+        output=$(printf '\n--- Transferred files (%d) ---\n' "$count"; printf '%s\n' "${files[@]}"; echo "--- End of transferred files ---")
+        if [[ -n "${LOG_FILE:-}" ]]; then
+            echo "$output" >> "$LOG_FILE"
+        else
+            # Daemon-tracked: stdout is redirected to the job log file
+            echo "$output"
+        fi
     fi
 }
 

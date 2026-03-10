@@ -4,161 +4,703 @@
 {% block page_title %}Setup Wizard{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto" x-data="{ step: {{ request.args.get('step', 1, type=int) }} }">
+<div class="max-w-3xl mx-auto" x-data="{
+    step: {{ step }},
+    remoteType: 'ssh',
+    authMethod: 'key',
+    sourceType: 'local',
+    sourceAuthMethod: 'key',
+    mysqlEnabled: false,
+    scheduleType: 'daily',
+    folderList: [],
+    addFolder(path) { path = path.trim(); if (path && !this.folderList.includes(path)) this.folderList.push(path); },
+    removeFolder(i) { this.folderList.splice(i, 1); }
+}">
 
     <!-- Progress steps -->
     <ul class="steps steps-horizontal w-full mb-8">
-        <li class="step" :class="step >= 1 ? 'step-primary' : ''">Welcome</li>
-        <li class="step" :class="step >= 2 ? 'step-primary' : ''">Destination</li>
-        <li class="step" :class="step >= 3 ? 'step-primary' : ''">Source</li>
-        <li class="step" :class="step >= 4 ? 'step-primary' : ''">Schedule</li>
-        <li class="step" :class="step >= 5 ? 'step-primary' : ''">Done</li>
+        <li class="step" :class="step >= 1 ? 'step-primary' : ''" @click="step = 1" style="cursor:pointer">
+            <span>Destination</span>
+            {% if remotes %}<span class="ml-1 text-success">&#10003;</span>{% endif %}
+        </li>
+        <li class="step" :class="step >= 2 ? 'step-primary' : ''" @click="step = 2" style="cursor:pointer">
+            <span>Source</span>
+            {% if targets %}<span class="ml-1 text-success">&#10003;</span>{% endif %}
+        </li>
+        <li class="step" :class="step >= 3 ? 'step-primary' : ''" @click="step = 3" style="cursor:pointer">
+            <span>Schedule</span>
+            {% if schedules %}<span class="ml-1 text-success">&#10003;</span>{% endif %}
+        </li>
+        <li class="step" :class="step >= 4 ? 'step-primary' : ''" @click="step = 4" style="cursor:pointer">
+            <span>Done</span>
+        </li>
     </ul>
 
-    <!-- Step 1: Welcome + API Key -->
+    <!-- ==================== Step 1: Destination ==================== -->
     <div x-show="step === 1" x-cloak>
-        <div class="card bg-base-200 shadow">
-            <div class="card-body">
-                <h2 class="card-title">Welcome to GNIZA</h2>
-                <p class="text-base-content/60 mb-4">Let's configure your backup system. First, set an API key for web access.</p>
+        <form method="POST" action="{{ url_for('wizard.save_destination') }}" id="wiz-dest-form">
 
-                <form method="POST" action="{{ url_for('wizard.step', n=1) }}">
-                    <fieldset class="fieldset mb-4">
-                        <label class="fieldset-label">API Key</label>
-                        <input type="text" name="api_key" class="input" placeholder="Enter a secure API key" required>
-                        <label class="label"><span class="fieldset-label text-xs text-base-content/40">This key is used for web authentication</span></label>
-                    </fieldset>
-                    <div class="card-actions justify-between">
-                        <span></span>
-                        <button type="submit" class="btn btn-primary">Next</button>
-                    </div>
-                </form>
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-lg mb-2">Configure Destination</h2>
+                    <p class="text-base-content/60 mb-4">Where should backups be stored?</p>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Step 2: First Destination -->
-    <div x-show="step === 2" x-cloak>
-        <div class="card bg-base-200 shadow">
-            <div class="card-body">
-                <h2 class="card-title">Configure Destination</h2>
-                <p class="text-base-content/60 mb-4">Where should backups be stored?</p>
+            <!-- Destination Type -->
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-base mb-4">Destination Type</h2>
+                    <div class="flex flex-wrap gap-4">
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="type" value="ssh" class="radio radio-primary" x-model="remoteType">
+                            <span>SSH</span>
+                        </label>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="type" value="local" class="radio radio-primary" x-model="remoteType">
+                            <span>Local</span>
+                        </label>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="type" value="s3" class="radio radio-primary" x-model="remoteType">
+                            <span>S3</span>
+                        </label>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="type" value="gdrive" class="radio radio-primary" x-model="remoteType">
+                            <span>Google Drive</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
 
-                <form method="POST" action="{{ url_for('wizard.step', n=2) }}">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <!-- SSH fields -->
+            <div x-show="remoteType === 'ssh'" x-cloak>
+                <div class="card bg-base-200 shadow mb-6">
+                    <div class="card-body">
+                        <h2 class="card-title text-base mb-4">SSH Connection</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Host</label>
+                                <input type="text" name="host" class="input" placeholder="192.168.1.1">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Port</label>
+                                <input type="text" name="port" value="22" class="input" placeholder="22">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">User</label>
+                                <input type="text" name="user" value="root" class="input" placeholder="root">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Auth Method</label>
+                                <select name="auth_method" class="select" x-model="authMethod">
+                                    <option value="key">SSH Key</option>
+                                    <option value="password">Password</option>
+                                </select>
+                            </fieldset>
+                            <fieldset class="fieldset" x-show="authMethod === 'key'" x-cloak>
+                                <label class="fieldset-label">SSH Key Path</label>
+                                <input type="text" name="key" class="input" placeholder="~/.ssh/id_rsa">
+                            </fieldset>
+                            <fieldset class="fieldset" x-show="authMethod === 'password'" x-cloak>
+                                <label class="fieldset-label">Password</label>
+                                <input type="password" name="password" class="input">
+                            </fieldset>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Basic Settings -->
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-base mb-4">Basic Settings</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <fieldset class="fieldset">
                             <label class="fieldset-label">Name</label>
                             <input type="text" name="name" class="input" placeholder="my-storage" required pattern="[A-Za-z0-9_-]+">
                         </fieldset>
                         <fieldset class="fieldset">
-                            <label class="fieldset-label">Type</label>
-                            <select name="type" class="select">
-                                <option value="local">Local</option>
-                                <option value="ssh">SSH</option>
-                            </select>
-                        </fieldset>
-                        <fieldset class="fieldset">
                             <label class="fieldset-label">Base Path</label>
-                            <input type="text" name="base" class="input" value="/backups" placeholder="/backups">
+                            <div class="flex gap-2">
+                                <input type="text" name="base" id="wiz-base-path-input" value="/backups" class="input font-mono flex-1" placeholder="/backups">
+                                <button type="button" class="btn btn-outline"
+                                        x-show="remoteType === 'local' || remoteType === 'ssh'"
+                                        @click="
+                                            let url;
+                                            if (remoteType === 'ssh') {
+                                                let host = document.querySelector('#wiz-dest-form [name=host]')?.value;
+                                                if (!host) { alert('Enter a host first'); return; }
+                                                let params = new URLSearchParams({
+                                                    path: '/', target: 'wiz_base',
+                                                    host: host,
+                                                    port: document.querySelector('#wiz-dest-form [name=port]')?.value || '22',
+                                                    user: document.querySelector('#wiz-dest-form [name=user]')?.value || 'root',
+                                                    key: document.querySelector('#wiz-dest-form [name=key]')?.value || '',
+                                                    password: document.querySelector('#wiz-dest-form [name=password]')?.value || ''
+                                                });
+                                                url = '/api/browse/ssh?' + params.toString();
+                                            } else {
+                                                url = '/api/browse?path=/&target=wiz_base';
+                                            }
+                                            htmx.ajax('GET', url, {target: '#folder-browser-box-wiz_base', swap: 'innerHTML'}).then(() => {
+                                                let box = document.getElementById('folder-browser-box-wiz_base');
+                                                if (box.querySelector('.alert-error')) {
+                                                    alert(box.querySelector('.alert-error').textContent.trim());
+                                                    return;
+                                                }
+                                                document.getElementById('folder_browser_modal_wiz_base').showModal();
+                                            });
+                                        ">
+                                    Browse
+                                </button>
+                            </div>
                         </fieldset>
                         <fieldset class="fieldset">
-                            <label class="fieldset-label">Host (SSH only)</label>
-                            <input type="text" name="host" class="input" placeholder="192.168.1.100">
+                            <label class="fieldset-label">Bandwidth Limit (KB/s, 0=unlimited)</label>
+                            <input type="text" name="bwlimit" value="0" class="input" placeholder="0">
                         </fieldset>
                     </div>
-                    <div class="card-actions justify-between">
-                        <button type="button" class="btn btn-ghost" @click="step = 1">Back</button>
-                        <button type="submit" class="btn btn-primary">Next</button>
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>
+
+            <!-- S3 fields -->
+            <div x-show="remoteType === 's3'" x-cloak>
+                <div class="card bg-base-200 shadow mb-6">
+                    <div class="card-body">
+                        <h2 class="card-title text-base mb-4">S3 Configuration</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Bucket</label>
+                                <input type="text" name="s3_bucket" class="input">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Region</label>
+                                <input type="text" name="s3_region" class="input" placeholder="us-east-1">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Endpoint</label>
+                                <input type="text" name="s3_endpoint" class="input" placeholder="https://s3.amazonaws.com">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Access Key ID</label>
+                                <input type="text" name="s3_access_key_id" class="input">
+                            </fieldset>
+                            <fieldset class="fieldset md:col-span-2">
+                                <label class="fieldset-label">Secret Access Key</label>
+                                <input type="password" name="s3_secret_access_key" class="input">
+                            </fieldset>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GDrive fields -->
+            <div x-show="remoteType === 'gdrive'" x-cloak>
+                <div class="card bg-base-200 shadow mb-6">
+                    <div class="card-body">
+                        <h2 class="card-title text-base mb-4">Google Drive Configuration</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Service Account File</label>
+                                <input type="text" name="gdrive_sa_file" class="input" placeholder="/path/to/sa.json">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Root Folder ID</label>
+                                <input type="text" name="gdrive_root_folder_id" class="input">
+                            </fieldset>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Folder Browser Modal for base path -->
+            <dialog id="folder_browser_modal_wiz_base" class="modal"
+                    @folder-selected.window="
+                        if ($event.detail.target === 'wiz_base') {
+                            document.getElementById('wiz-base-path-input').value = $event.detail.path;
+                            document.getElementById('folder_browser_modal_wiz_base').close();
+                        }
+                    ">
+                <div class="modal-box w-11/12 max-w-lg">
+                    <h3 class="font-bold text-lg mb-3">Browse Folders</h3>
+                    <div id="folder-browser-box-wiz_base" class="folder-browser-box"></div>
+                    <div class="modal-action">
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('folder_browser_modal_wiz_base').close()">Close</button>
+                    </div>
+                </div>
+                <div class="modal-backdrop" onclick="document.getElementById('folder_browser_modal_wiz_base').close()"></div>
+            </dialog>
+
+            <!-- Actions -->
+            <div class="flex justify-between">
+                {% if remotes %}
+                <button type="button" class="btn btn-ghost" @click="step = 2">Skip &rarr;</button>
+                {% else %}
+                <span></span>
+                {% endif %}
+                <button type="submit" class="btn btn-primary">Test & Save Destination</button>
+            </div>
+        </form>
     </div>
 
-    <!-- Step 3: First Source -->
-    <div x-show="step === 3" x-cloak>
-        <div class="card bg-base-200 shadow">
-            <div class="card-body">
-                <h2 class="card-title">Configure Source</h2>
-                <p class="text-base-content/60 mb-4">What should be backed up?</p>
+    <!-- ==================== Step 2: Source ==================== -->
+    <div x-show="step === 2" x-cloak>
+        <form method="POST" action="{{ url_for('wizard.save_source') }}">
 
-                <form method="POST" action="{{ url_for('wizard.step', n=3) }}">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <fieldset class="fieldset">
-                            <label class="fieldset-label">Name</label>
-                            <input type="text" name="name" class="input" placeholder="my-server" required pattern="[A-Za-z0-9_-]+">
-                        </fieldset>
-                        <fieldset class="fieldset">
-                            <label class="fieldset-label">Destination</label>
-                            <select name="remote" class="select">
-                                <option value="">-- None --</option>
-                                {% for r in remotes %}
-                                <option value="{{ r }}">{{ r }}</option>
-                                {% endfor %}
-                            </select>
-                        </fieldset>
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-lg mb-2">Configure Source</h2>
+                    <p class="text-base-content/60 mb-4">What should be backed up?</p>
+                </div>
+            </div>
+
+            <!-- Source Type -->
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-base mb-4">Source Type</h2>
+                    <div class="flex flex-wrap gap-4 mb-4">
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="source_type" value="local" class="radio radio-primary" x-model="sourceType">
+                            <span>Local</span>
+                        </label>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="source_type" value="ssh" class="radio radio-primary" x-model="sourceType">
+                            <span>SSH</span>
+                        </label>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="source_type" value="s3" class="radio radio-primary" x-model="sourceType">
+                            <span>S3</span>
+                        </label>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="source_type" value="gdrive" class="radio radio-primary" x-model="sourceType">
+                            <span>Google Drive</span>
+                        </label>
                     </div>
-                    <fieldset class="fieldset mb-4">
-                        <label class="fieldset-label">Folders (one per line)</label>
-                        <textarea name="folders" class="textarea h-24 font-mono" placeholder="/home&#10;/etc&#10;/var/www"></textarea>
+
+                    <!-- SSH source fields -->
+                    <div x-show="sourceType === 'ssh'" x-cloak>
+                        <div class="divider text-sm">SSH Connection</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Host</label>
+                                <input type="text" name="source_host" class="input" placeholder="192.168.1.1">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Port</label>
+                                <input type="text" name="source_port" value="22" class="input" placeholder="22">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">User</label>
+                                <input type="text" name="source_user" value="root" class="input" placeholder="root">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Auth Method</label>
+                                <select name="source_auth_method" class="select" x-model="sourceAuthMethod">
+                                    <option value="key">SSH Key</option>
+                                    <option value="password">Password</option>
+                                </select>
+                            </fieldset>
+                            <fieldset class="fieldset" x-show="sourceAuthMethod === 'key'" x-cloak>
+                                <label class="fieldset-label">SSH Key Path</label>
+                                <input type="text" name="source_key" class="input" placeholder="~/.ssh/id_rsa">
+                            </fieldset>
+                            <fieldset class="fieldset" x-show="sourceAuthMethod === 'password'" x-cloak>
+                                <label class="fieldset-label">Password</label>
+                                <input type="password" name="source_password" class="input">
+                            </fieldset>
+                        </div>
+                    </div>
+
+                    <!-- S3 source fields -->
+                    <div x-show="sourceType === 's3'" x-cloak>
+                        <div class="divider text-sm">S3 Configuration</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Bucket</label>
+                                <input type="text" name="source_s3_bucket" class="input">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Region</label>
+                                <input type="text" name="source_s3_region" class="input" placeholder="us-east-1">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Endpoint</label>
+                                <input type="text" name="source_s3_endpoint" class="input" placeholder="https://s3.amazonaws.com">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Access Key ID</label>
+                                <input type="text" name="source_s3_access_key_id" class="input">
+                            </fieldset>
+                            <fieldset class="fieldset md:col-span-2">
+                                <label class="fieldset-label">Secret Access Key</label>
+                                <input type="password" name="source_s3_secret_access_key" class="input">
+                            </fieldset>
+                        </div>
+                    </div>
+
+                    <!-- GDrive source fields -->
+                    <div x-show="sourceType === 'gdrive'" x-cloak>
+                        <div class="divider text-sm">Google Drive Configuration</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Service Account File</label>
+                                <input type="text" name="source_gdrive_sa_file" class="input" placeholder="/path/to/sa.json">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Root Folder ID</label>
+                                <input type="text" name="source_gdrive_root_folder_id" class="input">
+                            </fieldset>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Basic Settings -->
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-base mb-4">Basic Settings</h2>
+                    <fieldset class="fieldset max-w-md">
+                        <label class="fieldset-label">Name</label>
+                        <input type="text" name="name" class="input" placeholder="my-server" required pattern="[A-Za-z0-9_-]+">
                     </fieldset>
-                    <div class="card-actions justify-between">
-                        <button type="button" class="btn btn-ghost" @click="step = 2">Back</button>
-                        <button type="submit" class="btn btn-primary">Next</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+                    <fieldset class="fieldset mt-2">
+                        <label class="fieldset-label">Folders</label>
+                        <input type="hidden" name="folders" :value="folderList.join('\n')">
+                        <div class="flex flex-wrap gap-2 mb-2 min-h-[2rem]">
+                            <template x-for="(folder, i) in folderList" :key="i">
+                                <span class="badge badge-lg gap-1 font-mono">
+                                    <span x-text="folder"></span>
+                                    <button type="button" class="btn btn-ghost btn-xs btn-circle" @click="removeFolder(i)">&times;</button>
+                                </span>
+                            </template>
+                            <span x-show="folderList.length === 0" class="text-base-content/40 text-sm">No folders added</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" class="input input-sm font-mono flex-1" placeholder="/path/to/folder" x-ref="folderInput"
+                                   @keydown.enter.prevent="addFolder($refs.folderInput.value); $refs.folderInput.value = ''">
+                            <button type="button" class="btn btn-outline btn-sm" @click="addFolder($refs.folderInput.value); $refs.folderInput.value = ''">Add</button>
+                            <button type="button" class="btn btn-outline btn-sm"
+                                    x-show="sourceType === 'local' || sourceType === 'ssh'"
+                                    @click="
+                                        let url;
+                                        if (sourceType === 'ssh') {
+                                            let host = document.querySelector('[name=source_host]')?.value;
+                                            if (!host) { alert('Enter Source Host first'); return; }
+                                            let params = new URLSearchParams({
+                                                path: '/',
+                                                target: 'wiz_folders',
+                                                host: host,
+                                                port: document.querySelector('[name=source_port]').value || '22',
+                                                user: document.querySelector('[name=source_user]').value || 'root',
+                                                key: document.querySelector('[name=source_key]')?.value || '',
+                                                password: document.querySelector('[name=source_password]')?.value || ''
+                                            });
+                                            url = '/api/browse/ssh?' + params.toString();
+                                        } else {
+                                            url = '/api/browse?path=/&target=wiz_folders';
+                                        }
+                                        htmx.ajax('GET', url, {target: '#folder-browser-box-wiz_folders', swap: 'innerHTML'}).then(() => {
+                                            let box = document.getElementById('folder-browser-box-wiz_folders');
+                                            if (box.querySelector('.alert-error')) {
+                                                alert(box.querySelector('.alert-error').textContent.trim());
+                                                return;
+                                            }
+                                            document.getElementById('folder_browser_modal_wiz_folders').showModal();
+                                        });
+                                    ">
+                                Browse
+                            </button>
+                        </div>
+                    </fieldset>
 
-    <!-- Step 4: First Schedule -->
-    <div x-show="step === 4" x-cloak>
-        <div class="card bg-base-200 shadow">
-            <div class="card-body">
-                <h2 class="card-title">Configure Schedule</h2>
-                <p class="text-base-content/60 mb-4">When should backups run?</p>
+                    <!-- Folder Browser Modal -->
+                    <dialog id="folder_browser_modal_wiz_folders" class="modal"
+                            @folder-selected.window="
+                                if ($event.detail.target === 'wiz_folders') {
+                                    addFolder($event.detail.path);
+                                    document.getElementById('folder_browser_modal_wiz_folders').close();
+                                }
+                            ">
+                        <div class="modal-box w-11/12 max-w-lg">
+                            <h3 class="font-bold text-lg mb-3">Browse Folders</h3>
+                            <div id="folder-browser-box-wiz_folders" class="folder-browser-box"></div>
+                            <div class="modal-action">
+                                <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('folder_browser_modal_wiz_folders').close()">Close</button>
+                            </div>
+                        </div>
+                        <div class="modal-backdrop" onclick="document.getElementById('folder_browser_modal_wiz_folders').close()"></div>
+                    </dialog>
 
-                <form method="POST" action="{{ url_for('wizard.step', n=4) }}">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                         <fieldset class="fieldset">
-                            <label class="fieldset-label">Name</label>
-                            <input type="text" name="name" class="input" placeholder="nightly" required pattern="[A-Za-z0-9_-]+">
+                            <label class="fieldset-label">Exclude patterns (one per line)</label>
+                            <textarea name="exclude" class="textarea h-20 font-mono" placeholder="*.tmp&#10;.cache/"></textarea>
                         </fieldset>
                         <fieldset class="fieldset">
-                            <label class="fieldset-label">Schedule</label>
-                            <select name="schedule" class="select">
+                            <label class="fieldset-label">Include patterns (one per line)</label>
+                            <textarea name="include" class="textarea h-20 font-mono"></textarea>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MySQL Settings -->
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <div class="flex items-center gap-4 mb-4">
+                        <h2 class="card-title text-base">MySQL Backup</h2>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="checkbox" name="mysql_enabled" class="toggle toggle-primary toggle-sm"
+                                   x-model="mysqlEnabled" :true-value="true" :false-value="false">
+                            <span>Enable</span>
+                        </label>
+                    </div>
+
+                    <div x-show="mysqlEnabled" x-cloak>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Mode</label>
+                                <select name="mysql_mode" class="select">
+                                    <option value="all">All databases</option>
+                                    <option value="specific">Specific databases</option>
+                                </select>
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Host</label>
+                                <input type="text" name="mysql_host" value="localhost" class="input" placeholder="localhost">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Port</label>
+                                <input type="text" name="mysql_port" value="3306" class="input" placeholder="3306">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">User</label>
+                                <input type="text" name="mysql_user" class="input" placeholder="root">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Password</label>
+                                <input type="password" name="mysql_password" class="input">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Databases (comma-separated)</label>
+                                <input type="text" name="mysql_databases" class="input" placeholder="db1,db2">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Exclude databases</label>
+                                <input type="text" name="mysql_exclude" class="input" placeholder="information_schema,performance_schema">
+                            </fieldset>
+                            <fieldset class="fieldset md:col-span-2">
+                                <label class="fieldset-label">Extra mysqldump options</label>
+                                <input type="text" name="mysql_extra_opts" value="--single-transaction --routines --triggers" class="input">
+                            </fieldset>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hooks -->
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-base mb-4">Hooks</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Pre-backup hook</label>
+                            <input type="text" name="pre_hook" class="input font-mono" placeholder="/path/to/script.sh">
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Post-backup hook</label>
+                            <input type="text" name="post_hook" class="input font-mono" placeholder="/path/to/script.sh">
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <label class="label cursor-pointer gap-3 justify-start p-0">
+                        <input type="checkbox" name="enabled" class="toggle toggle-success" checked>
+                        <span class="font-medium">Enabled</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-between">
+                <button type="button" class="btn btn-ghost" @click="step = 1">&larr; Back</button>
+                <div class="flex gap-2">
+                    {% if targets %}
+                    <button type="button" class="btn btn-ghost" @click="step = 3">Skip &rarr;</button>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">Test & Save Source</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ==================== Step 3: Schedule ==================== -->
+    <div x-show="step === 3" x-cloak>
+        <form method="POST" action="{{ url_for('wizard.save_schedule') }}"
+              @submit.prevent="
+                if (document.querySelectorAll('#wiz-schedule-form input[name=targets]:checked').length === 0) { alert('Select at least one source.'); return; }
+                if (document.querySelectorAll('#wiz-schedule-form input[name=remotes]:checked').length === 0) { alert('Select at least one destination.'); return; }
+                $el.submit();
+              "
+              id="wiz-schedule-form">
+
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-lg mb-2">Configure Schedule</h2>
+                    <p class="text-base-content/60 mb-4">When should backups run?</p>
+                </div>
+            </div>
+
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-base mb-4">Schedule Settings</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Name</label>
+                            <input type="text" name="name" class="input" placeholder="nightly-backup" required pattern="[A-Za-z0-9_-]+">
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Schedule Type</label>
+                            <select x-model="scheduleType" name="schedule" class="select">
+                                <option value="hourly">Hourly</option>
                                 <option value="daily">Daily</option>
                                 <option value="weekly">Weekly</option>
                                 <option value="monthly">Monthly</option>
+                                <option value="custom">Custom (Cron)</option>
                             </select>
                         </fieldset>
-                        <fieldset class="fieldset">
+
+                        <!-- Hourly: interval -->
+                        <fieldset class="fieldset" x-show="scheduleType === 'hourly'" x-cloak>
+                            <label class="fieldset-label">Every N Hours</label>
+                            <select name="hourly_interval" class="select">
+                                {% for h in [1, 2, 3, 4, 6, 8, 12] %}
+                                <option value="{{ h }}">Every {{ h }} hour{{ 's' if h > 1 else '' }}</option>
+                                {% endfor %}
+                            </select>
+                        </fieldset>
+
+                        <!-- Daily / Weekly / Monthly: time field -->
+                        <fieldset class="fieldset" x-show="scheduleType !== 'custom' && scheduleType !== 'hourly'" x-cloak>
                             <label class="fieldset-label">Time</label>
-                            <input type="time" name="time" class="input" value="02:00">
+                            <input type="time" name="time" value="02:00" class="input">
                         </fieldset>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+
+                        <!-- Daily: day of week checkboxes -->
+                        <fieldset class="fieldset md:col-span-2" x-show="scheduleType === 'daily'" x-cloak>
+                            <label class="fieldset-label">Days of Week</label>
+                            <div class="flex flex-wrap gap-3">
+                                {% for d, label in [('0','Sun'),('1','Mon'),('2','Tue'),('3','Wed'),('4','Thu'),('5','Fri'),('6','Sat')] %}
+                                <label class="label cursor-pointer gap-1">
+                                    <input type="checkbox" name="day" value="{{ d }}" class="checkbox checkbox-primary checkbox-sm">
+                                    <span>{{ label }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </fieldset>
+
+                        <!-- Weekly: day of week select -->
+                        <fieldset class="fieldset" x-show="scheduleType === 'weekly'" x-cloak>
+                            <label class="fieldset-label">Day of Week</label>
+                            <select name="weekly_day" class="select">
+                                {% for val, label in [('0','Sunday'),('1','Monday'),('2','Tuesday'),('3','Wednesday'),('4','Thursday'),('5','Friday'),('6','Saturday')] %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </fieldset>
+
+                        <!-- Monthly: day of month select -->
+                        <fieldset class="fieldset" x-show="scheduleType === 'monthly'" x-cloak>
+                            <label class="fieldset-label">Day of Month</label>
+                            <select name="monthly_day" class="select">
+                                {% for d in [1, 7, 14, 21, 28] %}
+                                <option value="{{ d }}">{{ d }}{{ 'st' if d in [1, 21] else ('nd' if d == 2 else 'th') }}</option>
+                                {% endfor %}
+                            </select>
+                        </fieldset>
+
+                        <!-- Custom: cron expression -->
+                        <fieldset class="fieldset md:col-span-2" x-show="scheduleType === 'custom'" x-cloak>
+                            <label class="fieldset-label">Cron Expression</label>
+                            <input type="text" name="cron" class="input font-mono" placeholder="0 2 * * *">
+                            <label class="label"><span class="fieldset-label text-xs text-base-content/40">Format: minute hour day month weekday</span></label>
+                        </fieldset>
+
+                        <!-- Retention count override -->
                         <fieldset class="fieldset">
-                            <label class="fieldset-label">Sources</label>
-                            <input type="text" name="targets" class="input" placeholder="all" value="all">
-                        </fieldset>
-                        <fieldset class="fieldset">
-                            <label class="fieldset-label">Destinations</label>
-                            <input type="text" name="remotes" class="input" placeholder="all" value="all">
+                            <label class="fieldset-label">Retention Count</label>
+                            <input type="text" name="retention_count" class="input" placeholder="Leave empty for global default">
+                            <label class="label"><span class="fieldset-label text-xs text-base-content/40">Override global retention count for this schedule</span></label>
                         </fieldset>
                     </div>
-                    <div class="card-actions justify-between">
-                        <button type="button" class="btn btn-ghost" @click="step = 3">Back</button>
-                        <button type="submit" class="btn btn-primary">Next</button>
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="card bg-base-200 shadow">
+                    <div class="card-body">
+                        <h2 class="card-title text-base mb-4">Sources</h2>
+                        {% if targets %}
+                        <div class="flex flex-col gap-2">
+                            {% for t in targets %}
+                            <label class="label cursor-pointer gap-3 justify-start p-0">
+                                <input type="checkbox" name="targets" value="{{ t }}" class="toggle toggle-primary toggle-sm" checked>
+                                <span>{{ t }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <span class="text-base-content/40 text-sm">No sources configured yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card bg-base-200 shadow">
+                    <div class="card-body">
+                        <h2 class="card-title text-base mb-4">Destinations</h2>
+                        {% if remotes %}
+                        <div class="flex flex-col gap-2">
+                            {% for r in remotes %}
+                            <label class="label cursor-pointer gap-3 justify-start p-0">
+                                <input type="checkbox" name="remotes" value="{{ r }}" class="toggle toggle-primary toggle-sm" checked>
+                                <span>{{ r }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <span class="text-base-content/40 text-sm">No destinations configured yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <label class="label cursor-pointer gap-3 justify-start p-0">
+                        <input type="checkbox" name="active" class="toggle toggle-success" checked>
+                        <span class="font-medium">Active</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-between">
+                <button type="button" class="btn btn-ghost" @click="step = 2">&larr; Back</button>
+                <div class="flex gap-2">
+                    {% if schedules %}
+                    <button type="button" class="btn btn-ghost" @click="step = 4">Skip &rarr;</button>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">Save Schedule</button>
+                </div>
+            </div>
+        </form>
     </div>
 
-    <!-- Step 5: Summary -->
-    <div x-show="step === 5" x-cloak>
-        <div class="card bg-base-200 shadow">
+    <!-- ==================== Step 4: Done ==================== -->
+    <div x-show="step === 4" x-cloak>
+        <div class="card bg-base-200 shadow mb-6">
             <div class="card-body text-center">
                 <h2 class="card-title justify-center text-2xl mb-4">Setup Complete!</h2>
                 <p class="text-base-content/60 mb-6">Your backup system is configured. You can further customize sources, destinations, and schedules from the main interface.</p>
@@ -178,7 +720,14 @@
                     </div>
                 </div>
 
-                <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+                <div class="flex justify-center gap-4">
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost btn-lg">Go to Dashboard</a>
+                    {% if targets and remotes %}
+                    <form method="POST" action="{{ url_for('wizard.run_backup') }}" class="inline">
+                        <button type="submit" class="btn btn-primary btn-lg">Run First Backup</button>
+                    </form>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>

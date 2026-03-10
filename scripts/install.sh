@@ -201,21 +201,12 @@ enable_web="y"
 read -rp "Enable web dashboard? (y/n) [y]: " enable_web </dev/tty || true
 enable_web="${enable_web:-y}"
 if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
-    # Set up web credentials (preserve existing values)
-    web_user="$(grep '^WEB_USER=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_USER="//' | sed 's/"$//' || true)"
-    web_user="${web_user:-admin}"
+    # Set up web API key (preserve existing value)
     api_key="$(grep '^WEB_API_KEY=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_API_KEY="//' | sed 's/"$//' || true)"
     if [[ -z "$api_key" ]]; then
         api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
     fi
-    if grep -q "^WEB_USER=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
-        sed -i "s|^WEB_USER=.*|WEB_USER=\"${web_user}\"|" "$CONFIG_DIR/gniza.conf"
-    else
-        echo "WEB_USER=\"${web_user}\"" >> "$CONFIG_DIR/gniza.conf"
-    fi
-    if grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
-        : # Keep existing key
-    else
+    if ! grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
         echo "WEB_API_KEY=\"${api_key}\"" >> "$CONFIG_DIR/gniza.conf"
     fi
     # Ask about network access
@@ -231,7 +222,6 @@ if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
     fi
 
     WEB_INSTALLED="yes"
-    WEB_USER="$web_user"
     WEB_PASS="$api_key"
     WEB_HOST="$web_host"
     # Install systemd service
@@ -329,8 +319,7 @@ if [ "${WEB_INSTALLED:-}" = "yes" ]; then
     else
         echo "  URL:      http://$(hostname -I 2>/dev/null | awk '{print $1}'):2323"
     fi
-    echo "  User:     $WEB_USER"
-    echo "  Password: $WEB_PASS"
+    echo "  API Key:  $WEB_PASS"
     echo ""
 fi
 echo "Get started:"

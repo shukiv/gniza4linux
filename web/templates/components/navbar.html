@@ -107,6 +107,14 @@
         </a>
     </li>
     <li>
+        <a href="{{ url_for('guide.index') }}" class="{{ 'menu-active' if active_page == 'guide' else '' }}"
+           :class="$store.sidebar.collapsed ? 'justify-center tooltip tooltip-right' : ''"
+           :data-tip="$store.sidebar.collapsed ? 'Guide' : null">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422A12.083 12.083 0 0121 12.75c0 4.97-4.03 9-9 9s-9-4.03-9-9c0-.866.12-1.703.34-2.497L12 14z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7.5"/></svg>
+            <span x-show="!$store.sidebar.collapsed" x-cloak>Guide</span>
+        </a>
+    </li>
+    <li>
         <a href="{{ url_for('docs.index') }}" class="{{ 'menu-active' if active_page == 'docs' else '' }}"
            :class="$store.sidebar.collapsed ? 'justify-center tooltip tooltip-right' : ''"
            :data-tip="$store.sidebar.collapsed ? 'Docs' : null">

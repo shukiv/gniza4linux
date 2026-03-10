@@ -213,3 +213,21 @@
     </div>
 </div>
 {% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Dashboard</h3>
+<p class="mb-3 text-base-content/70">Overview of your backup system at a glance.</p>
+<h4 class="font-semibold text-sm mb-1">Stats</h4>
+<ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li><strong>Sources</strong> — What you're backing up (folders, databases).</li>
+    <li><strong>Destinations</strong> — Where backups are stored (SSH, local, S3, etc.).</li>
+    <li><strong>Schedules</strong> — Automated backup timing.</li>
+    <li><strong>Last Backup</strong> — Status of the most recent job.</li>
+</ul>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>Click stat cards or table headers to navigate to configuration pages.</li>
+    <li>Use <strong>Edit</strong> buttons to modify sources, destinations, or schedules.</li>
+    <li>Recent Jobs shows the last completed backups — click a job label to view its full log.</li>
+</ul>
+{% endblock %}

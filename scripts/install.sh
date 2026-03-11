@@ -131,21 +131,40 @@ if command -v python3 &>/dev/null; then
                 || warn "Could not install pip via package manager."
         fi
     fi
+    _deps_installed=false
+    # Try pip first
     if python3 -m pip --version &>/dev/null; then
-        info "Installing Python dependencies..."
+        info "Installing Python dependencies via pip..."
         _pip_quiet="--quiet"
         $DEBUG && _pip_quiet=""
         if python3 -m pip install --break-system-packages $_pip_quiet textual textual-serve flask waitress 2>/dev/null; then
             info "Python dependencies installed."
+            _deps_installed=true
         elif python3 -m pip install $_pip_quiet textual textual-serve flask waitress 2>/dev/null; then
             info "Python dependencies installed."
-        else
-            warn "Could not install Python dependencies. TUI/web mode may not work."
-            warn "Install manually: pip3 install textual textual-serve flask"
+            _deps_installed=true
         fi
-    else
-        warn "pip is not available. TUI/web mode may not work."
-        warn "Install pip and run: pip3 install textual textual-serve flask"
+    fi
+    # Fallback: install via apt (Debian/Ubuntu)
+    if ! $_deps_installed && command -v apt-get &>/dev/null; then
+        info "pip unavailable or failed, trying apt..."
+        _apt_cmd="apt-get install -y python3-flask python3-waitress python3-textual"
+        if [[ $EUID -eq 0 ]]; then
+            if $_apt_cmd 2>/dev/null; then
+                info "Python dependencies installed via apt."
+                _deps_installed=true
+            fi
+        else
+            if sudo $_apt_cmd 2>/dev/null; then
+                info "Python dependencies installed via apt."
+                _deps_installed=true
+            fi
+        fi
+    fi
+    if ! $_deps_installed; then
+        warn "Could not install Python dependencies. TUI/web mode may not work."
+        warn "Install manually: apt install python3-flask python3-waitress python3-textual"
+        warn "  or: pip3 install --break-system-packages textual textual-serve flask waitress"
     fi
 else
     warn "python3 not found. TUI mode will not be available."

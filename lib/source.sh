@@ -74,6 +74,7 @@ _rsync_from_source_ssh() {
     while (( attempt < max_retries )); do
         ((attempt++)) || true
         log_debug "rsync (source pull) attempt $attempt/$max_retries: $source_spec -> $local_dir"
+        log_info "CMD: rsync ${rsync_opts[*]} -e '$rsync_ssh' $source_spec $local_dir"
 
         local rsync_cmd=(rsync "${rsync_opts[@]}" -e "$rsync_ssh" "$source_spec" "$local_dir")
         if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then

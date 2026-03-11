@@ -25,6 +25,11 @@ _snaplog_tee() {
                     printf '%s\n' "$buf" > "$progress_file"
                 else
                     echo "$buf" >&2
+                    # Also append non-progress output to transfer log for ssh→ssh
+                    # (which uses --verbose instead of --log-file)
+                    if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+                        echo "$buf" >> "$_TRANSFER_LOG"
+                    fi
                 fi
                 buf=""
             fi
@@ -152,25 +157,22 @@ snaplog_upload() {
 # When GNIZA_DAEMON_TRACKED=1, LOG_FILE is empty but stdout goes to the job log.
 _snaplog_append_transfer_log() {
     [[ -z "${_TRANSFER_LOG:-}" || ! -s "$_TRANSFER_LOG" ]] && return 0
-    # Extract filenames from rsync log format:
+    # Count transferred files from rsync log format:
     # "2026/03/09 05:03:07 [719348] <f+++++++++ path/to/file"
     local count=0
-    local files=()
     while IFS= read -r line; do
         if [[ "$line" =~ \[([0-9]+)\]\ [\<\>][fd][[:alnum:].+]+\ (.+) ]]; then
-            files+=("${BASH_REMATCH[2]}")
             (( count++ ))
         fi
     done < "$_TRANSFER_LOG"
-    if (( count > 0 )); then
-        local output
-        output=$(printf '\n--- Transferred files (%d) ---\n' "$count"; printf '%s\n' "${files[@]}"; echo "--- End of transferred files ---")
-        if [[ -n "${LOG_FILE:-}" ]]; then
-            echo "$output" >> "$LOG_FILE"
-        else
-            # Daemon-tracked: stdout is redirected to the job log file
-            echo "$output"
-        fi
+    # Append full transfer log content (timestamps, change indicators, separators)
+    local output
+    output=$(printf '\n=== Transfer details (%d files) ===\n' "$count"; cat "$_TRANSFER_LOG"; echo "=== End transfer details ===")
+    if [[ -n "${LOG_FILE:-}" ]]; then
+        echo "$output" >> "$LOG_FILE"
+    else
+        # Daemon-tracked: stdout is redirected to the job log file
+        echo "$output"
     fi
 }
 

@@ -446,10 +446,11 @@ Requires `sshpass` for password auth.
 
 ##### S3 Source
 
-Pull files from an S3 or S3-compatible bucket (MinIO, DigitalOcean Spaces, Backblaze B2).
+Pull files from an S3 or S3-compatible bucket (AWS, Backblaze B2, Wasabi, MinIO, DigitalOcean Spaces).
 
 ```ini
 TARGET_SOURCE_TYPE="s3"
+TARGET_SOURCE_S3_PROVIDER="AWS"
 TARGET_SOURCE_S3_BUCKET="my-app-data"
 TARGET_SOURCE_S3_REGION="us-east-1"
 TARGET_SOURCE_S3_ACCESS_KEY_ID="AKIA..."
@@ -458,8 +459,20 @@ TARGET_SOURCE_S3_ENDPOINT=""
 TARGET_FOLDERS="/uploads,/media"
 ```
 
-Set `TARGET_SOURCE_S3_ENDPOINT` for S3-compatible providers:
+**S3 Provider** (`TARGET_SOURCE_S3_PROVIDER`): Controls the rclone provider setting for correct authentication and signing. Valid values:
+
+| Value | Provider | Default Endpoint |
+|---|---|---|
+| `AWS` | Amazon S3 (default) | Uses AWS default |
+| `Backblaze` | Backblaze B2 | `https://s3.us-west-004.backblazeb2.com` |
+| `Wasabi` | Wasabi | `https://s3.wasabisys.com` |
+| `Other` | Any S3-compatible | User-provided endpoint |
+
+The web UI and TUI auto-fill the endpoint when selecting Backblaze or Wasabi. Adjust the region in the endpoint URL to match your bucket's region.
+
+For other S3-compatible providers, set `S3_PROVIDER="Other"` and provide the endpoint:
 ```ini
+TARGET_SOURCE_S3_PROVIDER="Other"
 TARGET_SOURCE_S3_ENDPOINT="https://nyc3.digitaloceanspaces.com"
 ```
 
@@ -563,15 +576,53 @@ REMOTE_BASE="/mnt/backup-drive"
 
 #### S3 Destination
 
-Store snapshots in an S3 or S3-compatible bucket.
+Store snapshots in an S3 or S3-compatible bucket (AWS, Backblaze B2, Wasabi, or others).
 
 ```ini
 REMOTE_TYPE="s3"
+S3_PROVIDER="AWS"
 S3_BUCKET="my-backups"
 S3_ACCESS_KEY_ID="AKIA..."
 S3_SECRET_ACCESS_KEY="..."
 S3_REGION="us-east-1"
 S3_ENDPOINT=""
+REMOTE_BASE="/backups"
+```
+
+**S3 Provider** (`S3_PROVIDER`): Controls the rclone provider setting for correct authentication and signing. Valid values:
+
+| Value | Provider | Default Endpoint |
+|---|---|---|
+| `AWS` | Amazon S3 (default) | Uses AWS default |
+| `Backblaze` | Backblaze B2 | `https://s3.us-west-004.backblazeb2.com` |
+| `Wasabi` | Wasabi | `https://s3.wasabisys.com` |
+| `Other` | Any S3-compatible | User-provided endpoint |
+
+The web UI and TUI auto-fill the endpoint when selecting Backblaze or Wasabi. Adjust the region in the endpoint URL to match your bucket's region.
+
+**Backblaze B2 example**:
+
+```ini
+REMOTE_TYPE="s3"
+S3_PROVIDER="Backblaze"
+S3_BUCKET="my-b2-bucket"
+S3_ACCESS_KEY_ID="your-key-id"
+S3_SECRET_ACCESS_KEY="your-application-key"
+S3_REGION="us-west-004"
+S3_ENDPOINT="https://s3.us-west-004.backblazeb2.com"
+REMOTE_BASE="/backups"
+```
+
+**Wasabi example**:
+
+```ini
+REMOTE_TYPE="s3"
+S3_PROVIDER="Wasabi"
+S3_BUCKET="my-wasabi-bucket"
+S3_ACCESS_KEY_ID="your-key"
+S3_SECRET_ACCESS_KEY="your-secret"
+S3_REGION="us-east-1"
+S3_ENDPOINT="https://s3.wasabisys.com"
 REMOTE_BASE="/backups"
 ```
 

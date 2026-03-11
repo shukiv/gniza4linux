@@ -24,6 +24,13 @@ def main():
         serve(app, host=host, port=port, _quiet=True)
     except ImportError:
         app.run(host=host, port=port, debug=False)
+    except OSError as e:
+        if e.errno == 98:
+            print(f"Error: Port {port} is already in use. Another gniza-web instance may be running.")
+            print(f"  Stop it with: systemctl --user stop gniza-web")
+            print(f"  Or use a different port: gniza web --port=2324")
+            sys.exit(1)
+        raise
 
 
 if __name__ == "__main__":

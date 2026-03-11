@@ -71,7 +71,7 @@ rsync_to_remote() {
         ((attempt++)) || true
         log_debug "rsync attempt $attempt/$max_retries: $source_dir -> $remote_dest"
 
-        log_debug "CMD: rsync ${rsync_opts[*]} $source_dir ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}"
+        log_info "CMD: rsync ${rsync_opts[*]} $source_dir ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}"
         local rsync_cmd=(rsync "${rsync_opts[@]}" "$source_dir" "${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}")
         if _is_password_mode; then
             export SSHPASS="$REMOTE_PASSWORD"
@@ -176,6 +176,7 @@ rsync_local() {
     while (( attempt < max_retries )); do
         ((attempt++)) || true
         log_debug "rsync (local) attempt $attempt/$max_retries: $source_dir -> $local_dest"
+        log_info "CMD: rsync ${rsync_opts[*]} $source_dir $local_dest"
 
         local rc=0
         if [[ -n "${_TRANSFER_LOG:-}" ]]; then
@@ -358,6 +359,7 @@ rsync_ssh_to_ssh() {
     while (( attempt < max_retries )); do
         ((attempt++)) || true
         log_debug "rsync (ssh→ssh) attempt $attempt/$max_retries: $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}"
+        log_info "CMD (ssh→ssh): rsync ${ropts[*]} -e '...' $source_spec $remote_dest (via ${REMOTE_USER}@${REMOTE_HOST})"
 
         if _is_password_mode; then
             export SSHPASS="$REMOTE_PASSWORD"

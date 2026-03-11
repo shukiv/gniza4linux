@@ -14,6 +14,7 @@
 <form method="POST" action="{{ url_for('targets.save') }}"
       x-data="{
           sourceType: '{{ target.source_type }}',
+          sourceS3Provider: '{{ target.source_s3_provider or "AWS" }}',
           mysqlEnabled: {{ 'true' if target.mysql_enabled == 'yes' else 'false' }},
           sourceAuthMethod: '{{ target.source_auth_method or 'key' }}',
           folderList: window._targetFolders || [],
@@ -85,6 +86,24 @@
             <div x-show="sourceType === 's3'" x-cloak>
                 <div class="divider text-sm">S3 Configuration</div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Provider</label>
+                        <select name="source_s3_provider" class="select" x-model="sourceS3Provider"
+                                @change="
+                                    if (sourceS3Provider === 'Backblaze') {
+                                        $el.closest('.grid').querySelector('[name=source_s3_endpoint]').value = 'https://s3.us-west-004.backblazeb2.com';
+                                    } else if (sourceS3Provider === 'Wasabi') {
+                                        $el.closest('.grid').querySelector('[name=source_s3_endpoint]').value = 'https://s3.wasabisys.com';
+                                    } else if (sourceS3Provider === 'AWS') {
+                                        $el.closest('.grid').querySelector('[name=source_s3_endpoint]').value = '';
+                                    }
+                                ">
+                            <option value="AWS">AWS</option>
+                            <option value="Backblaze">Backblaze B2</option>
+                            <option value="Wasabi">Wasabi</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </fieldset>
                     <fieldset class="fieldset">
                         <label class="fieldset-label">Bucket</label>
                         <input type="text" name="source_s3_bucket" value="{{ target.source_s3_bucket }}" class="input">

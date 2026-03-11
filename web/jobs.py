@@ -178,7 +178,7 @@ class WebJobManager:
             pkill_pattern = f"rsync.*{remote['base']}" if remote["base"] else "rsync --fake-super"
             ssh_cmd = ["ssh", "-p", remote["port"],
                        "-o", "ConnectTimeout=5",
-                       "-o", "StrictHostKeyChecking=accept-new"]
+                       "-o", "StrictHostKeyChecking=no"]
             if remote["auth_method"] != "password":
                 ssh_cmd += ["-o", "BatchMode=yes"]
                 if remote["key"]:

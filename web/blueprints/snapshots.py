@@ -120,7 +120,7 @@ def _build_rclone_conf(remote_conf):
             content = (
                 "[remote]\n"
                 "type = s3\n"
-                "provider = AWS\n"
+                f"provider = {remote_conf.get('S3_PROVIDER', 'AWS')}\n"
                 f"access_key_id = {remote_conf.get('S3_ACCESS_KEY_ID', '')}\n"
                 f"secret_access_key = {remote_conf.get('S3_SECRET_ACCESS_KEY', '')}\n"
                 f"region = {remote_conf.get('S3_REGION', 'us-east-1')}\n"

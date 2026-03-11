@@ -16,6 +16,7 @@ from web.ssh_utils import ssh_cmd
 bp = Blueprint("remotes", __name__, url_prefix="/destinations")
 
 _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
+_VALID_S3_PROVIDERS = {"AWS", "Backblaze", "Wasabi", "Other"}
 
 
 def _test_remote(remote):
@@ -70,6 +71,7 @@ def _test_remote(remote):
             endpoint=remote.s3_endpoint,
             access_key_id=remote.s3_access_key_id,
             secret_access_key=remote.s3_secret_access_key,
+            provider=remote.s3_provider,
         )
 
     if remote.type == "gdrive":
@@ -154,6 +156,7 @@ def save():
         password=form.get("password", ""),
         base=form.get("base", "/backups"),
         bwlimit=form.get("bwlimit", "0"),
+        s3_provider=form.get("s3_provider", "AWS") if form.get("s3_provider", "AWS") in _VALID_S3_PROVIDERS else "AWS",
         s3_bucket=form.get("s3_bucket", ""),
         s3_region=form.get("s3_region", "us-east-1"),
         s3_endpoint=form.get("s3_endpoint", ""),

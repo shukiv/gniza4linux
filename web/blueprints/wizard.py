@@ -19,6 +19,7 @@ bp = Blueprint("wizard", __name__, url_prefix="/wizard")
 
 _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 _VALID_REMOTE_TYPES = {"ssh", "local", "s3", "gdrive"}
+_VALID_S3_PROVIDERS = {"AWS", "Backblaze", "Wasabi", "Other"}
 _VALID_SOURCE_TYPES = {"local", "ssh", "s3", "gdrive"}
 _VALID_SCHEDULE_TYPES = {"hourly", "daily", "weekly", "monthly", "custom"}
 
@@ -86,6 +87,7 @@ def save_destination():
         password=form.get("password", ""),
         base=form.get("base", "/backups"),
         bwlimit=form.get("bwlimit", "0"),
+        s3_provider=form.get("s3_provider", "AWS") if form.get("s3_provider", "AWS") in _VALID_S3_PROVIDERS else "AWS",
         s3_bucket=form.get("s3_bucket", ""),
         s3_region=form.get("s3_region", "us-east-1"),
         s3_endpoint=form.get("s3_endpoint", ""),
@@ -141,6 +143,7 @@ def save_source():
         source_s3_bucket=form.get("source_s3_bucket", ""),
         source_s3_region=form.get("source_s3_region", "us-east-1"),
         source_s3_endpoint=form.get("source_s3_endpoint", ""),
+        source_s3_provider=form.get("source_s3_provider", "AWS") if form.get("source_s3_provider", "AWS") in _VALID_S3_PROVIDERS else "AWS",
         source_s3_access_key_id=form.get("source_s3_access_key_id", ""),
         source_s3_secret_access_key=form.get("source_s3_secret_access_key", ""),
         source_gdrive_sa_file=form.get("source_gdrive_sa_file", ""),

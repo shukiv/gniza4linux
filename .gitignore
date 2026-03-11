@@ -4,3 +4,9 @@
 .DS_Store
 __pycache__/
 *.pyc
+
+# Non-essential files kept locally only
+FEATURES.md
+logo.txt
+gniza-logo.png
+tests/

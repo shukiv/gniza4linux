@@ -8,7 +8,7 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 
 - **Stand-alone or backup server** — Back up the local machine, or pull from remote servers without installing anything on them
 - **Remote sources** — Pull files from SSH servers, S3 buckets, or Google Drive before backing up
-- **Multiple destination types** — Push to SSH, local drives (USB/NFS), S3, or Google Drive
+- **Multiple destination types** — Push to SSH, local drives (USB/NFS), S3 (AWS, Backblaze B2, Wasabi), or Google Drive
 - **Incremental snapshots** — rsync `--link-dest` hardlink deduplication across snapshots
 - **MySQL/MariaDB backup** — Dump all or selected databases with grants, routines, and triggers
 - **Atomic snapshots** — `.partial` directory during transfer, renamed on success
@@ -301,6 +301,7 @@ TARGET_SOURCE_KEY=""
 TARGET_SOURCE_PASSWORD=""
 
 # S3 source
+TARGET_SOURCE_S3_PROVIDER="AWS"  # AWS | Backblaze | Wasabi | Other
 TARGET_SOURCE_S3_BUCKET=""
 TARGET_SOURCE_S3_REGION="us-east-1"
 TARGET_SOURCE_S3_ENDPOINT=""
@@ -348,15 +349,40 @@ REMOTE_TYPE="local"
 REMOTE_BASE="/mnt/backup-drive"
 ```
 
-**S3 destination**:
+**S3 destination** (AWS, Backblaze B2, Wasabi, or any S3-compatible):
 
 ```ini
 REMOTE_TYPE="s3"
+S3_PROVIDER="AWS"               # AWS | Backblaze | Wasabi | Other
 S3_BUCKET="my-backups"
 S3_ACCESS_KEY_ID="AKIA..."
 S3_SECRET_ACCESS_KEY="..."
 S3_REGION="us-east-1"
-S3_ENDPOINT=""                  # For S3-compatible (MinIO, DigitalOcean Spaces)
+S3_ENDPOINT=""                  # Auto-set for Backblaze/Wasabi, manual for Other
+```
+
+**Backblaze B2 example**:
+
+```ini
+REMOTE_TYPE="s3"
+S3_PROVIDER="Backblaze"
+S3_BUCKET="my-b2-bucket"
+S3_ACCESS_KEY_ID="your-key-id"
+S3_SECRET_ACCESS_KEY="your-app-key"
+S3_REGION="us-west-004"
+S3_ENDPOINT="https://s3.us-west-004.backblazeb2.com"
+```
+
+**Wasabi example**:
+
+```ini
+REMOTE_TYPE="s3"
+S3_PROVIDER="Wasabi"
+S3_BUCKET="my-wasabi-bucket"
+S3_ACCESS_KEY_ID="your-key"
+S3_SECRET_ACCESS_KEY="your-secret"
+S3_REGION="us-east-1"
+S3_ENDPOINT="https://s3.wasabisys.com"
 ```
 
 **Google Drive destination**:

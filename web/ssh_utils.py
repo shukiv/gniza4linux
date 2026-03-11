@@ -6,6 +6,8 @@ def ssh_cmd(host, port="22", user="root", key="", password=""):
     ssh_opts = [
         "ssh",
         "-o", "StrictHostKeyChecking=no",
+        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "LogLevel=ERROR",
         "-o", "ConnectTimeout=10",
         "-p", port or "22",
     ]
@@ -34,6 +36,8 @@ def ssh_cmd_from_conf(remote_conf):
     ssh_opts = [
         "ssh",
         "-o", "StrictHostKeyChecking=no",
+        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "LogLevel=ERROR",
         "-o", "ConnectTimeout=10",
         "-p", port or "22",
     ]

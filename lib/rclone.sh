@@ -107,8 +107,8 @@ _rclone_cmd() {
 
     log_debug "rclone $subcmd ${rclone_opts[*]} $*"
     local rc=0
-    if [[ -n "${_TRANSFER_LOG:-}" && "$subcmd" == "copy" ]]; then
-        echo "=== rclone copy $* ===" >> "$_TRANSFER_LOG"
+    if [[ -n "${_TRANSFER_LOG:-}" && ( "$subcmd" == "copy" || "$subcmd" == "sync" ) ]]; then
+        echo "=== rclone $subcmd $* ===" >> "$_TRANSFER_LOG"
         rclone "$subcmd" "${rclone_opts[@]}" --verbose --log-file="$_TRANSFER_LOG" "$@" || rc=$?
     else
         rclone "$subcmd" "${rclone_opts[@]}" "$@" || rc=$?
@@ -152,6 +152,46 @@ rclone_to_remote() {
     done
 
     log_error "rclone copy failed after $max_retries attempts"
+    return 1
+}
+
+# Incremental sync: mirrors source to a "current" directory on the remote,
+# moving changed/deleted files to a timestamped backup-dir (the snapshot).
+# This way only diffs are stored per snapshot, saving storage on S3/GDrive.
+# Usage: rclone_sync_incremental <source_dir> <target_name> <rel_path> <timestamp>
+rclone_sync_incremental() {
+    local source_dir="$1"
+    local target_name="$2"
+    local rel_path="$3"
+    local timestamp="$4"
+    local attempt=0
+    local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
+
+    local current_path; current_path=$(_rclone_remote_path "targets/${target_name}/current/${rel_path}")
+    local backup_dir; backup_dir=$(_rclone_remote_path "targets/${target_name}/snapshots/${timestamp}/${rel_path}")
+
+    [[ "$source_dir" != */ ]] && source_dir="$source_dir/"
+
+    log_info "CMD: rclone sync $source_dir -> $current_path (backup-dir: $backup_dir)"
+
+    while (( attempt < max_retries )); do
+        ((attempt++)) || true
+        log_debug "rclone sync attempt $attempt/$max_retries: $source_dir -> $current_path"
+
+        if _rclone_cmd sync "$source_dir" "$current_path" --backup-dir "$backup_dir"; then
+            log_debug "rclone sync succeeded on attempt $attempt"
+            return 0
+        fi
+
+        log_warn "rclone sync failed, attempt $attempt/$max_retries"
+        if (( attempt < max_retries )); then
+            local backoff=$(( attempt * 10 ))
+            log_info "Retrying in ${backoff}s..."
+            sleep "$backoff"
+        fi
+    done
+
+    log_error "rclone sync failed after $max_retries attempts"
     return 1
 }
 

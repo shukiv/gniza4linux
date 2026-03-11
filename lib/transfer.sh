@@ -534,9 +534,8 @@ transfer_folder() {
     fi
 
     if _is_rclone_mode; then
-        local snap_subpath="targets/${target_name}/snapshots/${timestamp}/${rel_path}"
-        log_info "Transferring $folder_path for $target_name (rclone)..."
-        rclone_to_remote "$folder_path" "$snap_subpath"
+        log_info "Transferring $folder_path for $target_name (rclone incremental)..."
+        rclone_sync_incremental "$folder_path" "$target_name" "$rel_path" "$timestamp"
         return
     fi
 

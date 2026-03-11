@@ -79,8 +79,9 @@ restore_target() {
         log_info "Restoring $rel_path -> $restore_dest"
 
         if _is_rclone_mode; then
-            local snap_subpath="targets/${target_name}/snapshots/${ts}/${rel_path}"
-            rclone_from_remote "$snap_subpath" "$restore_dest" || {
+            # Incremental rclone: current/ has latest mirror, snapshots/ have diffs
+            local current_subpath="targets/${target_name}/current/${rel_path}"
+            rclone_from_remote "$current_subpath" "$restore_dest" || {
                 log_error "Restore failed for folder: $folder"
                 ((errors++)) || true
             }
@@ -108,7 +109,7 @@ restore_target() {
 
         local mysql_found=false
         if _is_rclone_mode; then
-            local mysql_subpath="targets/${target_name}/snapshots/${ts}/_mysql"
+            local mysql_subpath="targets/${target_name}/current/_mysql"
             if rclone_from_remote "$mysql_subpath" "$mysql_restore_dir/_mysql" 2>/dev/null; then
                 mysql_found=true
             fi
@@ -198,8 +199,9 @@ restore_folder() {
     local rc=0
 
     if _is_rclone_mode; then
-        local snap_subpath="targets/${target_name}/snapshots/${ts}/${rel_path}"
-        rclone_from_remote "$snap_subpath" "$restore_dest" || rc=$?
+        # Incremental rclone: current/ has latest mirror
+        local current_subpath="targets/${target_name}/current/${rel_path}"
+        rclone_from_remote "$current_subpath" "$restore_dest" || rc=$?
     elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
         local source_path="$snap_dir/$ts/$rel_path/"
         rsync -aHAX --numeric-ids "$source_path" "$restore_dest/" || rc=$?
@@ -240,8 +242,8 @@ list_snapshot_contents() {
     }
 
     if _is_rclone_mode; then
-        local snap_subpath="targets/${target_name}/snapshots/${ts}"
-        rclone_list_files "$snap_subpath"
+        local current_subpath="targets/${target_name}/current"
+        rclone_list_files "$current_subpath"
     elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
         local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
         find "$snap_dir/$ts" -type f 2>/dev/null

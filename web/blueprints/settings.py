@@ -29,7 +29,8 @@ def index():
             if line.startswith("readonly GNIZA4LINUX_VERSION="):
                 version = line.split('"')[1]
                 break
-    return render_template("settings/index.html", settings=settings, version=version)
+    tab = request.args.get("tab", "general")
+    return render_template("settings/index.html", settings=settings, version=version, active_tab=tab)
 
 
 @bp.route("/", methods=["POST"])
@@ -96,7 +97,7 @@ def check_update():
             flash(stderr.strip() or stdout.strip() or "Update check failed.", "error")
     except Exception as e:
         flash(f"Error: {e}", "error")
-    return redirect(url_for("settings.index"))
+    return redirect(url_for("settings.index", tab="update"))
 
 
 @bp.route("/apply-update", methods=["POST"])
@@ -121,7 +122,7 @@ def apply_update():
             flash(stderr.strip() or stdout.strip() or "Update failed.", "error")
     except Exception as e:
         flash(f"Error: {e}", "error")
-    return redirect(url_for("settings.index"))
+    return redirect(url_for("settings.index", tab="update"))
 
 
 @bp.route("/test-email", methods=["POST"])
@@ -132,4 +133,4 @@ def test_email():
         flash(msg, "success" if ok else "error")
     except Exception as e:
         flash(f"Error: {e}", "error")
-    return redirect(url_for("settings.index"))
+    return redirect(url_for("settings.index", tab="email"))

@@ -49,12 +49,14 @@ def index():
     requested_step = request.args.get("step", -1, type=int)
     auto = _auto_step(targets, remotes, schedules)
     step = requested_step if 0 <= requested_step <= 4 else auto
+    ssh_keys = _get_ssh_keys()
     return render_template(
         "wizard/index.html",
         targets=targets,
         remotes=remotes,
         schedules=schedules,
         step=step,
+        ssh_keys=ssh_keys,
     )
 
 
@@ -241,14 +243,20 @@ def run_backup():
 
 
 def _get_ssh_keys():
-    """Find existing SSH public keys."""
+    """Find existing SSH key pairs (private + public)."""
     ssh_dir = Path.home() / ".ssh"
     keys = []
     if ssh_dir.is_dir():
         for pub in sorted(ssh_dir.glob("*.pub")):
+            private = pub.with_suffix("")
             try:
                 content = pub.read_text().strip()
-                keys.append({"name": pub.name, "path": str(pub), "content": content})
+                keys.append({
+                    "name": pub.stem,
+                    "private_path": str(private),
+                    "pub_path": str(pub),
+                    "content": content,
+                })
             except OSError:
                 pass
     return keys

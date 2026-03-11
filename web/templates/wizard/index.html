@@ -85,7 +85,7 @@
                 <div x-show="sshKeysLoading" class="text-base-content/40 text-sm mb-3">Loading keys...</div>
                 <div x-show="!sshKeysLoading && sshKeys.length > 0">
                     <p class="text-sm font-medium mb-2">Your SSH public keys:</p>
-                    <template x-for="key in sshKeys" :key="key.path">
+                    <template x-for="key in sshKeys" :key="key.private_path">
                         <div class="mb-2">
                             <div class="text-xs text-base-content/50 mb-1" x-text="key.name"></div>
                             <div class="relative">
@@ -233,7 +233,7 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                             </fieldset>
                             <fieldset class="fieldset">
                                 <label class="fieldset-label">User</label>
-                                <input type="text" name="user" value="root" class="input" placeholder="root">
+                                <input type="text" name="user" value="gniza" class="input" placeholder="gniza">
                             </fieldset>
                             <fieldset class="fieldset">
                                 <label class="fieldset-label">Auth Method</label>
@@ -243,8 +243,15 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                                 </select>
                             </fieldset>
                             <fieldset class="fieldset" x-show="authMethod === 'key'" x-cloak>
-                                <label class="fieldset-label">SSH Key Path</label>
-                                <input type="text" name="key" class="input" placeholder="~/.ssh/id_rsa">
+                                <label class="fieldset-label">SSH Key</label>
+                                <select name="key" class="select">
+                                    {% for key in ssh_keys %}
+                                    <option value="{{ key.private_path }}">{{ key.name }} ({{ key.private_path }})</option>
+                                    {% endfor %}
+                                    {% if not ssh_keys %}
+                                    <option value="">No keys found</option>
+                                    {% endif %}
+                                </select>
                             </fieldset>
                             <fieldset class="fieldset" x-show="authMethod === 'password'" x-cloak>
                                 <label class="fieldset-label">Password</label>
@@ -446,8 +453,15 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                                 </select>
                             </fieldset>
                             <fieldset class="fieldset" x-show="sourceAuthMethod === 'key'" x-cloak>
-                                <label class="fieldset-label">SSH Key Path</label>
-                                <input type="text" name="source_key" class="input" placeholder="~/.ssh/id_rsa">
+                                <label class="fieldset-label">SSH Key</label>
+                                <select name="source_key" class="select">
+                                    {% for key in ssh_keys %}
+                                    <option value="{{ key.private_path }}">{{ key.name }} ({{ key.private_path }})</option>
+                                    {% endfor %}
+                                    {% if not ssh_keys %}
+                                    <option value="">No keys found</option>
+                                    {% endif %}
+                                </select>
                             </fieldset>
                             <fieldset class="fieldset" x-show="sourceAuthMethod === 'password'" x-cloak>
                                 <label class="fieldset-label">Password</label>

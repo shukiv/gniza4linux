@@ -21,6 +21,7 @@ class Target:
     source_s3_bucket: str = ""
     source_s3_region: str = "us-east-1"
     source_s3_endpoint: str = ""
+    source_s3_provider: str = "AWS"
     source_s3_access_key_id: str = ""
     source_s3_secret_access_key: str = ""
     source_gdrive_sa_file: str = ""
@@ -61,6 +62,7 @@ class Target:
                 "TARGET_SOURCE_S3_BUCKET": self.source_s3_bucket,
                 "TARGET_SOURCE_S3_REGION": self.source_s3_region,
                 "TARGET_SOURCE_S3_ENDPOINT": self.source_s3_endpoint,
+                "TARGET_SOURCE_S3_PROVIDER": self.source_s3_provider,
                 "TARGET_SOURCE_S3_ACCESS_KEY_ID": self.source_s3_access_key_id,
                 "TARGET_SOURCE_S3_SECRET_ACCESS_KEY": self.source_s3_secret_access_key,
             })
@@ -103,6 +105,7 @@ class Target:
             source_s3_bucket=data.get("TARGET_SOURCE_S3_BUCKET", ""),
             source_s3_region=data.get("TARGET_SOURCE_S3_REGION", "us-east-1"),
             source_s3_endpoint=data.get("TARGET_SOURCE_S3_ENDPOINT", ""),
+            source_s3_provider=data.get("TARGET_SOURCE_S3_PROVIDER", "AWS"),
             source_s3_access_key_id=data.get("TARGET_SOURCE_S3_ACCESS_KEY_ID", ""),
             source_s3_secret_access_key=data.get("TARGET_SOURCE_S3_SECRET_ACCESS_KEY", ""),
             source_gdrive_sa_file=data.get("TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE", ""),
@@ -131,6 +134,7 @@ class Remote:
     password: str = ""
     base: str = "/backups"
     bwlimit: str = "0"
+    s3_provider: str = "AWS"
     s3_bucket: str = ""
     s3_region: str = "us-east-1"
     s3_endpoint: str = ""
@@ -158,6 +162,7 @@ class Remote:
             })
         elif self.type == "s3":
             data.update({
+                "S3_PROVIDER": self.s3_provider,
                 "S3_BUCKET": self.s3_bucket,
                 "S3_REGION": self.s3_region,
                 "S3_ENDPOINT": self.s3_endpoint,
@@ -186,6 +191,7 @@ class Remote:
             password=data.get("REMOTE_PASSWORD", ""),
             base=data.get("REMOTE_BASE", "/backups"),
             bwlimit=data.get("BWLIMIT", "0"),
+            s3_provider=data.get("S3_PROVIDER", "AWS"),
             s3_bucket=data.get("S3_BUCKET", ""),
             s3_region=data.get("S3_REGION", "us-east-1"),
             s3_endpoint=data.get("S3_ENDPOINT", ""),

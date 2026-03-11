@@ -9,7 +9,7 @@
 </div>
 
 <form method="POST" action="{{ url_for('remotes.save') }}"
-      x-data="{ remoteType: '{{ remote.type }}', authMethod: '{{ remote.auth_method or 'key' }}' }">
+      x-data="{ remoteType: '{{ remote.type }}', authMethod: '{{ remote.auth_method or 'key' }}', s3Provider: '{{ remote.s3_provider or 'AWS' }}' }">
     {% if not is_new %}
     <input type="hidden" name="original_name" value="{{ remote.name }}">
     {% endif %}
@@ -138,6 +138,24 @@
             <div class="card-body">
                 <h2 class="card-title text-base mb-4">S3 Configuration</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Provider</label>
+                        <select name="s3_provider" class="select" x-model="s3Provider"
+                                @change="
+                                    if (s3Provider === 'Backblaze') {
+                                        $el.closest('.grid').querySelector('[name=s3_endpoint]').value = 'https://s3.us-west-004.backblazeb2.com';
+                                    } else if (s3Provider === 'Wasabi') {
+                                        $el.closest('.grid').querySelector('[name=s3_endpoint]').value = 'https://s3.wasabisys.com';
+                                    } else if (s3Provider === 'AWS') {
+                                        $el.closest('.grid').querySelector('[name=s3_endpoint]').value = '';
+                                    }
+                                ">
+                            <option value="AWS">AWS</option>
+                            <option value="Backblaze">Backblaze B2</option>
+                            <option value="Wasabi">Wasabi</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </fieldset>
                     <fieldset class="fieldset">
                         <label class="fieldset-label">Bucket</label>
                         <input type="text" name="s3_bucket" value="{{ remote.s3_bucket }}" class="input">

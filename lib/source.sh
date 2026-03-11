@@ -142,7 +142,7 @@ _build_source_rclone_config() {
         cat > "$_SOURCE_RCLONE_CONF" <<EOF
 [gniza-source]
 type = s3
-provider = Other
+provider = ${TARGET_SOURCE_S3_PROVIDER:-AWS}
 access_key_id = ${TARGET_SOURCE_S3_ACCESS_KEY_ID:-}
 secret_access_key = ${TARGET_SOURCE_S3_SECRET_ACCESS_KEY:-}
 region = ${TARGET_SOURCE_S3_REGION:-us-east-1}

@@ -8,6 +8,8 @@
     step: {{ step }},
     remoteType: 'ssh',
     authMethod: 'key',
+    s3Provider: 'AWS',
+    sourceS3Provider: 'AWS',
     sourceType: 'local',
     sourceAuthMethod: 'key',
     mysqlEnabled: false,
@@ -322,6 +324,24 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                         <h2 class="card-title text-base mb-4">S3 Configuration</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <fieldset class="fieldset">
+                                <label class="fieldset-label">Provider</label>
+                                <select name="s3_provider" class="select" x-model="s3Provider"
+                                        @change="
+                                            if (s3Provider === 'Backblaze') {
+                                                $el.closest('.grid').querySelector('[name=s3_endpoint]').value = 'https://s3.us-west-004.backblazeb2.com';
+                                            } else if (s3Provider === 'Wasabi') {
+                                                $el.closest('.grid').querySelector('[name=s3_endpoint]').value = 'https://s3.wasabisys.com';
+                                            } else if (s3Provider === 'AWS') {
+                                                $el.closest('.grid').querySelector('[name=s3_endpoint]').value = '';
+                                            }
+                                        ">
+                                    <option value="AWS">AWS</option>
+                                    <option value="Backblaze">Backblaze B2</option>
+                                    <option value="Wasabi">Wasabi</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </fieldset>
+                            <fieldset class="fieldset">
                                 <label class="fieldset-label">Bucket</label>
                                 <input type="text" name="s3_bucket" class="input">
                             </fieldset>
@@ -474,6 +494,24 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                     <div x-show="sourceType === 's3'" x-cloak>
                         <div class="divider text-sm">S3 Configuration</div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Provider</label>
+                                <select name="source_s3_provider" class="select" x-model="sourceS3Provider"
+                                        @change="
+                                            if (sourceS3Provider === 'Backblaze') {
+                                                $el.closest('.grid').querySelector('[name=source_s3_endpoint]').value = 'https://s3.us-west-004.backblazeb2.com';
+                                            } else if (sourceS3Provider === 'Wasabi') {
+                                                $el.closest('.grid').querySelector('[name=source_s3_endpoint]').value = 'https://s3.wasabisys.com';
+                                            } else if (sourceS3Provider === 'AWS') {
+                                                $el.closest('.grid').querySelector('[name=source_s3_endpoint]').value = '';
+                                            }
+                                        ">
+                                    <option value="AWS">AWS</option>
+                                    <option value="Backblaze">Backblaze B2</option>
+                                    <option value="Wasabi">Wasabi</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </fieldset>
                             <fieldset class="fieldset">
                                 <label class="fieldset-label">Bucket</label>
                                 <input type="text" name="source_s3_bucket" class="input">

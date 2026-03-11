@@ -6,13 +6,13 @@ import tempfile
 
 
 def test_rclone_s3(bucket, region="us-east-1", endpoint="",
-                   access_key_id="", secret_access_key=""):
+                   access_key_id="", secret_access_key="", provider="AWS"):
     """Test S3 connection. Returns (ok: bool, error_msg: str|None)."""
     if not bucket:
         return False, "S3 bucket is required"
     if not access_key_id or not secret_access_key:
         return False, "S3 access key and secret are required"
-    conf = _build_s3_config(bucket, region, endpoint, access_key_id, secret_access_key)
+    conf = _build_s3_config(bucket, region, endpoint, access_key_id, secret_access_key, provider)
     return _run_rclone_test(conf, f"remote:{bucket}")
 
 
@@ -26,11 +26,11 @@ def test_rclone_gdrive(sa_file, root_folder_id=""):
     return _run_rclone_test(conf, "remote:")
 
 
-def _build_s3_config(bucket, region, endpoint, access_key_id, secret_access_key):
+def _build_s3_config(bucket, region, endpoint, access_key_id, secret_access_key, provider="AWS"):
     lines = [
         "[remote]",
         "type = s3",
-        "provider = AWS",
+        f"provider = {provider}",
         f"access_key_id = {access_key_id}",
         f"secret_access_key = {secret_access_key}",
         f"region = {region or 'us-east-1'}",

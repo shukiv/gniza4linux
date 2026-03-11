@@ -349,6 +349,7 @@ class TargetEditScreen(Screen):
                 endpoint=target.source_s3_endpoint,
                 access_key_id=target.source_s3_access_key_id,
                 secret_access_key=target.source_s3_secret_access_key,
+                provider=target.source_s3_provider,
             )
             if not ok:
                 self.notify(f"S3 test failed: {err}", severity="error")

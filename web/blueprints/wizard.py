@@ -1,8 +1,10 @@
 import os
 import re
+import subprocess
+from pathlib import Path
 
 from flask import (
-    Blueprint, render_template, request, redirect, url_for, flash,
+    Blueprint, render_template, request, redirect, url_for, flash, jsonify,
 )
 
 from tui.config import CONFIG_DIR, parse_conf, write_conf, list_conf_dir
@@ -32,7 +34,7 @@ def _config_state():
 def _auto_step(targets, remotes, schedules):
     """Determine which step to show based on config state."""
     if not remotes:
-        return 1
+        return 0
     if not targets:
         return 2
     if not schedules:
@@ -44,9 +46,9 @@ def _auto_step(targets, remotes, schedules):
 @login_required
 def index():
     targets, remotes, schedules = _config_state()
-    requested_step = request.args.get("step", 0, type=int)
+    requested_step = request.args.get("step", -1, type=int)
     auto = _auto_step(targets, remotes, schedules)
-    step = requested_step if 1 <= requested_step <= 4 else auto
+    step = requested_step if 0 <= requested_step <= 4 else auto
     return render_template(
         "wizard/index.html",
         targets=targets,
@@ -236,3 +238,45 @@ def run_backup():
     web_job_manager.create_and_start("backup", label, *args)
     flash("First backup started.", "success")
     return redirect(url_for("jobs.index"))
+
+
+def _get_ssh_keys():
+    """Find existing SSH public keys."""
+    ssh_dir = Path.home() / ".ssh"
+    keys = []
+    if ssh_dir.is_dir():
+        for pub in sorted(ssh_dir.glob("*.pub")):
+            try:
+                content = pub.read_text().strip()
+                keys.append({"name": pub.name, "path": str(pub), "content": content})
+            except OSError:
+                pass
+    return keys
+
+
+@bp.route("/ssh-keys")
+@login_required
+def ssh_keys():
+    """Return existing SSH public keys as JSON."""
+    return jsonify(keys=_get_ssh_keys())
+
+
+@bp.route("/ssh-keygen", methods=["POST"])
+@login_required
+def ssh_keygen():
+    """Generate a new Ed25519 SSH key pair for backups."""
+    ssh_dir = Path.home() / ".ssh"
+    ssh_dir.mkdir(mode=0o700, exist_ok=True)
+    key_path = ssh_dir / "id_ed25519_gniza"
+    if key_path.exists():
+        pub = key_path.with_suffix(".pub").read_text().strip() if key_path.with_suffix(".pub").exists() else ""
+        return jsonify(ok=True, message="Key already exists", path=str(key_path), public_key=pub)
+    try:
+        subprocess.run(
+            ["ssh-keygen", "-t", "ed25519", "-f", str(key_path), "-N", "", "-C", "gniza-backup"],
+            check=True, capture_output=True, text=True,
+        )
+        pub = key_path.with_suffix(".pub").read_text().strip()
+        return jsonify(ok=True, message="Key generated", path=str(key_path), public_key=pub)
+    except subprocess.CalledProcessError as e:
+        return jsonify(ok=False, message=f"ssh-keygen failed: {e.stderr.strip()}"), 500

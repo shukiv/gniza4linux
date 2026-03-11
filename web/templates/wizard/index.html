@@ -14,11 +14,40 @@
     scheduleType: 'daily',
     folderList: [],
     addFolder(path) { path = path.trim(); if (path && !this.folderList.includes(path)) this.folderList.push(path); },
-    removeFolder(i) { this.folderList.splice(i, 1); }
+    removeFolder(i) { this.folderList.splice(i, 1); },
+    sshKeys: [],
+    sshKeysLoading: false,
+    sshKeyGenerating: false,
+    sshNewKey: '',
+    async loadSshKeys() {
+        this.sshKeysLoading = true;
+        try {
+            const r = await fetch('{{ url_for('wizard.ssh_keys') }}');
+            const data = await r.json();
+            this.sshKeys = data.keys;
+        } finally { this.sshKeysLoading = false; }
+    },
+    async generateSshKey() {
+        this.sshKeyGenerating = true;
+        this.sshNewKey = '';
+        try {
+            const r = await fetch('{{ url_for('wizard.ssh_keygen') }}', { method: 'POST' });
+            const data = await r.json();
+            if (data.ok) {
+                this.sshNewKey = data.public_key;
+                await this.loadSshKeys();
+            } else {
+                alert(data.message);
+            }
+        } finally { this.sshKeyGenerating = false; }
+    }
 }">
 
     <!-- Progress steps -->
     <ul class="steps steps-horizontal w-full mb-8">
+        <li class="step" :class="step >= 0 ? 'step-primary' : ''" @click="step = 0" style="cursor:pointer">
+            <span>Prepare</span>
+        </li>
         <li class="step" :class="step >= 1 ? 'step-primary' : ''" @click="step = 1" style="cursor:pointer">
             <span>Destination</span>
             {% if remotes %}<span class="ml-1 text-success">&#10003;</span>{% endif %}
@@ -35,6 +64,122 @@
             <span>Done</span>
         </li>
     </ul>
+
+    <!-- ==================== Step 0: Prepare ==================== -->
+    <div x-show="step === 0" x-cloak x-init="loadSshKeys()">
+
+        <div class="card bg-base-200 shadow mb-6">
+            <div class="card-body">
+                <h2 class="card-title text-lg mb-2">Prepare Your Destination Server</h2>
+                <p class="text-base-content/60">Before configuring GNIZA, you need to prepare the server that will store your backups. Follow the steps below on your <strong>destination server</strong>.</p>
+            </div>
+        </div>
+
+        <!-- Step A: SSH Key -->
+        <div class="card bg-base-200 shadow mb-6">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-4">1. Your SSH Key</h2>
+                <p class="text-base-content/60 mb-4">GNIZA uses SSH key authentication to connect to the destination server. You'll need to copy your public key to the server later.</p>
+
+                <!-- Existing keys -->
+                <div x-show="sshKeysLoading" class="text-base-content/40 text-sm mb-3">Loading keys...</div>
+                <div x-show="!sshKeysLoading && sshKeys.length > 0">
+                    <p class="text-sm font-medium mb-2">Your SSH public keys:</p>
+                    <template x-for="key in sshKeys" :key="key.path">
+                        <div class="mb-2">
+                            <div class="text-xs text-base-content/50 mb-1" x-text="key.name"></div>
+                            <div class="relative">
+                                <pre class="bg-base-300 rounded p-3 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all select-all" x-text="key.content"></pre>
+                                <button type="button" class="btn btn-ghost btn-xs absolute top-1 right-1"
+                                        @click="navigator.clipboard.writeText(key.content)">Copy</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <div x-show="!sshKeysLoading && sshKeys.length === 0" class="mb-3">
+                    <p class="text-warning text-sm mb-2">No SSH keys found.</p>
+                </div>
+
+                <!-- Generate key -->
+                <button type="button" class="btn btn-outline btn-sm mt-2"
+                        @click="generateSshKey()" :disabled="sshKeyGenerating">
+                    <span x-show="!sshKeyGenerating">Generate New Key (Ed25519)</span>
+                    <span x-show="sshKeyGenerating" class="loading loading-spinner loading-xs"></span>
+                </button>
+                <div x-show="sshNewKey" class="mt-3">
+                    <div class="alert alert-success text-sm">
+                        <span>Key generated! Copy the public key above and use it in step 4 below.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step B: Install packages -->
+        <div class="card bg-base-200 shadow mb-6">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-4">2. Install Required Packages</h2>
+                <p class="text-base-content/60 mb-3">On the <strong>destination server</strong>, install the required packages:</p>
+                <div class="relative">
+                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">apt-get install ssh sudo rsync</pre>
+                    <button type="button" class="btn btn-ghost btn-xs absolute top-1 right-1"
+                            @click="navigator.clipboard.writeText('apt-get install ssh sudo rsync')">Copy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step C: Create user -->
+        <div class="card bg-base-200 shadow mb-6">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-4">3. Create a Backup User</h2>
+                <p class="text-base-content/60 mb-3">Create a dedicated user for backups on the destination server:</p>
+                <div class="relative">
+                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">adduser --disabled-password --gecos "GNIZA backup user" gniza</pre>
+                    <button type="button" class="btn btn-ghost btn-xs absolute top-1 right-1"
+                            @click="navigator.clipboard.writeText('adduser --disabled-password --gecos &quot;GNIZA backup user&quot; gniza')">Copy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step D: Sudoers -->
+        <div class="card bg-base-200 shadow mb-6">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-4">4. Configure Sudoers</h2>
+                <p class="text-base-content/60 mb-3">Allow the backup user to run <code class="text-primary">rsync</code> with elevated privileges (needed for preserving file ownership). If you'll be backing up MySQL databases, include <code class="text-primary">mysqldump</code> too:</p>
+                <div class="relative mb-3">
+                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync" >> /etc/sudoers</pre>
+                    <button type="button" class="btn btn-ghost btn-xs absolute top-1 right-1"
+                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync&quot; >> /etc/sudoers')">Copy</button>
+                </div>
+                <p class="text-base-content/40 text-xs">If MySQL backup is needed, use instead:</p>
+                <div class="relative mt-1">
+                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /usr/bin/mysqldump" >> /etc/sudoers</pre>
+                    <button type="button" class="btn btn-ghost btn-xs absolute top-1 right-1"
+                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /usr/bin/mysqldump&quot; >> /etc/sudoers')">Copy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step E: SSH authorized_keys -->
+        <div class="card bg-base-200 shadow mb-6">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-4">5. Set Up SSH Access</h2>
+                <p class="text-base-content/60 mb-3">On the destination server, set up the SSH authorized keys for the backup user. Replace <code class="text-primary">&lt;your-ssh-key&gt;</code> with the public key from step 1 above:</p>
+                <div class="relative">
+                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto whitespace-pre select-all">mkdir -p /home/gniza/.ssh
+chown gniza:gniza /home/gniza/.ssh
+chmod 700 /home/gniza/.ssh
+echo "<span class="text-primary" x-text="sshKeys.length > 0 ? sshKeys[0].content : '&lt;your-ssh-key&gt;'"></span>" > /home/gniza/.ssh/authorized_keys
+chown gniza:gniza /home/gniza/.ssh/authorized_keys
+chmod 600 /home/gniza/.ssh/authorized_keys</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end">
+            <button type="button" class="btn btn-primary" @click="step = 1">I'm Ready &rarr;</button>
+        </div>
+    </div>
 
     <!-- ==================== Step 1: Destination ==================== -->
     <div x-show="step === 1" x-cloak>

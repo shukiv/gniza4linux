@@ -345,6 +345,15 @@ SVCEOF
     DAEMON_INSTALLED="yes"
 fi
 
+# -- Restart existing services --------------------------------
+if [[ $EUID -eq 0 ]]; then
+    systemctl restart gniza-web 2>/dev/null && info "Web service restarted." || true
+    systemctl restart gniza-daemon 2>/dev/null && info "Daemon restarted." || true
+else
+    systemctl --user restart gniza-web 2>/dev/null || true
+    systemctl --user restart gniza-daemon 2>/dev/null || true
+fi
+
 # -- Done -----------------------------------------------------
 echo ""
 echo "${C_GREEN}${C_BOLD}Installation complete!${C_RESET}"

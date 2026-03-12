@@ -299,15 +299,15 @@ HELPEOF
                 _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
                     start "backup" "$_job_label" --log-file="${LOG_FILE:-}" --pid=$$ 2>/dev/null) || true
             fi
-            [[ -n "$_job_id" ]] && export GNIZA_JOB_ID="$_job_id"
+            [[ -n "${_job_id:-}" ]] && export GNIZA_JOB_ID="$_job_id"
 
             _finish_job_reg() {
                 local _rc=$1
                 local _st="success"
                 (( _rc != 0 )) && _st="failed"
-                if [[ -n "$_job_id" ]]; then
+                if [[ -n "${_job_id:-}" ]]; then
                     PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
-                        finish "$_job_id" "$_st" "$_rc" 2>/dev/null || true
+                        finish "${_job_id}" "$_st" "$_rc" 2>/dev/null || true
                 fi
             }
 
@@ -827,15 +827,15 @@ HELPEOF
                 _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
                     start "scheduled-run" "$_job_label" --log-file="${LOG_FILE:-}" --pid=$$ 2>/dev/null) || true
             fi
-            [[ -n "$_job_id" ]] && export GNIZA_JOB_ID="$_job_id"
+            [[ -n "${_job_id:-}" ]] && export GNIZA_JOB_ID="$_job_id"
 
             _finish_job_reg() {
                 local _rc=$1
                 local _st="success"
                 (( _rc != 0 )) && _st="failed"
-                if [[ -n "$_job_id" ]]; then
+                if [[ -n "${_job_id:-}" ]]; then
                     PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
-                        finish "$_job_id" "$_st" "$_rc" 2>/dev/null || true
+                        finish "${_job_id}" "$_st" "$_rc" 2>/dev/null || true
                 fi
             }
 

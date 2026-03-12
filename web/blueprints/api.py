@@ -75,26 +75,32 @@ def browse_children():
 
 def _ssh_list_dirs(host, path, port="22", user="root", key="", password="", show_hidden=False):
     """List directories on a remote SSH host."""
-    cmd = ssh_cmd(host, port, user, key, password) + [
-        f"find {shlex.quote(path)} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
-    ]
+    quoted = shlex.quote(path)
+    # Try find first, fall back to ls for restricted shells (e.g. Hetzner Storage Box)
+    find_cmd = f"find {quoted} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
+    ls_cmd = f"ls -1 {quoted}"
+    base_cmd = ssh_cmd(host, port, user, key, password)
     env = None
     if password:
         env = os.environ.copy()
         env["SSHPASS"] = password
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=15, env=env)
+        result = subprocess.run(base_cmd + [find_cmd], capture_output=True, text=True, timeout=15, env=env)
         if result.returncode != 0:
-            return None, result.stderr.strip() or "Connection failed"
+            # Fallback to ls (works on restricted shells)
+            result = subprocess.run(base_cmd + [ls_cmd], capture_output=True, text=True, timeout=15, env=env)
+            if result.returncode != 0:
+                return None, result.stderr.strip() or "Connection failed"
         dirs = []
         for line in result.stdout.strip().splitlines():
             line = line.strip()
-            if line and line != path:
-                name = line.rstrip("/").rsplit("/", 1)[-1]
-                if not show_hidden and name.startswith("."):
-                    continue
-                dirs.append(name)
-        return dirs, None
+            if not line or line == path:
+                continue
+            name = line.rstrip("/").rsplit("/", 1)[-1]
+            if not show_hidden and name.startswith("."):
+                continue
+            dirs.append(name)
+        return sorted(dirs), None
     except subprocess.TimeoutExpired:
         return None, "Connection timed out"
     except OSError as e:

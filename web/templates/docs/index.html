@@ -65,6 +65,8 @@
 
 <script>
 (function() {
+    var allDetails = [];
+
     // Make TOC items with sub-lists collapsible
     document.querySelectorAll('.doc-toc li').forEach(function(li) {
         var nested = li.querySelector(':scope > ul');
@@ -79,6 +81,18 @@
         details.appendChild(summary);
         details.appendChild(nested);
         li.appendChild(details);
+        allDetails.push(details);
+    });
+
+    // Clicking a summary opens that section and closes the others
+    allDetails.forEach(function(det) {
+        det.querySelector('summary').addEventListener('click', function(e) {
+            if (!det.open) {
+                allDetails.forEach(function(other) {
+                    if (other !== det) other.open = false;
+                });
+            }
+        });
     });
 })();
 </script>

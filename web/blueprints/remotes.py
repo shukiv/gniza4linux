@@ -48,7 +48,12 @@ def _test_remote(remote):
         try:
             result = subprocess.run(cmd + ["mkdir", "-p", base], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
-                return False, f"Failed to create base path: {result.stderr.strip()}"
+                # Retry with sudo
+                result = subprocess.run(cmd + ["sudo", "mkdir", "-p", base], capture_output=True, text=True, timeout=15, env=env)
+                if result.returncode != 0:
+                    return False, f"Failed to create base path: {result.stderr.strip()}"
+                # Fix ownership so the backup user can write
+                subprocess.run(cmd + ["sudo", "chown", f"{remote.user}:", base], capture_output=True, text=True, timeout=15, env=env)
         except (subprocess.TimeoutExpired, OSError) as e:
             return False, f"Failed to create base path: {e}"
         try:

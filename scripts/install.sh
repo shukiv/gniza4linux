@@ -132,35 +132,48 @@ if command -v python3 &>/dev/null; then
         fi
     fi
     _deps_installed=false
-    # Try pip first
+    _pip_quiet="--quiet"
+    $DEBUG && _pip_quiet=""
+    _pip_pkgs=("textual>=0.40" textual-serve flask waitress)
+
+    # Ensure pip is usable — install via apt if needed
+    if ! python3 -m pip --version &>/dev/null; then
+        info "pip not found, installing via apt..."
+        if [[ $EUID -eq 0 ]]; then
+            apt-get install -y python3-pip 2>/dev/null || true
+        else
+            sudo apt-get install -y python3-pip 2>/dev/null || true
+        fi
+    fi
+
+    # Try pip install (with --break-system-packages for PEP 668 systems)
     if python3 -m pip --version &>/dev/null; then
         info "Installing Python dependencies via pip..."
-        _pip_quiet="--quiet"
-        $DEBUG && _pip_quiet=""
-        if python3 -m pip install --break-system-packages $_pip_quiet "textual>=0.40" textual-serve flask waitress 2>/dev/null; then
+        if python3 -m pip install --break-system-packages $_pip_quiet "${_pip_pkgs[@]}"; then
             info "Python dependencies installed."
             _deps_installed=true
-        elif python3 -m pip install $_pip_quiet "textual>=0.40" textual-serve flask waitress 2>/dev/null; then
+        elif python3 -m pip install $_pip_quiet "${_pip_pkgs[@]}"; then
             info "Python dependencies installed."
             _deps_installed=true
-        fi
-    fi
-    # Fallback: install flask/waitress via apt, but NOT textual (apt version is too old)
-    if ! $_deps_installed && command -v apt-get &>/dev/null; then
-        info "pip unavailable or failed, trying apt for flask/waitress + pip for textual..."
-        _apt_cmd="apt-get install -y python3-pip python3-flask python3-waitress"
-        if [[ $EUID -eq 0 ]]; then
-            $_apt_cmd 2>/dev/null
         else
-            sudo $_apt_cmd 2>/dev/null
-        fi
-        # Now try pip again for textual (apt python3-textual is too old)
-        if python3 -m pip install --break-system-packages $_pip_quiet "textual>=0.40" textual-serve 2>/dev/null \
-            || python3 -m pip install $_pip_quiet "textual>=0.40" textual-serve 2>/dev/null; then
-            info "Python dependencies installed."
-            _deps_installed=true
+            warn "pip install failed. Trying with pipx/apt fallback..."
         fi
     fi
+
+    # Fallback: apt for flask/waitress, pipx or pip3 for textual
+    if ! $_deps_installed && command -v apt-get &>/dev/null; then
+        info "Installing flask/waitress via apt (textual requires pip — apt version is too old)..."
+        if [[ $EUID -eq 0 ]]; then
+            apt-get install -y python3-flask python3-waitress 2>/dev/null || true
+        else
+            sudo apt-get install -y python3-flask python3-waitress 2>/dev/null || true
+        fi
+        # Try pipx as last resort for textual
+        if command -v pipx &>/dev/null; then
+            pipx install "textual>=0.40" 2>/dev/null && _deps_installed=true
+        fi
+    fi
+
     if ! $_deps_installed; then
         warn "Could not install Python dependencies. TUI/web mode may not work."
         warn "Install manually: pip3 install --break-system-packages 'textual>=0.40' textual-serve flask waitress"

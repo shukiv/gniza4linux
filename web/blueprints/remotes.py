@@ -179,9 +179,8 @@ def save():
     ok, msg = _test_remote(remote)
     if ok is False:
         flash(msg, "error")
-        if original_name:
-            return redirect(url_for("remotes.edit", name=original_name))
-        return redirect(url_for("remotes.new"))
+        is_new = not original_name
+        return render_template("remotes/edit.html", remote=remote, is_new=is_new)
 
     write_conf(CONFIG_DIR / "remotes.d" / f"{remote.name}.conf", remote.to_conf())
     flash(f"Destination '{remote.name}' saved.", "success")

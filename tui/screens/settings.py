@@ -4,7 +4,7 @@ from pathlib import Path
 
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, Input, Select, Switch
+from textual.widgets import Header, Footer, Static, Button, Input, Select, Switch, Collapsible
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
@@ -64,62 +64,67 @@ class SettingsScreen(Screen):
                     )
                     yield Static("Rsync Checksum (detect changes by content):")
                     yield Switch(value=settings.rsync_checksum == "yes", id="set-rsyncchecksum")
-                with Vertical(classes="settings-section", id="section-email"):
-                    yield Static("Notification Email:")
-                    yield Input(value=settings.notify_email, id="set-email")
+                with Vertical(classes="settings-section", id="section-notifications"):
                     yield Static("Notify On:")
                     yield Select(
                         [("Always", "always"), ("Failure only", "failure"), ("Never", "never")],
                         id="set-notifyon",
                         value=settings.notify_on,
                     )
-                    yield Static("SMTP Host:")
-                    yield Input(value=settings.smtp_host, id="set-smtphost")
-                    yield Static("SMTP Port:")
-                    yield Input(value=settings.smtp_port, id="set-smtpport")
-                    yield Static("SMTP User:")
-                    yield Input(value=settings.smtp_user, id="set-smtpuser")
-                    yield Static("SMTP Password:")
-                    yield Input(value=settings.smtp_password, password=True, id="set-smtppass")
-                    yield Static("SMTP From:")
-                    yield Input(value=settings.smtp_from, id="set-smtpfrom")
-                    yield Static("SMTP Security:")
-                    yield Select(
-                        [("TLS", "tls"), ("SSL", "ssl"), ("None", "none")],
-                        id="set-smtpsec",
-                        value=settings.smtp_security,
-                    )
-                with Vertical(classes="settings-section", id="section-telegram"):
-                    yield Static("Bot Token:")
-                    yield Input(value=settings.telegram_bot_token, password=True, id="set-tg-token")
-                    yield Static("Chat ID:")
-                    yield Input(value=settings.telegram_chat_id, id="set-tg-chatid")
-                with Vertical(classes="settings-section", id="section-webhook"):
-                    yield Static("Webhook URL:")
-                    yield Input(value=settings.webhook_url, id="set-webhook-url")
-                    yield Static("Type:")
-                    yield Select(
-                        [("Slack", "slack"), ("Discord", "discord"), ("Generic", "generic")],
-                        id="set-webhook-type",
-                        value=settings.webhook_type if settings.webhook_type in ("slack", "discord", "generic") else "slack",
-                    )
-                with Vertical(classes="settings-section", id="section-ntfy"):
-                    yield Static("ntfy URL:")
-                    yield Input(value=settings.ntfy_url, id="set-ntfy-url")
-                    yield Static("Auth Token (optional):")
-                    yield Input(value=settings.ntfy_token, password=True, id="set-ntfy-token")
-                    yield Static("Default Priority:")
-                    yield Select(
-                        [("Min", "min"), ("Low", "low"), ("Default", "default"), ("High", "high"), ("Urgent", "urgent")],
-                        id="set-ntfy-priority",
-                        value=settings.ntfy_priority if settings.ntfy_priority in ("min", "low", "default", "high", "urgent") else "default",
-                    )
-                with Vertical(classes="settings-section", id="section-healthcheck"):
-                    yield Static("Ping URL:")
-                    yield Input(value=settings.healthchecks_url, id="set-hc-url")
-                with Vertical(classes="settings-section", id="section-stale"):
                     yield Static("Stale Alert Hours (0=disabled):")
                     yield Input(value=settings.stale_alert_hours, id="set-stale-hours")
+                    with Collapsible(title="Email (SMTP)", collapsed=True):
+                        yield Static("Notification Email:")
+                        yield Input(value=settings.notify_email, id="set-email")
+                        yield Static("SMTP Host:")
+                        yield Input(value=settings.smtp_host, id="set-smtphost")
+                        yield Static("SMTP Port:")
+                        yield Input(value=settings.smtp_port, id="set-smtpport")
+                        yield Static("SMTP User:")
+                        yield Input(value=settings.smtp_user, id="set-smtpuser")
+                        yield Static("SMTP Password:")
+                        yield Input(value=settings.smtp_password, password=True, id="set-smtppass")
+                        yield Static("SMTP From:")
+                        yield Input(value=settings.smtp_from, id="set-smtpfrom")
+                        yield Static("SMTP Security:")
+                        yield Select(
+                            [("TLS", "tls"), ("SSL", "ssl"), ("None", "none")],
+                            id="set-smtpsec",
+                            value=settings.smtp_security,
+                        )
+                        yield Button("Test Email", id="btn-test-email")
+                    with Collapsible(title="Telegram", collapsed=True):
+                        yield Static("Bot Token:")
+                        yield Input(value=settings.telegram_bot_token, password=True, id="set-tg-token")
+                        yield Static("Chat ID:")
+                        yield Input(value=settings.telegram_chat_id, id="set-tg-chatid")
+                        yield Button("Test Telegram", id="btn-test-telegram")
+                    with Collapsible(title="Webhook (Slack / Discord)", collapsed=True):
+                        yield Static("Webhook URL:")
+                        yield Input(value=settings.webhook_url, id="set-webhook-url")
+                        yield Static("Type:")
+                        yield Select(
+                            [("Slack", "slack"), ("Discord", "discord"), ("Generic", "generic")],
+                            id="set-webhook-type",
+                            value=settings.webhook_type if settings.webhook_type in ("slack", "discord", "generic") else "slack",
+                        )
+                        yield Button("Test Webhook", id="btn-test-webhook")
+                    with Collapsible(title="ntfy", collapsed=True):
+                        yield Static("ntfy URL:")
+                        yield Input(value=settings.ntfy_url, id="set-ntfy-url")
+                        yield Static("Auth Token (optional):")
+                        yield Input(value=settings.ntfy_token, password=True, id="set-ntfy-token")
+                        yield Static("Default Priority:")
+                        yield Select(
+                            [("Min", "min"), ("Low", "low"), ("Default", "default"), ("High", "high"), ("Urgent", "urgent")],
+                            id="set-ntfy-priority",
+                            value=settings.ntfy_priority if settings.ntfy_priority in ("min", "low", "default", "high", "urgent") else "default",
+                        )
+                        yield Button("Test ntfy", id="btn-test-ntfy")
+                    with Collapsible(title="Healthchecks.io", collapsed=True):
+                        yield Static("Ping URL:")
+                        yield Input(value=settings.healthchecks_url, id="set-hc-url")
+                        yield Button("Test Healthcheck", id="btn-test-healthcheck")
                 with Vertical(classes="settings-section", id="section-ssh"):
                     yield Static("SSH Timeout:")
                     yield Input(value=settings.ssh_timeout, id="set-sshtimeout")
@@ -138,24 +143,14 @@ class SettingsScreen(Screen):
                     yield Button("Update Now", variant="warning", id="btn-update-now")
                 with Horizontal(id="set-buttons"):
                     yield Button("Save", variant="primary", id="btn-save")
-                    yield Button("Test Email", id="btn-test-email")
-                    yield Button("Test Telegram", id="btn-test-telegram")
-                    yield Button("Test Webhook", id="btn-test-webhook")
-                    yield Button("Test ntfy", id="btn-test-ntfy")
-                    yield Button("Test Healthcheck", id="btn-test-healthcheck")
             yield DocsPanel.for_screen("settings-screen")
         yield Footer()
 
     def on_mount(self) -> None:
         self.query_one("#section-general").border_title = "General"
-        self.query_one("#section-email").border_title = "Email Notifications"
+        self.query_one("#section-notifications").border_title = "Notifications"
         self.query_one("#section-ssh").border_title = "SSH"
         self.query_one("#section-web").border_title = "Web Dashboard"
-        self.query_one("#section-telegram").border_title = "Telegram"
-        self.query_one("#section-webhook").border_title = "Webhook (Slack/Discord)"
-        self.query_one("#section-ntfy").border_title = "ntfy"
-        self.query_one("#section-healthcheck").border_title = "Healthchecks.io"
-        self.query_one("#section-stale").border_title = "Stale Backup Alert"
         self.query_one("#section-update").border_title = "Update"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

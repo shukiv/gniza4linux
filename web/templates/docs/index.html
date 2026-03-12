@@ -71,6 +71,8 @@
         var link = li.querySelector(':scope > a');
         if (!link) return;
         var details = document.createElement('details');
+        // Open "Getting Started" by default
+        if (link.textContent.trim() === 'Getting Started') details.open = true;
         var summary = document.createElement('summary');
         summary.appendChild(link);
         details.appendChild(summary);

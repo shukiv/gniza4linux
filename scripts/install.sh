@@ -256,10 +256,9 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$(command -v python3) -m web --host=$web_host --port=2323
+ExecStart=$INSTALL_DIR/bin/gniza web start --host=$web_host
 WorkingDirectory=$INSTALL_DIR
 Environment=GNIZA_DIR=$INSTALL_DIR
-Environment=PYTHONPATH=$INSTALL_DIR
 Restart=on-failure
 RestartSec=5
 
@@ -295,10 +294,9 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$(command -v python3) -m daemon
+ExecStart=$INSTALL_DIR/bin/gniza daemon start
 WorkingDirectory=$INSTALL_DIR
 Environment=GNIZA_DIR=$INSTALL_DIR
-Environment=PYTHONPATH=$INSTALL_DIR
 Restart=always
 RestartSec=5
 

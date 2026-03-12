@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -m web --host=0.0.0.0 --port=2323
+ExecStart=/usr/local/gniza/bin/gniza web start
 WorkingDirectory=/usr/local/gniza
 Environment=GNIZA_DIR=/usr/local/gniza
 Environment=PYTHONPATH=/usr/local/gniza

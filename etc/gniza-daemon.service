@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -m daemon
+ExecStart=/usr/local/gniza/bin/gniza daemon start
 WorkingDirectory=/usr/local/gniza
 Environment=GNIZA_DIR=/usr/local/gniza
 Environment=PYTHONPATH=/usr/local/gniza

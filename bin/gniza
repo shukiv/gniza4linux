@@ -1026,10 +1026,9 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$(_gniza_python_path) -m web --host=0.0.0.0 --port=2323
+ExecStart=$GNIZA_DIR/bin/gniza web start
 WorkingDirectory=$GNIZA_DIR
 Environment=GNIZA_DIR=$GNIZA_DIR
-Environment=PYTHONPATH=$GNIZA_DIR
 Restart=on-failure
 RestartSec=5
 
@@ -1140,10 +1139,9 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$(_gniza_python_path) -m daemon
+ExecStart=$GNIZA_DIR/bin/gniza daemon start
 WorkingDirectory=$GNIZA_DIR
 Environment=GNIZA_DIR=$GNIZA_DIR
-Environment=PYTHONPATH=$GNIZA_DIR
 Restart=always
 RestartSec=5
 

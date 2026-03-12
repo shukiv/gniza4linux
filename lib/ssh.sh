@@ -54,10 +54,9 @@ test_ssh_connection() {
 
 ensure_remote_dir() {
     local dir; dir="$(shquote "$1")"
-    remote_exec "mkdir -p '$dir'" || {
-        log_error "Failed to create remote directory: $dir"
-        return 1
-    }
+    if ! remote_exec "mkdir -p '$dir'" 2>/dev/null; then
+        log_warn "mkdir -p failed for remote dir '$dir' — relying on rsync --mkpath"
+    fi
 }
 
 build_rsync_ssh_cmd() {

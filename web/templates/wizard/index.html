@@ -147,29 +147,29 @@
         <div class="card bg-base-200 shadow mb-6">
             <div class="card-body">
                 <h2 class="card-title text-base mb-4">4. Configure Sudoers</h2>
-                <p class="text-base-content/60 mb-3">Allow the backup user to run <code class="text-primary">rsync</code> and <code class="text-primary">mkdir</code> with elevated privileges (needed for preserving file ownership and creating backup directories). If you'll be backing up databases, include the relevant dump tools too:</p>
+                <p class="text-base-content/60 mb-3">Allow the backup user to run <code class="text-primary">rsync</code>, <code class="text-primary">mkdir</code>, and <code class="text-primary">chown</code> with elevated privileges (needed for preserving file ownership and creating backup directories). If you'll be backing up databases, include the relevant dump tools too:</p>
                 <div class="relative mb-3">
-                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir" >> /etc/sudoers</pre>
+                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown" >> /etc/sudoers</pre>
                     <button type="button" class="btn btn-ghost btn-xs absolute top-1 right-1"
-                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir&quot; >> /etc/sudoers')">Copy</button>
+                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown&quot; >> /etc/sudoers')">Copy</button>
                 </div>
                 <p class="text-base-content/40 text-xs">If MySQL backup is needed, add:</p>
                 <div class="relative mt-1">
-                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /usr/bin/mysqldump" >> /etc/sudoers</pre>
+                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump" >> /etc/sudoers</pre>
                     <button type="button" class="btn btn-ghost btn-xs absolute top-1 right-1"
-                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /usr/bin/mysqldump&quot; >> /etc/sudoers')">Copy</button>
+                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump&quot; >> /etc/sudoers')">Copy</button>
                 </div>
                 <p class="text-base-content/40 text-xs mt-2">If PostgreSQL backup is needed, add:</p>
                 <div class="relative mt-1">
-                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql" >> /etc/sudoers</pre>
+                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql" >> /etc/sudoers</pre>
                     <button type="button" class="btn btn-ghost btn-xs absolute top-1 right-1"
-                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql&quot; >> /etc/sudoers')">Copy</button>
+                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql&quot; >> /etc/sudoers')">Copy</button>
                 </div>
                 <p class="text-base-content/40 text-xs mt-2">If both MySQL and PostgreSQL are needed:</p>
                 <div class="relative mt-1">
-                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /usr/bin/mysqldump, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql" >> /etc/sudoers</pre>
+                    <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql" >> /etc/sudoers</pre>
                     <button type="button" class="btn btn-ghost btn-xs absolute top-1 right-1"
-                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /usr/bin/mysqldump, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql&quot; >> /etc/sudoers')">Copy</button>
+                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql&quot; >> /etc/sudoers')">Copy</button>
                 </div>
             </div>
         </div>

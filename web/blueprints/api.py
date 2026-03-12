@@ -78,7 +78,7 @@ def _ssh_list_dirs(host, path, port="22", user="root", key="", password="", show
     quoted = shlex.quote(path)
     # Try find first, fall back to ls for restricted shells (e.g. Hetzner Storage Box)
     find_cmd = f"find {quoted} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
-    ls_cmd = f"ls -1 {quoted}"
+    ls_cmd = f"ls -1 {quoted}" if path != "/" else "ls -1 ."
     base_cmd = ssh_cmd(host, port, user, key, password)
     env = None
     if password:

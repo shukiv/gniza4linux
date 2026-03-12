@@ -99,8 +99,9 @@
                                     if (remoteType === 'ssh') {
                                         let host = document.querySelector('[name=host]')?.value;
                                         if (!host) { alert('Enter a host first'); return; }
+                                        let basePath = document.getElementById('base-path-input')?.value || '/';
                                         let params = new URLSearchParams({
-                                            path: '/', target: 'base',
+                                            path: basePath, target: 'base',
                                             host: host,
                                             port: document.querySelector('[name=port]')?.value || '22',
                                             user: document.querySelector('[name=user]')?.value || 'root',
@@ -109,7 +110,8 @@
                                         });
                                         url = '/api/browse/ssh?' + params.toString();
                                     } else {
-                                        url = '/api/browse?path=/&target=base';
+                                        let localBase = document.getElementById('base-path-input')?.value || '/';
+                                        url = '/api/browse?path=' + encodeURIComponent(localBase) + '&target=base';
                                     }
                                     htmx.ajax('GET', url, {target: '#folder-browser-box-base', swap: 'innerHTML'}).then(() => {
                                         let box = document.getElementById('folder-browser-box-base');

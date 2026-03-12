@@ -116,67 +116,39 @@ chmod +x "$INSTALL_DIR/bin/gniza"
 
 # -- Install Python TUI dependencies -------------------------
 if command -v python3 &>/dev/null; then
-    # Ensure pip is available
-    if ! python3 -m pip --version &>/dev/null; then
-        info "pip not found, installing..."
-        if [[ $EUID -eq 0 ]]; then
-            apt-get install -y python3-pip 2>/dev/null \
-                || yum install -y python3-pip 2>/dev/null \
-                || dnf install -y python3-pip 2>/dev/null \
-                || warn "Could not install pip via package manager."
-        else
-            sudo apt-get install -y python3-pip 2>/dev/null \
-                || sudo yum install -y python3-pip 2>/dev/null \
-                || sudo dnf install -y python3-pip 2>/dev/null \
-                || warn "Could not install pip via package manager."
-        fi
-    fi
     _deps_installed=false
     _pip_quiet="--quiet"
     $DEBUG && _pip_quiet=""
     _pip_pkgs=("textual>=0.40" textual-serve flask waitress)
+    _venv_dir="$INSTALL_DIR/venv"
 
-    # Ensure pip is usable — install via apt if needed
-    if ! python3 -m pip --version &>/dev/null; then
-        info "pip not found, installing via apt..."
+    # Ensure python3-venv is available
+    if ! python3 -m venv --help &>/dev/null; then
+        info "python3-venv not found, installing..."
         if [[ $EUID -eq 0 ]]; then
-            apt-get install -y python3-pip 2>/dev/null || true
+            apt-get install -y python3-venv 2>/dev/null || true
         else
-            sudo apt-get install -y python3-pip 2>/dev/null || true
+            sudo apt-get install -y python3-venv 2>/dev/null || true
         fi
     fi
 
-    # Try pip install (with --break-system-packages for PEP 668 systems)
-    if python3 -m pip --version &>/dev/null; then
-        info "Installing Python dependencies via pip..."
-        if python3 -m pip install --break-system-packages $_pip_quiet "${_pip_pkgs[@]}"; then
-            info "Python dependencies installed."
-            _deps_installed=true
-        elif python3 -m pip install $_pip_quiet "${_pip_pkgs[@]}"; then
+    # Create venv and install deps (avoids PEP 668 / externally-managed conflicts)
+    info "Setting up Python virtual environment..."
+    if python3 -m venv "$_venv_dir"; then
+        info "Installing Python dependencies in venv..."
+        if "$_venv_dir/bin/pip" install $_pip_quiet "${_pip_pkgs[@]}"; then
             info "Python dependencies installed."
             _deps_installed=true
         else
-            warn "pip install failed. Trying with pipx/apt fallback..."
+            warn "pip install in venv failed."
         fi
-    fi
-
-    # Fallback: apt for flask/waitress, pipx or pip3 for textual
-    if ! $_deps_installed && command -v apt-get &>/dev/null; then
-        info "Installing flask/waitress via apt (textual requires pip — apt version is too old)..."
-        if [[ $EUID -eq 0 ]]; then
-            apt-get install -y python3-flask python3-waitress 2>/dev/null || true
-        else
-            sudo apt-get install -y python3-flask python3-waitress 2>/dev/null || true
-        fi
-        # Try pipx as last resort for textual
-        if command -v pipx &>/dev/null; then
-            pipx install "textual>=0.40" 2>/dev/null && _deps_installed=true
-        fi
+    else
+        warn "Could not create venv."
     fi
 
     if ! $_deps_installed; then
         warn "Could not install Python dependencies. TUI/web mode may not work."
-        warn "Install manually: pip3 install --break-system-packages 'textual>=0.40' textual-serve flask waitress"
+        warn "Install manually: python3 -m venv $INSTALL_DIR/venv && $INSTALL_DIR/venv/bin/pip install ${_pip_pkgs[*]}"
     fi
 else
     warn "python3 not found. TUI mode will not be available."

@@ -29,6 +29,15 @@ source "$GNIZA_DIR/lib/snaplog.sh"
 source "$GNIZA_DIR/lib/source.sh"
 source "$GNIZA_DIR/lib/health.sh"
 
+# ── Python (prefer venv if available) ──────────────────────
+if [[ -x "$GNIZA_DIR/venv/bin/python3" ]]; then
+    GNIZA_PYTHON="$GNIZA_DIR/venv/bin/python3"
+else
+    GNIZA_PYTHON="python3"
+fi
+export GNIZA_PYTHON
+_gniza_python_path() { command -v "$GNIZA_PYTHON"; }
+
 # ── Help ─────────────────────────────────────────────────────
 show_help() {
     cat <<EOF
@@ -296,7 +305,7 @@ HELPEOF
                 [[ -n "$target" ]] && _job_label+=" $target"
                 [[ -n "$remote" ]] && _job_label+=" → $remote"
                 [[ "$all" == "true" ]] && _job_label="Backup all"
-                _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
+                _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" "$GNIZA_DIR/lib/job_register.py" \
                     start "backup" "$_job_label" --log-file="${LOG_FILE:-}" --pid=$$ 2>/dev/null) || true
             fi
             [[ -n "${_job_id:-}" ]] && export GNIZA_JOB_ID="$_job_id"
@@ -306,7 +315,7 @@ HELPEOF
                 local _st="success"
                 (( _rc != 0 )) && _st="failed"
                 if [[ -n "${_job_id:-}" ]]; then
-                    PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
+                    PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" "$GNIZA_DIR/lib/job_register.py" \
                         finish "${_job_id}" "$_st" "$_rc" 2>/dev/null || true
                 fi
             }
@@ -824,7 +833,7 @@ HELPEOF
                 [[ -n "$target" ]] && _job_label+=" ($target"
                 [[ -n "$remote" ]] && _job_label+=" → $remote"
                 [[ -n "$target" ]] && _job_label+=")"
-                _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
+                _job_id=$(PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" "$GNIZA_DIR/lib/job_register.py" \
                     start "scheduled-run" "$_job_label" --log-file="${LOG_FILE:-}" --pid=$$ 2>/dev/null) || true
             fi
             [[ -n "${_job_id:-}" ]] && export GNIZA_JOB_ID="$_job_id"
@@ -834,7 +843,7 @@ HELPEOF
                 local _st="success"
                 (( _rc != 0 )) && _st="failed"
                 if [[ -n "${_job_id:-}" ]]; then
-                    PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 "$GNIZA_DIR/lib/job_register.py" \
+                    PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" "$GNIZA_DIR/lib/job_register.py" \
                         finish "${_job_id}" "$_st" "$_rc" 2>/dev/null || true
                 fi
             }
@@ -876,7 +885,7 @@ HELPEOF
             # Send email notification
             local _status="success"
             if (( rc != 0 )); then _status="failed"; fi
-            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 -c "
+            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" -c "
 import sys
 from daemon.notify import send_job_notification
 send_job_notification({
@@ -917,7 +926,7 @@ send_job_notification({
             ;;
 
         test-email)
-            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 -c "
+            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" -c "
 from daemon.notify import send_test_notification
 ok, msg = send_test_notification('email')
 print(msg)
@@ -936,7 +945,7 @@ exit(0 if ok else 1)
                 email|telegram|webhook|ntfy|healthcheck) ;;
                 *) die "Invalid channel: $channel (must be email|telegram|webhook|ntfy|healthcheck)" ;;
             esac
-            GNIZA_TEST_CHANNEL="$channel" PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 -c "
+            GNIZA_TEST_CHANNEL="$channel" PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" -c "
 import os
 from daemon.notify import send_test_notification
 ok, msg = send_test_notification(os.environ['GNIZA_TEST_CHANNEL'])
@@ -994,7 +1003,7 @@ HELPEOF
             _web_args=()
             [[ -n "$_web_port" ]] && _web_args+=(--port="$_web_port")
             [[ -n "$_web_host" ]] && _web_args+=(--host="$_web_host")
-            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m web "${_web_args[@]}"
+            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec "$GNIZA_PYTHON" -m web "${_web_args[@]}"
             ;;
         install-service)
             if [[ $EUID -eq 0 ]]; then
@@ -1017,7 +1026,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$(command -v python3) -m web --host=0.0.0.0 --port=2323
+ExecStart=$(_gniza_python_path) -m web --host=0.0.0.0 --port=2323
 WorkingDirectory=$GNIZA_DIR
 Environment=GNIZA_DIR=$GNIZA_DIR
 Environment=PYTHONPATH=$GNIZA_DIR
@@ -1057,7 +1066,7 @@ SVCEOF
             ;;
         reset-password)
             _conf="$CONFIG_DIR/gniza.conf"
-            _new_key=$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')
+            _new_key=$("$GNIZA_PYTHON" -c 'import secrets; print(secrets.token_urlsafe(32))')
             # Create config file if it doesn't exist
             mkdir -p "$(dirname "$_conf")"
             touch "$_conf"
@@ -1108,7 +1117,7 @@ HELPEOF
             _daemon_interval=$(_parse_flag "--interval" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _daemon_args=(--foreground)
             [[ -n "$_daemon_interval" ]] && _daemon_args+=(--interval="$_daemon_interval")
-            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m daemon "${_daemon_args[@]}"
+            PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec "$GNIZA_PYTHON" -m daemon "${_daemon_args[@]}"
             ;;
         install-service)
             if [[ $EUID -eq 0 ]]; then
@@ -1131,7 +1140,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$(command -v python3) -m daemon
+ExecStart=$(_gniza_python_path) -m daemon
 WorkingDirectory=$GNIZA_DIR
 Environment=GNIZA_DIR=$GNIZA_DIR
 Environment=PYTHONPATH=$GNIZA_DIR
@@ -1189,9 +1198,9 @@ elif [[ -n "$SUBCOMMAND" ]]; then
     run_cli
 elif [[ "$FORCE_CLI" == "true" ]]; then
     run_cli
-elif python3 -c "import textual" 2>/dev/null && [[ -t 1 ]]; then
+elif "$GNIZA_PYTHON" -c "import textual" 2>/dev/null && [[ -t 1 ]]; then
     # Python Textual TUI mode
-    PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec python3 -m tui "$@"
+    PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec "$GNIZA_PYTHON" -m tui "$@"
 else
     # Fallback to CLI help
     run_cli

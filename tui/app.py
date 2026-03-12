@@ -5,7 +5,7 @@ except ModuleNotFoundError:
     NoMatches = Exception
 from textual.events import Resize
 
-from tui.config import has_remotes, has_targets
+from tui.config import has_remotes, has_targets, list_conf_dir
 from tui.screens.main_menu import MainMenuScreen
 from tui.screens.backup import BackupScreen
 from tui.screens.restore import RestoreScreen
@@ -49,7 +49,8 @@ class GnizaApp(App):
     }
 
     def on_mount(self) -> None:
-        if not has_remotes() or not has_targets():
+        _has_schedules = len(list_conf_dir("schedules.d")) > 0
+        if not has_remotes() or not has_targets() or not _has_schedules:
             self.push_screen("wizard")
         else:
             self.push_screen("main")

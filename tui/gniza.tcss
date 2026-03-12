@@ -434,13 +434,27 @@ HelpModal {
 /* Wizard */
 #wizard {
     width: 90%;
-    max-width: 60;
+    max-width: 70;
     padding: 2;
 }
 
-#wizard Button {
+#wizard-body {
+    height: auto;
+    margin: 0 0 1 0;
+}
+
+#wizard-body Button {
     width: 100%;
     margin: 0 0 1 0;
+}
+
+#wizard-nav {
+    height: auto;
+    align: center middle;
+}
+
+#wizard-nav Button {
+    margin: 0 1;
 }
 
 #wizard-welcome {

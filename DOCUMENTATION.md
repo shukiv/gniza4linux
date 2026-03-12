@@ -18,6 +18,7 @@ Complete reference for GNIZA, a Linux backup manager that works as a stand-alone
 - [Retention](#retention)
 - [Scheduling](#scheduling)
 - [MySQL Backup](#mysql-backup)
+- [PostgreSQL Backup](#postgresql-backup)
 - [Notifications](#notifications)
 - [Web Dashboard](#web-dashboard)
 - [Background Daemon](#background-daemon)
@@ -44,6 +45,7 @@ Key features:
 - **Incremental snapshots** with hardlink deduplication
 - **Atomic snapshots** — `.partial` directory renamed on success
 - **Built-in MySQL/MariaDB** dump support
+- **Built-in PostgreSQL** dump support
 - **Multiple source types**: local, SSH, S3, Google Drive
 - **Multiple destination types**: local, SSH, S3, Google Drive
 - **Automatic retention** and pruning
@@ -58,7 +60,7 @@ If you have ever set up backups with raw rsync, tar, or tools like Dirvish, you 
 |---|---|
 | Write rsync wrapper scripts | Declarative INI config files |
 | DIY hardlink rotation | Automatic `--link-dest` dedup |
-| Separate mysqldump cron | Built-in MySQL dump before file sync |
+| Separate mysqldump/pg_dump cron | Built-in MySQL + PostgreSQL dump before file sync |
 | Manual crontab entries | Schedule management via UI |
 | Custom log parsing | Structured job logs with status |
 | No visibility into progress | Real-time Running Tasks view |
@@ -515,7 +517,7 @@ Common uses:
 gniza --cli sources show --name=mysite
 ```
 
-Shows all configured fields including source type details and MySQL settings.
+Shows all configured fields including source type details, MySQL settings, and PostgreSQL settings.
 
 ### Deleting a Source
 
@@ -802,6 +804,12 @@ gniza --cli restore --source=mysite --destination=backup-server --snapshot=2026-
 
 # Skip MySQL restore
 gniza --cli restore --source=mysite --destination=backup-server --skip-mysql
+
+# Skip PostgreSQL restore
+gniza --cli restore --source=mysite --destination=backup-server --skip-postgresql
+
+# Skip both
+gniza --cli restore --source=mysite --destination=backup-server --skip-mysql --skip-postgresql
 ```
 
 ### Restore Behavior
@@ -809,11 +817,12 @@ gniza --cli restore --source=mysite --destination=backup-server --skip-mysql
 - **In-place restore**: Files are restored to their original locations, overwriting current files.
 - **Custom directory restore**: Files are restored under the specified directory, preserving the original path structure.
 - **MySQL restore**: If the snapshot contains MySQL dumps (`_mysql/` directory), they are automatically restored unless `--skip-mysql` is passed.
+- **PostgreSQL restore**: If the snapshot contains PostgreSQL dumps (`_postgresql/` directory), they are automatically restored unless `--skip-postgresql` is passed.
 - **Single folder restore**: Only the specified folder is restored from the snapshot.
 
 ### Restoring from TUI
 
-Navigate to Restore, select a source, destination, and snapshot, choose in-place or custom directory, and optionally toggle MySQL restore on/off.
+Navigate to Restore, select a source, destination, and snapshot, choose in-place or custom directory, and optionally toggle MySQL and/or PostgreSQL restore on/off.
 
 ---
 
@@ -852,9 +861,12 @@ Lists all files in the snapshot.
 ├── summary                 # Backup summary
 ├── var/www/                # Backed-up directories (original structure)
 ├── etc/nginx/
-└── _mysql/                 # MySQL dumps (if enabled)
-    ├── dbname.sql.gz       # Gzip-compressed database dump
-    └── _grants.sql.gz      # User grants and privileges
+├── _mysql/                 # MySQL dumps (if enabled)
+│   ├── dbname.sql.gz       # Gzip-compressed database dump
+│   └── _grants.sql.gz      # User grants and privileges
+└── _postgresql/            # PostgreSQL dumps (if enabled)
+    ├── dbname.sql.gz       # Gzip-compressed database dump (pg_dump plain format)
+    └── _roles.sql.gz       # Roles (pg_dumpall --roles-only)
 ```
 
 ### Snapshot Metadata (meta.json)
@@ -1060,6 +1072,66 @@ gniza --cli restore --source=mysite --destination=backup-server --skip-mysql
 ```
 
 In the TUI, toggle the "Restore MySQL databases" switch.
+
+---
+
+## PostgreSQL Backup
+
+GNIZA can dump PostgreSQL databases alongside file backups using `pg_dump` (plain format) + gzip. Available for **local and SSH sources only** (not S3 or Google Drive).
+
+### Enabling PostgreSQL Backup
+
+In the source config:
+
+```ini
+TARGET_POSTGRESQL_ENABLED="yes"
+TARGET_POSTGRESQL_USER="postgres"
+TARGET_POSTGRESQL_PASSWORD="secret"
+TARGET_POSTGRESQL_HOST="localhost"
+TARGET_POSTGRESQL_PORT="5432"
+```
+
+Leave `TARGET_POSTGRESQL_USER` and `TARGET_POSTGRESQL_PASSWORD` empty to use peer authentication.
+
+### Dump Modes
+
+**All databases** (default):
+```ini
+TARGET_POSTGRESQL_MODE="all"
+TARGET_POSTGRESQL_EXCLUDE="test_db,staging_db"
+```
+
+Dumps every user database except system databases (`template0`, `template1`, `postgres`) and any in the exclude list.
+
+**Specific databases**:
+```ini
+TARGET_POSTGRESQL_MODE="specific"
+TARGET_POSTGRESQL_DATABASES="app_db,user_db,analytics"
+```
+
+### Dump Options
+
+```ini
+TARGET_POSTGRESQL_EXTRA_OPTS="--no-owner --no-privileges"
+```
+
+Default options omit ownership and privilege statements for portable restores.
+
+### What Gets Dumped
+
+- Each database is dumped as `<dbname>.sql.gz` (pg_dump plain format, gzip compressed)
+- Roles are dumped via `pg_dumpall --roles-only` as `_roles.sql.gz`
+- All dumps are stored in the `_postgresql/` directory within the snapshot
+
+### PostgreSQL Restore
+
+During restore, PostgreSQL dumps from `_postgresql/` are automatically restored. Use `--skip-postgresql` to skip:
+
+```bash
+gniza --cli restore --source=mysite --destination=backup-server --skip-postgresql
+```
+
+In the TUI, toggle the "Restore PostgreSQL databases" switch.
 
 ---
 
@@ -1402,6 +1474,7 @@ gniza --cli restore --source=NAME --destination=NAME --snapshot=TS
 gniza --cli restore --source=NAME --destination=NAME --dest=/tmp/restore
 gniza --cli restore --source=NAME --destination=NAME --folder=/var/www
 gniza --cli restore --source=NAME --destination=NAME --skip-mysql
+gniza --cli restore --source=NAME --destination=NAME --skip-postgresql
 ```
 
 ### Snapshots

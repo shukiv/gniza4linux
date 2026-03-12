@@ -140,6 +140,46 @@ restore_target() {
         log_info "Skipping MySQL restore (--skip-mysql)"
     fi
 
+    # Restore PostgreSQL databases if snapshot contains _postgresql/ and target has PostgreSQL enabled
+    if [[ "${TARGET_POSTGRESQL_ENABLED:-no}" == "yes" && "${SKIP_POSTGRESQL_RESTORE:-}" != "yes" ]]; then
+        log_info "Checking for PostgreSQL dumps in snapshot..."
+        local pgsql_restore_dir
+        pgsql_restore_dir=$(mktemp -d "${WORK_DIR:-/tmp}/gniza-pgsql-restore-XXXXXX")
+        mkdir -p "$pgsql_restore_dir/_postgresql"
+
+        local pgsql_found=false
+        if _is_rclone_mode; then
+            local pgsql_subpath="targets/${target_name}/current/_postgresql"
+            if rclone_from_remote "$pgsql_subpath" "$pgsql_restore_dir/_postgresql" 2>/dev/null; then
+                pgsql_found=true
+            fi
+        elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+            local pgsql_source="$snap_dir/$ts/_postgresql/"
+            if [[ -d "$pgsql_source" ]]; then
+                rsync -aHAX "$pgsql_source" "$pgsql_restore_dir/_postgresql/" && pgsql_found=true
+            fi
+        else
+            local pgsql_source="$snap_dir/$ts/_postgresql/"
+            if _rsync_download "$pgsql_source" "$pgsql_restore_dir/_postgresql/" 2>/dev/null; then
+                pgsql_found=true
+            fi
+        fi
+
+        if [[ "$pgsql_found" == "true" ]] && ls "$pgsql_restore_dir/_postgresql/"*.sql.gz &>/dev/null || \
+           [[ -f "$pgsql_restore_dir/_postgresql/roles.sql" ]]; then
+            log_info "Found PostgreSQL dumps in snapshot, restoring..."
+            if ! pgsql_restore_databases "$pgsql_restore_dir/_postgresql"; then
+                log_error "PostgreSQL restore had errors"
+                ((errors++)) || true
+            fi
+        else
+            log_debug "No PostgreSQL dumps found in snapshot"
+        fi
+        rm -rf "$pgsql_restore_dir"
+    elif [[ "${SKIP_POSTGRESQL_RESTORE:-}" == "yes" ]]; then
+        log_info "Skipping PostgreSQL restore (--skip-postgresql)"
+    fi
+
     _restore_remote_globals
 
     if (( errors > 0 )); then

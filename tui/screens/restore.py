@@ -48,6 +48,9 @@ class RestoreScreen(Screen):
                     with Horizontal(id="restore-mysql-row"):
                         yield Static("Restore MySQL databases:")
                         yield Switch(value=True, id="restore-mysql-switch")
+                    with Horizontal(id="restore-pgsql-row"):
+                        yield Static("Restore PostgreSQL databases:")
+                        yield Switch(value=True, id="restore-pgsql-switch")
                     with Horizontal(id="restore-buttons"):
                         yield Button("Restore", variant="primary", id="btn-restore")
             yield DocsPanel.for_screen("restore-screen")
@@ -58,11 +61,16 @@ class RestoreScreen(Screen):
             self.query_one("#restore-mysql-row").display = False
         except Exception:
             pass
+        try:
+            self.query_one("#restore-pgsql-row").display = False
+        except Exception:
+            pass
 
     @on(Select.Changed, "#restore-target")
     def _on_target_changed(self, event: Select.Changed) -> None:
         self._try_load_snapshots()
         self._update_mysql_visibility()
+        self._update_pgsql_visibility()
 
     @on(Select.Changed, "#restore-remote")
     def _on_remote_changed(self, event: Select.Changed) -> None:
@@ -77,6 +85,18 @@ class RestoreScreen(Screen):
                 mysql_row.display = data.get("TARGET_MYSQL_ENABLED", "no") == "yes"
             else:
                 mysql_row.display = False
+        except Exception:
+            pass
+
+    def _update_pgsql_visibility(self) -> None:
+        try:
+            target_sel = self.query_one("#restore-target", Select)
+            pgsql_row = self.query_one("#restore-pgsql-row")
+            if isinstance(target_sel.value, str):
+                data = parse_conf(CONFIG_DIR / "targets.d" / f"{target_sel.value}.conf")
+                pgsql_row.display = data.get("TARGET_POSTGRESQL_ENABLED", "no") == "yes"
+            else:
+                pgsql_row.display = False
         except Exception:
             pass
 
@@ -152,6 +172,11 @@ class RestoreScreen(Screen):
         except Exception:
             restore_mysql = True
         skip_mysql = not restore_mysql
+        try:
+            restore_pgsql = self.query_one("#restore-pgsql-switch", Switch).value
+        except Exception:
+            restore_pgsql = True
+        skip_pgsql = not restore_pgsql
         msg = f"Restore snapshot?\n\nSource: {target}\nDestination: {remote}\nSnapshot: {snapshot}"
         if dest:
             msg += f"\nDestination: {dest}"
@@ -159,18 +184,22 @@ class RestoreScreen(Screen):
             msg += "\nLocation: In-place"
         if skip_mysql:
             msg += "\nMySQL: Skip"
+        if skip_pgsql:
+            msg += "\nPostgreSQL: Skip"
         self.app.push_screen(
             ConfirmDialog(msg, "Confirm Restore"),
-            callback=lambda ok: self._do_restore(target, remote, snapshot, dest, skip_mysql) if ok else None,
+            callback=lambda ok: self._do_restore(target, remote, snapshot, dest, skip_mysql, skip_pgsql) if ok else None,
         )
 
-    def _do_restore(self, target: str, remote: str, snapshot: str, dest: str, skip_mysql: bool = False) -> None:
+    def _do_restore(self, target: str, remote: str, snapshot: str, dest: str, skip_mysql: bool = False, skip_pgsql: bool = False) -> None:
         job = job_manager.create_job("restore", f"Restore: {target}")
         args = ["restore", f"--source={target}", f"--destination={remote}", f"--snapshot={snapshot}"]
         if dest:
             args.append(f"--dest={dest}")
         if skip_mysql:
             args.append("--skip-mysql")
+        if skip_pgsql:
+            args.append("--skip-postgresql")
         job_manager.start_job(self.app, job, *args)
         self.app.switch_screen("running_tasks")
 

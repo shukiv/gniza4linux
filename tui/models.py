@@ -35,6 +35,15 @@ class Target:
     mysql_host: str = "localhost"
     mysql_port: str = "3306"
     mysql_extra_opts: str = "--single-transaction --routines --triggers"
+    postgresql_enabled: str = "no"
+    postgresql_mode: str = "all"
+    postgresql_databases: str = ""
+    postgresql_exclude: str = ""
+    postgresql_user: str = ""
+    postgresql_password: str = ""
+    postgresql_host: str = "localhost"
+    postgresql_port: str = "5432"
+    postgresql_extra_opts: str = "--no-owner --no-privileges"
 
     def to_conf(self) -> dict[str, str]:
         data = {
@@ -82,6 +91,17 @@ class Target:
             "TARGET_MYSQL_PORT": self.mysql_port,
             "TARGET_MYSQL_EXTRA_OPTS": self.mysql_extra_opts,
         })
+        data.update({
+            "TARGET_POSTGRESQL_ENABLED": self.postgresql_enabled,
+            "TARGET_POSTGRESQL_MODE": self.postgresql_mode,
+            "TARGET_POSTGRESQL_DATABASES": self.postgresql_databases,
+            "TARGET_POSTGRESQL_EXCLUDE": self.postgresql_exclude,
+            "TARGET_POSTGRESQL_USER": self.postgresql_user,
+            "TARGET_POSTGRESQL_PASSWORD": self.postgresql_password,
+            "TARGET_POSTGRESQL_HOST": self.postgresql_host,
+            "TARGET_POSTGRESQL_PORT": self.postgresql_port,
+            "TARGET_POSTGRESQL_EXTRA_OPTS": self.postgresql_extra_opts,
+        })
         return data
 
     @classmethod
@@ -119,6 +139,15 @@ class Target:
             mysql_host=data.get("TARGET_MYSQL_HOST", "localhost"),
             mysql_port=data.get("TARGET_MYSQL_PORT", "3306"),
             mysql_extra_opts=data.get("TARGET_MYSQL_EXTRA_OPTS", "--single-transaction --routines --triggers"),
+            postgresql_enabled=data.get("TARGET_POSTGRESQL_ENABLED", "no"),
+            postgresql_mode=data.get("TARGET_POSTGRESQL_MODE", "all"),
+            postgresql_databases=data.get("TARGET_POSTGRESQL_DATABASES", ""),
+            postgresql_exclude=data.get("TARGET_POSTGRESQL_EXCLUDE", ""),
+            postgresql_user=data.get("TARGET_POSTGRESQL_USER", ""),
+            postgresql_password=data.get("TARGET_POSTGRESQL_PASSWORD", ""),
+            postgresql_host=data.get("TARGET_POSTGRESQL_HOST", "localhost"),
+            postgresql_port=data.get("TARGET_POSTGRESQL_PORT", "5432"),
+            postgresql_extra_opts=data.get("TARGET_POSTGRESQL_EXTRA_OPTS", "--no-owner --no-privileges"),
         )
 
 

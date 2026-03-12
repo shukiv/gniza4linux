@@ -157,6 +157,15 @@ def save_source():
         mysql_host=form.get("mysql_host", "localhost"),
         mysql_port=form.get("mysql_port", "3306"),
         mysql_extra_opts=form.get("mysql_extra_opts", "--single-transaction --routines --triggers"),
+        postgresql_enabled="yes" if form.get("postgresql_enabled") else "no",
+        postgresql_mode=form.get("postgresql_mode", "all"),
+        postgresql_databases=form.get("postgresql_databases", ""),
+        postgresql_exclude=form.get("postgresql_exclude", ""),
+        postgresql_user=form.get("postgresql_user", ""),
+        postgresql_password=form.get("postgresql_password", ""),
+        postgresql_host=form.get("postgresql_host", "localhost"),
+        postgresql_port=form.get("postgresql_port", "5432"),
+        postgresql_extra_opts=form.get("postgresql_extra_opts", "--no-owner --no-privileges"),
     )
 
     ok, msg = _test_source(target)

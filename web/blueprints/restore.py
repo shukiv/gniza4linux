@@ -73,6 +73,7 @@ def run():
     snapshot = request.form.get("snapshot", "").strip()
     dest = request.form.get("dest", "").strip()
     skip_mysql = request.form.get("skip_mysql")
+    skip_postgresql = request.form.get("skip_postgresql")
 
     if not target_name or not remote_name or not snapshot:
         flash("Please select a source, destination, and snapshot.", "error")
@@ -93,6 +94,8 @@ def run():
         args.append(f"--dest={dest}")
     if skip_mysql:
         args.append("--skip-mysql")
+    if skip_postgresql:
+        args.append("--skip-postgresql")
 
     label = f"Restore {target_name} <- {remote_name} ({snapshot})"
     web_job_manager.create_and_start("restore", label, *args)

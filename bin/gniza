@@ -16,6 +16,7 @@ source "$GNIZA_DIR/lib/targets.sh"
 source "$GNIZA_DIR/lib/remotes.sh"
 source "$GNIZA_DIR/lib/backup.sh"
 source "$GNIZA_DIR/lib/mysql.sh"
+source "$GNIZA_DIR/lib/postgresql.sh"
 source "$GNIZA_DIR/lib/restore.sh"
 source "$GNIZA_DIR/lib/retention.sh"
 source "$GNIZA_DIR/lib/schedule.sh"
@@ -99,10 +100,11 @@ Operations:
       Use --destination=NAME to target a specific destination.
 
   restore --source=NAME --snapshot=TS [--destination=NAME] [--dest=DIR]
-          [--folder=PATH] [--skip-mysql]
+          [--folder=PATH] [--skip-mysql] [--skip-postgresql]
       Restore from a snapshot. Use --dest for custom restore location.
       Use --folder to restore a single directory from the snapshot.
       Use --skip-mysql to skip MySQL database restore.
+      Use --skip-postgresql to skip PostgreSQL database restore.
 
   retention [--source=NAME] [--destination=NAME] [--count=N] [--all]
       Enforce snapshot retention policies. Deletes snapshots beyond
@@ -344,12 +346,14 @@ Options:
   --dest=DIR            Custom restore location (default: original path)
   --folder=PATH         Restore a single directory from the snapshot
   --skip-mysql          Skip MySQL database restore
+  --skip-postgresql     Skip PostgreSQL database restore
   --help                Show this help
 
 Examples:
   gniza restore --source=mysite --snapshot=latest
   gniza restore --source=mysite --snapshot=2025-03-01_120000 --dest=/tmp/restore
   gniza restore --source=mysite --snapshot=latest --folder=/var/www --skip-mysql
+  gniza restore --source=mysite --snapshot=latest --skip-postgresql
 HELPEOF
                 exit 0
             fi
@@ -367,6 +371,13 @@ HELPEOF
                 [[ "$arg" == "--skip-mysql" ]] && skip_mysql="yes"
             done
             [[ -n "$skip_mysql" ]] && export SKIP_MYSQL_RESTORE="yes"
+
+            # Check for --skip-postgresql flag
+            local skip_postgresql=""
+            for arg in "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}"; do
+                [[ "$arg" == "--skip-postgresql" ]] && skip_postgresql="yes"
+            done
+            [[ -n "$skip_postgresql" ]] && export SKIP_POSTGRESQL_RESTORE="yes"
 
             [[ -z "$target" ]] && die "restore requires --source=NAME"
 
@@ -479,6 +490,19 @@ HELPEOF
                         echo "Host:           $TARGET_MYSQL_HOST"
                         echo "Port:           $TARGET_MYSQL_PORT"
                         echo "Extra opts:     $TARGET_MYSQL_EXTRA_OPTS"
+                    fi
+                    if [[ "$TARGET_POSTGRESQL_ENABLED" == "yes" ]]; then
+                        echo ""
+                        echo "--- PostgreSQL ---"
+                        echo "Enabled:        yes"
+                        echo "Mode:           $TARGET_POSTGRESQL_MODE"
+                        echo "Databases:      ${TARGET_POSTGRESQL_DATABASES:-(all)}"
+                        echo "Exclude:        ${TARGET_POSTGRESQL_EXCLUDE:-(none)}"
+                        echo "User:           ${TARGET_POSTGRESQL_USER:-(current)}"
+                        echo "Password:       ${TARGET_POSTGRESQL_PASSWORD:+****}"
+                        echo "Host:           $TARGET_POSTGRESQL_HOST"
+                        echo "Port:           $TARGET_POSTGRESQL_PORT"
+                        echo "Extra opts:     $TARGET_POSTGRESQL_EXTRA_OPTS"
                     fi
                     ;;
                 *)

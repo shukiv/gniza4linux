@@ -11,6 +11,7 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 - **Multiple destination types** — Push to SSH, local drives (USB/NFS), S3 (AWS, Backblaze B2, Wasabi), or Google Drive
 - **Incremental snapshots** — rsync `--link-dest` hardlink deduplication across snapshots
 - **MySQL/MariaDB backup** — Dump all or selected databases with grants, routines, and triggers
+- **PostgreSQL backup** — Dump all or selected databases with roles via pg_dump + gzip
 - **Atomic snapshots** — `.partial` directory during transfer, renamed on success
 - **Retention policies** — Automatic pruning per-schedule with global default and snapshot pinning
 - **Disk space safety** — Abort if destination usage exceeds threshold (default 95%)
@@ -185,6 +186,9 @@ Requires `rclone` to be installed.
 +-- _mysql/             # MySQL dumps (if enabled)
     +-- dbname.sql.gz
     +-- _grants.sql.gz
++-- _postgresql/        # PostgreSQL dumps (if enabled)
+    +-- dbname.sql.gz
+    +-- _roles.sql.gz
 ```
 
 During transfer, snapshots are stored in a `.partial` directory. On success, the directory is renamed to the final timestamp. Interrupted backups leave no incomplete snapshots.
@@ -217,7 +221,7 @@ Destinations:
 
 Operations:
   backup [--source=NAME] [--destination=NAME] [--all]
-  restore --source=NAME --snapshot=TS [--destination=NAME] [--dest=DIR] [--skip-mysql]
+  restore --source=NAME --snapshot=TS [--destination=NAME] [--dest=DIR] [--skip-mysql] [--skip-postgresql]
   retention [--source=NAME] [--destination=NAME] [--all]
 
 Snapshots:
@@ -322,6 +326,17 @@ TARGET_MYSQL_PASSWORD=""
 TARGET_MYSQL_HOST="localhost"
 TARGET_MYSQL_PORT="3306"
 TARGET_MYSQL_EXTRA_OPTS="--single-transaction --routines --triggers"
+
+# PostgreSQL backup (local and SSH sources only)
+TARGET_POSTGRESQL_ENABLED="no"
+TARGET_POSTGRESQL_MODE="all"    # all | specific
+TARGET_POSTGRESQL_DATABASES=""  # Comma-separated (when mode=specific)
+TARGET_POSTGRESQL_EXCLUDE=""    # Databases to skip
+TARGET_POSTGRESQL_USER=""       # Leave empty for peer auth
+TARGET_POSTGRESQL_PASSWORD=""   # Leave empty for peer auth
+TARGET_POSTGRESQL_HOST="localhost"
+TARGET_POSTGRESQL_PORT="5432"
+TARGET_POSTGRESQL_EXTRA_OPTS="--no-owner --no-privileges"
 ```
 
 **Include vs Exclude**: Set `TARGET_INCLUDE` to back up only matching files (e.g. `*.conf,*.sh`). When include is set, everything else is excluded. If only `TARGET_EXCLUDE` is set, matching files are skipped. Patterns use rsync glob syntax.
@@ -432,6 +447,20 @@ gniza can dump MySQL/MariaDB databases alongside file backups.
 - **Restore**: MySQL dumps are automatically restored unless `--skip-mysql` is passed
 
 Auto-detects `mysqldump` or `mariadb-dump`.
+
+## PostgreSQL Backup
+
+gniza can dump PostgreSQL databases alongside file backups. Available for local and SSH sources only (not S3/Google Drive).
+
+- **All databases**: Set `TARGET_POSTGRESQL_MODE="all"` to dump every user database
+- **Specific databases**: Set `TARGET_POSTGRESQL_MODE="specific"` and list them in `TARGET_POSTGRESQL_DATABASES`
+- **Exclude databases**: Use `TARGET_POSTGRESQL_EXCLUDE` to skip specific databases
+- **Roles**: Roles are automatically dumped via `pg_dumpall --roles-only` to `_roles.sql.gz`
+- **Compression**: All dumps are gzip-compressed (pg_dump plain format + gzip)
+- **Restore**: PostgreSQL dumps are automatically restored unless `--skip-postgresql` is passed
+- **Authentication**: Leave `TARGET_POSTGRESQL_USER` and `TARGET_POSTGRESQL_PASSWORD` empty for peer auth
+
+Dumps are stored in the `_postgresql/` subdirectory within each snapshot.
 
 ## Scheduling
 

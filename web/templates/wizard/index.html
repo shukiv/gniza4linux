@@ -13,6 +13,7 @@
     sourceType: 'local',
     sourceAuthMethod: 'key',
     mysqlEnabled: false,
+    postgresqlEnabled: false,
     scheduleType: 'daily',
     folderList: [],
     addFolder(path) { path = path.trim(); if (path && !this.folderList.includes(path)) this.folderList.push(path); },
@@ -689,6 +690,60 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                             <fieldset class="fieldset md:col-span-2">
                                 <label class="fieldset-label">Extra mysqldump options</label>
                                 <input type="text" name="mysql_extra_opts" value="--single-transaction --routines --triggers" class="input">
+                            </fieldset>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PostgreSQL Settings (only for local/ssh sources) -->
+            <div class="card bg-base-200 shadow mb-6" x-show="sourceType === 'local' || sourceType === 'ssh'" x-cloak>
+                <div class="card-body">
+                    <div class="flex items-center gap-4 mb-4">
+                        <h2 class="card-title text-base">PostgreSQL Backup</h2>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="checkbox" name="postgresql_enabled" class="toggle toggle-primary toggle-sm"
+                                   x-model="postgresqlEnabled" :true-value="true" :false-value="false">
+                            <span>Enable</span>
+                        </label>
+                    </div>
+
+                    <div x-show="postgresqlEnabled" x-cloak>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Mode</label>
+                                <select name="postgresql_mode" class="select">
+                                    <option value="all">All databases</option>
+                                    <option value="specific">Specific databases</option>
+                                </select>
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Host</label>
+                                <input type="text" name="postgresql_host" value="localhost" class="input" placeholder="localhost">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Port</label>
+                                <input type="text" name="postgresql_port" value="5432" class="input" placeholder="5432">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">User</label>
+                                <input type="text" name="postgresql_user" class="input" placeholder="postgres">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Password</label>
+                                <input type="password" name="postgresql_password" class="input">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Databases (comma-separated)</label>
+                                <input type="text" name="postgresql_databases" class="input" placeholder="db1,db2">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Exclude databases</label>
+                                <input type="text" name="postgresql_exclude" class="input" placeholder="test_db,dev_db">
+                            </fieldset>
+                            <fieldset class="fieldset md:col-span-2">
+                                <label class="fieldset-label">Extra pg_dump options</label>
+                                <input type="text" name="postgresql_extra_opts" value="--no-owner --no-privileges" class="input">
                             </fieldset>
                         </div>
                     </div>

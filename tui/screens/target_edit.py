@@ -122,6 +122,35 @@ class TargetEditScreen(Screen):
                 yield Input(value=target.mysql_port, placeholder="3306", id="te-mysql-port", classes="mysql-field")
                 yield Static("MySQL Extra Options:", classes="mysql-field")
                 yield Input(value=target.mysql_extra_opts, placeholder="--single-transaction --routines --triggers", id="te-mysql-extra-opts", classes="mysql-field")
+                yield Static("--- PostgreSQL Backup ---", classes="section-label pgsql-section")
+                yield Static("PostgreSQL Enabled:", classes="pgsql-section")
+                yield Select(
+                    [("No", "no"), ("Yes", "yes")],
+                    value=target.postgresql_enabled,
+                    id="te-pgsql-enabled",
+                    classes="pgsql-section",
+                )
+                yield Static("PostgreSQL Mode:", classes="pgsql-field")
+                yield Select(
+                    [("All databases", "all"), ("Specific databases", "specific")],
+                    value=target.postgresql_mode,
+                    id="te-pgsql-mode",
+                    classes="pgsql-field",
+                )
+                yield Static("Databases (comma-separated):", classes="pgsql-field pgsql-select-field")
+                yield Input(value=target.postgresql_databases, placeholder="db1,db2", id="te-pgsql-databases", classes="pgsql-field pgsql-select-field")
+                yield Static("Exclude databases (comma-separated):", classes="pgsql-field pgsql-all-field")
+                yield Input(value=target.postgresql_exclude, placeholder="test_db,dev_db", id="te-pgsql-exclude", classes="pgsql-field pgsql-all-field")
+                yield Static("PostgreSQL User:", classes="pgsql-field")
+                yield Input(value=target.postgresql_user, placeholder="Leave empty for peer auth", id="te-pgsql-user", classes="pgsql-field")
+                yield Static("PostgreSQL Password:", classes="pgsql-field")
+                yield Input(value=target.postgresql_password, placeholder="Leave empty for peer auth", password=True, id="te-pgsql-password", classes="pgsql-field")
+                yield Static("PostgreSQL Host:", classes="pgsql-field")
+                yield Input(value=target.postgresql_host, placeholder="localhost", id="te-pgsql-host", classes="pgsql-field")
+                yield Static("PostgreSQL Port:", classes="pgsql-field")
+                yield Input(value=target.postgresql_port, placeholder="5432", id="te-pgsql-port", classes="pgsql-field")
+                yield Static("PostgreSQL Extra Options:", classes="pgsql-field")
+                yield Input(value=target.postgresql_extra_opts, placeholder="--no-owner --no-privileges", id="te-pgsql-extra-opts", classes="pgsql-field")
                 with Horizontal(id="te-buttons"):
                     yield Button("Test & Save", variant="primary", id="btn-save")
                     yield Button("Cancel", id="btn-cancel")
@@ -130,6 +159,7 @@ class TargetEditScreen(Screen):
 
     def on_mount(self) -> None:
         self._update_mysql_visibility()
+        self._update_pgsql_visibility()
         self._update_source_visibility()
 
     _SOURCE_TYPE_MAP = {"Local": "local", "SSH": "ssh", "S3": "s3", "Google Drive": "gdrive"}
@@ -138,6 +168,8 @@ class TargetEditScreen(Screen):
     def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id in ("te-mysql-enabled", "te-mysql-mode"):
             self._update_mysql_visibility()
+        elif event.select.id in ("te-pgsql-enabled", "te-pgsql-mode"):
+            self._update_pgsql_visibility()
         elif event.select.id == "te-source-auth-method":
             self._update_source_visibility()
 
@@ -155,6 +187,18 @@ class TargetEditScreen(Screen):
             for w in self.query(".mysql-select-field"):
                 w.display = mode == "specific"
             for w in self.query(".mysql-all-field"):
+                w.display = mode == "all"
+
+    def _update_pgsql_visibility(self) -> None:
+        enabled = str(self.query_one("#te-pgsql-enabled", Select).value)
+        is_enabled = enabled == "yes"
+        for w in self.query(".pgsql-field"):
+            w.display = is_enabled
+        if is_enabled:
+            mode = str(self.query_one("#te-pgsql-mode", Select).value)
+            for w in self.query(".pgsql-select-field"):
+                w.display = mode == "specific"
+            for w in self.query(".pgsql-all-field"):
                 w.display = mode == "all"
 
     def _get_source_type(self) -> str:
@@ -192,6 +236,15 @@ class TargetEditScreen(Screen):
             self._update_mysql_visibility()
         else:
             for w in self.query(".mysql-field"):
+                w.display = False
+        # Hide PostgreSQL section for S3/GDrive (no PostgreSQL on cloud sources)
+        show_pgsql = source_type in ("local", "ssh")
+        for w in self.query(".pgsql-section"):
+            w.display = show_pgsql
+        if show_pgsql:
+            self._update_pgsql_visibility()
+        else:
+            for w in self.query(".pgsql-field"):
                 w.display = False
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -246,8 +299,9 @@ class TargetEditScreen(Screen):
         folders = self.query_one("#te-folders", TagList).value
         mysql_enabled = str(self.query_one("#te-mysql-enabled", Select).value)
         source_type = self._get_source_type()
-        if not folders and mysql_enabled != "yes" and source_type == "local":
-            self.notify("At least one folder or MySQL backup is required", severity="error")
+        pgsql_enabled = str(self.query_one("#te-pgsql-enabled", Select).value)
+        if not folders and mysql_enabled != "yes" and pgsql_enabled != "yes" and source_type == "local":
+            self.notify("At least one folder or MySQL/PostgreSQL backup is required", severity="error")
             return
         if source_type != "local" and not folders:
             self.notify("At least one remote path is required", severity="error")
@@ -285,6 +339,15 @@ class TargetEditScreen(Screen):
             mysql_host=self.query_one("#te-mysql-host", Input).value.strip(),
             mysql_port=self.query_one("#te-mysql-port", Input).value.strip(),
             mysql_extra_opts=self.query_one("#te-mysql-extra-opts", Input).value.strip(),
+            postgresql_enabled=pgsql_enabled,
+            postgresql_mode=str(self.query_one("#te-pgsql-mode", Select).value),
+            postgresql_databases=self.query_one("#te-pgsql-databases", Input).value.strip(),
+            postgresql_exclude=self.query_one("#te-pgsql-exclude", Input).value.strip(),
+            postgresql_user=self.query_one("#te-pgsql-user", Input).value.strip(),
+            postgresql_password=self.query_one("#te-pgsql-password", Input).value.strip(),
+            postgresql_host=self.query_one("#te-pgsql-host", Input).value.strip(),
+            postgresql_port=self.query_one("#te-pgsql-port", Input).value.strip(),
+            postgresql_extra_opts=self.query_one("#te-pgsql-extra-opts", Input).value.strip(),
         )
 
         if not self._test_source(target):

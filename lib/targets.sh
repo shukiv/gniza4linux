@@ -62,6 +62,15 @@ load_target() {
     TARGET_MYSQL_HOST="${TARGET_MYSQL_HOST:-localhost}"
     TARGET_MYSQL_PORT="${TARGET_MYSQL_PORT:-3306}"
     TARGET_MYSQL_EXTRA_OPTS="${TARGET_MYSQL_EXTRA_OPTS:---single-transaction --routines --triggers}"
+    TARGET_POSTGRESQL_ENABLED="${TARGET_POSTGRESQL_ENABLED:-no}"
+    TARGET_POSTGRESQL_MODE="${TARGET_POSTGRESQL_MODE:-all}"
+    TARGET_POSTGRESQL_DATABASES="${TARGET_POSTGRESQL_DATABASES:-}"
+    TARGET_POSTGRESQL_EXCLUDE="${TARGET_POSTGRESQL_EXCLUDE:-}"
+    TARGET_POSTGRESQL_USER="${TARGET_POSTGRESQL_USER:-}"
+    TARGET_POSTGRESQL_PASSWORD="${TARGET_POSTGRESQL_PASSWORD:-}"
+    TARGET_POSTGRESQL_HOST="${TARGET_POSTGRESQL_HOST:-localhost}"
+    TARGET_POSTGRESQL_PORT="${TARGET_POSTGRESQL_PORT:-5432}"
+    TARGET_POSTGRESQL_EXTRA_OPTS="${TARGET_POSTGRESQL_EXTRA_OPTS:---no-owner --no-privileges}"
     TARGET_SOURCE_TYPE="${TARGET_SOURCE_TYPE:-local}"
     TARGET_SOURCE_HOST="${TARGET_SOURCE_HOST:-}"
     TARGET_SOURCE_PORT="${TARGET_SOURCE_PORT:-22}"
@@ -95,8 +104,8 @@ validate_target() {
         ((errors++)) || true
     fi
 
-    if [[ -z "$TARGET_FOLDERS" && "${TARGET_MYSQL_ENABLED:-no}" != "yes" ]]; then
-        log_error "Target '$name': TARGET_FOLDERS is required (or enable MySQL backup)"
+    if [[ -z "$TARGET_FOLDERS" && "${TARGET_MYSQL_ENABLED:-no}" != "yes" && "${TARGET_POSTGRESQL_ENABLED:-no}" != "yes" ]]; then
+        log_error "Target '$name': TARGET_FOLDERS is required (or enable MySQL/PostgreSQL backup)"
         ((errors++)) || true
     elif [[ -n "$TARGET_FOLDERS" ]]; then
         if [[ "${TARGET_SOURCE_TYPE:-local}" == "local" ]]; then

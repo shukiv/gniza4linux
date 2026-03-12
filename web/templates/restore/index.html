@@ -67,6 +67,12 @@
                         <span>Skip MySQL restore</span>
                     </label>
                 </fieldset>
+                <fieldset class="fieldset mb-6">
+                    <label class="label cursor-pointer gap-2 justify-start">
+                        <input type="checkbox" name="skip_postgresql" class="checkbox checkbox-primary">
+                        <span>Skip PostgreSQL restore</span>
+                    </label>
+                </fieldset>
 
                 <div class="card-actions justify-end">
                     <button type="submit" class="btn btn-primary" onclick="return confirm('Start restore? This will overwrite existing files.')">Restore</button>
@@ -87,6 +93,7 @@
     <li><strong>Snapshot</strong> — The specific point-in-time snapshot to restore from. Loaded after selecting source and destination.</li>
     <li><strong>Restore location</strong> — Choose 'In-place' to overwrite original files, or 'Custom directory' to restore to a different path.</li>
     <li><strong>Restore MySQL</strong> — Toggle whether to restore MySQL databases (only shown if the source has MySQL backup enabled).</li>
+    <li><strong>Restore PostgreSQL</strong> — Toggle whether to restore PostgreSQL databases (only shown if the source has PostgreSQL backup enabled).</li>
 </ul>
 <h4 class="font-semibold text-sm mb-1">Warning</h4>
 <p class="text-base-content/70">In-place restore will overwrite existing files. Consider restoring to a custom directory first to verify the contents.</p>

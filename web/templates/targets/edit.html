@@ -16,6 +16,7 @@
           sourceType: '{{ target.source_type }}',
           sourceS3Provider: '{{ target.source_s3_provider or "AWS" }}',
           mysqlEnabled: {{ 'true' if target.mysql_enabled == 'yes' else 'false' }},
+          postgresqlEnabled: {{ 'true' if target.postgresql_enabled == 'yes' else 'false' }},
           sourceAuthMethod: '{{ target.source_auth_method or 'key' }}',
           folderList: window._targetFolders || [],
           addFolder(path) { path = path.trim(); if (path && !this.folderList.includes(path)) this.folderList.push(path); },
@@ -289,6 +290,61 @@
         </div>
     </div>
 
+    <!-- PostgreSQL Settings (only for local/ssh sources) -->
+    <div class="card bg-base-200 shadow mb-6" x-show="sourceType === 'local' || sourceType === 'ssh'" x-cloak>
+        <div class="card-body">
+            <div class="flex items-center gap-4 mb-4">
+                <h2 class="card-title text-base">PostgreSQL Backup</h2>
+                <label class="label cursor-pointer gap-2">
+                    <input type="checkbox" name="postgresql_enabled" class="toggle toggle-primary toggle-sm"
+                           x-model="postgresqlEnabled" :true-value="true" :false-value="false"
+                           {{ 'checked' if target.postgresql_enabled == 'yes' else '' }}>
+                    <span>Enable</span>
+                </label>
+            </div>
+
+            <div x-show="postgresqlEnabled" x-cloak>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Mode</label>
+                        <select name="postgresql_mode" class="select">
+                            <option value="all" {{ 'selected' if target.postgresql_mode == 'all' else '' }}>All databases</option>
+                            <option value="specific" {{ 'selected' if target.postgresql_mode == 'specific' else '' }}>Specific databases</option>
+                        </select>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Host</label>
+                        <input type="text" name="postgresql_host" value="{{ target.postgresql_host }}" class="input" placeholder="localhost">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Port</label>
+                        <input type="text" name="postgresql_port" value="{{ target.postgresql_port }}" class="input" placeholder="5432">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">User</label>
+                        <input type="text" name="postgresql_user" value="{{ target.postgresql_user }}" class="input" placeholder="postgres">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Password</label>
+                        <input type="password" name="postgresql_password" value="{{ target.postgresql_password }}" class="input">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Databases (comma-separated)</label>
+                        <input type="text" name="postgresql_databases" value="{{ target.postgresql_databases }}" class="input" placeholder="db1,db2">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Exclude databases</label>
+                        <input type="text" name="postgresql_exclude" value="{{ target.postgresql_exclude }}" class="input" placeholder="test_db,dev_db">
+                    </fieldset>
+                    <fieldset class="fieldset md:col-span-2">
+                        <label class="fieldset-label">Extra pg_dump options</label>
+                        <input type="text" name="postgresql_extra_opts" value="{{ target.postgresql_extra_opts }}" class="input">
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Hooks -->
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
@@ -343,4 +399,6 @@
 <p class="mb-3 text-base-content/70">When using a source server, specify remote paths in the Folders field instead of local paths.</p>
 <h4 class="font-semibold text-sm mb-1">MySQL</h4>
 <p class="text-base-content/70">Enable MySQL to dump databases alongside files. Choose 'All databases' or select specific ones. Leave user/password empty for socket auth.</p>
+<h4 class="font-semibold text-sm mb-1">PostgreSQL</h4>
+<p class="text-base-content/70">Enable PostgreSQL to dump databases alongside files. Uses pg_dump for each database and pg_dumpall for roles. Leave user/password empty for peer auth.</p>
 {% endblock %}

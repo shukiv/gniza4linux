@@ -140,6 +140,20 @@ _backup_target_impl() {
         fi
     fi
 
+
+    # 8.6. Dump PostgreSQL databases (if enabled)
+    local pgsql_dump_dir=""
+    if [[ "${TARGET_POSTGRESQL_ENABLED:-no}" == "yes" && "${TARGET_SOURCE_TYPE:-local}" != "s3" && "${TARGET_SOURCE_TYPE:-local}" != "gdrive" ]]; then
+        log_info "Dumping PostgreSQL databases for $target_name..."
+        if pgsql_dump_databases; then
+            pgsql_dump_roles || log_warn "Roles dump failed, continuing with database dumps"
+            pgsql_dump_dir="${PGSQL_DUMP_DIR:-}"
+        else
+            log_warn "PostgreSQL dump failed for $target_name — continuing with file backup"
+            pgsql_cleanup_dump
+        fi
+    fi
+
     # 9. Transfer each folder
     local folder
     local transfer_failed=false
@@ -204,8 +218,27 @@ _backup_target_impl() {
         fi
     fi
 
+
+    # 9.6. Transfer PostgreSQL dumps
+    if [[ -n "$pgsql_dump_dir" && -d "$pgsql_dump_dir/_postgresql" ]]; then
+        if [[ "$transfer_failed" != "true" ]] && [[ "$threshold" -gt 0 ]]; then
+            check_remote_disk_space "$threshold" || {
+                log_error "Disk space threshold exceeded — aborting before PostgreSQL dump transfer"
+                transfer_failed=true
+            }
+        fi
+        if [[ "$transfer_failed" != "true" ]]; then
+            log_info "Transferring PostgreSQL dumps for $target_name..."
+            if ! transfer_folder "$target_name" "$pgsql_dump_dir/_postgresql" "$ts" "$prev" "_postgresql"; then
+                log_error "Transfer failed for PostgreSQL dumps"
+                transfer_failed=true
+            fi
+        fi
+    fi
+
     # Cleanup MySQL temp dir
     mysql_cleanup_dump
+    pgsql_cleanup_dump
 
     if [[ "$transfer_failed" == "true" ]]; then
         log_error "One or more folder transfers failed for $target_name"
@@ -230,6 +263,7 @@ _backup_target_impl() {
     local esc_hostname; esc_hostname=$(printf '%s' "$hostname" | sed 's/["\]/\\&/g')
     local esc_folders; esc_folders=$(printf '%s' "$TARGET_FOLDERS" | sed 's/["\]/\\&/g')
     local mysql_val; mysql_val=$([ "${TARGET_MYSQL_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
+    local pgsql_val; pgsql_val=$([ "${TARGET_POSTGRESQL_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
     meta_json=$(printf '{
   "target": "%s",
   "hostname": "%s",
@@ -237,10 +271,11 @@ _backup_target_impl() {
   "duration": %d,
   "folders": "%s",
   "mysql_dumps": %s,
+  "postgresql_dumps": %s,
   "total_size": %d,
   "mode": "%s",
   "pinned": false
-}' "$esc_target" "$esc_hostname" "$ts" "$duration" "$esc_folders" "$mysql_val" "$total_size" "${BACKUP_MODE:-$DEFAULT_BACKUP_MODE}")
+}' "$esc_target" "$esc_hostname" "$ts" "$duration" "$esc_folders" "$mysql_val" "$pgsql_val" "$total_size" "${BACKUP_MODE:-$DEFAULT_BACKUP_MODE}")
 
     if _is_rclone_mode; then
         local meta_subpath="targets/${target_name}/snapshots/${ts}/meta.json"

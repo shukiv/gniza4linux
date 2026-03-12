@@ -100,7 +100,7 @@ def create_app():
             "nav_items": nav_items,
             "active_page": active_page,
             "app_name": "GNIZA",
-            "app_version": "0.24",
+            "app_version": "0.25",
             "current_year": datetime.now().year,
         }
 

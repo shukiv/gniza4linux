@@ -135,34 +135,37 @@ if command -v python3 &>/dev/null; then
 
     # Ensure python3-venv is available
     if ! python3 -m venv --help &>/dev/null; then
-        info "python3-venv not found, installing..."
-        if [[ $EUID -eq 0 ]]; then
-            apt-get install -y python3-venv 2>/dev/null || true
-        else
-            sudo apt-get install -y python3-venv 2>/dev/null || true
+        info "Installing python3-venv..."
+        if command -v apt-get &>/dev/null; then
+            apt-get update -qq 2>/dev/null || true
+            if [[ $EUID -eq 0 ]]; then
+                apt-get install -y -qq python3-venv || true
+            else
+                sudo apt-get install -y -qq python3-venv || true
+            fi
+        elif command -v yum &>/dev/null; then
+            yum install -y -q python3-virtualenv 2>/dev/null || true
+        elif command -v dnf &>/dev/null; then
+            dnf install -y -q python3-virtualenv 2>/dev/null || true
+        fi
+        if ! python3 -m venv --help &>/dev/null; then
+            die "python3-venv is required but could not be installed. Install it manually and retry."
         fi
     fi
 
     # Create venv and install deps (avoids PEP 668 / externally-managed conflicts)
     info "Setting up Python virtual environment..."
-    if python3 -m venv "$_venv_dir"; then
-        info "Installing Python dependencies in venv..."
-        if "$_venv_dir/bin/pip" install $_pip_quiet "${_pip_pkgs[@]}"; then
-            info "Python dependencies installed."
-            _deps_installed=true
-        else
-            warn "pip install in venv failed."
-        fi
-    else
-        warn "Could not create venv."
+    if ! python3 -m venv "$_venv_dir"; then
+        die "Failed to create Python virtual environment at $_venv_dir"
     fi
 
-    if ! $_deps_installed; then
-        warn "Could not install Python dependencies. TUI/web mode may not work."
-        warn "Install manually: python3 -m venv $INSTALL_DIR/venv && $INSTALL_DIR/venv/bin/pip install ${_pip_pkgs[*]}"
+    info "Installing Python dependencies in venv..."
+    if ! "$_venv_dir/bin/pip" install $_pip_quiet "${_pip_pkgs[@]}"; then
+        die "Failed to install Python dependencies. Check network connectivity and retry."
     fi
+    info "Python dependencies installed."
 else
-    warn "python3 not found. TUI mode will not be available."
+    die "python3 is required but not found. Install Python 3 and retry."
 fi
 
 # -- Create symlink -------------------------------------------

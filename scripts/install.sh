@@ -53,9 +53,20 @@ if [[ -n "${BASH_SOURCE[0]:-}" && "${BASH_SOURCE[0]}" != "bash" ]]; then
 fi
 
 if [[ -z "$SOURCE_DIR" ]]; then
-    # Clone from git
+    # Clone from git — install git if missing
     if ! command -v git &>/dev/null; then
-        die "git is required to install gniza4linux (or run from a local clone)"
+        info "Installing git..."
+        if command -v apt-get &>/dev/null; then
+            apt-get update -qq && apt-get install -y -qq git || die "Failed to install git"
+        elif command -v yum &>/dev/null; then
+            yum install -y -q git || die "Failed to install git"
+        elif command -v dnf &>/dev/null; then
+            dnf install -y -q git || die "Failed to install git"
+        elif command -v pacman &>/dev/null; then
+            pacman -Sy --noconfirm git || die "Failed to install git"
+        else
+            die "git is required but could not be installed automatically. Install it manually and retry."
+        fi
     fi
     TMPDIR=$(mktemp -d)
     trap 'rm -rf "$TMPDIR"' EXIT

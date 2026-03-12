@@ -40,43 +40,20 @@ info "Config dir:   $CONFIG_DIR"
 info "Log dir:      $LOG_DIR"
 echo ""
 
-# -- Determine source ----------------------------------------
-SOURCE_DIR=""
-
-# Check if running from a local clone (won't work when piped via curl)
-if [[ -n "${BASH_SOURCE[0]:-}" && "${BASH_SOURCE[0]}" != "bash" ]]; then
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || true
-    if [[ -n "${SCRIPT_DIR:-}" && -f "$SCRIPT_DIR/../lib/constants.sh" && -f "$SCRIPT_DIR/../bin/gniza" ]]; then
-        SOURCE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-        info "Installing from local clone: $SOURCE_DIR"
-    fi
-fi
-
-if [[ -z "$SOURCE_DIR" ]]; then
-    # Clone from git — install git if missing
-    if ! command -v git &>/dev/null; then
-        info "Installing git..."
-        if command -v apt-get &>/dev/null; then
-            apt-get update -qq && apt-get install -y -qq git || die "Failed to install git"
-        elif command -v yum &>/dev/null; then
-            yum install -y -q git || die "Failed to install git"
-        elif command -v dnf &>/dev/null; then
-            dnf install -y -q git || die "Failed to install git"
-        elif command -v pacman &>/dev/null; then
-            pacman -Sy --noconfirm git || die "Failed to install git"
-        else
-            die "git is required but could not be installed automatically. Install it manually and retry."
-        fi
-    fi
-    TMPDIR=$(mktemp -d)
-    trap 'rm -rf "$TMPDIR"' EXIT
-    info "Cloning from $REPO_URL..."
-    if $DEBUG; then
-        git clone --depth 1 "$REPO_URL" "$TMPDIR/gniza4linux" || die "Failed to clone repository"
+# -- Install git if missing -----------------------------------
+if ! command -v git &>/dev/null; then
+    info "Installing git..."
+    if command -v apt-get &>/dev/null; then
+        apt-get update -qq && apt-get install -y -qq git || die "Failed to install git"
+    elif command -v yum &>/dev/null; then
+        yum install -y -q git || die "Failed to install git"
+    elif command -v dnf &>/dev/null; then
+        dnf install -y -q git || die "Failed to install git"
+    elif command -v pacman &>/dev/null; then
+        pacman -Sy --noconfirm git || die "Failed to install git"
     else
-        git clone --depth 1 --quiet "$REPO_URL" "$TMPDIR/gniza4linux" || die "Failed to clone repository"
+        die "git is required but could not be installed automatically. Install it manually and retry."
     fi
-    SOURCE_DIR="$TMPDIR/gniza4linux"
 fi
 
 # -- Install system dependencies ------------------------------
@@ -129,33 +106,42 @@ for cmd in bash rsync; do
     fi
 done
 
-# -- Install files --------------------------------------------
+# -- Install files (git clone/pull) ----------------------------
 info "Installing to $INSTALL_DIR..."
-mkdir -p "$INSTALL_DIR"
 
-# Copy project files
-cp -r "$SOURCE_DIR/bin"  "$INSTALL_DIR/"
-cp -r "$SOURCE_DIR/lib"  "$INSTALL_DIR/"
-cp -r "$SOURCE_DIR/etc"  "$INSTALL_DIR/"
-
-if [[ -d "$SOURCE_DIR/tui" ]]; then
-    cp -r "$SOURCE_DIR/tui" "$INSTALL_DIR/"
-fi
-
-if [[ -d "$SOURCE_DIR/web" ]]; then
-    cp -r "$SOURCE_DIR/web" "$INSTALL_DIR/"
-fi
-
-if [[ -d "$SOURCE_DIR/daemon" ]]; then
-    cp -r "$SOURCE_DIR/daemon" "$INSTALL_DIR/"
-fi
-
-if [[ -d "$SOURCE_DIR/scripts" ]]; then
-    cp -r "$SOURCE_DIR/scripts" "$INSTALL_DIR/"
-fi
-
-if [[ -d "$SOURCE_DIR/tests" ]]; then
-    cp -r "$SOURCE_DIR/tests" "$INSTALL_DIR/"
+if [[ -d "$INSTALL_DIR/.git" ]]; then
+    # Already a git repo — just pull latest
+    info "Updating existing installation..."
+    git -C "$INSTALL_DIR" fetch origin
+    git -C "$INSTALL_DIR" reset --hard origin/main
+else
+    # Fresh install — clone directly into install dir
+    if [[ -d "$INSTALL_DIR" && "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]]; then
+        # Non-git install dir exists (e.g. old cp-based install) — preserve venv, replace rest
+        info "Converting existing installation to git..."
+        _tmp_venv=""
+        if [[ -d "$INSTALL_DIR/venv" ]]; then
+            _tmp_venv=$(mktemp -d)
+            mv "$INSTALL_DIR/venv" "$_tmp_venv/venv"
+        fi
+        trash "$INSTALL_DIR" 2>/dev/null || rm -rf "$INSTALL_DIR"
+        if $DEBUG; then
+            git clone "$REPO_URL" "$INSTALL_DIR" || die "Failed to clone repository"
+        else
+            git clone --quiet "$REPO_URL" "$INSTALL_DIR" || die "Failed to clone repository"
+        fi
+        if [[ -n "${_tmp_venv:-}" && -d "$_tmp_venv/venv" ]]; then
+            mv "$_tmp_venv/venv" "$INSTALL_DIR/venv"
+            rm -rf "$_tmp_venv"
+        fi
+    else
+        mkdir -p "$(dirname "$INSTALL_DIR")"
+        if $DEBUG; then
+            git clone "$REPO_URL" "$INSTALL_DIR" || die "Failed to clone repository"
+        else
+            git clone --quiet "$REPO_URL" "$INSTALL_DIR" || die "Failed to clone repository"
+        fi
+    fi
 fi
 
 # Make entrypoint executable

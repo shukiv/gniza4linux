@@ -115,7 +115,7 @@ gniza web start             # Start the service
 gniza web status            # Check status
 ```
 
-Access at `http://<server-ip>:2323`. Credentials are stored in `gniza.conf` as `WEB_USER` and `WEB_API_KEY`.
+Access at `http://<server-ip>:2323`. Credentials are stored in `gniza.conf` as `WEB_USER` and `WEB_API_KEY` (password).
 
 Supports both root (system service) and user (user service) modes.
 

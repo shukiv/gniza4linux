@@ -98,7 +98,7 @@ def login():
 
         max_attempts, _ = _get_limits()
         attempts_left = max_attempts - len(_failed_attempts.get(ip, []))
-        flash(f"Invalid API key. {attempts_left} attempt{'s' if attempts_left != 1 else ''} remaining.", "error")
+        flash(f"Invalid password. {attempts_left} attempt{'s' if attempts_left != 1 else ''} remaining.", "error")
 
     return render_template("auth/login.html", lockout_remaining=remaining if locked else 0)
 

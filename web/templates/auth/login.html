@@ -22,8 +22,8 @@
             <form method="POST" x-data="{ locked: {{ lockout_remaining|default(0) }}, timer: null }"
                   x-init="if (locked > 0) { timer = setInterval(() => { locked--; if (locked <= 0) { clearInterval(timer); locked = 0; } }, 1000); }">
                 <fieldset class="fieldset">
-                    <label class="fieldset-label" for="token">API Key</label>
-                    <input type="password" name="token" id="token" placeholder="Enter your API key"
+                    <label class="fieldset-label" for="token">Password</label>
+                    <input type="password" name="token" id="token" placeholder="Enter your password"
                            class="input w-full" autofocus :disabled="locked > 0" />
                 </fieldset>
                 <fieldset class="fieldset mt-6">

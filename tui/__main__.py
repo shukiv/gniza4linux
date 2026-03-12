@@ -122,7 +122,7 @@ def main():
             templates_path=_templates_dir,
         )
 
-        # Add HTTP Basic Auth if API key is configured
+        # Add HTTP Basic Auth if password is configured
         if web_key:
             _PUBLIC_PATHS = ("/static/", "/favicon.ico")
 

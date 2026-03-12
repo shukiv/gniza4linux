@@ -34,11 +34,11 @@ def create_app():
     if not stored_key:
         stored_key = secrets.token_urlsafe(32)
         print(f"\n{'='*60}")
-        print(f"  No WEB_API_KEY configured.")
-        print(f"  Set WEB_API_KEY in gniza.conf for persistent access.")
+        print(f"  No WEB_API_KEY (password) configured.")
+        print(f"  Set WEB_API_KEY in gniza.conf to set a password.")
         print(f"{'='*60}\n")
 
-    # Derive secret_key from API key — never use the credential itself as signing key
+    # Derive secret_key from password — never use the credential itself as signing key
     app.secret_key = hashlib.sha256(
         b"gniza-flask-session:" + stored_key.encode()
     ).hexdigest()

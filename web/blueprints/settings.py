@@ -69,7 +69,7 @@ def save():
     write_conf(CONFIG_DIR / "gniza.conf", settings.to_conf())
 
     if settings.web_api_key != old_api_key:
-        flash("Settings saved. API key changed — restarting web service...", "success")
+        flash("Settings saved. Password changed — restarting web service...", "success")
 
         def _delayed_restart():
             import time

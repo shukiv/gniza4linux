@@ -220,7 +220,7 @@ enable_web="y"
 read -rp "Enable web dashboard? (y/n) [y]: " enable_web </dev/tty || true
 enable_web="${enable_web:-y}"
 if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
-    # Set up web API key (preserve existing value)
+    # Set up web password (preserve existing value)
     api_key="$(grep '^WEB_API_KEY=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_API_KEY="//' | sed 's/"$//' || true)"
     if [[ -z "$api_key" ]]; then
         api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
@@ -338,7 +338,7 @@ if [ "${WEB_INSTALLED:-}" = "yes" ]; then
     else
         echo "  URL:      http://$(hostname -I 2>/dev/null | awk '{print $1}'):2323"
     fi
-    echo "  API Key:  $WEB_PASS"
+    echo "  Password: $WEB_PASS"
     echo ""
 fi
 echo "Get started:"

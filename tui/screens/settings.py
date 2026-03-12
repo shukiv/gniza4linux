@@ -99,7 +99,7 @@ class SettingsScreen(Screen):
                     yield Input(value=settings.web_port, id="set-web-port")
                     yield Static("Host:")
                     yield Input(value=settings.web_host, id="set-web-host")
-                    yield Static("API Key:")
+                    yield Static("Password:")
                     yield Input(value=settings.web_api_key, password=True, id="set-web-key")
                 with Vertical(classes="settings-section", id="section-update"):
                     yield Static(f"gniza v{self._version}")
@@ -170,7 +170,7 @@ class SettingsScreen(Screen):
                 subprocess.run(["systemctl", "restart", "gniza-web"], check=False)
             else:
                 subprocess.run(["systemctl", "--user", "restart", "gniza-web"], check=False)
-            self.notify("Settings saved. Web service restarted (API key changed).")
+            self.notify("Settings saved. Web service restarted (password changed).")
         else:
             self.notify("Settings saved.")
 

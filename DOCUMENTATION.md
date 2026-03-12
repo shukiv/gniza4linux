@@ -89,7 +89,7 @@ Installs to: `~/.local/share/gniza` (app), `~/.config/gniza/` (config), `~/.loca
 
 **Prerequisites** (installer handles most automatically): rsync, ssh, python3 + pip, curl or wget.
 
-> **Tip:** After installation, access the web dashboard at `http://your-server:2323`. Log in with the API key shown during installation (or set `WEB_API_KEY` in `gniza.conf`).
+> **Tip:** After installation, access the web dashboard at `http://your-server:2323`. Log in with the password shown during installation (or set `WEB_API_KEY` in `gniza.conf`).
 
 ### Step 2: Setting up SSH Keys
 
@@ -1231,7 +1231,7 @@ WEB_USER="admin"                       # Login username
 WEB_API_KEY="generated-during-install" # Login password
 ```
 
-The API key is generated automatically during installation if you enable the web dashboard. You can change it in Settings or directly in `gniza.conf`.
+The password is generated automatically during installation if you enable the web dashboard. You can change it in Settings or directly in `gniza.conf`.
 
 After changing web settings, restart the service:
 ```bash
@@ -1259,9 +1259,9 @@ All three interfaces (TUI, Web, CLI) maintain full feature parity:
 
 ### Authentication
 
-The web dashboard uses session-based authentication. Login with the username and API key configured in `gniza.conf`. Sessions are secured with:
+The web dashboard uses session-based authentication. Login with the username and password configured in `gniza.conf`. Sessions are secured with:
 
-- Derived secret key (never stores API key directly in session)
+- Derived secret key (never stores password directly in session)
 - Secure cookie flags (HttpOnly, SameSite=Lax)
 - Session fixation protection on login
 
@@ -1404,7 +1404,7 @@ The Settings screen organizes options into four bordered sections:
 | **General** | Log level, log retention, retention count, bandwidth limit, disk threshold, rsync compression, rsync options |
 | **Email Notifications** | Email address, notify mode, SMTP host/port/user/password/from/security, Send Test Email button |
 | **SSH** | SSH timeout, SSH retries |
-| **Web Dashboard** | Port, host, API key |
+| **Web Dashboard** | Port, host, password |
 
 ### Features
 
@@ -1695,4 +1695,4 @@ Ensure Python 3 and Textual are installed: `python3 -c "import textual"`. The in
 **Web dashboard not accessible**
 - Check service status: `gniza web status`
 - Verify the port is open: `ss -tlnp | grep 2323`
-- Check credentials in `gniza.conf` (`WEB_USER` and `WEB_API_KEY`)
+- Check credentials in `gniza.conf` (`WEB_USER` and `WEB_API_KEY` / password)

@@ -163,7 +163,7 @@
                     <input type="text" name="web_host" value="{{ settings.web_host }}" class="input">
                 </fieldset>
                 <fieldset class="fieldset md:col-span-2">
-                    <label class="fieldset-label">API Key</label>
+                    <label class="fieldset-label">Password</label>
                     <div class="join w-full">
                         <input :type="showApiKey ? 'text' : 'password'" name="web_api_key" value="{{ settings.web_api_key }}" class="input join-item w-full font-mono">
                         <button type="button" class="btn join-item" @click="showApiKey = !showApiKey" x-text="showApiKey ? 'Hide' : 'Show'">Show</button>
@@ -247,7 +247,7 @@ document.getElementById('btn-update-now').addEventListener('click', function() {
 <h4 class="font-semibold text-sm mb-1">Web Dashboard</h4>
 <ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
     <li><strong>Port / Host</strong> — Address and port for the web interface.</li>
-    <li><strong>API Key</strong> — Password used to log in.</li>
+    <li><strong>Password</strong> — Password used to log in to the web dashboard.</li>
     <li><strong>Login Max Attempts</strong> — Failed login attempts before lockout (default: 5).</li>
     <li><strong>Login Lockout</strong> — Seconds an IP is locked after too many failures (default: 300).</li>
 </ul>

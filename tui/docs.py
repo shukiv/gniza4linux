@@ -222,7 +222,7 @@ SCREEN_DOCS = {
         "  [bold]Retries[/bold] - Number of retry attempts.\n"
         "\n"
         "[bold]Web Dashboard:[/bold]\n"
-        "  Port, host, and API key for the web interface.\n"
+        "  Port, host, and password for the web interface.\n"
         "\n"
         "[bold]Tips:[/bold]\n"
         "  - Per-schedule settings can override the default retention count."

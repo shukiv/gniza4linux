@@ -79,17 +79,53 @@ if [[ -z "$SOURCE_DIR" ]]; then
     SOURCE_DIR="$TMPDIR/gniza4linux"
 fi
 
-# -- Check dependencies --------------------------------------
-info "Checking dependencies..."
-for cmd in bash rsync; do
+# -- Install system dependencies ------------------------------
+info "Checking and installing system dependencies..."
+
+# Detect package manager
+_pkg_install() {
+    if command -v apt-get &>/dev/null; then
+        apt-get install -y -qq "$@"
+    elif command -v yum &>/dev/null; then
+        yum install -y -q "$@"
+    elif command -v dnf &>/dev/null; then
+        dnf install -y -q "$@"
+    elif command -v pacman &>/dev/null; then
+        pacman -Sy --noconfirm "$@"
+    else
+        return 1
+    fi
+}
+
+_apt_updated=false
+_apt_update() {
+    if ! $_apt_updated && command -v apt-get &>/dev/null; then
+        apt-get update -qq 2>/dev/null || true
+        _apt_updated=true
+    fi
+}
+
+# Required system packages
+_to_install=()
+for cmd in rsync ssh curl sshpass; do
     if ! command -v "$cmd" &>/dev/null; then
-        die "Required dependency not found: $cmd"
+        case "$cmd" in
+            ssh) _to_install+=(openssh-client) ;;
+            *)   _to_install+=("$cmd") ;;
+        esac
     fi
 done
 
-for cmd in ssh curl; do
+if [[ ${#_to_install[@]} -gt 0 ]]; then
+    info "Installing system packages: ${_to_install[*]}"
+    _apt_update
+    _pkg_install "${_to_install[@]}" || warn "Could not install some packages: ${_to_install[*]}"
+fi
+
+# Verify critical deps
+for cmd in bash rsync; do
     if ! command -v "$cmd" &>/dev/null; then
-        warn "Optional dependency not found: $cmd"
+        die "Required dependency not found: $cmd"
     fi
 done
 
@@ -126,8 +162,12 @@ fi
 chmod +x "$INSTALL_DIR/bin/gniza"
 
 # -- Install Python TUI dependencies -------------------------
+if ! command -v python3 &>/dev/null; then
+    info "Installing python3..."
+    _apt_update
+    _pkg_install python3 || die "Failed to install python3. Install it manually and retry."
+fi
 if command -v python3 &>/dev/null; then
-    _deps_installed=false
     _pip_quiet="--quiet"
     $DEBUG && _pip_quiet=""
     _pip_pkgs=("textual>=0.40" textual-serve flask waitress)
@@ -139,21 +179,20 @@ if command -v python3 &>/dev/null; then
     if ! python3 -m venv "$_test_venv" &>/dev/null; then
         rm -rf "$_test_venv"
         info "Installing python3-venv..."
+        _apt_update
+        # Try generic python3-venv first, then versioned (e.g. python3.9-venv on Debian 11)
+        _pyver=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || echo "")
         if command -v apt-get &>/dev/null; then
-            apt-get update -qq 2>/dev/null || true
-            if [[ $EUID -eq 0 ]]; then
-                apt-get install -y -qq python3-venv || true
-            else
-                sudo apt-get install -y -qq python3-venv || true
+            apt-get install -y -qq python3-venv 2>/dev/null || true
+            if [[ -n "$_pyver" ]] && ! python3 -m venv "$_test_venv" &>/dev/null; then
+                rm -rf "$_test_venv"
+                apt-get install -y -qq "python${_pyver}-venv" 2>/dev/null || true
             fi
-        elif command -v yum &>/dev/null; then
-            yum install -y -q python3-virtualenv 2>/dev/null || true
-        elif command -v dnf &>/dev/null; then
-            dnf install -y -q python3-virtualenv 2>/dev/null || true
+        else
+            _pkg_install python3-virtualenv 2>/dev/null || true
         fi
-    else
-        rm -rf "$_test_venv"
     fi
+    rm -rf "$_test_venv"
 
     # Create venv and install deps (avoids PEP 668 / externally-managed conflicts)
     info "Setting up Python virtual environment..."

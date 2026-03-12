@@ -84,10 +84,10 @@
         allDetails.push(details);
     });
 
-    // Clicking a summary opens that section and closes the others
+    // Accordion: when one opens, close the others
     allDetails.forEach(function(det) {
-        det.querySelector('summary').addEventListener('click', function(e) {
-            if (!det.open) {
+        det.addEventListener('toggle', function() {
+            if (det.open) {
                 allDetails.forEach(function(other) {
                     if (other !== det) other.open = false;
                 });

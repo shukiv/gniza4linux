@@ -137,10 +137,10 @@ if command -v python3 &>/dev/null; then
         info "Installing Python dependencies via pip..."
         _pip_quiet="--quiet"
         $DEBUG && _pip_quiet=""
-        if python3 -m pip install --break-system-packages $_pip_quiet textual textual-serve flask waitress 2>/dev/null; then
+        if python3 -m pip install --break-system-packages $_pip_quiet "textual>=0.40" textual-serve flask waitress 2>/dev/null; then
             info "Python dependencies installed."
             _deps_installed=true
-        elif python3 -m pip install $_pip_quiet textual textual-serve flask waitress 2>/dev/null; then
+        elif python3 -m pip install $_pip_quiet "textual>=0.40" textual-serve flask waitress 2>/dev/null; then
             info "Python dependencies installed."
             _deps_installed=true
         fi
@@ -164,7 +164,7 @@ if command -v python3 &>/dev/null; then
     if ! $_deps_installed; then
         warn "Could not install Python dependencies. TUI/web mode may not work."
         warn "Install manually: apt install python3-flask python3-waitress python3-textual"
-        warn "  or: pip3 install --break-system-packages textual textual-serve flask waitress"
+        warn "  or: pip3 install --break-system-packages "textual>=0.40" textual-serve flask waitress"
     fi
 else
     warn "python3 not found. TUI mode will not be available."

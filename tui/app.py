@@ -1,5 +1,8 @@
 from textual.app import App
-from textual.css.query import NoMatches
+try:
+    from textual.css.query import NoMatches
+except ModuleNotFoundError:
+    NoMatches = Exception
 from textual.events import Resize
 
 from tui.config import has_remotes, has_targets

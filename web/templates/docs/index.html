@@ -37,10 +37,10 @@
     .doc-toc li { margin: 0.15em 0; }
     .doc-toc a { color: oklch(var(--bc) / 0.7); text-decoration: none; font-size: 0.85em; display: block; padding: 0.15em 0.5em; border-radius: 0.25em; transition: all 0.15s; }
     .doc-toc a:hover { color: oklch(var(--bc)); background: oklch(var(--bc) / 0.1); }
-    .doc-toc > ul > li > details > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.3em; }
-    .doc-toc > ul > li > details > summary::-webkit-details-marker { display: none; }
-    .doc-toc > ul > li > details > summary::before { content: '+'; font-weight: 700; font-size: 0.85em; width: 1em; text-align: center; color: oklch(var(--bc) / 0.4); }
-    .doc-toc > ul > li > details[open] > summary::before { content: '−'; }
+    .doc-toc li > details > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.3em; }
+    .doc-toc li > details > summary::-webkit-details-marker { display: none; }
+    .doc-toc li > details > summary::before { content: '+'; font-weight: 700; font-size: 0.85em; width: 1em; text-align: center; color: oklch(var(--bc) / 0.4); }
+    .doc-toc li > details[open] > summary::before { content: '−'; }
 </style>
 
 <!-- Mobile TOC -->
@@ -99,9 +99,9 @@
         }
     });
 
-    // Make TOC top-level items collapsible
-    document.querySelectorAll('.doc-toc > ul > li').forEach(function(li) {
-        var nested = li.querySelector('ul');
+    // Make TOC items with sub-lists collapsible
+    document.querySelectorAll('.doc-toc li').forEach(function(li) {
+        var nested = li.querySelector(':scope > ul');
         if (!nested) return;
         var link = li.querySelector(':scope > a');
         if (!link) return;

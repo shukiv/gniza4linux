@@ -78,27 +78,33 @@ def _ssh_list_dirs(host, path, port="22", user="root", key="", password="", show
     quoted = shlex.quote(path)
     # Try find first, fall back to ls for restricted shells (e.g. Hetzner Storage Box)
     find_cmd = f"find {quoted} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
-    ls_cmd = f"ls -1 {quoted}" if path != "/" else "ls -1 ."
+    # -p appends / to directories so we can filter them
+    ls_cmd = f"ls -1p {quoted}" if path != "/" else "ls -1p ."
     base_cmd = ssh_cmd(host, port, user, key, password)
     env = None
     if password:
         env = os.environ.copy()
         env["SSHPASS"] = password
     try:
+        used_ls = False
         result = subprocess.run(base_cmd + [find_cmd], capture_output=True, text=True, timeout=15, env=env)
         if result.returncode != 0:
-            # Fallback to ls (works on restricted shells)
+            used_ls = True
+            # Fallback to ls -1p (works on restricted shells, -p marks dirs with /)
             result = subprocess.run(base_cmd + [ls_cmd], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
                 # Path may not exist — fall back to home directory
-                result = subprocess.run(base_cmd + ["ls", "-1", "."], capture_output=True, text=True, timeout=15, env=env)
+                result = subprocess.run(base_cmd + ["ls", "-1p", "."], capture_output=True, text=True, timeout=15, env=env)
                 if result.returncode != 0:
                     return None, result.stderr.strip() or "Connection failed"
-                path = "~"
+                path = "/"
         dirs = []
         for line in result.stdout.strip().splitlines():
             line = line.strip()
             if not line or line == path:
+                continue
+            # With ls -1p, only entries ending with / are directories
+            if used_ls and not line.endswith("/"):
                 continue
             name = line.rstrip("/").rsplit("/", 1)[-1]
             if not show_hidden and name.startswith("."):

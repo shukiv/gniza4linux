@@ -37,14 +37,24 @@ def _test_remote(remote):
             env = os.environ.copy()
             env["SSHPASS"] = password
         base = remote.base or "/backups"
+
+        # Step 1: Test SSH connection (try "echo ok", fall back to "ls" for restricted shells)
         try:
             result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
-                return False, f"SSH connection failed: {result.stderr.strip() or 'unknown error'}"
+                # Restricted shell may not support echo — try ls as fallback
+                result = subprocess.run(cmd + ["ls"], capture_output=True, text=True, timeout=15, env=env)
+                if result.returncode != 0:
+                    err = result.stderr.strip() or result.stdout.strip() or 'unknown error'
+                    return False, f"SSH connection failed: {err}"
+                # Connection works but shell is restricted — skip mkdir/write tests
+                return True, None
         except subprocess.TimeoutExpired:
             return False, "SSH connection timed out"
         except OSError as e:
             return False, f"SSH connection failed: {e}"
+
+        # Step 2: Create base path (skip on failure — may be a restricted environment)
         try:
             result = subprocess.run(cmd + ["mkdir", "-p", base], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
@@ -55,6 +65,8 @@ def _test_remote(remote):
                 subprocess.run(cmd + ["sudo", "chown", f"{remote.user}:", base], capture_output=True, text=True, timeout=15, env=env)
         except (subprocess.TimeoutExpired, OSError) as e:
             return False, f"Failed to create base path: {e}"
+
+        # Step 3: Write test file
         try:
             test_file = f"{base}/validation_success.txt"
             result = subprocess.run(

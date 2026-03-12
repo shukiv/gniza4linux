@@ -63,6 +63,12 @@ Root mode installs to `/usr/local/gniza`. User mode installs to `~/.local/share/
 
 The installer detects dependencies, sets up config directories, and optionally launches a setup wizard.
 
+### Uninstall
+
+```bash
+gniza uninstall
+```
+
 ### Dependencies
 
 - **Required**: bash 4+, rsync

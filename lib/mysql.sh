@@ -11,9 +11,10 @@ _MYSQL_SYSTEM_DBS="information_schema performance_schema sys"
 # Sets _MYSQL_SSH array. Returns 1 if local (no SSH needed).
 _mysql_is_remote() {
     [[ "${TARGET_SOURCE_TYPE:-local}" == "ssh" ]] || return 1
-    _MYSQL_SSH=(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o "ConnectTimeout=${SSH_TIMEOUT:-30}" -p "${TARGET_SOURCE_PORT:-22}")
-    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" && -n "${TARGET_SOURCE_KEY:-}" ]]; then
-        _MYSQL_SSH+=(-i "$TARGET_SOURCE_KEY")
+    _MYSQL_SSH=(ssh -o StrictHostKeyChecking=accept-new -o "ConnectTimeout=${SSH_TIMEOUT:-30}" -p "${TARGET_SOURCE_PORT:-22}")
+    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" ]]; then
+        _MYSQL_SSH+=(-o BatchMode=yes)
+        [[ -n "${TARGET_SOURCE_KEY:-}" ]] && _MYSQL_SSH+=(-i "$TARGET_SOURCE_KEY")
     fi
     _MYSQL_SSH+=("${TARGET_SOURCE_USER:-root}@${TARGET_SOURCE_HOST}")
     return 0

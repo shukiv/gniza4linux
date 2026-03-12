@@ -11,9 +11,10 @@ _PGSQL_SYSTEM_DBS="template0 template1 postgres"
 # Sets _PGSQL_SSH array. Returns 1 if local (no SSH needed).
 _pgsql_is_remote() {
     [[ "${TARGET_SOURCE_TYPE:-local}" == "ssh" ]] || return 1
-    _PGSQL_SSH=(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o "ConnectTimeout=${SSH_TIMEOUT:-30}" -p "${TARGET_SOURCE_PORT:-22}")
-    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" && -n "${TARGET_SOURCE_KEY:-}" ]]; then
-        _PGSQL_SSH+=(-i "$TARGET_SOURCE_KEY")
+    _PGSQL_SSH=(ssh -o StrictHostKeyChecking=accept-new -o "ConnectTimeout=${SSH_TIMEOUT:-30}" -p "${TARGET_SOURCE_PORT:-22}")
+    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" ]]; then
+        _PGSQL_SSH+=(-o BatchMode=yes)
+        [[ -n "${TARGET_SOURCE_KEY:-}" ]] && _PGSQL_SSH+=(-i "$TARGET_SOURCE_KEY")
     fi
     _PGSQL_SSH+=("${TARGET_SOURCE_USER:-root}@${TARGET_SOURCE_HOST}")
     return 0

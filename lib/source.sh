@@ -48,12 +48,13 @@ _rsync_from_source_ssh() {
     local max_retries="${SSH_RETRIES:-${DEFAULT_SSH_RETRIES:-3}}"
 
     # Build SSH command for source connection
-    local ssh_opts=(-o BatchMode=yes -o StrictHostKeyChecking=accept-new)
+    local ssh_opts=(-o StrictHostKeyChecking=accept-new)
     ssh_opts+=(-o ConnectTimeout="${SSH_TIMEOUT:-${DEFAULT_SSH_TIMEOUT:-30}}")
     ssh_opts+=(-p "${TARGET_SOURCE_PORT:-22}")
 
-    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" && -n "${TARGET_SOURCE_KEY:-}" ]]; then
-        ssh_opts+=(-i "$TARGET_SOURCE_KEY")
+    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" ]]; then
+        ssh_opts+=(-o BatchMode=yes)
+        [[ -n "${TARGET_SOURCE_KEY:-}" ]] && ssh_opts+=(-i "$TARGET_SOURCE_KEY")
     fi
 
     local rsync_ssh="ssh ${ssh_opts[*]}"

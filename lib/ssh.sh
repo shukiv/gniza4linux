@@ -4,6 +4,8 @@
 [[ -n "${_GNIZA_SSH_LOADED:-}" ]] && return 0
 _GNIZA_SSH_LOADED=1
 
+declare -g REMOTE_RESTRICTED_SHELL=false
+
 _is_password_mode() {
     [[ "${REMOTE_AUTH_METHOD:-key}" == "password" ]]
 }
@@ -42,9 +44,13 @@ remote_exec() {
 
 test_ssh_connection() {
     log_info "Testing SSH connection to ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PORT}..."
-    # Try "echo ok" first; fall back to "ls ." for restricted shells (e.g. Hetzner Storage Box)
-    if remote_exec "echo ok" &>/dev/null || remote_exec "ls ." &>/dev/null; then
+    REMOTE_RESTRICTED_SHELL=false
+    if remote_exec "echo ok" &>/dev/null; then
         log_info "SSH connection successful"
+        return 0
+    elif remote_exec "ls ." &>/dev/null; then
+        log_info "SSH connection successful (restricted shell detected)"
+        REMOTE_RESTRICTED_SHELL=true
         return 0
     else
         log_error "SSH connection failed to ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PORT}"

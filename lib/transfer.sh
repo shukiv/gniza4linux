@@ -26,7 +26,12 @@ rsync_to_remote() {
     local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
     local rsync_ssh; rsync_ssh=$(build_rsync_ssh_cmd)
 
-    local rsync_opts=(-aHAX --numeric-ids --delete --sparse --mkpath --rsync-path="rsync --fake-super")
+    local rsync_opts=(-aHAX --numeric-ids --delete --sparse --mkpath)
+    if [[ "${REMOTE_RESTRICTED_SHELL:-false}" == "true" ]]; then
+        log_debug "Restricted shell — skipping --fake-super"
+    else
+        rsync_opts+=(--rsync-path="rsync --fake-super")
+    fi
 
     if [[ -n "$link_dest" ]]; then
         rsync_opts+=(--link-dest="$link_dest")

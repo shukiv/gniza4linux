@@ -42,7 +42,8 @@ remote_exec() {
 
 test_ssh_connection() {
     log_info "Testing SSH connection to ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PORT}..."
-    if remote_exec "echo ok" &>/dev/null; then
+    # Try "echo ok" first; fall back to "ls ." for restricted shells (e.g. Hetzner Storage Box)
+    if remote_exec "echo ok" &>/dev/null || remote_exec "ls ." &>/dev/null; then
         log_info "SSH connection successful"
         return 0
     else

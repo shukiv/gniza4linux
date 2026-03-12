@@ -320,23 +320,27 @@ get_target_remotes() {
 # Returns 0 (unknown) on unsupported remote types.
 remote_disk_usage_pct() {
     local base; base="$(shquote "${REMOTE_BASE:-/}")"
-    local df_line=""
+    local df_out=""
     case "${REMOTE_TYPE:-ssh}" in
         ssh)
-            df_line=$(remote_exec "(df '$base' 2>/dev/null || df / 2>/dev/null) | tail -1") || return 1
+            # Plain "df" without pipes/redirects — works on restricted shells (e.g. Hetzner)
+            df_out=$(remote_exec "df '$base'" 2>/dev/null) || df_out=$(remote_exec "df" 2>/dev/null) || return 1
             ;;
         local)
-            df_line=$({ df "$base" 2>/dev/null || df / 2>/dev/null; } | tail -1) || return 1
+            df_out=$(df "$base" 2>/dev/null || df / 2>/dev/null) || return 1
             ;;
         s3|gdrive)
             rclone_disk_usage_pct
+            return
             ;;
         *)
             echo "0"
             return 0
             ;;
     esac
-    # Extract the percentage field (e.g. "73%") — grep for number followed by %
+    # Extract last line with %, then parse percentage locally
+    local df_line
+    df_line=$(echo "$df_out" | grep '%' | tail -1) || return 1
     local pct_raw
     pct_raw=$(echo "$df_line" | grep -oP '[0-9]+%' | head -1) || return 1
     echo "${pct_raw%%%}"
@@ -365,8 +369,8 @@ remote_disk_info_short() {
     local df_out=""
     case "${REMOTE_TYPE:-ssh}" in
         ssh)
-            # Fall back to / if the base path doesn't exist yet
-            df_out=$(remote_exec "df -h '$base' 2>/dev/null || df -h / 2>/dev/null") || return 1
+            # Plain "df -h" without pipes/redirects — works on restricted shells
+            df_out=$(remote_exec "df -h '$base'" 2>/dev/null) || df_out=$(remote_exec "df -h" 2>/dev/null) || return 1
             ;;
         local)
             df_out=$(df -h "$base" 2>/dev/null || df -h / 2>/dev/null) || return 1

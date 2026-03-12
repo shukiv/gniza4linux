@@ -133,8 +133,11 @@ if command -v python3 &>/dev/null; then
     _pip_pkgs=("textual>=0.40" textual-serve flask waitress)
     _venv_dir="$INSTALL_DIR/venv"
 
-    # Ensure python3-venv is available
-    if ! python3 -m venv --help &>/dev/null; then
+    # Ensure python3-venv is available (--help succeeds even without ensurepip,
+    # so we test with an actual temp venv creation)
+    _test_venv=$(mktemp -d)
+    if ! python3 -m venv "$_test_venv" &>/dev/null; then
+        rm -rf "$_test_venv"
         info "Installing python3-venv..."
         if command -v apt-get &>/dev/null; then
             apt-get update -qq 2>/dev/null || true
@@ -148,15 +151,14 @@ if command -v python3 &>/dev/null; then
         elif command -v dnf &>/dev/null; then
             dnf install -y -q python3-virtualenv 2>/dev/null || true
         fi
-        if ! python3 -m venv --help &>/dev/null; then
-            die "python3-venv is required but could not be installed. Install it manually and retry."
-        fi
+    else
+        rm -rf "$_test_venv"
     fi
 
     # Create venv and install deps (avoids PEP 668 / externally-managed conflicts)
     info "Setting up Python virtual environment..."
     if ! python3 -m venv "$_venv_dir"; then
-        die "Failed to create Python virtual environment at $_venv_dir"
+        die "Failed to create Python venv. Install python3-venv manually: apt-get install python3-venv"
     fi
 
     info "Installing Python dependencies in venv..."

@@ -282,8 +282,14 @@ class RemoteEditScreen(Screen):
                     capture_output=True, text=True, timeout=15, env=env,
                 )
                 if result.returncode != 0:
-                    self.notify(f"Failed to write test file: {result.stderr.strip()}", severity="error")
-                    return False
+                    # Retry with sudo
+                    result = subprocess.run(
+                        cmd + ["sudo", "sh", "-c", f'echo "gniza validation" > {test_file}'],
+                        capture_output=True, text=True, timeout=15, env=env,
+                    )
+                    if result.returncode != 0:
+                        self.notify(f"Failed to write test file: {result.stderr.strip()}", severity="error")
+                        return False
             except (subprocess.TimeoutExpired, OSError) as e:
                 self.notify(f"Failed to write test file: {e}", severity="error")
                 return False

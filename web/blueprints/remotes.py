@@ -61,7 +61,13 @@ def _test_remote(remote):
                 capture_output=True, text=True, timeout=15, env=env,
             )
             if result.returncode != 0:
-                return False, f"Failed to write test file: {result.stderr.strip()}"
+                # Retry with sudo
+                result = subprocess.run(
+                    cmd + ["sudo", "sh", "-c", f'echo "gniza validation" > {test_file}'],
+                    capture_output=True, text=True, timeout=15, env=env,
+                )
+                if result.returncode != 0:
+                    return False, f"Failed to write test file: {result.stderr.strip()}"
         except (subprocess.TimeoutExpired, OSError) as e:
             return False, f"Failed to write test file: {e}"
         return True, None

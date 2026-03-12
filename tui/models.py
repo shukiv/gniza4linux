@@ -285,6 +285,15 @@ class AppSettings:
     smtp_password: str = ""
     smtp_from: str = ""
     smtp_security: str = "tls"
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
+    webhook_url: str = ""
+    webhook_type: str = "slack"
+    ntfy_url: str = ""
+    ntfy_token: str = ""
+    ntfy_priority: str = "default"
+    healthchecks_url: str = ""
+    stale_alert_hours: str = "0"
     ssh_timeout: str = "30"
     ssh_retries: str = "3"
     rsync_extra_opts: str = ""
@@ -314,6 +323,15 @@ class AppSettings:
             smtp_password=data.get("SMTP_PASSWORD", ""),
             smtp_from=data.get("SMTP_FROM", ""),
             smtp_security=data.get("SMTP_SECURITY", "tls"),
+            telegram_bot_token=data.get("TELEGRAM_BOT_TOKEN", ""),
+            telegram_chat_id=data.get("TELEGRAM_CHAT_ID", ""),
+            webhook_url=data.get("WEBHOOK_URL", ""),
+            webhook_type=data.get("WEBHOOK_TYPE", "slack"),
+            ntfy_url=data.get("NTFY_URL", ""),
+            ntfy_token=data.get("NTFY_TOKEN", ""),
+            ntfy_priority=data.get("NTFY_PRIORITY", "default"),
+            healthchecks_url=data.get("HEALTHCHECKS_URL", ""),
+            stale_alert_hours=data.get("STALE_ALERT_HOURS", "0"),
             ssh_timeout=data.get("SSH_TIMEOUT", "30"),
             ssh_retries=data.get("SSH_RETRIES", "3"),
             rsync_extra_opts=data.get("RSYNC_EXTRA_OPTS", ""),
@@ -343,6 +361,15 @@ class AppSettings:
             "SMTP_PASSWORD": self.smtp_password,
             "SMTP_FROM": self.smtp_from,
             "SMTP_SECURITY": self.smtp_security,
+            "TELEGRAM_BOT_TOKEN": self.telegram_bot_token,
+            "TELEGRAM_CHAT_ID": self.telegram_chat_id,
+            "WEBHOOK_URL": self.webhook_url,
+            "WEBHOOK_TYPE": self.webhook_type,
+            "NTFY_URL": self.ntfy_url,
+            "NTFY_TOKEN": self.ntfy_token,
+            "NTFY_PRIORITY": self.ntfy_priority,
+            "HEALTHCHECKS_URL": self.healthchecks_url,
+            "STALE_ALERT_HOURS": self.stale_alert_hours,
             "SSH_TIMEOUT": self.ssh_timeout,
             "SSH_RETRIES": self.ssh_retries,
             "RSYNC_EXTRA_OPTS": self.rsync_extra_opts,

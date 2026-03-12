@@ -58,7 +58,7 @@ def create_app():
         {"name": "Schedules", "endpoint": "schedules.index", "active": False},
         {"name": "Snapshots", "endpoint": "snapshots.index", "active": False},
         {"name": "Logs", "endpoint": "logs.index", "active": False},
-        {"name": "Email Log", "endpoint": "email_log.index", "active": False},
+        {"name": "Notification Log", "endpoint": "notification_log.index", "active": False},
         {"name": "Settings", "endpoint": "settings.index", "active": False},
         {"name": "Docs", "endpoint": "docs.index", "active": False},
         {"name": "Health", "endpoint": "health.index", "active": False},
@@ -84,8 +84,10 @@ def create_app():
                 active_page = "schedules"
             elif request.endpoint.startswith("snapshots"):
                 active_page = "snapshots"
+            elif request.endpoint.startswith("notification_log"):
+                active_page = "notification log"
             elif request.endpoint.startswith("email_log"):
-                active_page = "email log"
+                active_page = "notification log"
             elif request.endpoint.startswith("logs"):
                 active_page = "logs"
             elif request.endpoint.startswith("settings"):
@@ -114,6 +116,7 @@ def create_app():
     from web.blueprints.snapshots import bp as snapshots_bp
     from web.blueprints.logs import bp as logs_bp
     from web.blueprints.email_log import bp as email_log_bp
+    from web.blueprints.notification_log import bp as notification_log_bp
     from web.blueprints.wizard import bp as wizard_bp
     from web.blueprints.api import bp as api_bp
     from web.blueprints.docs import bp as docs_bp
@@ -131,6 +134,7 @@ def create_app():
     app.register_blueprint(snapshots_bp)
     app.register_blueprint(logs_bp)
     app.register_blueprint(email_log_bp)
+    app.register_blueprint(notification_log_bp)
     app.register_blueprint(wizard_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(docs_bp)

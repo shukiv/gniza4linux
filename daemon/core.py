@@ -10,9 +10,10 @@ from pathlib import Path
 
 from lib.job_utils import detect_return_code, is_skipped_job
 from tui.config import (
-    get_log_retain_days, get_max_concurrent_jobs, LOG_DIR, WORK_DIR
+    get_log_retain_days, get_max_concurrent_jobs, parse_conf,
+    CONFIG_DIR, LOG_DIR, WORK_DIR,
 )
-from daemon.notify import send_job_notification
+from daemon.notify import send_job_notification, send_stale_alert
 
 logger = logging.getLogger("gniza-daemon")
 
@@ -383,6 +384,84 @@ def enforce_retention():
         logger.error(f"Retention cleanup error: {e}")
 
 
+def check_stale_backups():
+    """Check for sources that haven't had a successful backup recently."""
+    try:
+        conf = parse_conf(CONFIG_DIR / "gniza.conf")
+        threshold_hours = int(conf.get("STALE_ALERT_HOURS", "0"))
+    except (ValueError, OSError):
+        return
+
+    if threshold_hours <= 0:
+        return
+
+    # Check cooldown — don't re-alert within threshold period
+    state_file = WORK_DIR / "stale-alert.state"
+    now = time.time()
+    try:
+        if state_file.is_file():
+            last_alert = float(state_file.read_text().strip())
+            if now - last_alert < threshold_hours * 3600:
+                return
+    except (ValueError, OSError):
+        pass
+
+    # Load job registry and find last successful job per source
+    entries = _load_registry()
+    last_success = {}
+    for entry in entries:
+        if entry.get("status") not in ("success", "skipped"):
+            continue
+        label = entry.get("label", "")
+        finished = entry.get("finished_at", "")
+        if not label or not finished:
+            continue
+        try:
+            ts = datetime.fromisoformat(finished)
+            if label not in last_success or ts > last_success[label]:
+                last_success[label] = ts
+        except (ValueError, TypeError):
+            continue
+
+    # Find all configured sources
+    stale_sources = []
+    targets_dir = CONFIG_DIR / "targets.d"
+    if targets_dir.is_dir():
+        for conf_file in sorted(targets_dir.glob("*.conf")):
+            target_conf = parse_conf(conf_file)
+            name = target_conf.get("TARGET_NAME", conf_file.stem)
+            enabled = target_conf.get("TARGET_ENABLED", "yes")
+            if enabled.lower() != "yes":
+                continue
+
+            last = last_success.get(name)
+            if last is None:
+                # Never had a successful backup
+                stale_sources.append({
+                    "name": name,
+                    "last_success": "never",
+                    "hours_ago": "N/A",
+                })
+            else:
+                hours_ago = (datetime.now() - last).total_seconds() / 3600
+                if hours_ago > threshold_hours:
+                    stale_sources.append({
+                        "name": name,
+                        "last_success": last.strftime("%Y-%m-%d %H:%M"),
+                        "hours_ago": f"{hours_ago:.0f}",
+                    })
+
+    if stale_sources:
+        try:
+            send_stale_alert(stale_sources)
+            # Update state file
+            state_file.parent.mkdir(parents=True, exist_ok=True)
+            state_file.write_text(str(now))
+            logger.info(f"Stale backup alert sent for {len(stale_sources)} source(s)")
+        except Exception:
+            logger.exception("Failed to send stale backup alert")
+
+
 def run(interval=10):
     """Main daemon loop."""
     signal.signal(signal.SIGTERM, _handle_signal)
@@ -403,6 +482,7 @@ def run(interval=10):
                 cleanup_orphan_job_logs()
                 cleanup_stale_workdir()
                 enforce_retention()
+                check_stale_backups()
         except Exception:
             logger.exception("Health check error")
         time.sleep(interval)

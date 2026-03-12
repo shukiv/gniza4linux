@@ -51,6 +51,15 @@ load_config() {
     SMTP_PASSWORD="${SMTP_PASSWORD:-}"
     SMTP_FROM="${SMTP_FROM:-}"
     SMTP_SECURITY="${SMTP_SECURITY:-$DEFAULT_SMTP_SECURITY}"
+    TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
+    TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
+    WEBHOOK_URL="${WEBHOOK_URL:-}"
+    WEBHOOK_TYPE="${WEBHOOK_TYPE:-$DEFAULT_WEBHOOK_TYPE}"
+    NTFY_URL="${NTFY_URL:-}"
+    NTFY_TOKEN="${NTFY_TOKEN:-}"
+    NTFY_PRIORITY="${NTFY_PRIORITY:-$DEFAULT_NTFY_PRIORITY}"
+    HEALTHCHECKS_URL="${HEALTHCHECKS_URL:-}"
+    STALE_ALERT_HOURS="${STALE_ALERT_HOURS:-$DEFAULT_STALE_ALERT_HOURS}"
     SSH_TIMEOUT="${SSH_TIMEOUT:-$DEFAULT_SSH_TIMEOUT}"
     SSH_RETRIES="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
     RSYNC_EXTRA_OPTS="${RSYNC_EXTRA_OPTS:-}"
@@ -69,6 +78,10 @@ load_config() {
     export BACKUP_MODE BWLIMIT RETENTION_COUNT
     export LOG_LEVEL LOG_RETAIN NOTIFY_EMAIL NOTIFY_ON
     export SMTP_HOST SMTP_PORT SMTP_USER SMTP_PASSWORD SMTP_FROM SMTP_SECURITY
+    export TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID
+    export WEBHOOK_URL WEBHOOK_TYPE
+    export NTFY_URL NTFY_TOKEN NTFY_PRIORITY
+    export HEALTHCHECKS_URL STALE_ALERT_HOURS
     export SSH_TIMEOUT SSH_RETRIES RSYNC_EXTRA_OPTS RSYNC_COMPRESS RSYNC_CHECKSUM DISK_USAGE_THRESHOLD
 }
 
@@ -104,6 +117,20 @@ validate_config() {
             log_error "SMTP_PORT must be 1-65535, got: $SMTP_PORT"
             ((errors++)) || true
         fi
+    fi
+
+    # Validate WEBHOOK_TYPE
+    if [[ -n "${WEBHOOK_TYPE:-}" ]]; then
+        case "$WEBHOOK_TYPE" in
+            slack|discord|generic) ;;
+            *) log_error "WEBHOOK_TYPE must be slack|discord|generic, got: $WEBHOOK_TYPE"; ((errors++)) || true ;;
+        esac
+    fi
+
+    # Validate STALE_ALERT_HOURS
+    if [[ -n "${STALE_ALERT_HOURS:-}" ]] && [[ ! "$STALE_ALERT_HOURS" =~ ^[0-9]+$ ]]; then
+        log_error "STALE_ALERT_HOURS must be a non-negative integer, got: $STALE_ALERT_HOURS"
+        ((errors++)) || true
     fi
 
     # Validate numeric fields

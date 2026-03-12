@@ -26,6 +26,25 @@ SMTP_PASSWORD=""
 SMTP_FROM=""
 SMTP_SECURITY="tls"
 
+# Telegram notifications
+TELEGRAM_BOT_TOKEN=""
+TELEGRAM_CHAT_ID=""
+
+# Webhook notifications (Slack, Discord, or generic)
+WEBHOOK_URL=""
+WEBHOOK_TYPE="slack"
+
+# ntfy notifications (https://ntfy.sh)
+NTFY_URL=""
+NTFY_TOKEN=""
+NTFY_PRIORITY="default"
+
+# Healthchecks.io ping URL
+HEALTHCHECKS_URL=""
+
+# Stale backup alert: hours without a successful backup before alerting (0 = disabled)
+STALE_ALERT_HOURS=0
+
 # SSH defaults
 SSH_TIMEOUT=30
 SSH_RETRIES=3

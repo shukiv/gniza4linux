@@ -17,7 +17,8 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 - **Disk space safety** — Abort if destination usage exceeds threshold (default 95%)
 - **Pre/post hooks** — Run shell commands before and after each backup
 - **Cron scheduling** — Hourly, daily, weekly, monthly, or custom cron expressions
-- **Email notifications** — SMTP (TLS/SSL) or system mail on failure or every run
+- **Multi-channel notifications** — Email (SMTP/system mail), Telegram, Webhook (Slack/Discord/generic), ntfy, and Healthchecks.io on failure or every run
+- **Stale backup alerts** — Get notified when a source hasn't been backed up within a configurable window
 - **Bandwidth limiting** — Global or per-destination KB/s cap
 - **Retry logic** — Automatic SSH reconnection with exponential backoff
 - **Include/exclude filters** — Rsync glob patterns per source
@@ -65,7 +66,7 @@ The installer detects dependencies, sets up config directories, and optionally l
 ### Dependencies
 
 - **Required**: bash 4+, rsync
-- **Optional**: ssh, curl (SMTP notifications), sshpass (password auth), rclone (S3/Google Drive)
+- **Optional**: ssh, curl (SMTP/Telegram/Webhook/ntfy/Healthchecks notifications), sshpass (password auth), rclone (S3/Google Drive)
 - **TUI/Web**: python3, textual, textual-serve (installed automatically)
 
 ## Quick Start
@@ -231,6 +232,10 @@ Snapshots:
 Scheduling:
   schedule install | show | remove
 
+Notifications:
+  test-notification <channel>       Test a notification channel (email, telegram, webhook, ntfy, healthcheck)
+  test-email                        Alias for test-notification email
+
 Other:
   logs [--last] [--tail=N]
   web start | install-service | remove-service | status [--port=PORT]
@@ -273,6 +278,25 @@ SMTP_USER=""
 SMTP_PASSWORD=""
 SMTP_FROM=""
 SMTP_SECURITY="tls"            # tls | ssl | none
+
+# Telegram
+TELEGRAM_BOT_TOKEN=""
+TELEGRAM_CHAT_ID=""
+
+# Webhook (Slack, Discord, or generic)
+WEBHOOK_URL=""
+WEBHOOK_TYPE=""                 # slack | discord | generic
+
+# ntfy
+NTFY_URL=""
+NTFY_TOKEN=""
+NTFY_PRIORITY=""
+
+# Healthchecks.io
+HEALTHCHECKS_URL=""
+
+# Stale backup alerts
+STALE_ALERT_HOURS=""            # Alert when a source hasn't backed up in X hours
 
 # Web dashboard
 WEB_USER="admin"
@@ -476,13 +500,23 @@ Cron entries are tagged for clean install/removal. Each schedule can be scoped t
 
 ## Notifications
 
-Email notifications on backup success or failure.
+Multi-channel notifications on backup success or failure.
 
-**SMTP** (recommended): Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, and `SMTP_SECURITY` in `gniza.conf`. Supports TLS, SSL, and plaintext.
+**Email (SMTP)**: Configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, and `SMTP_SECURITY` in `gniza.conf`. Supports TLS, SSL, and plaintext. Falls back to system `mail` or `sendmail` if SMTP is not configured.
 
-**System mail**: Falls back to `mail` or `sendmail` if SMTP is not configured.
+**Telegram**: Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` to receive notifications via Telegram bot.
+
+**Webhook**: Set `WEBHOOK_URL` and `WEBHOOK_TYPE` (`slack`, `discord`, or `generic`) to post notifications to Slack, Discord, or any webhook endpoint.
+
+**ntfy**: Set `NTFY_URL` (and optionally `NTFY_TOKEN` and `NTFY_PRIORITY`) to push notifications via [ntfy](https://ntfy.sh/).
+
+**Healthchecks.io**: Set `HEALTHCHECKS_URL` to ping a [Healthchecks.io](https://healthchecks.io/) check on backup success/failure.
+
+**Stale backup alerts**: Set `STALE_ALERT_HOURS` to get notified when a source hasn't been backed up within the specified number of hours.
 
 **Report includes**: Status, source count (total/succeeded/failed), duration, failed source list, log file path, hostname, and timestamp.
+
+**Notification log**: All notifications are logged to `notification.log` (replaces the old `email.log`; old entries are still displayed for backward compatibility).
 
 ## Disk Space Safety
 

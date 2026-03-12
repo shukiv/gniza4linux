@@ -89,6 +89,37 @@ class SettingsScreen(Screen):
                         id="set-smtpsec",
                         value=settings.smtp_security,
                     )
+                with Vertical(classes="settings-section", id="section-telegram"):
+                    yield Static("Bot Token:")
+                    yield Input(value=settings.telegram_bot_token, password=True, id="set-tg-token")
+                    yield Static("Chat ID:")
+                    yield Input(value=settings.telegram_chat_id, id="set-tg-chatid")
+                with Vertical(classes="settings-section", id="section-webhook"):
+                    yield Static("Webhook URL:")
+                    yield Input(value=settings.webhook_url, id="set-webhook-url")
+                    yield Static("Type:")
+                    yield Select(
+                        [("Slack", "slack"), ("Discord", "discord"), ("Generic", "generic")],
+                        id="set-webhook-type",
+                        value=settings.webhook_type if settings.webhook_type in ("slack", "discord", "generic") else "slack",
+                    )
+                with Vertical(classes="settings-section", id="section-ntfy"):
+                    yield Static("ntfy URL:")
+                    yield Input(value=settings.ntfy_url, id="set-ntfy-url")
+                    yield Static("Auth Token (optional):")
+                    yield Input(value=settings.ntfy_token, password=True, id="set-ntfy-token")
+                    yield Static("Default Priority:")
+                    yield Select(
+                        [("Min", "min"), ("Low", "low"), ("Default", "default"), ("High", "high"), ("Urgent", "urgent")],
+                        id="set-ntfy-priority",
+                        value=settings.ntfy_priority if settings.ntfy_priority in ("min", "low", "default", "high", "urgent") else "default",
+                    )
+                with Vertical(classes="settings-section", id="section-healthcheck"):
+                    yield Static("Ping URL:")
+                    yield Input(value=settings.healthchecks_url, id="set-hc-url")
+                with Vertical(classes="settings-section", id="section-stale"):
+                    yield Static("Stale Alert Hours (0=disabled):")
+                    yield Input(value=settings.stale_alert_hours, id="set-stale-hours")
                 with Vertical(classes="settings-section", id="section-ssh"):
                     yield Static("SSH Timeout:")
                     yield Input(value=settings.ssh_timeout, id="set-sshtimeout")
@@ -107,7 +138,11 @@ class SettingsScreen(Screen):
                     yield Button("Update Now", variant="warning", id="btn-update-now")
                 with Horizontal(id="set-buttons"):
                     yield Button("Save", variant="primary", id="btn-save")
-                    yield Button("Send Test Email", id="btn-test-email")
+                    yield Button("Test Email", id="btn-test-email")
+                    yield Button("Test Telegram", id="btn-test-telegram")
+                    yield Button("Test Webhook", id="btn-test-webhook")
+                    yield Button("Test ntfy", id="btn-test-ntfy")
+                    yield Button("Test Healthcheck", id="btn-test-healthcheck")
             yield DocsPanel.for_screen("settings-screen")
         yield Footer()
 
@@ -116,6 +151,11 @@ class SettingsScreen(Screen):
         self.query_one("#section-email").border_title = "Email Notifications"
         self.query_one("#section-ssh").border_title = "SSH"
         self.query_one("#section-web").border_title = "Web Dashboard"
+        self.query_one("#section-telegram").border_title = "Telegram"
+        self.query_one("#section-webhook").border_title = "Webhook (Slack/Discord)"
+        self.query_one("#section-ntfy").border_title = "ntfy"
+        self.query_one("#section-healthcheck").border_title = "Healthchecks.io"
+        self.query_one("#section-stale").border_title = "Stale Backup Alert"
         self.query_one("#section-update").border_title = "Update"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -126,6 +166,18 @@ class SettingsScreen(Screen):
         elif event.button.id == "btn-test-email":
             self._save()
             self._send_test_email()
+        elif event.button.id == "btn-test-telegram":
+            self._save()
+            self._send_test_notification("telegram")
+        elif event.button.id == "btn-test-webhook":
+            self._save()
+            self._send_test_notification("webhook")
+        elif event.button.id == "btn-test-ntfy":
+            self._save()
+            self._send_test_notification("ntfy")
+        elif event.button.id == "btn-test-healthcheck":
+            self._save()
+            self._send_test_notification("healthcheck")
         elif event.button.id == "btn-check-update":
             self._check_for_update()
         elif event.button.id == "btn-update-now":
@@ -149,6 +201,15 @@ class SettingsScreen(Screen):
             smtp_password=self.query_one("#set-smtppass", Input).value,
             smtp_from=self.query_one("#set-smtpfrom", Input).value.strip(),
             smtp_security=self._get_select_val("#set-smtpsec", "tls"),
+            telegram_bot_token=self.query_one("#set-tg-token", Input).value,
+            telegram_chat_id=self.query_one("#set-tg-chatid", Input).value.strip(),
+            webhook_url=self.query_one("#set-webhook-url", Input).value.strip(),
+            webhook_type=self._get_select_val("#set-webhook-type", "slack"),
+            ntfy_url=self.query_one("#set-ntfy-url", Input).value.strip(),
+            ntfy_token=self.query_one("#set-ntfy-token", Input).value,
+            ntfy_priority=self._get_select_val("#set-ntfy-priority", "default"),
+            healthchecks_url=self.query_one("#set-hc-url", Input).value.strip(),
+            stale_alert_hours=self.query_one("#set-stale-hours", Input).value.strip() or "0",
             ssh_timeout=self.query_one("#set-sshtimeout", Input).value.strip() or "30",
             ssh_retries=self.query_one("#set-sshretries", Input).value.strip() or "3",
             rsync_extra_opts=self.query_one("#set-rsyncopts", Input).value.strip(),
@@ -180,6 +241,19 @@ class SettingsScreen(Screen):
         self.app.push_screen(log_screen)
         log_screen.write("Sending test email...")
         rc, stdout, stderr = await run_cli("test-email")
+        if stdout:
+            log_screen.write(stdout)
+        if stderr:
+            log_screen.write(stderr)
+        log_screen.finish()
+
+    @work
+    async def _send_test_notification(self, channel: str) -> None:
+        label = channel.title()
+        log_screen = OperationLog(f"Test {label} Notification", show_spinner=True)
+        self.app.push_screen(log_screen)
+        log_screen.write(f"Sending test {channel} notification...")
+        rc, stdout, stderr = await run_cli("test-notification", channel)
         if stdout:
             log_screen.write(stdout)
         if stderr:

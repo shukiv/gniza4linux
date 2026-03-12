@@ -918,8 +918,28 @@ send_job_notification({
 
         test-email)
             PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 -c "
-from daemon.notify import send_test_email
-ok, msg = send_test_email()
+from daemon.notify import send_test_notification
+ok, msg = send_test_notification('email')
+print(msg)
+exit(0 if ok else 1)
+"
+            ;;
+
+        test-notification)
+            local channel="${2:-}"
+            if [[ -z "$channel" ]]; then
+                echo "Usage: gniza test-notification <channel>"
+                echo "Channels: email, telegram, webhook, ntfy, healthcheck"
+                exit 1
+            fi
+            case "$channel" in
+                email|telegram|webhook|ntfy|healthcheck) ;;
+                *) die "Invalid channel: $channel (must be email|telegram|webhook|ntfy|healthcheck)" ;;
+            esac
+            GNIZA_TEST_CHANNEL="$channel" PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" python3 -c "
+import os
+from daemon.notify import send_test_notification
+ok, msg = send_test_notification(os.environ['GNIZA_TEST_CHANNEL'])
 print(msg)
 exit(0 if ok else 1)
 "

@@ -49,7 +49,7 @@ Key features:
 - **Multiple source types**: local, SSH, S3, Google Drive
 - **Multiple destination types**: local, SSH, S3, Google Drive
 - **Automatic retention** and pruning
-- **Email notifications** on success/failure
+- **Multi-channel notifications** (Email, Telegram, Webhook, ntfy, Healthchecks.io) on success/failure
 - **Three interfaces**: Web Dashboard, Terminal UI (TUI), and CLI
 
 ### Why GNIZA?
@@ -65,7 +65,7 @@ If you have ever set up backups with raw rsync, tar, or tools like Dirvish, you 
 | Custom log parsing | Structured job logs with status |
 | No visibility into progress | Real-time Running Tasks view |
 | Manual cleanup of old backups | Automatic retention with pruning |
-| Hope it works | Email alerts on success/failure |
+| Hope it works | Multi-channel alerts on success/failure |
 
 ### Step 1: Installation
 
@@ -243,7 +243,7 @@ rsync -avP /path/to/backup/home/2026-03-10_020000/var/www/ /var/www/
 ### Step 10: Monitoring
 
 - **Logs** — view all job logs with status (success/failure/running)
-- **Email notifications** — configure in Settings
+- **Notifications** — configure email, Telegram, webhook, ntfy, and Healthchecks.io in Settings
 - **Running Tasks** — real-time progress of active jobs
 - **Health checks** — system state monitoring in Settings
 
@@ -318,7 +318,7 @@ bash scripts/install.sh          # user mode
 | rsync | Yes | File transfer and deduplication |
 | ssh | No | SSH sources and destinations |
 | sshpass | No | Password-based SSH authentication |
-| curl | No | SMTP email notifications |
+| curl | No | Notifications (SMTP, Telegram, Webhook, ntfy, Healthchecks) |
 | rclone | No | S3 and Google Drive support |
 | python3 | No | TUI and web dashboard |
 | textual | No | Terminal UI framework |
@@ -1137,11 +1137,11 @@ In the TUI, toggle the "Restore PostgreSQL databases" switch.
 
 ## Notifications
 
-GNIZA sends email notifications on backup completion.
+GNIZA supports multi-channel notifications on backup completion. Configure one or more channels to receive alerts.
 
-### Configuration
+### Notification Channels
 
-In `gniza.conf`:
+#### Email
 
 ```ini
 NOTIFY_ON="failure"             # never | failure | always
@@ -1156,17 +1156,63 @@ SMTP_FROM="gniza@example.com"
 SMTP_SECURITY="tls"            # tls | ssl | none
 ```
 
+If SMTP is not configured, gniza falls back to the system `mail` or `sendmail` command.
+
+#### Telegram
+
+```ini
+TELEGRAM_BOT_TOKEN="123456:ABC-DEF..."
+TELEGRAM_CHAT_ID="-1001234567890"
+```
+
+Create a bot via [@BotFather](https://t.me/BotFather), add it to your group, and set the chat ID.
+
+#### Webhook (Slack / Discord / Generic)
+
+```ini
+WEBHOOK_URL="https://hooks.slack.com/services/T.../B.../..."
+WEBHOOK_TYPE="slack"            # slack | discord | generic
+```
+
+For Slack or Discord, use the incoming webhook URL. For generic webhooks, gniza sends a JSON POST with the notification payload.
+
+#### ntfy
+
+```ini
+NTFY_URL="https://ntfy.sh/my-backup-alerts"
+NTFY_TOKEN=""                   # Optional auth token
+NTFY_PRIORITY=""                # Optional priority (1-5)
+```
+
+See [ntfy.sh](https://ntfy.sh/) for self-hosted or public usage.
+
+#### Healthchecks.io
+
+```ini
+HEALTHCHECKS_URL="https://hc-ping.com/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+```
+
+Pings the check URL on backup success, and signals failure on errors. See [healthchecks.io](https://healthchecks.io/).
+
+### Stale Backup Alerts
+
+```ini
+STALE_ALERT_HOURS="48"          # Alert when a source hasn't backed up in 48 hours
+```
+
+When configured, gniza sends a notification if any source has not been backed up within the specified number of hours.
+
 ### Notification Modes
 
-| Mode | When emails are sent |
+| Mode | When notifications are sent |
 |------|---------------------|
 | `never` | No notifications |
 | `failure` | Only when a backup fails (default) |
 | `always` | After every backup run |
 
-### Email Content
+### Notification Content
 
-Notification emails include:
+Notifications include:
 - Status: SUCCESS, PARTIAL FAILURE, or FAILURE
 - Source count: total, succeeded, failed
 - Duration
@@ -1174,22 +1220,27 @@ Notification emails include:
 - Log file path
 - Hostname and timestamp
 
-### Test Email
+### Notification Log
 
-Verify your SMTP settings by sending a test email:
+All sent notifications are recorded in `notification.log` (5-column format). This replaces the old `email.log` file. Old `email.log` entries are still displayed in the web dashboard for backward compatibility.
+
+### Test Notifications
+
+Verify your notification settings by sending a test message to any configured channel:
 
 **TUI**: Settings > Send Test Email (automatically saves settings first).
 
 **CLI**:
 ```bash
-gniza --cli test-email
+gniza --cli test-notification email
+gniza --cli test-notification telegram
+gniza --cli test-notification webhook
+gniza --cli test-notification ntfy
+gniza --cli test-notification healthcheck
+gniza --cli test-email                          # Alias for test-notification email
 ```
 
-Requires `NOTIFY_EMAIL` and `SMTP_HOST` to be configured.
-
-### Fallback
-
-If SMTP is not configured, gniza falls back to the system `mail` or `sendmail` command.
+Each channel requires its corresponding settings to be configured (e.g., `SMTP_HOST` for email, `TELEGRAM_BOT_TOKEN` for Telegram).
 
 ---
 
@@ -1255,7 +1306,7 @@ All three interfaces (TUI, Web, CLI) maintain full feature parity:
 | **Snapshots** | Browse snapshots by source and destination. View file tree with HTMX-loaded directory expansion |
 | **Retention** | Run retention cleanup per source or all. Edit default retention count |
 | **Logs** | Paginated log viewer with status detection (success/error/skipped). View full log content |
-| **Settings** | Edit all global settings organized in sections: General, Email, SSH, Web. Send test email |
+| **Settings** | Edit all global settings organized in sections: General, Notifications, SSH, Web. Send test notifications |
 
 ### Authentication
 
@@ -1402,7 +1453,7 @@ The Settings screen organizes options into four bordered sections:
 | Section | Contents |
 |---------|----------|
 | **General** | Log level, log retention, retention count, bandwidth limit, disk threshold, rsync compression, rsync options |
-| **Email Notifications** | Email address, notify mode, SMTP host/port/user/password/from/security, Send Test Email button |
+| **Notifications** | Email (address, notify mode, SMTP settings), Telegram (bot token, chat ID), Webhook (URL, type), ntfy (URL, token, priority), Healthchecks.io (URL), stale alert hours, Send Test buttons |
 | **SSH** | SSH timeout, SSH retries |
 | **Web Dashboard** | Port, host, password |
 
@@ -1534,7 +1585,12 @@ gniza daemon status                                   # Check status
 ### Notifications
 
 ```bash
-gniza --cli test-email                                # Send a test email
+gniza --cli test-notification email                   # Test email notification
+gniza --cli test-notification telegram                # Test Telegram notification
+gniza --cli test-notification webhook                 # Test webhook notification
+gniza --cli test-notification ntfy                    # Test ntfy notification
+gniza --cli test-notification healthcheck             # Test Healthchecks.io ping
+gniza --cli test-email                                # Alias for test-notification email
 ```
 
 ### System
@@ -1593,6 +1649,15 @@ Log files are named using local time (e.g., `gniza-20260307-040001.log`) to matc
 | `SMTP_PASSWORD` | (empty) | SMTP password |
 | `SMTP_FROM` | (empty) | Sender address |
 | `SMTP_SECURITY` | `tls` | `tls`, `ssl`, or `none` |
+| `TELEGRAM_BOT_TOKEN` | (empty) | Telegram bot token from @BotFather |
+| `TELEGRAM_CHAT_ID` | (empty) | Telegram chat/group ID |
+| `WEBHOOK_URL` | (empty) | Webhook endpoint URL |
+| `WEBHOOK_TYPE` | (empty) | `slack`, `discord`, or `generic` |
+| `NTFY_URL` | (empty) | ntfy topic URL |
+| `NTFY_TOKEN` | (empty) | ntfy auth token (optional) |
+| `NTFY_PRIORITY` | (empty) | ntfy priority 1-5 (optional) |
+| `HEALTHCHECKS_URL` | (empty) | Healthchecks.io ping URL |
+| `STALE_ALERT_HOURS` | (empty) | Alert when source not backed up in X hours |
 
 ### Web Dashboard
 

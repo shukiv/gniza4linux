@@ -11,7 +11,7 @@ from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import AppSettings
 from web.app import login_required
 from web.backend import run_cli_sync
-from daemon.notify import send_test_email
+from daemon.notify import send_test_notification
 
 bp = Blueprint("settings", __name__, url_prefix="/settings")
 
@@ -52,6 +52,15 @@ def save():
         smtp_password=form.get("smtp_password", ""),
         smtp_from=form.get("smtp_from", ""),
         smtp_security=form.get("smtp_security", "tls"),
+        telegram_bot_token=form.get("telegram_bot_token", ""),
+        telegram_chat_id=form.get("telegram_chat_id", ""),
+        webhook_url=form.get("webhook_url", ""),
+        webhook_type=form.get("webhook_type", "slack"),
+        ntfy_url=form.get("ntfy_url", ""),
+        ntfy_token=form.get("ntfy_token", ""),
+        ntfy_priority=form.get("ntfy_priority", "default"),
+        healthchecks_url=form.get("healthchecks_url", ""),
+        stale_alert_hours=form.get("stale_alert_hours", "0"),
         ssh_timeout=form.get("ssh_timeout", "30"),
         ssh_retries=form.get("ssh_retries", "3"),
         rsync_extra_opts=form.get("rsync_extra_opts", ""),
@@ -125,12 +134,19 @@ def apply_update():
     return redirect(url_for("settings.index", tab="update"))
 
 
-@bp.route("/test-email", methods=["POST"])
+@bp.route("/test-notification/<channel>", methods=["POST"])
 @login_required
-def test_email():
+def test_notification(channel):
     try:
-        ok, msg = send_test_email()
+        ok, msg = send_test_notification(channel)
         flash(msg, "success" if ok else "error")
     except Exception as e:
         flash(f"Error: {e}", "error")
-    return redirect(url_for("settings.index", tab="email"))
+    return redirect(url_for("settings.index", tab="notifications"))
+
+
+@bp.route("/test-email", methods=["POST"])
+@login_required
+def test_email():
+    """Backward compatibility route."""
+    return test_notification("email")

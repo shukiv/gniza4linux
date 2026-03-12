@@ -94,29 +94,6 @@
             details.appendChild(sibling);
         }
     });
-
-    // TOC links: open target section (close others) and scroll to it
-    document.querySelectorAll('.doc-toc a').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            var href = this.getAttribute('href');
-            if (!href || href.charAt(0) !== '#') return;
-            var id = href.substring(1);
-            var target = document.getElementById(id);
-            if (!target) return;
-            e.preventDefault();
-            // Find the parent details element
-            var details = target.closest('.doc-section') || (target.classList.contains('doc-section-title') ? target.parentElement : null);
-            if (!details || details.tagName !== 'DETAILS') return;
-            // Close all other sections
-            container.querySelectorAll('.doc-section[open]').forEach(function(d) {
-                if (d !== details) d.open = false;
-            });
-            // Open target section
-            details.open = true;
-            // Scroll to the target
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-    });
 })();
 </script>
 {% endblock %}

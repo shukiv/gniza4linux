@@ -259,14 +259,13 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                             </fieldset>
                             <fieldset class="fieldset" x-show="authMethod === 'key'" x-cloak>
                                 <label class="fieldset-label">SSH Key</label>
-                                <select name="key" class="select">
+                                <input type="text" name="key" class="input" list="ssh-key-list-dest" placeholder="~/.ssh/id_rsa"
+                                       value="{% if ssh_keys %}{{ ssh_keys[0].private_path }}{% endif %}">
+                                <datalist id="ssh-key-list-dest">
                                     {% for key in ssh_keys %}
-                                    <option value="{{ key.private_path }}">{{ key.name }} ({{ key.private_path }})</option>
+                                    <option value="{{ key.private_path }}">{{ key.name }}</option>
                                     {% endfor %}
-                                    {% if not ssh_keys %}
-                                    <option value="">No keys found</option>
-                                    {% endif %}
-                                </select>
+                                </datalist>
                             </fieldset>
                             <fieldset class="fieldset" x-show="authMethod === 'password'" x-cloak>
                                 <label class="fieldset-label">Password</label>
@@ -487,14 +486,13 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                             </fieldset>
                             <fieldset class="fieldset" x-show="sourceAuthMethod === 'key'" x-cloak>
                                 <label class="fieldset-label">SSH Key</label>
-                                <select name="source_key" class="select">
+                                <input type="text" name="source_key" class="input" list="ssh-key-list-src" placeholder="~/.ssh/id_rsa"
+                                       value="{% if ssh_keys %}{{ ssh_keys[0].private_path }}{% endif %}">
+                                <datalist id="ssh-key-list-src">
                                     {% for key in ssh_keys %}
-                                    <option value="{{ key.private_path }}">{{ key.name }} ({{ key.private_path }})</option>
+                                    <option value="{{ key.private_path }}">{{ key.name }}</option>
                                     {% endfor %}
-                                    {% if not ssh_keys %}
-                                    <option value="">No keys found</option>
-                                    {% endif %}
-                                </select>
+                                </datalist>
                             </fieldset>
                             <fieldset class="fieldset" x-show="sourceAuthMethod === 'password'" x-cloak>
                                 <label class="fieldset-label">Password</label>

@@ -12,6 +12,7 @@ from web.app import login_required
 from web.backend import run_cli_sync
 from web.helpers import load_remotes
 from web.ssh_utils import ssh_cmd
+from web.blueprints.wizard import _get_ssh_keys
 
 bp = Blueprint("remotes", __name__, url_prefix="/destinations")
 
@@ -150,7 +151,7 @@ def index():
 @login_required
 def new():
     remote = Remote()
-    return render_template("remotes/edit.html", remote=remote, is_new=True)
+    return render_template("remotes/edit.html", remote=remote, is_new=True, ssh_keys=_get_ssh_keys())
 
 
 @bp.route("/<name>/edit")
@@ -165,7 +166,7 @@ def edit(name):
         return redirect(url_for("remotes.index"))
     data = parse_conf(conf_path)
     remote = Remote.from_conf(name, data)
-    return render_template("remotes/edit.html", remote=remote, is_new=False)
+    return render_template("remotes/edit.html", remote=remote, is_new=False, ssh_keys=_get_ssh_keys())
 
 
 @bp.route("/save", methods=["POST"])

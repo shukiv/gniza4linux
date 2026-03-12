@@ -66,7 +66,12 @@
                     </fieldset>
                     <fieldset class="fieldset" x-show="authMethod === 'key'" x-cloak>
                         <label class="fieldset-label">SSH Key Path</label>
-                        <input type="text" name="key" value="{{ remote.key }}" class="input" placeholder="~/.ssh/id_rsa">
+                        <input type="text" name="key" value="{{ remote.key }}" class="input" list="ssh-key-list" placeholder="~/.ssh/id_rsa">
+                        <datalist id="ssh-key-list">
+                            {% for key in ssh_keys %}
+                            <option value="{{ key.private_path }}">{{ key.name }}</option>
+                            {% endfor %}
+                        </datalist>
                     </fieldset>
                     <fieldset class="fieldset" x-show="authMethod === 'password'" x-cloak>
                         <label class="fieldset-label">Password</label>

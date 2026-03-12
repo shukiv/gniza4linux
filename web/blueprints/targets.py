@@ -11,6 +11,7 @@ from tui.models import Target
 from web.app import login_required
 from web.helpers import load_targets
 from web.ssh_utils import ssh_cmd
+from web.blueprints.wizard import _get_ssh_keys
 
 bp = Blueprint("targets", __name__, url_prefix="/sources")
 
@@ -108,7 +109,7 @@ def index():
 @login_required
 def new():
     target = Target()
-    return render_template("targets/edit.html", target=target, is_new=True)
+    return render_template("targets/edit.html", target=target, is_new=True, ssh_keys=_get_ssh_keys())
 
 
 @bp.route("/<name>/edit")
@@ -123,7 +124,7 @@ def edit(name):
         return redirect(url_for("targets.index"))
     data = parse_conf(conf_path)
     target = Target.from_conf(name, data)
-    return render_template("targets/edit.html", target=target, is_new=False)
+    return render_template("targets/edit.html", target=target, is_new=False, ssh_keys=_get_ssh_keys())
 
 
 @bp.route("/save", methods=["POST"])

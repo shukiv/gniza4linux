@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import fcntl
 import json
 import os
@@ -6,7 +8,6 @@ import signal
 import tempfile
 import threading
 import uuid
-from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path

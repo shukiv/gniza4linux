@@ -171,8 +171,9 @@ _backup_target_impl() {
         fi
         ((folder_index++)) || true
         if [[ "${TARGET_SOURCE_TYPE:-local}" != "local" ]]; then
-            if [[ "${TARGET_SOURCE_TYPE}" == "ssh" && "${REMOTE_TYPE:-ssh}" == "ssh" ]]; then
+            if [[ "${TARGET_SOURCE_TYPE}" == "ssh" && "${REMOTE_TYPE:-ssh}" == "ssh" && "${REMOTE_RESTRICTED_SHELL:-false}" != "true" ]]; then
                 # Pipelined: direct SSH source -> SSH destination (no local staging)
+                # Disabled for restricted shells (e.g. Hetzner Storage Box) that can't run commands
                 log_info "Pipelined transfer from ${TARGET_SOURCE_HOST}: $folder"
                 if ! transfer_folder_pipelined "$target_name" "$folder" "$ts" "$prev"; then
                     log_error "Pipelined transfer failed for folder: $folder"

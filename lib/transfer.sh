@@ -245,9 +245,13 @@ rsync_ssh_to_ssh() {
     local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
 
     # --- Build the rsync command string to run ON the destination ---
-    # --fake-super on source side (rsync-path) AND locally on dest (--fake-super flag)
-    local -a ropts=(-aHAX --numeric-ids --delete --sparse --fake-super)
-    ropts+=(--rsync-path="rsync --fake-super")
+    local -a ropts=(-aHAX --numeric-ids --delete --sparse)
+    if [[ "${REMOTE_RESTRICTED_SHELL:-false}" == "true" ]]; then
+        log_debug "Restricted destination shell — skipping --fake-super for ssh→ssh"
+    else
+        ropts+=(--fake-super)
+        ropts+=(--rsync-path="rsync --fake-super")
+    fi
 
     if [[ -n "$link_dest" ]]; then
         ropts+=(--link-dest="$link_dest")

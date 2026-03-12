@@ -272,8 +272,6 @@ class RemoteEditScreen(Screen):
                     if result.returncode != 0:
                         self.notify(f"Failed to create base path: {result.stderr.strip()}", severity="error")
                         return False
-                    # Fix ownership so the backup user can write
-                    subprocess.run(cmd + ["sudo", "chown", f"{remote.user}:", base], capture_output=True, text=True, timeout=15, env=env)
             except (subprocess.TimeoutExpired, OSError) as e:
                 self.notify(f"Failed to create base path: {e}", severity="error")
                 return False

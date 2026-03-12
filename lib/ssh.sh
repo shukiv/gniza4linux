@@ -59,6 +59,32 @@ ensure_remote_dir() {
     fi
 }
 
+# Probe whether REMOTE_BASE works as-is on the remote.
+# If an absolute path like /backups fails (read-only root), automatically
+# convert to a relative path (./backups) so users don't have to care.
+normalize_remote_base() {
+    [[ "${REMOTE_TYPE:-ssh}" != "ssh" ]] && return 0
+    local base="${REMOTE_BASE:-/backups}"
+
+    # Try creating the base directory with the configured path
+    if remote_exec "mkdir -p '$(shquote "$base")'" 2>/dev/null; then
+        return 0
+    fi
+
+    # Absolute path failed — try relative (strip leading /)
+    if [[ "$base" == /* ]]; then
+        local rel=".${base}"
+        if remote_exec "mkdir -p '$(shquote "$rel")'" 2>/dev/null; then
+            log_info "Remote root is read-only — using relative path: $rel (instead of $base)"
+            REMOTE_BASE="$rel"
+            return 0
+        fi
+    fi
+
+    log_warn "Could not create remote base '$base' — rsync will attempt to create it"
+    return 0
+}
+
 build_rsync_ssh_cmd() {
     if _is_password_mode; then
         echo "ssh -p $REMOTE_PORT -o StrictHostKeyChecking=yes -o ConnectTimeout=$SSH_TIMEOUT"

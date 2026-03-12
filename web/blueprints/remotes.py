@@ -54,15 +54,28 @@ def _test_remote(remote):
         except OSError as e:
             return False, f"SSH connection failed: {e}"
 
-        # Step 2: Create base path (skip on failure — may be a restricted environment)
+        # Step 2: Create base path — if absolute path fails (read-only root),
+        # try relative path automatically (e.g. /backups -> ./backups)
         try:
             result = subprocess.run(cmd + ["mkdir", "-p", base], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
-                # Retry with sudo
-                result = subprocess.run(cmd + ["sudo", "mkdir", "-p", base], capture_output=True, text=True, timeout=15, env=env)
-                if result.returncode != 0:
-                    return False, f"Failed to create base path: {result.stderr.strip()}"
-                subprocess.run(cmd + ["sudo", "chown", f"{remote.user}:", base], capture_output=True, text=True, timeout=15, env=env)
+                if base.startswith("/"):
+                    rel_base = "." + base
+                    result = subprocess.run(cmd + ["mkdir", "-p", rel_base], capture_output=True, text=True, timeout=15, env=env)
+                    if result.returncode == 0:
+                        base = rel_base  # use relative path for write test
+                    else:
+                        # Retry original with sudo
+                        result = subprocess.run(cmd + ["sudo", "mkdir", "-p", base], capture_output=True, text=True, timeout=15, env=env)
+                        if result.returncode != 0:
+                            return False, f"Failed to create base path: {result.stderr.strip()}"
+                        subprocess.run(cmd + ["sudo", "chown", f"{remote.user}:", base], capture_output=True, text=True, timeout=15, env=env)
+                else:
+                    # Retry with sudo
+                    result = subprocess.run(cmd + ["sudo", "mkdir", "-p", base], capture_output=True, text=True, timeout=15, env=env)
+                    if result.returncode != 0:
+                        return False, f"Failed to create base path: {result.stderr.strip()}"
+                    subprocess.run(cmd + ["sudo", "chown", f"{remote.user}:", base], capture_output=True, text=True, timeout=15, env=env)
         except (subprocess.TimeoutExpired, OSError) as e:
             return False, f"Failed to create base path: {e}"
 
@@ -70,17 +83,24 @@ def _test_remote(remote):
         try:
             test_file = f"{base}/validation_success.txt"
             result = subprocess.run(
-                cmd + ["sh", "-c", f'echo "gniza validation" > {test_file}'],
+                cmd + ["dd", f"of={test_file}"],
+                input="gniza validation",
                 capture_output=True, text=True, timeout=15, env=env,
             )
             if result.returncode != 0:
-                # Retry with sudo
+                # Try with sh -c (full shell)
                 result = subprocess.run(
-                    cmd + ["sudo", "sh", "-c", f'echo "gniza validation" > {test_file}'],
+                    cmd + ["sh", "-c", f'echo "gniza validation" > {test_file}'],
                     capture_output=True, text=True, timeout=15, env=env,
                 )
                 if result.returncode != 0:
-                    return False, f"Failed to write test file: {result.stderr.strip()}"
+                    # Retry with sudo
+                    result = subprocess.run(
+                        cmd + ["sudo", "sh", "-c", f'echo "gniza validation" > {test_file}'],
+                        capture_output=True, text=True, timeout=15, env=env,
+                    )
+                    if result.returncode != 0:
+                        return False, f"Failed to write test file: {result.stderr.strip()}"
         except (subprocess.TimeoutExpired, OSError) as e:
             return False, f"Failed to write test file: {e}"
         return True, None

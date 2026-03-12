@@ -73,6 +73,7 @@ _backup_target_impl() {
                 log_error "Cannot connect to remote '$remote_name'"
                 return 1
             }
+            normalize_remote_base
             ;;
         local)
             if [[ ! -d "$REMOTE_BASE" ]]; then

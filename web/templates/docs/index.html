@@ -25,13 +25,6 @@
     .doc-content a:hover { opacity: 0.8; }
     .doc-content strong { font-weight: 600; }
     .doc-content > h1:first-child { margin-top: 0; }
-    .doc-section { margin: 1em 0; border: 1px solid oklch(var(--bc) / 0.1); border-radius: 0.5em; }
-    .doc-section > *:not(summary) { padding: 0 1em; }
-    .doc-section > *:last-child { padding-bottom: 1em; }
-    .doc-section-title { font-size: 1.5em; font-weight: 600; padding: 0.5em 1em; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.5em; }
-    .doc-section-title::-webkit-details-marker { display: none; }
-    .doc-section-title::before { content: '▶'; font-size: 0.6em; transition: transform 0.2s; }
-    .doc-section[open] > .doc-section-title::before { transform: rotate(90deg); }
     .doc-toc ul { list-style: none; padding-left: 0; }
     .doc-toc ul ul { padding-left: 1em; }
     .doc-toc li { margin: 0.15em 0; }
@@ -70,35 +63,7 @@
 </div>
 
 <script>
-// Make h2 sections collapsible — run immediately since DOM is already parsed at this point
 (function() {
-    var container = document.getElementById('doc-body');
-    if (!container) return;
-
-    // Collect all h2 elements first
-    var headings = Array.from(container.querySelectorAll(':scope > h2'));
-    headings.forEach(function(h2) {
-        var details = document.createElement('details');
-        details.open = true;
-        details.className = 'doc-section';
-        var summary = document.createElement('summary');
-        while (h2.firstChild) summary.appendChild(h2.firstChild);
-        summary.id = h2.id;
-        summary.className = 'doc-section-title';
-        details.appendChild(summary);
-        // Insert details before the h2
-        h2.parentNode.insertBefore(details, h2);
-        h2.remove();
-        // Move siblings into details until next h2 or end
-        var next = details.nextSibling;
-        while (next) {
-            if (next.nodeType === 1 && (next.tagName === 'H2' || next.tagName === 'H1' || next.classList.contains('doc-section'))) break;
-            var sibling = next;
-            next = next.nextSibling;
-            details.appendChild(sibling);
-        }
-    });
-
     // Make TOC items with sub-lists collapsible
     document.querySelectorAll('.doc-toc li').forEach(function(li) {
         var nested = li.querySelector(':scope > ul');

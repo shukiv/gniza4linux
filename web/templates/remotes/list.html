@@ -5,7 +5,67 @@
 {% block page_title %}Destinations{% endblock %}
 
 {% block content %}
-<div x-data="{ showModal: false, deleteUrl: '', deleteName: '' }">
+<div x-data="{
+    showModal: false, deleteUrl: '', deleteName: '',
+    sshKeys: [], sshKeysLoading: false, sshKeyGenerating: false,
+    loadSshKeys() {
+        this.sshKeysLoading = true;
+        fetch('{{ url_for('wizard.ssh_keys') }}')
+            .then(r => r.json())
+            .then(data => { this.sshKeys = data.keys || []; this.sshKeysLoading = false; })
+            .catch(() => { this.sshKeysLoading = false; });
+    },
+    generateSshKey() {
+        this.sshKeyGenerating = true;
+        fetch('{{ url_for('wizard.ssh_keygen') }}', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                this.sshKeyGenerating = false;
+                if (data.ok) { this.loadSshKeys(); }
+                else { alert(data.error || 'Key generation failed'); }
+            })
+            .catch(() => { this.sshKeyGenerating = false; });
+    },
+    copyKey(text, btn) {
+        navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+    }
+}">
+
+<!-- SSH Keys -->
+<div class="collapse collapse-arrow bg-base-200 shadow mb-6" x-init="loadSshKeys()">
+    <input type="checkbox" />
+    <div class="collapse-title font-semibold">
+        SSH Public Keys
+        <span class="text-base-content/50 font-normal text-sm ml-2">Copy your key to set up SSH access on destination servers</span>
+    </div>
+    <div class="collapse-content">
+        <template x-if="sshKeysLoading">
+            <p class="text-base-content/50 text-sm py-2">Loading keys...</p>
+        </template>
+        <template x-if="!sshKeysLoading && sshKeys.length === 0">
+            <p class="text-warning text-sm py-2">No SSH keys found. Generate one below.</p>
+        </template>
+        <template x-for="key in sshKeys" :key="key.name">
+            <div class="mb-3">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="font-mono text-sm font-medium" x-text="key.name"></span>
+                </div>
+                <div class="relative">
+                    <pre class="bg-base-300 rounded-lg p-3 text-xs overflow-x-auto whitespace-pre-wrap break-all select-all" x-text="key.content"></pre>
+                    <button type="button" class="btn btn-ghost btn-xs absolute top-2 right-2"
+                            @click="copyKey(key.content, $el)">Copy</button>
+                </div>
+            </div>
+        </template>
+        <button type="button" class="btn btn-outline btn-sm mt-2"
+                @click="generateSshKey()" :disabled="sshKeyGenerating">
+            <span x-show="!sshKeyGenerating">Generate New Key (Ed25519)</span>
+            <span x-show="sshKeyGenerating" class="loading loading-spinner loading-xs"></span>
+        </button>
+    </div>
+</div>
 
 <div class="flex items-center justify-between mb-6">
     <h2 class="text-xl font-semibold">Backup Destinations</h2>

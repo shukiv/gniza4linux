@@ -30,8 +30,8 @@
     .doc-section > *:last-child { padding-bottom: 1em; }
     .doc-section-title { font-size: 1.5em; font-weight: 600; padding: 0.5em 1em; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 0.5em; }
     .doc-section-title::-webkit-details-marker { display: none; }
-    .doc-section-title::before { content: '+'; font-size: 1em; font-weight: 700; width: 1em; text-align: center; transition: transform 0.2s; }
-    .doc-section[open] > .doc-section-title::before { content: '−'; }
+    .doc-section-title::before { content: '▶'; font-size: 0.6em; transition: transform 0.2s; }
+    .doc-section[open] > .doc-section-title::before { transform: rotate(90deg); }
     .doc-toc ul { list-style: none; padding-left: 0; }
     .doc-toc ul ul { padding-left: 1em; }
     .doc-toc li { margin: 0.15em 0; }
@@ -75,7 +75,7 @@
     var headings = Array.from(container.querySelectorAll(':scope > h2'));
     headings.forEach(function(h2) {
         var details = document.createElement('details');
-        details.open = false;
+        details.open = true;
         details.className = 'doc-section';
         var summary = document.createElement('summary');
         while (h2.firstChild) summary.appendChild(h2.firstChild);

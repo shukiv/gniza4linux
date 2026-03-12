@@ -28,6 +28,9 @@ _pgsql_run_cmd() {
         # Prepend PGPASSWORD on remote side if set
         if [[ -n "${TARGET_POSTGRESQL_PASSWORD:-}" ]]; then
             cmd_str="PGPASSWORD=$(printf '%q' "$TARGET_POSTGRESQL_PASSWORD") $cmd_str"
+        elif [[ -z "${TARGET_POSTGRESQL_USER:-}" ]]; then
+            # No user/password: use sudo for peer auth on remote
+            cmd_str="sudo $cmd_str"
         fi
         if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
             SSHPASS="$TARGET_SOURCE_PASSWORD" sshpass -e "${_PGSQL_SSH[@]}" "$cmd_str"

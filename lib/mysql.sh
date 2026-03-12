@@ -28,6 +28,9 @@ _mysql_run_cmd() {
         # Prepend MYSQL_PWD on remote side if set
         if [[ -n "${TARGET_MYSQL_PASSWORD:-}" ]]; then
             cmd_str="MYSQL_PWD=$(printf '%q' "$TARGET_MYSQL_PASSWORD") $cmd_str"
+        elif [[ -z "${TARGET_MYSQL_USER:-}" ]]; then
+            # No user/password: use sudo for socket auth on remote
+            cmd_str="sudo $cmd_str"
         fi
         if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
             SSHPASS="$TARGET_SOURCE_PASSWORD" sshpass -e "${_MYSQL_SSH[@]}" "$cmd_str"

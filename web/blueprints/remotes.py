@@ -11,8 +11,7 @@ from tui.models import Remote
 from web.app import login_required
 from web.backend import run_cli_sync
 from web.helpers import load_remotes
-from web.ssh_utils import ssh_cmd
-from web.blueprints.wizard import _get_ssh_keys
+from web.ssh_utils import ssh_cmd, get_ssh_keys as _get_ssh_keys
 
 bp = Blueprint("remotes", __name__, url_prefix="/destinations")
 

@@ -10,8 +10,7 @@ from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Target
 from web.app import login_required
 from web.helpers import load_targets
-from web.ssh_utils import ssh_cmd
-from web.blueprints.wizard import _get_ssh_keys
+from web.ssh_utils import ssh_cmd, get_ssh_keys as _get_ssh_keys
 
 bp = Blueprint("targets", __name__, url_prefix="/sources")
 

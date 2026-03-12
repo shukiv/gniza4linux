@@ -14,6 +14,7 @@ from web.blueprints.remotes import _test_remote
 from web.blueprints.targets import _test_source, _lines_to_csv
 from web.blueprints.schedules import _reinstall_cron
 from web.jobs import web_job_manager
+from web.ssh_utils import get_ssh_keys as _get_ssh_keys
 
 bp = Blueprint("wizard", __name__, url_prefix="/wizard")
 
@@ -252,26 +253,6 @@ def run_backup():
     web_job_manager.create_and_start("backup", label, *args)
     flash("First backup started.", "success")
     return redirect(url_for("jobs.index"))
-
-
-def _get_ssh_keys():
-    """Find existing SSH key pairs (private + public)."""
-    ssh_dir = Path.home() / ".ssh"
-    keys = []
-    if ssh_dir.is_dir():
-        for pub in sorted(ssh_dir.glob("*.pub")):
-            private = pub.with_suffix("")
-            try:
-                content = pub.read_text().strip()
-                keys.append({
-                    "name": pub.stem,
-                    "private_path": str(private),
-                    "pub_path": str(pub),
-                    "content": content,
-                })
-            except OSError:
-                pass
-    return keys
 
 
 @bp.route("/ssh-keys")

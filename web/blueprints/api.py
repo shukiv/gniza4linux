@@ -90,7 +90,11 @@ def _ssh_list_dirs(host, path, port="22", user="root", key="", password="", show
             # Fallback to ls (works on restricted shells)
             result = subprocess.run(base_cmd + [ls_cmd], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
-                return None, result.stderr.strip() or "Connection failed"
+                # Path may not exist — fall back to home directory
+                result = subprocess.run(base_cmd + ["ls", "-1", "."], capture_output=True, text=True, timeout=15, env=env)
+                if result.returncode != 0:
+                    return None, result.stderr.strip() or "Connection failed"
+                path = "~"
         dirs = []
         for line in result.stdout.strip().splitlines():
             line = line.strip()

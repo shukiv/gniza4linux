@@ -145,26 +145,25 @@ if command -v python3 &>/dev/null; then
             _deps_installed=true
         fi
     fi
-    # Fallback: install via apt (Debian/Ubuntu)
+    # Fallback: install flask/waitress via apt, but NOT textual (apt version is too old)
     if ! $_deps_installed && command -v apt-get &>/dev/null; then
-        info "pip unavailable or failed, trying apt..."
-        _apt_cmd="apt-get install -y python3-flask python3-waitress python3-textual"
+        info "pip unavailable or failed, trying apt for flask/waitress + pip for textual..."
+        _apt_cmd="apt-get install -y python3-pip python3-flask python3-waitress"
         if [[ $EUID -eq 0 ]]; then
-            if $_apt_cmd 2>/dev/null; then
-                info "Python dependencies installed via apt."
-                _deps_installed=true
-            fi
+            $_apt_cmd 2>/dev/null
         else
-            if sudo $_apt_cmd 2>/dev/null; then
-                info "Python dependencies installed via apt."
-                _deps_installed=true
-            fi
+            sudo $_apt_cmd 2>/dev/null
+        fi
+        # Now try pip again for textual (apt python3-textual is too old)
+        if python3 -m pip install --break-system-packages $_pip_quiet "textual>=0.40" textual-serve 2>/dev/null \
+            || python3 -m pip install $_pip_quiet "textual>=0.40" textual-serve 2>/dev/null; then
+            info "Python dependencies installed."
+            _deps_installed=true
         fi
     fi
     if ! $_deps_installed; then
         warn "Could not install Python dependencies. TUI/web mode may not work."
-        warn "Install manually: apt install python3-flask python3-waitress python3-textual"
-        warn "  or: pip3 install --break-system-packages "textual>=0.40" textual-serve flask waitress"
+        warn "Install manually: pip3 install --break-system-packages 'textual>=0.40' textual-serve flask waitress"
     fi
 else
     warn "python3 not found. TUI mode will not be available."

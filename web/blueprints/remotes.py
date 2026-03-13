@@ -38,17 +38,26 @@ def _test_remote(remote):
             env["SSHPASS"] = password
         base = remote.base or "/backups"
 
-        # Step 1: Test SSH connection (try "echo ok", fall back to "ls" for restricted shells)
+        # Step 1: Test SSH connection (try "echo ok", fall back to sftp for restricted shells)
         try:
             result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
-                # Restricted shell may not support echo — try ls as fallback
-                result = subprocess.run(cmd + ["ls"], capture_output=True, text=True, timeout=15, env=env)
-                if result.returncode != 0:
-                    err = result.stderr.strip() or result.stdout.strip() or 'unknown error'
+                # Restricted shell (e.g. Hetzner Storage Box) — try sftp fallback
+                sftp_cmd = ["sftp", "-o", "BatchMode=yes", "-o", f"Port={port}",
+                            "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
+                if key:
+                    sftp_cmd += ["-o", f"IdentityFile={key}"]
+                if password:
+                    sftp_cmd = ["sshpass", "-e"] + sftp_cmd
+                sftp_cmd.append(f"{user}@{host}")
+                sftp_result = subprocess.run(
+                    sftp_cmd, input="bye\n", capture_output=True, text=True, timeout=15, env=env,
+                )
+                if sftp_result.returncode != 0:
+                    err = result.stderr.strip() or 'unknown error'
                     return False, f"SSH connection failed: {err}"
                 # Connection works but shell is restricted — skip mkdir/write tests
-                return True, None
+                return None, "Connected via SFTP (restricted shell detected)"
         except subprocess.TimeoutExpired:
             return False, "SSH connection timed out"
         except OSError as e:

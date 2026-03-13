@@ -45,7 +45,21 @@ def _test_source(target):
         try:
             result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
-                return False, f"SSH connection failed: {result.stderr.strip() or 'unknown error'}"
+                # Restricted shells (e.g. Hetzner Storage Box) reject commands but accept sftp.
+                # Fall back to sftp connection test.
+                sftp_cmd = ["sftp", "-o", "BatchMode=yes", "-o", f"Port={port}",
+                            "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
+                if key:
+                    sftp_cmd += ["-o", f"IdentityFile={key}"]
+                if password:
+                    sftp_cmd = ["sshpass", "-e"] + sftp_cmd
+                sftp_cmd.append(f"{user}@{host}")
+                sftp_result = subprocess.run(
+                    sftp_cmd, input="bye\n", capture_output=True, text=True, timeout=15, env=env,
+                )
+                if sftp_result.returncode != 0:
+                    return False, f"SSH connection failed: {result.stderr.strip() or 'unknown error'}"
+                return None, "Connected via SFTP (restricted shell detected — normal commands not available)"
         except subprocess.TimeoutExpired:
             return False, "SSH connection timed out"
         except OSError as e:

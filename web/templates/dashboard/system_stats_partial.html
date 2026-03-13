@@ -31,15 +31,14 @@
     <div class="stat px-4 py-3">
         <div class="stat-title text-xs">{{ 'Disks' if disks|length > 1 else 'Local Disk' }}</div>
         {% for d in disks %}
-        {% if not loop.first %}<div class="border-t border-base-300 my-1"></div>{% endif %}
-        <div class="flex items-baseline justify-between{{ ' mt-0.5' if loop.first }}">
-            <span class="{{ 'stat-value text-lg' if disks|length == 1 else 'text-sm font-bold' }}">{{ "%.0f"|format(d.percent) }}%</span>
-            <span class="text-xs font-normal text-base-content/50 whitespace-nowrap">{{ "%.0f"|format(d.used_gb) }}/{{ "%.0f"|format(d.total_gb) }} GB</span>
+        {% if not loop.first %}<div class="my-1"></div>{% endif %}
+        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 {{ 'h-7' if disks|length > 1 else 'h-8' }} {{ 'mt-1' if loop.first }}">
+            <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if d.percent > 90 else 'bg-warning' if d.percent > 80 else 'bg-primary' }}" style="width: {{ d.percent|int }}%"></div>
+            <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
+                <span>{% if disks|length > 1 %}<span class="font-mono font-normal opacity-60">{{ d.mount }}</span> {% endif %}{{ "%.0f"|format(d.percent) }}%</span>
+                <span class="opacity-70">{{ "%.0f"|format(d.used_gb) }}/{{ "%.0f"|format(d.total_gb) }} GB</span>
+            </div>
         </div>
-        {% if disks|length > 1 %}
-        <div class="text-xs text-base-content/40 font-mono leading-tight">{{ d.mount }}</div>
-        {% endif %}
-        <progress class="progress {{ 'progress-error' if d.percent > 90 else 'progress-warning' if d.percent > 80 else 'progress-primary' }} w-full{{ ' h-1.5' if disks|length > 1 }} mt-0.5" value="{{ d.percent|int }}" max="100"></progress>
         {% endfor %}
         <div class="flex items-baseline justify-between mt-1.5">
             <span class="text-xs text-base-content/50">IO Wait {{ "%.1f"|format(iowait) }}%</span>

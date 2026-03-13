@@ -206,6 +206,7 @@ def save():
         s3_secret_access_key=form.get("s3_secret_access_key", ""),
         gdrive_sa_file=form.get("gdrive_sa_file", ""),
         gdrive_root_folder_id=form.get("gdrive_root_folder_id", ""),
+        sudo="yes" if form.get("sudo") else "no",
     )
 
     ok, msg = _test_remote(remote)

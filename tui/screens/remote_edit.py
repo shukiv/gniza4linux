@@ -71,6 +71,8 @@ class RemoteEditScreen(Screen):
                     yield Button("Browse...", id="btn-browse-key")
                 yield Static("Password:", id="lbl-password", classes="ssh-field ssh-password-field")
                 yield Input(value=remote.password, placeholder="SSH password", password=True, id="re-password", classes="ssh-field ssh-password-field")
+                yield Static("Sudo rsync:", id="lbl-sudo", classes="ssh-field")
+                yield Select([("No", "no"), ("Yes", "yes")], id="re-sudo", value=remote.sudo, classes="ssh-field")
                 # Common fields
                 yield Static("Base path:")
                 with Horizontal(id="re-base-row"):
@@ -219,6 +221,7 @@ class RemoteEditScreen(Screen):
             s3_secret_access_key=self.query_one("#re-s3secret", Input).value,
             gdrive_sa_file=self.query_one("#re-gdsa", Input).value.strip(),
             gdrive_root_folder_id=self.query_one("#re-gdfolder", Input).value.strip(),
+            sudo=str(self.query_one("#re-sudo", Select).value),
         )
 
         if rtype == "ssh" and not remote.host:

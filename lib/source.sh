@@ -58,7 +58,9 @@ _rsync_from_source_ssh() {
     fi
 
     local rsync_ssh="ssh ${ssh_opts[*]}"
-    local rsync_opts=(-aHAX --numeric-ids --sparse --rsync-path="rsync --fake-super")
+    local rsync_path="rsync --fake-super"
+    [[ "${TARGET_SOURCE_SUDO:-no}" == "yes" ]] && rsync_path="sudo rsync --fake-super"
+    local rsync_opts=(-aHAX --numeric-ids --sparse --rsync-path="$rsync_path")
     rsync_opts+=(--info=progress2 --no-inc-recursive)
 
     if [[ -n "${_TRANSFER_LOG:-}" ]]; then

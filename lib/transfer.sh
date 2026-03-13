@@ -29,6 +29,8 @@ rsync_to_remote() {
     local rsync_opts=(-aHAX --numeric-ids --delete --sparse --mkpath)
     if [[ "${REMOTE_RESTRICTED_SHELL:-false}" == "true" ]]; then
         log_debug "Restricted shell — skipping --fake-super"
+    elif [[ "${REMOTE_SUDO:-no}" == "yes" ]]; then
+        rsync_opts+=(--rsync-path="sudo rsync --fake-super")
     else
         rsync_opts+=(--rsync-path="rsync --fake-super")
     fi
@@ -250,7 +252,10 @@ rsync_ssh_to_ssh() {
         log_debug "Restricted destination shell — skipping --fake-super for ssh→ssh"
     else
         ropts+=(--fake-super)
-        ropts+=(--rsync-path="rsync --fake-super")
+        # --rsync-path controls what runs on the SOURCE side
+        local src_rsync_path="rsync --fake-super"
+        [[ "${TARGET_SOURCE_SUDO:-no}" == "yes" ]] && src_rsync_path="sudo rsync --fake-super"
+        ropts+=(--rsync-path="$src_rsync_path")
     fi
 
     if [[ -n "$link_dest" ]]; then
@@ -300,7 +305,9 @@ rsync_ssh_to_ssh() {
     local source_spec="${TARGET_SOURCE_USER:-root}@${TARGET_SOURCE_HOST}:${source_path}"
 
     # Assemble the remote command string with safe quoting
+    # REMOTE_SUDO controls what runs on the DESTINATION side
     local remote_cmd="rsync"
+    [[ "${REMOTE_SUDO:-no}" == "yes" ]] && remote_cmd="sudo rsync"
     for opt in "${ropts[@]}"; do
         remote_cmd+=" $(printf '%q' "$opt")"
     done

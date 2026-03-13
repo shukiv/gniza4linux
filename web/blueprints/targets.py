@@ -162,6 +162,7 @@ def save():
         source_auth_method=form.get("source_auth_method", "key"),
         source_key=form.get("source_key", ""),
         source_password=form.get("source_password", ""),
+        source_sudo="yes" if form.get("source_sudo") else "no",
         source_s3_bucket=form.get("source_s3_bucket", ""),
         source_s3_region=form.get("source_s3_region", "us-east-1"),
         source_s3_endpoint=form.get("source_s3_endpoint", ""),

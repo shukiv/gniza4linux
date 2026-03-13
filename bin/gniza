@@ -474,6 +474,7 @@ HELPEOF
                             else
                                 echo "Password:       ****"
                             fi
+                            echo "Sudo:           $TARGET_SOURCE_SUDO"
                             ;;
                         s3)
                             echo "Bucket:         $TARGET_SOURCE_S3_BUCKET"
@@ -585,6 +586,7 @@ HELPEOF
                             else
                                 echo "Password:       ****"
                             fi
+                            echo "Sudo:           $REMOTE_SUDO"
                             echo "Base path:      $REMOTE_BASE"
                             ;;
                         local)

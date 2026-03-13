@@ -11,6 +11,7 @@ REMOTE_USER="root"
 REMOTE_AUTH_METHOD="key"
 REMOTE_KEY=""
 REMOTE_PASSWORD=""
+#REMOTE_SUDO="no"
 REMOTE_BASE="/backups"
 
 # Bandwidth limit override (KB/s, 0 = use global)

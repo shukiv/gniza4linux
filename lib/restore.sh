@@ -9,14 +9,20 @@ _rsync_download() {
     local remote_path="$1"
     local local_path="$2"
     local rsync_ssh; rsync_ssh=$(build_rsync_ssh_cmd)
+    local -a rsync_opts=(-aHAX --numeric-ids)
+    if [[ "${REMOTE_RESTRICTED_SHELL:-false}" != "true" ]]; then
+        local rsync_path="rsync --fake-super"
+        [[ "${REMOTE_SUDO:-no}" == "yes" ]] && rsync_path="sudo rsync --fake-super"
+        rsync_opts+=(--rsync-path="$rsync_path")
+    fi
     if _is_password_mode; then
         export SSHPASS="$REMOTE_PASSWORD"
-        sshpass -e rsync -aHAX --numeric-ids --rsync-path="rsync --fake-super" \
+        sshpass -e rsync "${rsync_opts[@]}" \
             -e "$rsync_ssh" \
             "${REMOTE_USER}@${REMOTE_HOST}:${remote_path}" \
             "$local_path"
     else
-        rsync -aHAX --numeric-ids --rsync-path="rsync --fake-super" \
+        rsync "${rsync_opts[@]}" \
             -e "$rsync_ssh" \
             "${REMOTE_USER}@${REMOTE_HOST}:${remote_path}" \
             "$local_path"

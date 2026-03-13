@@ -62,6 +62,13 @@ class TargetEditScreen(Screen):
                 yield Input(value=target.source_key, placeholder="/root/.ssh/id_rsa", id="te-source-key", classes="source-field source-ssh-field source-key-field")
                 yield Static("Password:", classes="source-field source-ssh-field source-password-field")
                 yield Input(value=target.source_password, placeholder="SSH password", password=True, id="te-source-password", classes="source-field source-ssh-field source-password-field")
+                yield Static("Sudo rsync:", classes="source-field source-ssh-field")
+                yield Select(
+                    [("No", "no"), ("Yes", "yes")],
+                    value=target.source_sudo,
+                    id="te-source-sudo",
+                    classes="source-field source-ssh-field",
+                )
                 yield Static("S3 Bucket:", classes="source-field source-s3-field")
                 yield Input(value=target.source_s3_bucket, placeholder="my-bucket", id="te-source-s3-bucket", classes="source-field source-s3-field")
                 yield Static("S3 Region:", classes="source-field source-s3-field")
@@ -323,6 +330,7 @@ class TargetEditScreen(Screen):
             source_auth_method=str(self.query_one("#te-source-auth-method", Select).value),
             source_key=self.query_one("#te-source-key", Input).value.strip(),
             source_password=self.query_one("#te-source-password", Input).value.strip(),
+            source_sudo=str(self.query_one("#te-source-sudo", Select).value),
             source_s3_bucket=self.query_one("#te-source-s3-bucket", Input).value.strip(),
             source_s3_region=self.query_one("#te-source-s3-region", Input).value.strip(),
             source_s3_endpoint=self.query_one("#te-source-s3-endpoint", Input).value.strip(),

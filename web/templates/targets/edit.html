@@ -85,6 +85,13 @@
                         <label class="fieldset-label">Password</label>
                         <input type="password" name="source_password" value="{{ target.source_password }}" class="input">
                     </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="label cursor-pointer gap-2 justify-start p-0">
+                            <input type="checkbox" name="source_sudo" class="toggle toggle-primary toggle-sm"
+                                   {{ 'checked' if target.source_sudo == 'yes' else '' }}>
+                            <span>Use sudo for rsync</span>
+                        </label>
+                    </fieldset>
                 </div>
             </div>
 

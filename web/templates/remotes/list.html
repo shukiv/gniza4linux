@@ -104,9 +104,9 @@
             </div>
             <p class="text-base-content/40 text-xs">With MySQL:</p>
             <div class="relative mt-1 mb-2">
-                <pre class="bg-base-300 rounded p-3 text-xs font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump" >> /etc/sudoers</pre>
+                <pre class="bg-base-300 rounded p-3 text-xs font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/mysql" >> /etc/sudoers</pre>
                 <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
-                        @click="copyKey('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump&quot; >> /etc/sudoers', $el)">Copy</button>
+                        @click="copyKey('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/mysql&quot; >> /etc/sudoers', $el)">Copy</button>
             </div>
             <p class="text-base-content/40 text-xs">With PostgreSQL:</p>
             <div class="relative mt-1 mb-2">

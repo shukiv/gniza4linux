@@ -21,15 +21,17 @@ _pgsql_is_remote() {
 }
 
 # Run a command locally or via SSH. For remote, wraps with sshpass if needed.
-# Usage: _pgsql_run_cmd "psql -U postgres -At -c 'SELECT 1'"
+# Usage: _pgsql_run_cmd "psql -U postgres -At -c 'SELECT 1'" [use_sudo]
+# use_sudo: "auto" (default) = sudo when no user/password, "yes" = always, "no" = never
 _pgsql_run_cmd() {
     local cmd_str="$1"
+    local use_sudo="${2:-auto}"
     if _pgsql_is_remote; then
         # Prepend PGPASSWORD on remote side if set
         if [[ -n "${TARGET_POSTGRESQL_PASSWORD:-}" ]]; then
             cmd_str="PGPASSWORD=$(printf '%q' "$TARGET_POSTGRESQL_PASSWORD") $cmd_str"
-        elif [[ -z "${TARGET_POSTGRESQL_USER:-}" ]]; then
-            # No user/password: use sudo for peer auth on remote
+        elif [[ "$use_sudo" == "yes" || ( "$use_sudo" == "auto" && -z "${TARGET_POSTGRESQL_USER:-}" ) ]]; then
+            # Use sudo for peer auth on remote
             cmd_str="sudo $cmd_str"
         fi
         if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
@@ -138,9 +140,13 @@ pgsql_get_databases() {
     if _pgsql_is_remote; then
         local conn_str
         conn_str=$(_pgsql_build_conn_str)
-        all_dbs=$(_pgsql_run_cmd "$client_cmd $conn_str -At -c $(printf '%q' "$sql_query")" 2>&1) || {
-            log_error "Failed to list databases: $all_dbs"
-            return 1
+        # Try without sudo first (psql client may not be in sudoers),
+        # fall back to sudo if that fails
+        all_dbs=$(_pgsql_run_cmd "$client_cmd $conn_str -At -c $(printf '%q' "$sql_query")" "no" 2>&1) || {
+            all_dbs=$(_pgsql_run_cmd "$client_cmd $conn_str -At -c $(printf '%q' "$sql_query")" 2>&1) || {
+                log_error "Failed to list databases: $all_dbs"
+                return 1
+            }
         }
     else
         pgsql_build_conn_args

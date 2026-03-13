@@ -21,15 +21,17 @@ _mysql_is_remote() {
 }
 
 # Run a command locally or via SSH. For remote, wraps with sshpass if needed.
-# Usage: _mysql_run_cmd "mysql -u root -e 'SHOW DATABASES'"
+# Usage: _mysql_run_cmd "mysql -u root -e 'SHOW DATABASES'" [use_sudo]
+# use_sudo: "auto" (default) = sudo when no user/password, "yes" = always, "no" = never
 _mysql_run_cmd() {
     local cmd_str="$1"
+    local use_sudo="${2:-auto}"
     if _mysql_is_remote; then
         # Prepend MYSQL_PWD on remote side if set
         if [[ -n "${TARGET_MYSQL_PASSWORD:-}" ]]; then
             cmd_str="MYSQL_PWD=$(printf '%q' "$TARGET_MYSQL_PASSWORD") $cmd_str"
-        elif [[ -z "${TARGET_MYSQL_USER:-}" ]]; then
-            # No user/password: use sudo for socket auth on remote
+        elif [[ "$use_sudo" == "yes" || ( "$use_sudo" == "auto" && -z "${TARGET_MYSQL_USER:-}" ) ]]; then
+            # Use sudo for socket auth on remote
             cmd_str="sudo $cmd_str"
         fi
         if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
@@ -138,9 +140,13 @@ mysql_get_databases() {
     if _mysql_is_remote; then
         local conn_str
         conn_str=$(_mysql_build_conn_str)
-        all_dbs=$(_mysql_run_cmd "$client_cmd $conn_str -N -e 'SHOW DATABASES'" 2>&1) || {
-            log_error "Failed to list databases: $all_dbs"
-            return 1
+        # Try without sudo first (mysql client may not be in sudoers),
+        # fall back to sudo if that fails
+        all_dbs=$(_mysql_run_cmd "$client_cmd $conn_str -N -e 'SHOW DATABASES'" "no" 2>&1) || {
+            all_dbs=$(_mysql_run_cmd "$client_cmd $conn_str -N -e 'SHOW DATABASES'" 2>&1) || {
+                log_error "Failed to list databases: $all_dbs"
+                return 1
+            }
         }
     else
         mysql_build_conn_args
@@ -332,9 +338,12 @@ mysql_dump_grants() {
     local users_output
     local sql_query="SELECT CONCAT(\"'\", user, \"'@'\", host, \"'\") FROM mysql.user"
     if [[ "$is_remote" == "true" ]]; then
-        users_output=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "$sql_query")" 2>&1) || {
-            log_error "Failed to list MySQL users: $users_output"
-            return 1
+        # Try without sudo first, fall back to sudo
+        users_output=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "$sql_query")" "no" 2>&1) || {
+            users_output=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "$sql_query")" 2>&1) || {
+                log_error "Failed to list MySQL users: $users_output"
+                return 1
+            }
         }
     else
         users_output=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e "$sql_query" 2>&1) || {
@@ -368,7 +377,8 @@ mysql_dump_grants() {
             # Try SHOW CREATE USER (MySQL 5.7+/MariaDB 10.2+)
             local create_user
             if [[ "$is_remote" == "true" ]]; then
-                create_user=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "SHOW CREATE USER $user_host")" 2>/dev/null) || true
+                create_user=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "SHOW CREATE USER $user_host")" "no" 2>/dev/null) || \
+                    create_user=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "SHOW CREATE USER $user_host")" 2>/dev/null) || true
             else
                 create_user=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e \
                     "SHOW CREATE USER $user_host" 2>/dev/null) || true
@@ -380,7 +390,8 @@ mysql_dump_grants() {
             # SHOW GRANTS
             local grants
             if [[ "$is_remote" == "true" ]]; then
-                grants=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "SHOW GRANTS FOR $user_host")" 2>/dev/null) || continue
+                grants=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "SHOW GRANTS FOR $user_host")" "no" 2>/dev/null) || \
+                    grants=$(_mysql_run_cmd "$client_cmd $conn_str -N -e $(printf '%q' "SHOW GRANTS FOR $user_host")" 2>/dev/null) || continue
             else
                 grants=$("$client_cmd" "${MYSQL_CONN_ARGS[@]}" -N -e \
                     "SHOW GRANTS FOR $user_host" 2>/dev/null) || continue

@@ -27,7 +27,7 @@ def _get_providers():
         )
         if result.returncode == 0:
             data = json.loads(result.stdout)
-            _providers_cache = data.get("providers", [])
+            _providers_cache = data if isinstance(data, list) else data.get("providers", [])
             return _providers_cache
     except (subprocess.TimeoutExpired, OSError, json.JSONDecodeError):
         pass

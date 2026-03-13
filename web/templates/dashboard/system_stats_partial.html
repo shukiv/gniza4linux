@@ -1,11 +1,10 @@
 <div class="stats stats-vertical md:stats-horizontal shadow w-full">
     <!-- CPU -->
-    <div class="stat px-4 py-3 flex flex-col items-center justify-center">
-        <div class="radial-progress bg-base-300 border-4 border-base-300 {{ 'text-error' if cpu_percent > 90 else 'text-warning' if cpu_percent > 70 else 'text-primary' }}" style="--value:{{ cpu_percent|int }}; --size:5rem; --thickness:6px;" aria-valuenow="{{ cpu_percent|int }}" role="progressbar">
-            <div class="flex flex-col items-center">
-                <span class="text-[10px] text-base-content/50 leading-none">CPU</span>
-                <span class="text-base font-bold text-base-content leading-tight">{{ "%.0f"|format(cpu_percent) }}%</span>
-            </div>
+    <div class="stat px-4 py-3">
+        <div class="stat-title text-xs">CPU</div>
+        <div class="stat-value text-lg">{{ "%.0f"|format(cpu_percent) }}%</div>
+        <div class="stat-desc mt-1 w-full">
+            <progress class="progress {{ 'progress-error' if cpu_percent > 90 else 'progress-warning' if cpu_percent > 70 else 'progress-primary' }} w-full" value="{{ cpu_percent|int }}" max="100"></progress>
         </div>
     </div>
 

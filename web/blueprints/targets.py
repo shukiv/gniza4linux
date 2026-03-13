@@ -192,12 +192,11 @@ def save():
         crontab_users=form.get("crontab_users", "root"),
     )
 
+    is_new = not original_name
     ok, msg = _test_source(target)
     if ok is False:
         flash(msg, "error")
-        if original_name:
-            return redirect(url_for("targets.edit", name=original_name))
-        return redirect(url_for("targets.new"))
+        return render_template("targets/edit.html", target=target, is_new=is_new, ssh_keys=_get_ssh_keys())
     if ok is None and msg:
         flash(msg, "warning")
 

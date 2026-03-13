@@ -2,7 +2,7 @@
     <!-- CPU -->
     <div class="stat px-4 py-3 flex flex-col items-center">
         <div class="stat-title text-xs">CPU</div>
-        <div class="radial-progress bg-base-300 border-4 border-base-300 {{ 'text-error' if cpu_percent > 90 else 'text-warning' if cpu_percent > 70 else 'text-primary' }}" style="--value:{{ cpu_percent|int }}; --size:4.5rem; --thickness:5px;" aria-valuenow="{{ cpu_percent|int }}" role="progressbar">
+        <div class="radial-progress bg-base-300 border-4 border-base-300 {{ 'text-error' if cpu_percent > 90 else 'text-warning' if cpu_percent > 70 else 'text-primary' }}" style="--value:{{ cpu_percent|int }}; --size:4.5rem; --thickness:10px;" aria-valuenow="{{ cpu_percent|int }}" role="progressbar">
             <span class="text-base font-bold text-base-content">{{ "%.0f"|format(cpu_percent) }}%</span>
         </div>
     </div>

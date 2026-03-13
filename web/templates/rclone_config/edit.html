@@ -72,7 +72,7 @@
                                 <span x-show="nameValue && !nameValid" class="text-error text-xs">Invalid name</span>
                             </div>
                             <input type="text" name="remote_name" class="input w-full" placeholder="e.g. my-backblaze"
-                                   required pattern="[A-Za-z0-9_-]+"
+                                   required pattern="[A-Za-z0-9_\-]+"
                                    x-model="nameValue" @input="checkName()"
                                    :class="nameValue ? (nameValid ? 'input-success' : 'input-error') : ''">
                         </fieldset>

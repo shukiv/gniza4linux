@@ -27,7 +27,7 @@
                 <fieldset class="fieldset">
                     <label class="fieldset-label">Name</label>
                     <input type="text" name="name" value="{{ schedule.name }}" class="input"
-                           placeholder="nightly-backup" required pattern="[A-Za-z0-9_-]+"
+                           placeholder="nightly-backup" required pattern="[A-Za-z0-9_\-]+"
                            {{ 'readonly' if not is_new else '' }}>
                 </fieldset>
                 <fieldset class="fieldset">

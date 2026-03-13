@@ -11,9 +11,15 @@
                 <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
             </div>
             <h2 class="text-lg font-semibold mb-2">Authentication successful!</h2>
-            <p class="text-base-content/60 text-sm mb-4">You can close this tab. The wizard will continue automatically.</p>
+            <p class="text-base-content/60 text-sm mb-4">This window will close automatically...</p>
             <a href="{{ url_for('rclone_config.index') }}" class="btn btn-primary btn-sm">Go to Rclone Remotes</a>
         </div>
     </div>
 </div>
+<script>
+    // Auto-close this popup/tab after a short delay
+    setTimeout(function() {
+        window.close();
+    }, 1500);
+</script>
 {% endblock %}

@@ -331,3 +331,28 @@ def run_now(name):
     web_job_manager.create_and_start("backup", label, *args)
     flash(f"Schedule '{name}' started.", "success")
     return redirect(url_for("jobs.index"))
+
+
+@bp.route("/run-all", methods=["POST"])
+@login_required
+def run_all():
+    schedules = _load_schedules()
+    active = [s for s in schedules if s.active == "yes"]
+    if not active:
+        flash("No active schedules to run.", "warning")
+        return redirect(url_for("schedules.index"))
+    for s in active:
+        args = ["scheduled-run", f"--schedule={s.name}"]
+        if s.targets:
+            args.append(f"--source={s.targets}")
+        if s.remotes:
+            args.append(f"--destination={s.remotes}")
+        label = f"Scheduled: {s.name}"
+        if s.targets:
+            label += f" ({s.targets}"
+            if s.remotes:
+                label += f" → {s.remotes}"
+            label += ")"
+        web_job_manager.create_and_start("backup", label, *args)
+    flash(f"Started {len(active)} schedule(s).", "success")
+    return redirect(url_for("jobs.index"))

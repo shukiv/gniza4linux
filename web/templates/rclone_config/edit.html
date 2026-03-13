@@ -10,14 +10,27 @@
 
 {% if is_new %}
 <div x-data="{
-    step: 1,
-    providerType: '',
-    providerLabel: '',
+    step: {{ restore_step or 1 }},
+    providerType: '{{ provider_type }}',
+    providerLabel: '{{ provider_type }}',
     advancedEnabled: false,
-    nameValid: false,
-    nameValue: '',
+    nameValid: {{ 'true' if remote_name else 'false' }},
+    nameValue: '{{ remote_name }}',
+    requiredError: '',
     checkName() {
         this.nameValid = /^[A-Za-z0-9_-]+$/.test(this.nameValue) && this.nameValue.length > 0;
+    },
+    validateRequired() {
+        var missing = [];
+        this.$el.querySelectorAll('[data-required]').forEach(function(el) {
+            if (!el.value.trim()) missing.push(el.getAttribute('data-required'));
+        });
+        if (missing.length) {
+            this.requiredError = 'Required: ' + missing.join(', ');
+            return false;
+        }
+        this.requiredError = '';
+        return true;
     }
 }">
     <!-- Step indicator -->
@@ -111,8 +124,14 @@
             <div class="card bg-base-200 shadow">
                 <div class="card-body">
                     <div id="step2-fields">
+                        {% if restore_step == 2 and fields %}
+                        {% include "rclone_config/fields_partial.html" %}
+                        {% else %}
                         <p class="text-base-content/50">Select a provider in Step 1 to see configuration fields.</p>
+                        {% endif %}
                     </div>
+
+                    <div x-show="requiredError" class="alert alert-error text-sm mt-4" x-text="requiredError"></div>
 
                     <div class="flex justify-between mt-6">
                         <button type="button" class="btn btn-ghost" @click="step = 1">
@@ -125,7 +144,7 @@
                                 <span class="text-sm">Edit Advanced Options</span>
                             </label>
                             <button type="button" class="btn btn-primary"
-                                    @click="if(advancedEnabled) { step = 3 } else { $el.closest('form').submit() }">
+                                    @click="if(validateRequired()) { if(advancedEnabled) { step = 3 } else { $el.closest('form').submit() } }">
                                 <span x-text="advancedEnabled ? 'Next' : 'Create Remote'"></span>
                                 <svg x-show="advancedEnabled" class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             </button>

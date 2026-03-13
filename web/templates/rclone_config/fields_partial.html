@@ -18,14 +18,14 @@
                        class="input input-bordered w-full input-sm pr-12"
                        value="{{ values.get(field.Name, '') }}"
                        placeholder="{{ field.DefaultStr or '' }}"
-                       {% if field.Required %}required{% endif %}>
+                       {% if field.Required %}required data-required="{{ field.Name }}"{% endif %}>
                 <button type="button" class="btn btn-ghost btn-xs absolute right-1 top-1/2 -translate-y-1/2"
                         @click="show = !show" x-text="show ? 'Hide' : 'Show'"></button>
             </div>
 
             {% elif field.Exclusive and field.Examples %}
             <select name="{{ field.Name }}" class="select select-bordered w-full select-sm"
-                    {% if field.Required %}required{% endif %}>
+                    {% if field.Required %}required data-required="{{ field.Name }}"{% endif %}>
                 <option value="">-- Select --</option>
                 {% for ex in field.Examples %}
                 <option value="{{ ex.Value }}"
@@ -38,14 +38,14 @@
             {% elif field.Type == "int" %}
             <input type="number" name="{{ field.Name }}" class="input input-bordered w-full input-sm"
                    value="{{ values.get(field.Name, field.DefaultStr or field.Default or '') }}"
-                   {% if field.Required %}required{% endif %}>
+                   {% if field.Required %}required data-required="{{ field.Name }}"{% endif %}>
 
             {% elif field.Examples %}
             <input type="text" name="{{ field.Name }}" class="input input-bordered w-full input-sm"
                    value="{{ values.get(field.Name, field.DefaultStr or '') }}"
                    placeholder="{{ field.DefaultStr or '' }}"
                    list="dl-{{ field.Name }}"
-                   {% if field.Required %}required{% endif %}>
+                   {% if field.Required %}required data-required="{{ field.Name }}"{% endif %}>
             <datalist id="dl-{{ field.Name }}">
                 {% for ex in field.Examples %}
                 <option value="{{ ex.Value }}">{{ ex.Help[:80] if ex.Help else '' }}</option>
@@ -56,7 +56,7 @@
             <input type="text" name="{{ field.Name }}" class="input input-bordered w-full input-sm"
                    value="{{ values.get(field.Name, field.DefaultStr or '') }}"
                    placeholder="{{ field.DefaultStr or '' }}"
-                   {% if field.Required %}required{% endif %}>
+                   {% if field.Required %}required data-required="{{ field.Name }}"{% endif %}>
             {% endif %}
         </div>
     </div>

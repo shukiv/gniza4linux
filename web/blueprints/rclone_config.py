@@ -124,6 +124,7 @@ def new():
         providers=providers,
         fields=[],
         values={},
+        restore_step=None,
     )
 
 
@@ -155,11 +156,12 @@ def create():
     remote_name = form.get("remote_name", "").strip()
     provider_type = form.get("provider_type", "").strip()
 
+    providers = _get_providers()
+
     if not remote_name or not _VALID_NAME_RE.match(remote_name):
         flash("Invalid remote name. Use only letters, numbers, hyphens, and underscores.", "error")
         return redirect(url_for("rclone_config.new"))
 
-    providers = _get_providers()
     provider_names = [p["Name"] for p in providers]
     if provider_type not in provider_names:
         flash("Invalid provider type.", "error")
@@ -167,16 +169,33 @@ def create():
 
     # Get ALL options (non-advanced + advanced) for this provider
     all_options = []
-    for p in _get_providers():
+    for p in providers:
         if p.get("Name") == provider_type:
             all_options = p.get("Options", [])
             break
+
+    # Collect submitted values for re-rendering on error
+    submitted_values = {}
+    for opt in all_options:
+        val = form.get(opt["Name"], "")
+        if val:
+            submitted_values[opt["Name"]] = val
 
     # Check required non-advanced fields
     for opt in all_options:
         if not opt.get("Advanced") and opt.get("Required") and not form.get(opt["Name"], "").strip():
             flash(f"Field '{opt['Name']}' is required.", "error")
-            return redirect(url_for("rclone_config.new"))
+            non_adv = [o for o in all_options if not o.get("Advanced")]
+            return render_template(
+                "rclone_config/edit.html",
+                is_new=True,
+                remote_name=remote_name,
+                provider_type=provider_type,
+                providers=providers,
+                fields=non_adv,
+                values=submitted_values,
+                restore_step=2,
+            )
 
     # Build params from all submitted form fields
     params = {}

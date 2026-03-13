@@ -8,8 +8,8 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Snapshot</th>
                 <th>Date</th>
+                <th>Snapshot</th>
                 <th></th>
             </tr>
         </thead>
@@ -24,8 +24,8 @@
             {% set sec = parts[15:17] %}
             <tr class="hover:bg-base-300">
                 <td class="text-base-content/50">{{ loop.index }}</td>
-                <td class="font-mono text-sm text-base-content/50">{{ s }}</td>
                 <td>{{ d }}/{{ mo }}/{{ y }} {{ h }}:{{ mi }}:{{ sec }}</td>
+                <td class="font-mono text-sm text-base-content/50">{{ s }}</td>
                 <td class="text-right">
                     <button class="btn btn-ghost btn-xs"
                             hx-get="/snapshots/browse/{{ target }}/{{ remote }}/{{ s }}"

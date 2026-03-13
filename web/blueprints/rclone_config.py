@@ -234,14 +234,72 @@ def create():
 # ── Create: Step 2+ — wizard follow-up questions ────────────
 
 def _run_bg_config(task_id, name, ptype, state, result_val):
-    """Run rclone config create in background thread (for OAuth flows)."""
-    rc, data, err = _rclone_config_create(name, ptype, state=state, result_val=result_val)
-    if data and data.get("State") and data.get("Option"):
-        _bg_tasks[task_id] = {"status": "more_steps", "data": data}
-    elif rc == 0:
-        _bg_tasks[task_id] = {"status": "done", "name": name}
-    else:
-        _bg_tasks[task_id] = {"status": "error", "error": err, "name": name}
+    """Run rclone config create in background thread (for OAuth flows).
+
+    Suppresses rclone's browser opening and captures the auth URL from stderr
+    so the waiting page can display it as a clickable link.
+    """
+    import os
+
+    cmd = ["rclone", "config", "create", name, ptype,
+           "--non-interactive", "--obscure"]
+    if state:
+        cmd += ["--state", state]
+    if result_val:
+        cmd += ["--result", result_val]
+
+    env = os.environ.copy()
+    env["BROWSER"] = "false"  # prevent rclone from opening the browser
+
+    try:
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, env=env,
+        )
+
+        # Read stderr line by line to capture the auth URL early
+        auth_url = None
+        stderr_lines = []
+        for line in proc.stderr:
+            stderr_lines.append(line)
+            # rclone prints: "If your browser doesn't open automatically go to the following link: <URL>"
+            # or just the URL on the next line after "go to the following link:"
+            if "http" in line and ("127.0.0.1" in line or "localhost" in line or "accounts.google" in line or "oauth" in line.lower() or "auth" in line.lower()):
+                url_match = re.search(r'(https?://\S+)', line)
+                if url_match:
+                    auth_url = url_match.group(1)
+                    _bg_tasks[task_id]["auth_url"] = auth_url
+
+        stdout = proc.stdout.read()
+        proc.wait(timeout=120)
+
+        rc = proc.returncode
+        data = None
+        if rc == 0 and stdout.strip():
+            try:
+                data = json.loads(stdout)
+            except json.JSONDecodeError:
+                pass
+
+        if data and data.get("State") and data.get("Option"):
+            _bg_tasks[task_id].update({"status": "more_steps", "data": data})
+        elif rc == 0:
+            _bg_tasks[task_id].update({"status": "done", "name": name})
+        else:
+            err = "".join(stderr_lines).strip() or stdout.strip()
+            err_lines = [l for l in err.splitlines()
+                         if l.strip() and not l.startswith("Usage:")
+                         and not l.startswith("Flags:")
+                         and not l.startswith("  --")
+                         and not l.startswith("Use \"rclone")]
+            err = err_lines[0] if err_lines else err.split("\n")[0]
+            _bg_tasks[task_id].update({"status": "error", "error": err, "name": name})
+
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        _bg_tasks[task_id].update({"status": "error", "error": "Command timed out", "name": name})
+    except OSError as e:
+        _bg_tasks[task_id].update({"status": "error", "error": str(e), "name": name})
 
 
 @bp.route("/wizard", methods=["GET", "POST"])
@@ -318,7 +376,10 @@ def wizard_poll(task_id):
     if not task:
         return jsonify({"status": "error", "error": "Task not found"})
     if task["status"] == "running":
-        return jsonify({"status": "running"})
+        resp = {"status": "running"}
+        if task.get("auth_url"):
+            resp["auth_url"] = task["auth_url"]
+        return jsonify(resp)
     # Clean up completed task
     _bg_tasks.pop(task_id, None)
     if task["status"] == "done":

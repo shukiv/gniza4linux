@@ -31,10 +31,14 @@
 <div class="card bg-base-200 shadow max-w-lg mx-auto" x-data="{
     status: 'running',
     error: '',
+    authUrl: '',
     poll() {
         fetch('/rclone-config/wizard/poll/{{ task_id }}')
             .then(r => r.json())
             .then(data => {
+                if (data.auth_url && !this.authUrl) {
+                    this.authUrl = data.auth_url;
+                }
                 if (data.status === 'running') {
                     setTimeout(() => this.poll(), 2000);
                 } else if (data.status === 'done') {
@@ -55,12 +59,35 @@
         <div x-show="status === 'running'">
             <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
             <h2 class="text-lg font-semibold mb-2">Waiting for authentication...</h2>
-            <p class="text-base-content/60 text-sm mb-4">
-                A browser window should have opened for you to authenticate with <strong>{{ provider_type }}</strong>.
-            </p>
-            <p class="text-base-content/50 text-xs">
-                Complete the authentication in the browser window, then this page will automatically redirect you back.
-            </p>
+
+            <!-- Auth URL available — show clickable link -->
+            <template x-if="authUrl">
+                <div>
+                    <p class="text-base-content/60 text-sm mb-3">
+                        Click the button below to authenticate with <strong>{{ provider_type }}</strong>:
+                    </p>
+                    <a :href="authUrl" target="_blank" rel="noopener"
+                       class="btn btn-primary btn-sm mb-4">
+                        Open Authentication Page
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </a>
+                    <p class="text-base-content/50 text-xs">
+                        Complete the authentication in the new tab, then this page will automatically redirect you back.
+                    </p>
+                </div>
+            </template>
+
+            <!-- No auth URL yet — still starting up -->
+            <template x-if="!authUrl">
+                <div>
+                    <p class="text-base-content/60 text-sm mb-4">
+                        Preparing authentication for <strong>{{ provider_type }}</strong>...
+                    </p>
+                    <p class="text-base-content/50 text-xs">
+                        The authentication link will appear here shortly.
+                    </p>
+                </div>
+            </template>
         </div>
 
         <!-- Done state -->

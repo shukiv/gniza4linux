@@ -176,6 +176,20 @@ _snaplog_append_transfer_log() {
     fi
 }
 
+# Remove stale temp files from WORK_DIR left by crashed/killed backups.
+# Removes gniza-snaplog-*, gniza-source-*, gniza-mysql-*, gniza-pgsql-*,
+# gniza-progress-*, gniza-transferlog-* older than 24 hours.
+workdir_cleanup_stale() {
+    local wd="${WORK_DIR:-/tmp}"
+    [[ -d "$wd" ]] || return 0
+    find "$wd" -maxdepth 1 -name 'gniza-snaplog-*' -mmin +1440 -exec rm -rf {} + 2>/dev/null || true
+    find "$wd" -maxdepth 1 -name 'gniza-source-*' -mmin +1440 -exec rm -rf {} + 2>/dev/null || true
+    find "$wd" -maxdepth 1 -name 'gniza-mysql-*' -mmin +1440 -exec rm -rf {} + 2>/dev/null || true
+    find "$wd" -maxdepth 1 -name 'gniza-pgsql-*' -mmin +1440 -exec rm -rf {} + 2>/dev/null || true
+    find "$wd" -maxdepth 1 -name 'gniza-progress-*.txt' -mmin +1440 -delete 2>/dev/null || true
+    find "$wd" -maxdepth 1 -name 'gniza-transferlog-*.txt' -mmin +1440 -delete 2>/dev/null || true
+}
+
 # Clean up temporary snapshot log directory.
 snaplog_cleanup() {
     _snaplog_append_transfer_log

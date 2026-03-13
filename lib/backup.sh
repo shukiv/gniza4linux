@@ -10,7 +10,10 @@ backup_target() {
     local target_name="$1"
     local remote_name="${2:-}"
 
-    # 0. Per-target lock: prevent same target from running twice
+    # 0. Clean stale temp files from previous crashed runs
+    workdir_cleanup_stale
+
+    # 0.5. Per-target lock: prevent same target from running twice
     acquire_target_lock "$target_name" || {
         log_warn "Skipping target '$target_name': previous backup still running"
         return 2

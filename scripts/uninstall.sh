@@ -66,24 +66,31 @@ else
     info "No crontab entries to check"
 fi
 
-# ── Remove web service ───────────────────────────────────────
+# ── Remove systemd services ──────────────────────────────────
+for SVC in gniza-web gniza-daemon; do
+    if [[ "$MODE" == "root" ]]; then
+        _svc_file="/etc/systemd/system/${SVC}.service"
+        if systemctl is-active "$SVC" &>/dev/null || [[ -f "$_svc_file" ]]; then
+            info "Stopping and removing ${SVC} service (system)..."
+            systemctl stop "$SVC" 2>/dev/null || true
+            systemctl disable "$SVC" 2>/dev/null || true
+            rm -f "$_svc_file"
+        fi
+    else
+        _svc_file="$HOME/.config/systemd/user/${SVC}.service"
+        if systemctl --user is-active "$SVC" &>/dev/null || [[ -f "$_svc_file" ]]; then
+            info "Stopping and removing ${SVC} service (user)..."
+            systemctl --user stop "$SVC" 2>/dev/null || true
+            systemctl --user disable "$SVC" 2>/dev/null || true
+            rm -f "$_svc_file"
+        fi
+    fi
+done
+
 if [[ "$MODE" == "root" ]]; then
-    if systemctl is-active gniza-web &>/dev/null || [[ -f /etc/systemd/system/gniza-web.service ]]; then
-        info "Removing GNIZA web service (system)..."
-        systemctl stop gniza-web 2>/dev/null || true
-        systemctl disable gniza-web 2>/dev/null || true
-        rm -f /etc/systemd/system/gniza-web.service
-        systemctl daemon-reload
-    fi
+    systemctl daemon-reload
 else
-    _user_service="$HOME/.config/systemd/user/gniza-web.service"
-    if systemctl --user is-active gniza-web &>/dev/null || [[ -f "$_user_service" ]]; then
-        info "Removing GNIZA web service (user)..."
-        systemctl --user stop gniza-web 2>/dev/null || true
-        systemctl --user disable gniza-web 2>/dev/null || true
-        rm -f "$_user_service"
-        systemctl --user daemon-reload 2>/dev/null || true
-    fi
+    systemctl --user daemon-reload 2>/dev/null || true
 fi
 
 # ── Remove symlink ───────────────────────────────────────────

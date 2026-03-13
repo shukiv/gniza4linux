@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - {{ 'New Rclone Remote' if is_new else 'Edit Rclone Remote' }}{% endblock %}
+{% block page_title %}{{ 'New Rclone Remote' if is_new else 'Edit Rclone Remote: ' + remote_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('rclone_config.index') }}" class="btn btn-ghost btn-sm">&larr; Back to Rclone Remotes</a>
+</div>
+
+{% if is_new %}
+<form method="POST" action="{{ url_for('rclone_config.create') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="card bg-base-200 shadow mb-6">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">Remote Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Remote Name</label>
+                    <input type="text" name="remote_name" class="input" placeholder="my-remote"
+                           required pattern="[A-Za-z0-9_-]+">
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Provider Type</label>
+                    <select name="provider_type" class="select" required id="provider-type-select">
+                        <option value="">-- Select a provider --</option>
+                        {% for p in providers %}
+                        <option value="{{ p.Name }}">{{ p.Name }} — {{ p.Description }}</option>
+                        {% endfor %}
+                    </select>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+
+    <div id="provider-fields"></div>
+
+    <div class="flex justify-end gap-2">
+        <a href="{{ url_for('rclone_config.index') }}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">Create Remote</button>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var sel = document.getElementById('provider-type-select');
+    if (sel) {
+        sel.addEventListener('change', function() {
+            var val = this.value;
+            if (val) {
+                htmx.ajax('GET', '/rclone-config/fields/' + encodeURIComponent(val), {
+                    target: '#provider-fields',
+                    swap: 'innerHTML'
+                });
+            } else {
+                document.getElementById('provider-fields').textContent = '';
+            }
+        });
+    }
+});
+</script>
+
+{% else %}
+<form method="POST" action="{{ url_for('rclone_config.update', name=remote_name) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="card bg-base-200 shadow mb-6">
+        <div class="card-body">
+            <h2 class="card-title text-base mb-4">Remote Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Remote Name</label>
+                    <input type="text" class="input" value="{{ remote_name }}" readonly>
+                </fieldset>
+                <fieldset class="fieldset">
+                    <label class="fieldset-label">Provider Type</label>
+                    <span class="badge badge-outline badge-lg mt-1">{{ provider_type }}</span>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+
+    <div id="provider-fields">
+        {% include "rclone_config/fields_partial.html" %}
+    </div>
+
+    <div class="flex justify-end gap-2">
+        <a href="{{ url_for('rclone_config.index') }}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </div>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">{{ 'New Rclone Remote' if is_new else 'Edit Rclone Remote' }}</h3>
+<p class="mb-3 text-base-content/70">{{ 'Create a new rclone remote by selecting a provider and filling in the required fields.' if is_new else 'Edit the configuration for this rclone remote.' }}</p>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>Only non-advanced fields are shown. For advanced options, use <code>rclone config</code> in the terminal.</li>
+    <li>Password fields are automatically encrypted by rclone when saved.</li>
+    <li>Fields marked <span class="badge badge-warning badge-xs">Required</span> must be filled in.</li>
+</ul>
+{% endblock %}

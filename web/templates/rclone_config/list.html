@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Rclone Remotes{% endblock %}
+{% block page_title %}Rclone Remotes{% endblock %}
+
+{% block content %}
+<div x-data="{ showModal: false, deleteUrl: '', deleteName: '' }">
+
+<div class="mb-4">
+    <a href="{{ url_for('remotes.index') }}" class="btn btn-ghost btn-sm">&larr; Back to Destinations</a>
+</div>
+
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-xl font-semibold">Rclone Remotes</h2>
+    <a href="{{ url_for('rclone_config.new') }}" class="btn btn-primary btn-sm">+ Create New Remote</a>
+</div>
+
+<div class="card bg-base-200 shadow">
+    <div class="card-body p-0">
+        {% if remotes %}
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in remotes %}
+                    <tr class="hover:bg-base-300">
+                        <td class="font-mono font-medium">{{ r.name }}</td>
+                        <td><span class="badge badge-outline badge-md">{{ r.type }}</span></td>
+                        <td>
+                            <div class="flex gap-1 items-center">
+                                <a href="{{ url_for('rclone_config.edit', name=r.name) }}" class="btn btn-primary btn-sm">Edit</a>
+                                <button class="btn btn-error btn-sm"
+                                        @click="deleteName = '{{ r.name }}'; deleteUrl = '{{ url_for('rclone_config.delete', name=r.name) }}'; showModal = true">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-base-content/40">
+            <p class="mb-4">No rclone remotes configured yet.</p>
+            <a href="{{ url_for('rclone_config.new') }}" class="btn btn-primary btn-sm">Create your first remote</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete confirm modal -->
+<dialog class="modal" :class="{ 'modal-open': showModal }">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Confirm Delete</h3>
+        <p class="py-4">Are you sure you want to delete remote <span class="font-mono font-bold" x-text="deleteName"></span>?</p>
+        <div class="modal-action">
+            <form :action="deleteUrl" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-error">Delete</button>
+            </form>
+            <button class="btn" @click="showModal = false">Cancel</button>
+        </div>
+    </div>
+    <div class="modal-backdrop" @click="showModal = false"></div>
+</dialog>
+
+</div>
+{% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Rclone Remotes</h3>
+<p class="mb-3 text-base-content/70">Manage rclone remote configurations directly from the web UI.</p>
+<h4 class="font-semibold text-sm mb-1">What are rclone remotes?</h4>
+<p class="mb-3 text-base-content/70">Rclone remotes define connections to cloud storage providers (S3, Google Drive, Dropbox, etc.). They are stored in rclone's config file.</p>
+<h4 class="font-semibold text-sm mb-1">Tips</h4>
+<ul class="list-disc list-inside text-base-content/70 space-y-0.5">
+    <li>Create remotes here, then select them in Source or Destination editors.</li>
+    <li>Password fields are automatically encrypted by rclone.</li>
+</ul>
+{% endblock %}

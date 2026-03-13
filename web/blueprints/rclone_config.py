@@ -233,11 +233,25 @@ def create():
 
 # ── Create: Step 2+ — wizard follow-up questions ────────────
 
+def _ensure_noop_xdg_open():
+    """Create a no-op xdg-open script so rclone can't open a browser."""
+    import os, stat, tempfile
+    noop_dir = os.path.join(tempfile.gettempdir(), "rclone-nobrowser")
+    noop_script = os.path.join(noop_dir, "xdg-open")
+    if not os.path.exists(noop_script):
+        os.makedirs(noop_dir, exist_ok=True)
+        with open(noop_script, "w") as f:
+            f.write("#!/bin/sh\nexit 0\n")
+        os.chmod(noop_script, stat.S_IRWXU)
+    return noop_dir
+
+
 def _run_bg_config(task_id, name, ptype, state, result_val):
     """Run rclone config create in background thread (for OAuth flows).
 
-    Suppresses rclone's browser opening and captures the auth URL from stderr
-    so the waiting page can display it as a clickable link.
+    Suppresses rclone's browser opening by prepending a no-op xdg-open to PATH,
+    then captures the auth URL from rclone's stderr NOTICE line so the waiting
+    page can display it as a clickable link.
     """
     import os
 
@@ -248,8 +262,10 @@ def _run_bg_config(task_id, name, ptype, state, result_val):
     if result_val:
         cmd += ["--result", result_val]
 
+    # Prepend a dir with a no-op xdg-open so rclone can't open a browser
+    noop_dir = _ensure_noop_xdg_open()
     env = os.environ.copy()
-    env["BROWSER"] = "false"  # prevent rclone from opening the browser
+    env["PATH"] = noop_dir + ":" + env.get("PATH", "")
 
     try:
         proc = subprocess.Popen(
@@ -258,17 +274,15 @@ def _run_bg_config(task_id, name, ptype, state, result_val):
         )
 
         # Read stderr line by line to capture the auth URL early
-        auth_url = None
         stderr_lines = []
         for line in proc.stderr:
             stderr_lines.append(line)
-            # rclone prints: "If your browser doesn't open automatically go to the following link: <URL>"
-            # or just the URL on the next line after "go to the following link:"
-            if "http" in line and ("127.0.0.1" in line or "localhost" in line or "accounts.google" in line or "oauth" in line.lower() or "auth" in line.lower()):
+            # rclone prints: "NOTICE: If your browser doesn't open automatically
+            #   go to the following link: http://127.0.0.1:53682/auth?state=..."
+            if "http" in line:
                 url_match = re.search(r'(https?://\S+)', line)
                 if url_match:
-                    auth_url = url_match.group(1)
-                    _bg_tasks[task_id]["auth_url"] = auth_url
+                    _bg_tasks[task_id]["auth_url"] = url_match.group(1)
 
         stdout = proc.stdout.read()
         proc.wait(timeout=120)

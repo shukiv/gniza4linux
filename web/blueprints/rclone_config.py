@@ -299,6 +299,16 @@ def wizard_step():
             flash(f"Failed to create remote: {err}", "error")
         return redirect(url_for("rclone_config.index"))
 
+    # GET — render the current question
+    option = wiz["option"]
+    return render_template(
+        "rclone_config/wizard_step.html",
+        name=wiz["name"],
+        provider_type=wiz["type"],
+        step=wiz["step"],
+        option=option,
+    )
+
 
 @bp.route("/wizard/poll/<task_id>")
 @login_required
@@ -326,16 +336,6 @@ def wizard_poll(task_id):
         }
         return jsonify({"status": "done", "redirect": url_for("rclone_config.wizard_step")})
     return jsonify({"status": "error", "error": task.get("error", "Unknown error")})
-
-    # GET — render the current question
-    option = wiz["option"]
-    return render_template(
-        "rclone_config/wizard_step.html",
-        name=wiz["name"],
-        provider_type=wiz["type"],
-        step=wiz["step"],
-        option=option,
-    )
 
 
 # ── Edit ─────────────────────────────────────────────────────

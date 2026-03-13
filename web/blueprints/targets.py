@@ -9,7 +9,7 @@ from flask import (
 from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Target
 from web.app import login_required
-from web.helpers import load_targets
+from web.helpers import load_targets, get_rclone_remotes
 from web.ssh_utils import ssh_cmd, get_ssh_keys as _get_ssh_keys
 
 bp = Blueprint("targets", __name__, url_prefix="/sources")
@@ -131,7 +131,7 @@ def index():
 @login_required
 def new():
     target = Target()
-    return render_template("targets/edit.html", target=target, is_new=True, ssh_keys=_get_ssh_keys())
+    return render_template("targets/edit.html", target=target, is_new=True, ssh_keys=_get_ssh_keys(), rclone_remotes=get_rclone_remotes())
 
 
 @bp.route("/<name>/edit")
@@ -146,7 +146,7 @@ def edit(name):
         return redirect(url_for("targets.index"))
     data = parse_conf(conf_path)
     target = Target.from_conf(name, data)
-    return render_template("targets/edit.html", target=target, is_new=False, ssh_keys=_get_ssh_keys())
+    return render_template("targets/edit.html", target=target, is_new=False, ssh_keys=_get_ssh_keys(), rclone_remotes=get_rclone_remotes(target.source_rclone_config_path))
 
 
 @bp.route("/save", methods=["POST"])
@@ -221,7 +221,7 @@ def save():
     ok, msg = _test_source(target)
     if ok is False:
         flash(msg, "error")
-        return render_template("targets/edit.html", target=target, is_new=is_new, ssh_keys=_get_ssh_keys())
+        return render_template("targets/edit.html", target=target, is_new=is_new, ssh_keys=_get_ssh_keys(), rclone_remotes=get_rclone_remotes(target.source_rclone_config_path))
     if ok is None and msg:
         flash(msg, "warning")
 

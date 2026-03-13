@@ -13,6 +13,7 @@ from web.app import login_required
 from web.blueprints.remotes import _test_remote
 from web.blueprints.targets import _test_source, _lines_to_csv
 from web.blueprints.schedules import _reinstall_cron
+from web.helpers import get_rclone_remotes
 from web.jobs import web_job_manager
 from web.ssh_utils import get_ssh_keys as _get_ssh_keys
 
@@ -59,6 +60,7 @@ def index():
         schedules=schedules,
         step=step,
         ssh_keys=ssh_keys,
+        rclone_remotes=get_rclone_remotes(),
     )
 
 

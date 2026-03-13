@@ -230,12 +230,23 @@
                 <h2 class="card-title text-base mb-4">Rclone Configuration</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">Remote Name</label>
-                        <input type="text" name="rclone_remote_name" value="{{ remote.rclone_remote_name }}" class="input" placeholder="e.g. mybackblaze">
+                        <label class="fieldset-label">Config File Path</label>
+                        <input type="text" name="rclone_config_path" value="{{ remote.rclone_config_path }}" class="input" placeholder="Leave empty for default (~/.config/rclone/rclone.conf)"
+                               hx-get="/api/rclone-remotes" hx-trigger="change" hx-target="#rclone-remote-select"
+                               hx-include="[name='rclone_config_path']">
                     </fieldset>
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">Config File Path</label>
-                        <input type="text" name="rclone_config_path" value="{{ remote.rclone_config_path }}" class="input" placeholder="Leave empty for default (~/.config/rclone/rclone.conf)">
+                        <label class="fieldset-label">Remote Name</label>
+                        <select name="rclone_remote_name" id="rclone-remote-select" class="select">
+                            {% if rclone_remotes %}
+                            <option value="">-- Select a remote --</option>
+                            {% for r in rclone_remotes %}
+                            <option value="{{ r }}" {% if r == remote.rclone_remote_name %}selected{% endif %}>{{ r }}</option>
+                            {% endfor %}
+                            {% else %}
+                            <option value="">No remotes found</option>
+                            {% endif %}
+                        </select>
                     </fieldset>
                 </div>
                 <div class="text-base-content/50 text-sm mt-3">Run <code class="text-primary">rclone config</code> in your terminal to create and manage remotes.</div>

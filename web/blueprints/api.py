@@ -6,6 +6,7 @@ from flask import Blueprint, request, render_template
 from markupsafe import escape
 
 from web.app import login_required
+from web.helpers import get_rclone_remotes
 from web.ssh_utils import ssh_cmd
 
 bp = Blueprint("api", __name__, url_prefix="/api")
@@ -214,3 +215,18 @@ def browse_ssh_children():
                            show_hidden=show_hidden,
                            ssh=True, ssh_host=host, ssh_port=port,
                            ssh_user=user, ssh_key=key, ssh_password=password)
+
+
+@bp.route("/rclone-remotes")
+@login_required
+def rclone_remotes():
+    config_path = request.args.get("rclone_config_path", "") or request.args.get("source_rclone_config_path", "")
+    remotes = get_rclone_remotes(config_path)
+    selected = request.args.get("selected", "")
+    if not remotes:
+        return '<option value="">No remotes found</option>'
+    html = '<option value="">-- Select a remote --</option>'
+    for r in remotes:
+        sel = ' selected' if r == selected else ''
+        html += f'<option value="{escape(r)}"{sel}>{escape(r)}</option>'
+    return html

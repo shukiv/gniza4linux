@@ -47,13 +47,24 @@ _mysql_run_cmd() {
     fi
 }
 
+# Run a command via SSH without the sudo/MYSQL_PWD wrapper.
+# Used for binary detection where sudo is unnecessary and may be restricted.
+_mysql_ssh_raw() {
+    local cmd_str="$1"
+    _mysql_is_remote || return 1
+    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
+        SSHPASS="$TARGET_SOURCE_PASSWORD" sshpass -e "${_MYSQL_SSH[@]}" "$cmd_str"
+    else
+        "${_MYSQL_SSH[@]}" "$cmd_str"
+    fi
+}
+
 # Detect the mysqldump binary (MySQL or MariaDB), locally or remotely.
 _mysql_find_dump_cmd() {
     if _mysql_is_remote; then
-        # Use 'which' with common paths — 'command -v' may miss binaries
-        # outside the SSH user's PATH, and 'sudo command -v' is unreliable
-        # because command is a shell builtin that checks the caller's PATH.
-        _mysql_run_cmd "PATH=\$PATH:/usr/bin:/usr/local/bin command -v mysqldump || PATH=\$PATH:/usr/bin:/usr/local/bin command -v mariadb-dump" 2>/dev/null || return 1
+        # SSH directly without sudo wrapper — binary detection doesn't need
+        # elevated privileges, and sudo may reject shell builtins/unknown commands.
+        _mysql_ssh_raw "PATH=\$PATH:/usr/bin:/usr/local/bin command -v mysqldump || PATH=\$PATH:/usr/bin:/usr/local/bin command -v mariadb-dump" 2>/dev/null || return 1
     else
         if command -v mysqldump &>/dev/null; then
             echo "mysqldump"
@@ -68,7 +79,7 @@ _mysql_find_dump_cmd() {
 # Detect the mysql client binary, locally or remotely.
 _mysql_find_client_cmd() {
     if _mysql_is_remote; then
-        _mysql_run_cmd "PATH=\$PATH:/usr/bin:/usr/local/bin command -v mysql || PATH=\$PATH:/usr/bin:/usr/local/bin command -v mariadb" 2>/dev/null || return 1
+        _mysql_ssh_raw "PATH=\$PATH:/usr/bin:/usr/local/bin command -v mysql || PATH=\$PATH:/usr/bin:/usr/local/bin command -v mariadb" 2>/dev/null || return 1
     else
         if command -v mysql &>/dev/null; then
             echo "mysql"

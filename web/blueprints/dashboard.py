@@ -33,6 +33,20 @@ def _format_bytes_rate(bps):
         return f"{bps / (1024 * 1024 * 1024):.2f} GB/s"
 
 
+def _format_bytes(b):
+    """Format bytes into human-readable size."""
+    if b < 1024:
+        return f"{b} B"
+    elif b < 1024 * 1024:
+        return f"{b / 1024:.1f} KB"
+    elif b < 1024 * 1024 * 1024:
+        return f"{b / (1024 * 1024):.1f} MB"
+    elif b < 1024 ** 4:
+        return f"{b / (1024 ** 3):.1f} GB"
+    else:
+        return f"{b / (1024 ** 4):.2f} TB"
+
+
 def _load_schedules():
     schedules = []
     for name in list_conf_dir("schedules.d"):
@@ -145,6 +159,8 @@ def system_stats():
         mem_total_gb=mem.total / (1024 ** 3),
         net_send_rate=_format_bytes_rate(send_rate),
         net_recv_rate=_format_bytes_rate(recv_rate),
+        net_sent_total=_format_bytes(net.bytes_sent),
+        net_recv_total=_format_bytes(net.bytes_recv),
         disk_percent=disk.percent,
         disk_used_gb=disk.used / (1024 ** 3),
         disk_total_gb=disk.total / (1024 ** 3),

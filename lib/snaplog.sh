@@ -52,7 +52,7 @@ snaplog_init() {
     fi
 }
 
-# Generate snapshot log files (log, rsync_error, summary, index).
+# Generate snapshot log files (log, rsync_error, summary).
 # Usage: snaplog_generate <target> <remote> <ts> <start_time> <status>
 snaplog_generate() {
     local target="$1"
@@ -104,25 +104,6 @@ EOF
         } >> "$_SNAP_LOG_DIR/summary"
     fi
 
-    # Generate index
-    snaplog_generate_index "$target" "$ts"
-}
-
-# Generate file index for the snapshot.
-# Usage: snaplog_generate_index <target> <ts>
-snaplog_generate_index() {
-    local target="$1"
-    local ts="$2"
-
-    if _is_rclone_mode; then
-        _rclone_cmd lsl "$(_rclone_remote_path "targets/${target}/snapshots/${ts}")" 2>/dev/null > "$_SNAP_LOG_DIR/index" || true
-    elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
-        local snap_dir; snap_dir=$(get_snapshot_dir "$target")
-        find "$snap_dir/${ts}.partial" -printf '%M %n %u %g %8s %T+ %P\n' 2>/dev/null | sort > "$_SNAP_LOG_DIR/index"
-    else
-        local snap_dir; snap_dir=$(get_snapshot_dir "$target")
-        remote_exec "find '$(shquote "$snap_dir/${ts}.partial")' -printf '%M %n %u %g %8s %T+ %P\n' 2>/dev/null | sort" > "$_SNAP_LOG_DIR/index"
-    fi
 }
 
 # Upload snapshot logs to the remote.
@@ -133,17 +114,17 @@ snaplog_upload() {
 
     if _is_rclone_mode; then
         local snap_subpath="targets/${target}/snapshots/${ts}"
-        for f in log rsync_error summary index; do
+        for f in log rsync_error summary; do
             local remote_dest; remote_dest=$(_rclone_remote_path "${snap_subpath}/${f}")
             _rclone_cmd copyto "$_SNAP_LOG_DIR/$f" "$remote_dest" || log_warn "Failed to upload $f"
         done
     elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
         local snap_dir; snap_dir=$(get_snapshot_dir "$target")
-        cp "$_SNAP_LOG_DIR"/{log,rsync_error,summary,index} "$snap_dir/${ts}.partial/" || log_warn "Failed to copy snapshot logs"
+        cp "$_SNAP_LOG_DIR"/{log,rsync_error,summary} "$snap_dir/${ts}.partial/" || log_warn "Failed to copy snapshot logs"
     else
         local snap_dir; snap_dir=$(get_snapshot_dir "$target")
         local rsync_ssh; rsync_ssh=$(build_rsync_ssh_cmd)
-        local rsync_cmd=(rsync -e "$rsync_ssh" "$_SNAP_LOG_DIR/log" "$_SNAP_LOG_DIR/rsync_error" "$_SNAP_LOG_DIR/summary" "$_SNAP_LOG_DIR/index" "${REMOTE_USER}@${REMOTE_HOST}:${snap_dir}/${ts}.partial/")
+        local rsync_cmd=(rsync -e "$rsync_ssh" "$_SNAP_LOG_DIR/log" "$_SNAP_LOG_DIR/rsync_error" "$_SNAP_LOG_DIR/summary" "${REMOTE_USER}@${REMOTE_HOST}:${snap_dir}/${ts}.partial/")
         if _is_password_mode; then
             export SSHPASS="$REMOTE_PASSWORD"
             rsync_cmd=(sshpass -e "${rsync_cmd[@]}")

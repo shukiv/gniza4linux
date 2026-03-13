@@ -472,18 +472,30 @@ def oauth_callback(task_id):
     Exchanges the authorization code for tokens, then feeds the token
     to rclone config create to finalize the remote.
     """
+    import sys
+    def _dbg(msg):
+        print(f"[OAUTH-CB] {msg}", file=sys.stderr, flush=True)
+
+    _dbg(f"oauth_callback called with task_id={task_id}")
+    _dbg(f"_bg_tasks keys: {list(_bg_tasks.keys())}")
+
     task = _bg_tasks.get(task_id)
     if not task:
+        _dbg("Task not found!")
         flash("OAuth session not found or expired.", "error")
         return redirect(url_for("rclone_config.index"))
+
+    _dbg(f"Task found: status={task.get('status')}, name={task.get('name')}")
 
     # Check for error from Google
     error = request.args.get("error")
     if error:
+        _dbg(f"Google error: {error}")
         task.update({"status": "error", "error": f"Google OAuth error: {error}"})
         return render_template("rclone_config/oauth_done.html")
 
     code = request.args.get("code")
+    _dbg(f"Got code: {code[:20] if code else 'NONE'}...")
     if not code:
         task.update({"status": "error", "error": "No authorization code received"})
         return render_template("rclone_config/oauth_done.html")
@@ -509,10 +521,12 @@ def oauth_callback(task_id):
             data=token_data,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
+        _dbg(f"Exchanging code at {oauth_cfg['token_url']} with redirect_uri={task['redirect_uri']}")
         with urllib.request.urlopen(token_req, timeout=15) as resp:
             token_resp = json.loads(resp.read().decode())
+        _dbg(f"Token response keys: {list(token_resp.keys())}")
     except Exception as e:
-        log.error("Token exchange failed: %s", e)
+        _dbg(f"Token exchange FAILED: {e}")
         task.update({"status": "error", "error": f"Token exchange failed: {e}"})
         return render_template("rclone_config/oauth_done.html")
 
@@ -530,22 +544,26 @@ def oauth_callback(task_id):
         "expiry": expiry,
     })
 
-    log.info("Got token for %s (first 80 chars): %s", task.get("name"), rclone_token[:80])
+    _dbg(f"rclone_token (first 80): {rclone_token[:80]}")
 
     # Feed token to rclone config create via the config_token step
     name = task["name"]
     config_token_state = task["config_token_state"]
 
+    _dbg(f"Calling _rclone_config_create name={name} ptype={provider_type} state={config_token_state[:30]}...")
     rc, data, err = _rclone_config_create(
         name, provider_type, state=config_token_state, result_val=rclone_token,
     )
-    log.info("config create result: rc=%s data=%s err=%s", rc, data, err)
+    _dbg(f"config create result: rc={rc} data={data} err={err}")
 
     if data and data.get("State") and data.get("Option"):
+        _dbg(f"More steps needed: {data.get('Option', {}).get('Name')}")
         task.update({"status": "more_steps", "data": data})
     elif rc == 0:
+        _dbg("SUCCESS — remote created")
         task.update({"status": "done", "name": name})
     else:
+        _dbg(f"FAILED: {err}")
         task.update({
             "status": "error",
             "error": err or "Failed to finalize remote configuration",

@@ -47,12 +47,14 @@ def _test_source(target):
             if result.returncode != 0:
                 # Restricted shells (e.g. Hetzner Storage Box) reject commands but accept sftp.
                 # Fall back to sftp connection test.
-                sftp_cmd = ["sftp", "-o", "BatchMode=yes", "-o", f"Port={port}",
+                sftp_cmd = ["-o", f"Port={port}",
                             "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
                 if key:
-                    sftp_cmd += ["-o", f"IdentityFile={key}"]
+                    sftp_cmd += ["-o", f"IdentityFile={key}", "-o", "BatchMode=yes"]
                 if password:
-                    sftp_cmd = ["sshpass", "-e"] + sftp_cmd
+                    sftp_cmd = ["sshpass", "-e", "sftp"] + sftp_cmd
+                else:
+                    sftp_cmd = ["sftp"] + sftp_cmd
                 sftp_cmd.append(f"{user}@{host}")
                 sftp_result = subprocess.run(
                     sftp_cmd, input="bye\n", capture_output=True, text=True, timeout=15, env=env,

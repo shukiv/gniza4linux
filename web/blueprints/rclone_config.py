@@ -1,11 +1,14 @@
 import json
+import os
 import re
 import subprocess
 import threading
+import urllib.parse
+import urllib.request
 
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash, session,
-    jsonify,
+    jsonify, Response,
 )
 
 from web.app import login_required
@@ -233,131 +236,123 @@ def create():
 
 # ── Create: Step 2+ — wizard follow-up questions ────────────
 
-def _ensure_noop_xdg_open():
-    """Create a no-op xdg-open script so rclone can't open a browser."""
-    import os, stat, tempfile
-    noop_dir = os.path.join(tempfile.gettempdir(), "rclone-nobrowser")
-    noop_script = os.path.join(noop_dir, "xdg-open")
-    if not os.path.exists(noop_script):
-        os.makedirs(noop_dir, exist_ok=True)
-        with open(noop_script, "w") as f:
-            f.write("#!/bin/sh\nexit 0\n")
-        os.chmod(noop_script, stat.S_IRWXU)
-    return noop_dir
+def _run_bg_oauth(task_id, name, ptype, config_state, gniza_callback_url):
+    """Run OAuth flow via 'rclone authorize' and feed token back to config create.
 
-
-def _serve_redirect_on_port(port, redirect_url, timeout_secs=30):
-    """Start a tiny HTTP server on the given port that redirects all requests.
-
-    After rclone's OAuth server shuts down, we take over port 53682 and serve
-    a page that auto-redirects the browser back to gniza.  Runs in a daemon
-    thread and shuts down after *timeout_secs*.
+    Steps:
+    1. Run 'rclone authorize <ptype> --auth-no-open-browser'
+    2. Capture auth URL from stderr, fetch it server-side to get the Google OAuth URL
+    3. Rewrite redirect_uri in Google's URL to point to gniza's callback proxy
+    4. Store rewritten URL in _bg_tasks for the waiting page to display
+    5. After auth completes, rclone authorize outputs the token to stdout
+    6. Feed the token back via config create --state/--result to finish setup
     """
-    import http.server
     import time
 
-    class Handler(http.server.BaseHTTPRequestHandler):
-        def do_GET(self):
-            self.send_response(302)
-            self.send_header("Location", redirect_url)
-            self.end_headers()
-
-        def log_message(self, *args):
-            pass  # silence logs
-
-    start = time.time()
-    while time.time() - start < 5:
-        try:
-            srv = http.server.HTTPServer(("127.0.0.1", port), Handler)
-            break
-        except OSError:
-            time.sleep(0.3)
-    else:
-        return  # couldn't bind
-
-    srv.timeout = 1
-    deadline = time.time() + timeout_secs
-    while time.time() < deadline:
-        srv.handle_request()
-    srv.server_close()
-
-
-def _run_bg_config(task_id, name, ptype, state, result_val, redirect_base=""):
-    """Run rclone config create in background thread (for OAuth flows).
-
-    Suppresses rclone's browser opening by prepending a no-op xdg-open to PATH,
-    then captures the auth URL from rclone's stderr NOTICE line so the waiting
-    page can display it as a clickable link.  After rclone finishes, takes over
-    port 53682 to redirect the Success page back to gniza.
-    """
-    import os
-
-    cmd = ["rclone", "config", "create", name, ptype,
-           "--non-interactive", "--obscure"]
-    if state:
-        cmd += ["--state", state]
-    if result_val:
-        cmd += ["--result", result_val]
-
-    # Prepend a dir with a no-op xdg-open so rclone can't open a browser
-    noop_dir = _ensure_noop_xdg_open()
-    env = os.environ.copy()
-    env["PATH"] = noop_dir + ":" + env.get("PATH", "")
-
+    cmd = ["rclone", "authorize", ptype, "--auth-no-open-browser"]
     try:
         proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            text=True, env=env,
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         )
 
-        # Read stderr line by line to capture the auth URL early
-        stderr_lines = []
+        # Read stderr to capture the auth URL
+        rclone_auth_url = None
         for line in proc.stderr:
-            stderr_lines.append(line)
-            # rclone prints: "NOTICE: If your browser doesn't open automatically
-            #   go to the following link: http://127.0.0.1:53682/auth?state=..."
             if "http" in line:
-                url_match = re.search(r'(https?://\S+)', line)
-                if url_match:
-                    _bg_tasks[task_id]["auth_url"] = url_match.group(1)
+                m = re.search(r'(https?://\S+)', line)
+                if m:
+                    rclone_auth_url = m.group(1)
+                    break
 
-        stdout = proc.stdout.read()
-        proc.wait(timeout=120)
-
-        rc = proc.returncode
-        data = None
-        if rc == 0 and stdout.strip():
+        if rclone_auth_url:
+            # Fetch rclone's /auth endpoint server-side to get the Google redirect
             try:
-                data = json.loads(stdout)
-            except json.JSONDecodeError:
-                pass
+                req = urllib.request.Request(rclone_auth_url)
+                resp = urllib.request.urlopen(req, timeout=10)
+                # Won't reach here — it's a redirect, handled below
+            except urllib.error.HTTPError as e:
+                if e.code in (301, 302, 303, 307, 308):
+                    google_url = e.headers.get("Location", "")
+                else:
+                    google_url = ""
+            except Exception:
+                google_url = ""
+
+            if not google_url:
+                # urllib follows redirects by default for 301/302; get it differently
+                import http.client
+                parsed = urllib.parse.urlparse(rclone_auth_url)
+                conn = http.client.HTTPConnection(parsed.hostname, parsed.port, timeout=10)
+                conn.request("GET", parsed.path + "?" + parsed.query if parsed.query else parsed.path)
+                resp = conn.getresponse()
+                google_url = resp.getheader("Location", "")
+                conn.close()
+
+            if google_url:
+                # Rewrite redirect_uri to point to gniza's OAuth callback proxy
+                parsed_google = urllib.parse.urlparse(google_url)
+                qs = urllib.parse.parse_qs(parsed_google.query, keep_blank_values=True)
+                qs["redirect_uri"] = [gniza_callback_url]
+                new_query = urllib.parse.urlencode(qs, doseq=True)
+                rewritten_url = urllib.parse.urlunparse(
+                    parsed_google._replace(query=new_query)
+                )
+                _bg_tasks[task_id]["auth_url"] = rewritten_url
+            else:
+                # Fallback: show the raw rclone auth URL
+                _bg_tasks[task_id]["auth_url"] = rclone_auth_url
+
+        # Drain remaining stderr
+        for _ in proc.stderr:
+            pass
+
+        # Wait for rclone authorize to complete (user authenticates)
+        # stdout will contain the token in the format:
+        # Paste the following into your remote machine --->
+        # {"access_token":"...","token_type":"Bearer",...}
+        # <---End paste
+        stdout = proc.stdout.read()
+        proc.wait(timeout=300)
+
+        if proc.returncode != 0:
+            _bg_tasks[task_id].update({
+                "status": "error",
+                "error": "Authorization failed or timed out",
+                "name": name,
+            })
+            return
+
+        # Extract token JSON from stdout
+        token_match = re.search(r'(\{[^{}]*"access_token"[^{}]*\})', stdout)
+        if not token_match:
+            _bg_tasks[task_id].update({
+                "status": "error",
+                "error": "Could not extract token from rclone authorize output",
+                "name": name,
+            })
+            return
+
+        token_json = token_match.group(1)
+
+        # Now feed the token back to config create via the config_token step
+        rc, data, err = _rclone_config_create(
+            name, ptype, state=config_state, result_val=token_json,
+        )
 
         if data and data.get("State") and data.get("Option"):
             _bg_tasks[task_id].update({"status": "more_steps", "data": data})
         elif rc == 0:
             _bg_tasks[task_id].update({"status": "done", "name": name})
         else:
-            err = "".join(stderr_lines).strip() or stdout.strip()
-            err_lines = [l for l in err.splitlines()
-                         if l.strip() and not l.startswith("Usage:")
-                         and not l.startswith("Flags:")
-                         and not l.startswith("  --")
-                         and not l.startswith("Use \"rclone")]
-            err = err_lines[0] if err_lines else err.split("\n")[0]
-            _bg_tasks[task_id].update({"status": "error", "error": err, "name": name})
-
-        # After rclone exits, take over port 53682 to redirect the browser
-        # tab (which is showing rclone's "Success!" page) back to gniza.
-        redirect_url = (redirect_base.rstrip("/") + "/rclone-config/") if redirect_base else "http://localhost:2323/rclone-config/"
-        threading.Thread(
-            target=_serve_redirect_on_port,
-            args=(53682, redirect_url),
-            daemon=True,
-        ).start()
+            _bg_tasks[task_id].update({
+                "status": "error",
+                "error": err or "Failed to finalize remote configuration",
+                "name": name,
+            })
 
     except subprocess.TimeoutExpired:
         proc.kill()
-        _bg_tasks[task_id].update({"status": "error", "error": "Command timed out", "name": name})
+        _bg_tasks[task_id].update({"status": "error", "error": "Authorization timed out", "name": name})
     except OSError as e:
         _bg_tasks[task_id].update({"status": "error", "error": str(e), "name": name})
 
@@ -373,19 +368,34 @@ def wizard_step():
     if request.method == "POST":
         answer = request.form.get("answer", "")
 
-        # For OAuth auto-config steps, run in background and show waiting page
+        # For OAuth auto-config steps, use headless flow + rclone authorize
         option = wiz.get("option", {})
-        is_oauth_step = option.get("Name") in ("config_is_local", "config_token")
+        is_oauth_step = option.get("Name") == "config_is_local"
 
         if is_oauth_step and answer.lower() in ("true", "yes"):
             import secrets
+
+            # Step A: answer "false" (headless) to get config_token state
+            rc, data, err = _rclone_config_create(
+                wiz["name"], wiz["type"],
+                state=wiz["state"], result_val="false",
+            )
+            if not (data and data.get("State") and data.get("Option")):
+                flash(f"Failed to start OAuth flow: {err}", "error")
+                return redirect(url_for("rclone_config.index"))
+
+            config_token_state = data["State"]
+
+            # Step B: start rclone authorize in background
             task_id = secrets.token_hex(8)
             _bg_tasks[task_id] = {"status": "running"}
-            host_url = request.host_url  # e.g. "http://localhost:2323/"
+            # Build the gniza callback URL that will proxy to rclone's port 53682
+            gniza_callback = request.host_url.rstrip("/") + url_for(
+                "rclone_config.oauth_callback", task_id=task_id,
+            )
             t = threading.Thread(
-                target=_run_bg_config,
-                args=(task_id, wiz["name"], wiz["type"], wiz["state"], answer),
-                kwargs={"redirect_base": host_url},
+                target=_run_bg_oauth,
+                args=(task_id, wiz["name"], wiz["type"], config_token_state, gniza_callback),
                 daemon=True,
             )
             t.start()
@@ -428,6 +438,25 @@ def wizard_step():
         step=wiz["step"],
         option=option,
     )
+
+
+@bp.route("/oauth-callback/<task_id>")
+def oauth_callback(task_id):
+    """OAuth callback proxy — Google redirects here after auth.
+
+    Forwards the code/state to rclone's local auth server on port 53682,
+    then shows a success page that redirects to gniza (no rclone Success page).
+    """
+    # Proxy the callback to rclone's local server
+    qs = request.query_string.decode()
+    rclone_url = f"http://127.0.0.1:53682/?{qs}"
+    try:
+        urllib.request.urlopen(rclone_url, timeout=10)
+    except Exception:
+        pass  # rclone processes the token; response doesn't matter
+
+    # Return a page that redirects to gniza
+    return render_template("rclone_config/oauth_done.html")
 
 
 @bp.route("/wizard/poll/<task_id>")

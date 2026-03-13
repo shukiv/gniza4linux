@@ -237,17 +237,9 @@ def create():
 # ── Create: Step 2+ — wizard follow-up questions ────────────
 
 def _run_bg_oauth(task_id, name, ptype, config_state, gniza_base_url=""):
-    """Run OAuth flow via 'rclone authorize' and feed token back to config create.
-
-    Steps:
-    1. Run 'rclone authorize <ptype> --auth-no-open-browser'
-    2. Capture auth URL from stderr, fetch it server-side to get the Google OAuth URL
-    3. Rewrite redirect_uri in Google's URL to point to gniza's callback proxy
-    4. Store rewritten URL in _bg_tasks for the waiting page to display
-    5. After auth completes, rclone authorize outputs the token to stdout
-    6. Feed the token back via config create --state/--result to finish setup
-    """
-    import time
+    """Run OAuth flow via 'rclone authorize' and feed token back to config create."""
+    import logging
+    log = logging.getLogger("gniza.rclone_oauth")
 
     cmd = ["rclone", "authorize", ptype, "--auth-no-open-browser"]
     try:
@@ -257,37 +249,35 @@ def _run_bg_oauth(task_id, name, ptype, config_state, gniza_base_url=""):
 
         # Read stderr to capture the auth URL
         rclone_auth_url = None
+        stderr_lines = []
         for line in proc.stderr:
-            if "http" in line:
+            stderr_lines.append(line.rstrip())
+            if "http" in line and not rclone_auth_url:
                 m = re.search(r'(https?://\S+)', line)
                 if m:
                     rclone_auth_url = m.group(1)
-                    break
 
         if rclone_auth_url:
             _bg_tasks[task_id]["auth_url"] = rclone_auth_url
 
-        # Drain remaining stderr
-        for _ in proc.stderr:
-            pass
+        log.info("rclone authorize stderr: %s", "\n".join(stderr_lines))
 
-        # Wait for rclone authorize to complete (user authenticates)
-        # stdout will contain the token in the format:
-        # Paste the following into your remote machine --->
-        # {"access_token":"...","token_type":"Bearer",...}
-        # <---End paste
+        # Read stdout (contains the token between arrow markers)
         stdout = proc.stdout.read()
         proc.wait(timeout=300)
 
+        log.info("rclone authorize rc=%d stdout=%r", proc.returncode, stdout[:500])
+
         if proc.returncode != 0:
+            err_detail = "\n".join(stderr_lines[-3:]) if stderr_lines else "no stderr"
             _bg_tasks[task_id].update({
                 "status": "error",
-                "error": "Authorization failed or timed out",
+                "error": f"rclone authorize failed (rc={proc.returncode}): {err_detail}",
                 "name": name,
             })
             return
 
-        # Extract token JSON from stdout — rclone outputs between arrow markers:
+        # Extract token JSON — rclone outputs between arrow markers:
         #   Paste the following into your remote machine --->
         #   {"access_token":"...","token_type":"Bearer",...}
         #   <---End paste
@@ -300,16 +290,19 @@ def _run_bg_oauth(task_id, name, ptype, config_state, gniza_base_url=""):
             if not token_match:
                 _bg_tasks[task_id].update({
                     "status": "error",
-                    "error": "Could not extract token from rclone authorize output",
+                    "error": f"Could not extract token. stdout: {stdout[:200]}",
                     "name": name,
                 })
                 return
             token_json = token_match.group(1)
 
+        log.info("Extracted token (first 80 chars): %s", token_json[:80])
+
         # Now feed the token back to config create via the config_token step
         rc, data, err = _rclone_config_create(
             name, ptype, state=config_state, result_val=token_json,
         )
+        log.info("config create result: rc=%s data=%s err=%s", rc, data, err)
 
         if data and data.get("State") and data.get("Option"):
             _bg_tasks[task_id].update({"status": "more_steps", "data": data})

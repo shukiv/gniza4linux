@@ -446,6 +446,13 @@ TARGET_SOURCE_PASSWORD="your-password"
 
 Requires `sshpass` for password auth.
 
+To use sudo for rsync on the source (when the SSH user is not root but needs elevated privileges to read files):
+```ini
+TARGET_SOURCE_SUDO="yes"
+```
+
+When enabled, gniza runs rsync via `sudo` on the remote source, allowing a non-root SSH user to back up files that require root access (e.g., `/etc`, `/var`).
+
 ##### S3 Source
 
 Pull files from an S3 or S3-compatible bucket (AWS, Backblaze B2, Wasabi, MinIO, DigitalOcean Spaces).
@@ -567,6 +574,13 @@ REMOTE_AUTH_METHOD="password"
 REMOTE_PASSWORD="your-password"
 ```
 
+To use sudo for rsync on the destination (when the SSH user is not root but needs elevated privileges to write files):
+```ini
+REMOTE_SUDO="yes"
+```
+
+When enabled, gniza runs rsync via `sudo` on the remote destination, allowing a non-root SSH user to write backups to directories that require root access.
+
 #### Local Destination
 
 Store snapshots on a local drive (USB, NFS mount, second disk).
@@ -654,6 +668,7 @@ Requires `rclone`.
 | `REMOTE_AUTH_METHOD` | `key` | `key` or `password` |
 | `REMOTE_KEY` | `~/.ssh/id_rsa` | Path to SSH private key |
 | `REMOTE_PASSWORD` | (empty) | SSH password (requires sshpass) |
+| `REMOTE_SUDO` | `no` | Use sudo rsync on destination (`yes` or `no`) |
 | `REMOTE_BASE` | `/backups` | Base directory for snapshots |
 | `BWLIMIT` | `0` | Bandwidth limit in KB/s (0 = unlimited) |
 

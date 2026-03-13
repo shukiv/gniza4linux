@@ -333,6 +333,7 @@ TARGET_SOURCE_USER="root"
 TARGET_SOURCE_AUTH_METHOD="key" # key | password
 TARGET_SOURCE_KEY=""
 TARGET_SOURCE_PASSWORD=""
+TARGET_SOURCE_SUDO="no"             # Use sudo rsync on source (yes | no)
 
 # S3 source
 TARGET_SOURCE_S3_PROVIDER="AWS"  # AWS | Backblaze | Wasabi | Other
@@ -383,6 +384,7 @@ REMOTE_USER="root"
 REMOTE_AUTH_METHOD="key"        # key | password
 REMOTE_KEY="/root/.ssh/backup_key"  # Defaults to ~/.ssh/id_rsa
 REMOTE_PASSWORD=""
+REMOTE_SUDO="no"                    # Use sudo rsync on destination (yes | no)
 REMOTE_BASE="/backups"
 BWLIMIT=0                      # Override global bandwidth limit
 ```

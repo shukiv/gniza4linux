@@ -44,6 +44,7 @@
                                     <span x-show="!testing">Test</span>
                                     <span x-show="testing" class="loading loading-spinner loading-xs"></span>
                                 </button>
+                                <a href="{{ url_for('browse.index', type='rclone', name=r.name) }}" class="btn btn-neutral btn-sm">Browse</a>
                                 <a href="{{ url_for('rclone_config.edit', name=r.name) }}" class="btn btn-primary btn-sm">Edit</a>
                                 <button class="btn btn-error btn-sm"
                                         @click="deleteName = '{{ r.name }}'; deleteUrl = '{{ url_for('rclone_config.delete', name=r.name) }}'; showModal = true">

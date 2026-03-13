@@ -40,11 +40,16 @@ def index():
             ]
     except Exception:
         pass
+    # Support deep-linking: ?type=destinations&name=rasp
+    preselect_type = request.args.get("type", "")
+    preselect_name = request.args.get("name", "")
     return render_template(
         "browse/index.html",
         sources=sources,
         destinations=destinations,
         rclone_remotes=rclone_remotes,
+        preselect_type=preselect_type,
+        preselect_name=preselect_name,
     )
 
 

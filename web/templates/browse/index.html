@@ -3,7 +3,7 @@
 {% block page_title %}Browse Files{% endblock %}
 
 {% block content %}
-<div x-data="{ tab: 'destinations' }">
+<div x-data="{ tab: '{{ preselect_type or 'destinations' }}' }">
     <!-- Tabs -->
     <div role="tablist" class="tabs tabs-bordered mb-6">
         <a role="tab" class="tab" :class="tab === 'sources' && 'tab-active'" @click="tab = 'sources'">Sources</a>
@@ -20,7 +20,8 @@
                     hx-get="{{ url_for('browse.source', name=s) }}"
                     hx-target="#browser-content"
                     hx-swap="innerHTML"
-                    hx-indicator="#browse-loading">{{ s }}</button>
+                    hx-indicator="#browse-loading"
+                    {% if preselect_type == 'sources' and preselect_name == s %}hx-trigger="load, click" class="btn btn-sm btn-primary"{% endif %}>{{ s }}</button>
             {% endfor %}
         </div>
         {% else %}
@@ -37,7 +38,8 @@
                     hx-get="{{ url_for('browse.destination', name=d) }}"
                     hx-target="#browser-content"
                     hx-swap="innerHTML"
-                    hx-indicator="#browse-loading">{{ d }}</button>
+                    hx-indicator="#browse-loading"
+                    {% if preselect_type == 'destinations' and preselect_name == d %}hx-trigger="load, click" class="btn btn-sm btn-primary"{% endif %}>{{ d }}</button>
             {% endfor %}
         </div>
         {% else %}
@@ -54,7 +56,8 @@
                     hx-get="{{ url_for('browse.rclone_remote', name=r.name) }}"
                     hx-target="#browser-content"
                     hx-swap="innerHTML"
-                    hx-indicator="#browse-loading">{{ r.name }} <span class="badge badge-ghost badge-sm ml-1">{{ r.type }}</span></button>
+                    hx-indicator="#browse-loading"
+                    {% if preselect_type == 'rclone' and preselect_name == r.name %}hx-trigger="load, click" class="btn btn-sm btn-primary"{% endif %}>{{ r.name }} <span class="badge badge-ghost badge-sm ml-1">{{ r.type }}</span></button>
             {% endfor %}
         </div>
         {% else %}
@@ -70,7 +73,9 @@
 
 <!-- Browser content area -->
 <div id="browser-content">
+    {% if not preselect_name %}
     <p class="text-base-content/40 text-center py-12">Select a source, destination, or rclone remote to browse.</p>
+    {% endif %}
 </div>
 {% endblock %}
 

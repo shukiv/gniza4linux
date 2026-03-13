@@ -42,6 +42,7 @@
                         </td>
                         <td>
                             <div class="flex gap-1">
+                                <a href="{{ url_for('browse.index', type='sources', name=t.name) }}" class="btn btn-neutral btn-sm">Browse</a>
                                 <a href="{{ url_for('targets.edit', name=t.name) }}" class="btn btn-primary btn-sm">Edit</a>
                                 <button class="btn btn-error btn-sm"
                                         @click="deleteName = '{{ t.name }}'; deleteUrl = '{{ url_for('targets.delete', name=t.name) }}'; showModal = true">

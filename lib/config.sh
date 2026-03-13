@@ -67,10 +67,13 @@ load_config() {
     RSYNC_CHECKSUM="${RSYNC_CHECKSUM:-$DEFAULT_RSYNC_CHECKSUM}"
     DISK_USAGE_THRESHOLD="${DISK_USAGE_THRESHOLD:-$DEFAULT_DISK_USAGE_THRESHOLD}"
 
-    # WORK_DIR from detect_mode takes precedence — ignore config value
-    # to prevent root-mode paths leaking into user-mode sessions.
-    # Re-run detect_mode to restore the correct value if config overrode it.
+    # Allow WORK_DIR override from config, but fall back to mode-based default
+    local _conf_work_dir="${WORK_DIR:-}"
     detect_mode
+    if [[ -n "$_conf_work_dir" ]]; then
+        WORK_DIR="$_conf_work_dir"
+        export WORK_DIR
+    fi
 
     # --debug flag overrides config
     [[ "${GNIZA4LINUX_DEBUG:-false}" == "true" ]] && LOG_LEVEL="debug"

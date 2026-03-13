@@ -45,6 +45,10 @@
                     <label class="fieldset-label">Simultaneous Jobs (0=unlimited)</label>
                     <input type="text" name="max_concurrent_jobs" value="{{ settings.max_concurrent_jobs }}" class="input">
                 </fieldset>
+                <fieldset class="fieldset md:col-span-2">
+                    <label class="fieldset-label">Working Directory (temp/staging — leave empty for default)</label>
+                    <input type="text" name="work_dir" value="{{ settings.work_dir }}" class="input font-mono" placeholder="default: auto-detected based on install mode">
+                </fieldset>
                 <fieldset class="fieldset">
                     <label class="fieldset-label">Rsync Compression
                         <span class="tooltip tooltip-right" data-tip="Compression uses extra CPU on both sides. On fast LANs it can slow transfers down. Best for slow or metered links (WAN, cloud). Disable for local or gigabit LAN backups.">

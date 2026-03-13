@@ -68,6 +68,7 @@ def save():
         rsync_checksum="yes" if form.get("rsync_checksum") else "no",
         disk_usage_threshold=form.get("disk_usage_threshold", "95"),
         max_concurrent_jobs=form.get("max_concurrent_jobs", "1"),
+        work_dir=form.get("work_dir", ""),
         web_port=form.get("web_port", "2323"),
         web_host=form.get("web_host", "0.0.0.0"),
         web_api_key=form.get("web_api_key", ""),

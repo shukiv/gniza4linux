@@ -20,15 +20,27 @@ def _get_log_dir() -> Path:
     return Path(xdg) / "gniza" / "log"
 
 
+CONFIG_DIR = _get_config_dir()
+LOG_DIR = _get_log_dir()
+
+
 def _get_work_dir() -> Path:
+    # Check gniza.conf for custom WORK_DIR
+    conf_path = CONFIG_DIR / "gniza.conf"
+    if conf_path.is_file():
+        for line in conf_path.read_text().splitlines():
+            line = line.strip()
+            if line.startswith("WORK_DIR="):
+                val = line.split("=", 1)[1].strip('"').strip("'")
+                if val:
+                    return Path(val)
+    # Default based on mode
     if os.geteuid() == 0:
         return Path("/usr/local/gniza/workdir")
     xdg = os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state"))
     return Path(xdg) / "gniza" / "workdir"
 
 
-CONFIG_DIR = _get_config_dir()
-LOG_DIR = _get_log_dir()
 WORK_DIR = _get_work_dir()
 
 

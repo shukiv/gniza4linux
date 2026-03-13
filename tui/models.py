@@ -307,6 +307,7 @@ class AppSettings:
     rsync_checksum: str = "no"
     disk_usage_threshold: str = "95"
     max_concurrent_jobs: str = "1"
+    work_dir: str = ""
     web_port: str = "2323"
     web_host: str = "0.0.0.0"
     web_api_key: str = ""
@@ -345,6 +346,7 @@ class AppSettings:
             rsync_checksum=data.get("RSYNC_CHECKSUM", "no"),
             disk_usage_threshold=data.get("DISK_USAGE_THRESHOLD", "95"),
             max_concurrent_jobs=data.get("MAX_CONCURRENT_JOBS", "1"),
+            work_dir=data.get("WORK_DIR", ""),
             web_port=data.get("WEB_PORT", "2323"),
             web_host=data.get("WEB_HOST", "0.0.0.0"),
             web_api_key=data.get("WEB_API_KEY", ""),
@@ -383,6 +385,7 @@ class AppSettings:
             "RSYNC_CHECKSUM": self.rsync_checksum,
             "DISK_USAGE_THRESHOLD": self.disk_usage_threshold,
             "MAX_CONCURRENT_JOBS": self.max_concurrent_jobs,
+            "WORK_DIR": self.work_dir,
             "WEB_PORT": self.web_port,
             "WEB_HOST": self.web_host,
             "WEB_API_KEY": self.web_api_key,

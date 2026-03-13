@@ -50,7 +50,7 @@ _pgsql_run_cmd() {
 # Detect the pg_dump binary, locally or remotely.
 _pgsql_find_dump_cmd() {
     if _pgsql_is_remote; then
-        _pgsql_run_cmd "command -v pg_dump" 2>/dev/null || return 1
+        _pgsql_run_cmd "PATH=\$PATH:/usr/bin:/usr/local/bin command -v pg_dump" 2>/dev/null || return 1
     else
         if command -v pg_dump &>/dev/null; then
             echo "pg_dump"
@@ -63,7 +63,7 @@ _pgsql_find_dump_cmd() {
 # Detect the psql client binary, locally or remotely.
 _pgsql_find_client_cmd() {
     if _pgsql_is_remote; then
-        _pgsql_run_cmd "command -v psql" 2>/dev/null || return 1
+        _pgsql_run_cmd "PATH=\$PATH:/usr/bin:/usr/local/bin command -v psql" 2>/dev/null || return 1
     else
         if command -v psql &>/dev/null; then
             echo "psql"
@@ -304,7 +304,7 @@ pgsql_dump_roles() {
     # Find pg_dumpall binary
     local dumpall_cmd
     if [[ "$is_remote" == "true" ]]; then
-        dumpall_cmd=$(_pgsql_run_cmd "command -v pg_dumpall" 2>/dev/null) || {
+        dumpall_cmd=$(_pgsql_run_cmd "PATH=\$PATH:/usr/bin:/usr/local/bin command -v pg_dumpall" 2>/dev/null) || {
             log_error "pg_dumpall not found on remote host — cannot dump roles"
             return 1
         }

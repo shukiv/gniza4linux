@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}GNIZA - Browse Files{% endblock %}
+{% block page_title %}Browse Files{% endblock %}
+
+{% block content %}
+<div x-data="{ tab: 'destinations' }">
+    <!-- Tabs -->
+    <div role="tablist" class="tabs tabs-bordered mb-6">
+        <a role="tab" class="tab" :class="tab === 'sources' && 'tab-active'" @click="tab = 'sources'">Sources</a>
+        <a role="tab" class="tab" :class="tab === 'destinations' && 'tab-active'" @click="tab = 'destinations'">Destinations</a>
+        <a role="tab" class="tab" :class="tab === 'rclone' && 'tab-active'" @click="tab = 'rclone'">Rclone Remotes</a>
+    </div>
+
+    <!-- Sources tab -->
+    <div x-show="tab === 'sources'" x-transition>
+        {% if sources %}
+        <div class="flex flex-wrap gap-2 mb-4">
+            {% for s in sources %}
+            <button class="btn btn-sm btn-outline"
+                    hx-get="{{ url_for('browse.source', name=s) }}"
+                    hx-target="#browser-content"
+                    hx-swap="innerHTML"
+                    hx-indicator="#browse-loading">{{ s }}</button>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-base-content/50">No sources configured.</p>
+        {% endif %}
+    </div>
+
+    <!-- Destinations tab -->
+    <div x-show="tab === 'destinations'" x-transition>
+        {% if destinations %}
+        <div class="flex flex-wrap gap-2 mb-4">
+            {% for d in destinations %}
+            <button class="btn btn-sm btn-outline"
+                    hx-get="{{ url_for('browse.destination', name=d) }}"
+                    hx-target="#browser-content"
+                    hx-swap="innerHTML"
+                    hx-indicator="#browse-loading">{{ d }}</button>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-base-content/50">No destinations configured.</p>
+        {% endif %}
+    </div>
+
+    <!-- Rclone Remotes tab -->
+    <div x-show="tab === 'rclone'" x-transition>
+        {% if rclone_remotes %}
+        <div class="flex flex-wrap gap-2 mb-4">
+            {% for r in rclone_remotes %}
+            <button class="btn btn-sm btn-outline"
+                    hx-get="{{ url_for('browse.rclone_remote', name=r.name) }}"
+                    hx-target="#browser-content"
+                    hx-swap="innerHTML"
+                    hx-indicator="#browse-loading">{{ r.name }} <span class="badge badge-ghost badge-sm ml-1">{{ r.type }}</span></button>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-base-content/50">No rclone remotes configured.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Loading indicator -->
+<div id="browse-loading" class="htmx-indicator text-center py-8">
+    <span class="loading loading-spinner loading-md"></span>
+</div>
+
+<!-- Browser content area -->
+<div id="browser-content">
+    <p class="text-base-content/40 text-center py-12">Select a source, destination, or rclone remote to browse.</p>
+</div>
+{% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Browse Files</h3>
+<p class="text-base-content/70">Browse files and directories on your configured sources, destinations, and rclone remotes. Click a name to browse its contents. Expand folders to see their contents.</p>
+{% endblock %}

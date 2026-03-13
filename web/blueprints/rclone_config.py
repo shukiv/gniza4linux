@@ -34,6 +34,15 @@ bp = Blueprint("rclone_config", __name__, url_prefix="/rclone-config")
 
 _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 
+
+def _is_localhost_request():
+    """Check if the current request is from localhost (direct OAuth will work)."""
+    host = request.host.split(":")[0]
+    remote = request.remote_addr or ""
+    return (host in ("localhost", "127.0.0.1", "::1") and
+            remote in ("127.0.0.1", "::1"))
+
+
 # Module-level cache for providers
 _providers_cache = None
 
@@ -288,7 +297,7 @@ def _run_bg_oauth(task_id, name, ptype, config_state, gniza_base_url=""):
         log.info("rclone authorize rc=%d stdout=%r", proc.returncode, stdout[:500])
 
         if proc.returncode != 0:
-            err_detail = "\n".join(stderr_lines[-3:]) if stderr_lines else "no stderr"
+            err_detail = "see server logs"
             _bg_tasks[task_id].update({
                 "status": "error",
                 "error": f"rclone authorize failed (rc={proc.returncode}): {err_detail}",
@@ -360,33 +369,6 @@ def wizard_step():
             import secrets
 
             provider_type = wiz["type"]
-            oauth_cfg = _OAUTH_PROVIDERS.get(provider_type)
-
-            if not oauth_cfg:
-                # Fallback to legacy rclone authorize for unsupported providers
-                rc, data, err = _rclone_config_create(
-                    wiz["name"], wiz["type"],
-                    state=wiz["state"], result_val="false",
-                )
-                if not (data and data.get("State") and data.get("Option")):
-                    flash(f"Failed to start OAuth flow: {err}", "error")
-                    return redirect(url_for("rclone_config.index"))
-
-                config_token_state = data["State"]
-                task_id = secrets.token_hex(8)
-                _bg_tasks[task_id] = {"status": "running"}
-                t = threading.Thread(
-                    target=_run_bg_oauth,
-                    args=(task_id, wiz["name"], wiz["type"], config_token_state),
-                    daemon=True,
-                )
-                t.start()
-                return render_template(
-                    "rclone_config/waiting.html",
-                    name=wiz["name"],
-                    provider_type=wiz["type"],
-                    task_id=task_id,
-                )
 
             # Step A: answer "false" (headless) to get config_token state
             rc, data, err = _rclone_config_create(
@@ -399,37 +381,69 @@ def wizard_step():
 
             config_token_state = data["State"]
 
-            # Step B: build Google OAuth URL directly (no rclone authorize)
-            task_id = secrets.token_hex(8)
-            base_url = request.host_url.rstrip("/")
-            redirect_uri = f"{base_url}/rclone-config/oauth-callback/{task_id}"
-
-            auth_params = urllib.parse.urlencode({
-                "client_id": oauth_cfg["client_id"],
-                "redirect_uri": redirect_uri,
-                "response_type": "code",
-                "scope": oauth_cfg["scope"],
-                "access_type": "offline",
-                "state": task_id,
-                "prompt": "consent",
-            })
-            auth_url = f"{oauth_cfg['auth_url']}?{auth_params}"
-
-            _bg_tasks[task_id] = {
-                "status": "running",
-                "auth_url": auth_url,
-                "name": wiz["name"],
-                "type": wiz["type"],
-                "config_token_state": config_token_state,
-                "redirect_uri": redirect_uri,
-            }
-
-            return render_template(
-                "rclone_config/waiting.html",
-                name=wiz["name"],
-                provider_type=wiz["type"],
-                task_id=task_id,
-            )
+            if _is_localhost_request():
+                # LOCALHOST: use direct OAuth or legacy rclone authorize
+                oauth_cfg = _OAUTH_PROVIDERS.get(provider_type)
+                if oauth_cfg:
+                    # Direct OAuth (Google etc.)
+                    task_id = secrets.token_hex(8)
+                    base_url = request.host_url.rstrip("/")
+                    redirect_uri = f"{base_url}/rclone-config/oauth-callback/{task_id}"
+                    auth_params = urllib.parse.urlencode({
+                        "client_id": oauth_cfg["client_id"],
+                        "redirect_uri": redirect_uri,
+                        "response_type": "code",
+                        "scope": oauth_cfg["scope"],
+                        "access_type": "offline",
+                        "state": task_id,
+                        "prompt": "consent",
+                    })
+                    auth_url = f"{oauth_cfg['auth_url']}?{auth_params}"
+                    _bg_tasks[task_id] = {
+                        "status": "running",
+                        "auth_url": auth_url,
+                        "name": wiz["name"],
+                        "type": wiz["type"],
+                        "config_token_state": config_token_state,
+                        "redirect_uri": redirect_uri,
+                    }
+                    return render_template(
+                        "rclone_config/waiting.html",
+                        name=wiz["name"],
+                        provider_type=wiz["type"],
+                        task_id=task_id,
+                    )
+                else:
+                    # Legacy rclone authorize fallback
+                    task_id = secrets.token_hex(8)
+                    _bg_tasks[task_id] = {"status": "running"}
+                    t = threading.Thread(
+                        target=_run_bg_oauth,
+                        args=(task_id, wiz["name"], wiz["type"], config_token_state),
+                        daemon=True,
+                    )
+                    t.start()
+                    return render_template(
+                        "rclone_config/waiting.html",
+                        name=wiz["name"],
+                        provider_type=wiz["type"],
+                        task_id=task_id,
+                    )
+            else:
+                # REMOTE ACCESS: paste-token flow
+                task_id = secrets.token_hex(8)
+                _bg_tasks[task_id] = {
+                    "status": "waiting_paste",
+                    "name": wiz["name"],
+                    "type": provider_type,
+                    "config_token_state": config_token_state,
+                }
+                return render_template(
+                    "rclone_config/waiting_paste_token.html",
+                    name=wiz["name"],
+                    provider_type=provider_type,
+                    task_id=task_id,
+                )
 
         # Non-OAuth steps: run synchronously
         rc, data, err = _rclone_config_create(
@@ -472,30 +486,19 @@ def oauth_callback(task_id):
     Exchanges the authorization code for tokens, then feeds the token
     to rclone config create to finalize the remote.
     """
-    import sys
-    def _dbg(msg):
-        print(f"[OAUTH-CB] {msg}", file=sys.stderr, flush=True)
-
-    _dbg(f"oauth_callback called with task_id={task_id}")
-    _dbg(f"_bg_tasks keys: {list(_bg_tasks.keys())}")
-
     task = _bg_tasks.get(task_id)
     if not task:
-        _dbg("Task not found!")
         flash("OAuth session not found or expired.", "error")
         return redirect(url_for("rclone_config.index"))
-
-    _dbg(f"Task found: status={task.get('status')}, name={task.get('name')}")
 
     # Check for error from Google
     error = request.args.get("error")
     if error:
-        _dbg(f"Google error: {error}")
+        log.warning("Google OAuth error: %s", error)
         task.update({"status": "error", "error": f"Google OAuth error: {error}"})
         return render_template("rclone_config/oauth_done.html")
 
     code = request.args.get("code")
-    _dbg(f"Got code: {code[:20] if code else 'NONE'}...")
     if not code:
         task.update({"status": "error", "error": "No authorization code received"})
         return render_template("rclone_config/oauth_done.html")
@@ -521,12 +524,10 @@ def oauth_callback(task_id):
             data=token_data,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        _dbg(f"Exchanging code at {oauth_cfg['token_url']} with redirect_uri={task['redirect_uri']}")
         with urllib.request.urlopen(token_req, timeout=15) as resp:
             token_resp = json.loads(resp.read().decode())
-        _dbg(f"Token response keys: {list(token_resp.keys())}")
     except Exception as e:
-        _dbg(f"Token exchange FAILED: {e}")
+        log.error("Token exchange failed: %s", e)
         task.update({"status": "error", "error": f"Token exchange failed: {e}"})
         return render_template("rclone_config/oauth_done.html")
 
@@ -544,45 +545,35 @@ def oauth_callback(task_id):
         "expiry": expiry,
     })
 
-    _dbg(f"rclone_token (first 80): {rclone_token[:80]}")
-
     # Feed token to rclone config create via the config_token step
     name = task["name"]
     config_token_state = task["config_token_state"]
 
-    _dbg(f"Calling _rclone_config_create name={name} ptype={provider_type} state={config_token_state[:30]}...")
     rc, data, err = _rclone_config_create(
         name, provider_type, state=config_token_state, result_val=rclone_token,
     )
-    _dbg(f"config create result: rc={rc} data={data} err={err}")
 
     # Auto-answer follow-up config questions (e.g. config_change_team_drive)
     max_auto = 5
     while data and data.get("State") and data.get("Option") and max_auto > 0:
         opt = data["Option"]
-        opt_name = opt.get("Name", "")
         default_val = opt.get("DefaultStr", opt.get("Default", "false"))
-        _dbg(f"Auto-answering follow-up: {opt_name} = {default_val}")
         rc, data, err = _rclone_config_create(
             name, provider_type, state=data["State"], result_val=str(default_val),
         )
-        _dbg(f"Follow-up result: rc={rc} data={data} err={err}")
         max_auto -= 1
 
     if data and data.get("State") and data.get("Option"):
-        _dbg(f"Still more steps after auto-answer: {data.get('Option', {}).get('Name')}")
         task.update({"status": "more_steps", "data": data})
     elif rc == 0:
         # The wizard flow doesn't persist the token — set it directly
-        _dbg(f"Wizard done, setting token directly via config update")
         try:
             subprocess.run(
                 ["rclone", "config", "update", name, f"token={rclone_token}", "--non-interactive", "--obscure"],
                 capture_output=True, text=True, timeout=15,
             )
         except Exception as e:
-            _dbg(f"Token update failed: {e}")
-        _dbg("SUCCESS — remote created with token")
+            log.warning("Failed to persist token via config update: %s", e)
         task.update({"status": "done", "name": name})
     else:
         _dbg(f"FAILED: {err}")
@@ -624,6 +615,96 @@ def wizard_poll(task_id):
         }
         return jsonify({"status": "done", "redirect": url_for("rclone_config.wizard_step")})
     return jsonify({"status": "error", "error": task.get("error", "Unknown error")})
+
+
+@bp.route("/wizard/paste-token/<task_id>", methods=["POST"])
+@login_required
+def wizard_paste_token(task_id):
+    """Accept a pasted token from 'rclone authorize' output."""
+    task = _bg_tasks.get(task_id)
+    if not task:
+        flash("Session expired. Please try again.", "error")
+        return redirect(url_for("rclone_config.index"))
+
+    raw = request.form.get("token", "").strip()
+    if not raw:
+        flash("Please paste the token from rclone authorize output.", "error")
+        return render_template(
+            "rclone_config/waiting_paste_token.html",
+            name=task["name"],
+            provider_type=task["type"],
+            task_id=task_id,
+        )
+
+    # Extract JSON from rclone's ---> ... <--- markers if present
+    paste_match = re.search(r'--->\s*(.+?)\s*<---', raw, re.DOTALL)
+    token_json = paste_match.group(1).strip() if paste_match else raw.strip()
+
+    # Validate it's valid JSON with access_token
+    try:
+        parsed = json.loads(token_json)
+        if "access_token" not in parsed:
+            raise ValueError("Missing access_token")
+    except (json.JSONDecodeError, ValueError) as e:
+        flash(f"Invalid token format: {e}. Paste the complete JSON output from rclone authorize.", "error")
+        return render_template(
+            "rclone_config/waiting_paste_token.html",
+            name=task["name"],
+            provider_type=task["type"],
+            task_id=task_id,
+        )
+
+    name = task["name"]
+    provider_type = task["type"]
+    config_token_state = task["config_token_state"]
+
+    # Feed token to rclone config create
+    rc, data, err = _rclone_config_create(
+        name, provider_type, state=config_token_state, result_val=token_json,
+    )
+
+    # Auto-answer follow-up config questions
+    max_auto = 5
+    while data and data.get("State") and data.get("Option") and max_auto > 0:
+        opt = data["Option"]
+        default_val = opt.get("DefaultStr", opt.get("Default", "false"))
+        rc, data, err = _rclone_config_create(
+            name, provider_type, state=data["State"], result_val=str(default_val),
+        )
+        max_auto -= 1
+
+    if data and data.get("State") and data.get("Option"):
+        # More wizard steps needed
+        session["rclone_wizard"] = {
+            "name": name,
+            "type": provider_type,
+            "state": data["State"],
+            "option": data["Option"],
+            "step": session.get("rclone_wizard", {}).get("step", 2) + 1,
+        }
+        _bg_tasks.pop(task_id, None)
+        return redirect(url_for("rclone_config.wizard_step"))
+    elif rc == 0:
+        # Ensure token is persisted
+        try:
+            subprocess.run(
+                ["rclone", "config", "update", name, f"token={token_json}", "--non-interactive", "--obscure"],
+                capture_output=True, text=True, timeout=15,
+            )
+        except Exception as e:
+            log.warning("Failed to persist token via config update: %s", e)
+        _bg_tasks.pop(task_id, None)
+        session.pop("rclone_wizard", None)
+        flash(f"Remote '{name}' created successfully.", "success")
+        return redirect(url_for("rclone_config.index"))
+    else:
+        flash(f"Failed to create remote: {err}", "error")
+        return render_template(
+            "rclone_config/waiting_paste_token.html",
+            name=task["name"],
+            provider_type=task["type"],
+            task_id=task_id,
+        )
 
 
 # ── Edit ─────────────────────────────────────────────────────

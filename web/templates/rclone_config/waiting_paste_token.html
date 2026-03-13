@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Authenticate {{ name }}{% endblock %}
+{% block page_title %}Authenticate: {{ name }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('rclone_config.index') }}" class="btn btn-ghost btn-sm">&larr; Back to Rclone Remotes</a>
+</div>
+
+<!-- Step indicator -->
+<div class="flex items-center justify-center mb-8">
+    <div class="flex flex-col items-center w-40">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 bg-success text-success-content border-success">1</div>
+        <span class="text-xs mt-1 text-center text-base-content/50">Remote Config</span>
+    </div>
+    <div class="h-0.5 w-24 -mt-4 bg-success"></div>
+    <div class="flex flex-col items-center w-40">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 bg-success text-success-content border-success">2</div>
+        <span class="text-xs mt-1 text-center text-base-content/50">Set up Drive</span>
+    </div>
+    <div class="h-0.5 w-24 -mt-4 bg-primary"></div>
+    <div class="flex flex-col items-center w-40">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 bg-primary text-primary-content border-primary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </div>
+        <span class="text-xs mt-1 text-center font-medium text-primary">Paste Token</span>
+    </div>
+</div>
+
+<div class="card bg-base-200 shadow max-w-2xl mx-auto">
+    <div class="card-body">
+        <div class="alert alert-info mb-4">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>You are accessing Gniza remotely. To authenticate with <strong>{{ provider_type }}</strong>, run the command below on a machine that has a web browser and <a href="https://rclone.org/install/" target="_blank" class="link">rclone</a> installed.</span>
+        </div>
+
+        <h3 class="font-semibold text-sm mb-2">Step 1: Run this command on your local machine</h3>
+        <div class="relative" x-data="{ copied: false }">
+            <pre class="bg-base-300 rounded-lg p-4 pr-12 text-sm overflow-x-auto select-all"><code>rclone authorize "{{ provider_type }}"</code></pre>
+            <button class="btn btn-neutral btn-xs absolute top-2 right-2"
+                    @click="navigator.clipboard.writeText('rclone authorize &quot;{{ provider_type }}&quot;'); copied = true; setTimeout(() => copied = false, 2000)">
+                <span x-show="!copied">Copy</span>
+                <span x-show="copied" x-cloak>Copied!</span>
+            </button>
+        </div>
+        <p class="text-base-content/50 text-xs mt-1 mb-4">This will open a browser window for authentication. After you sign in, rclone will display a token.</p>
+
+        <h3 class="font-semibold text-sm mb-2">Step 2: Paste the token here</h3>
+        <p class="text-base-content/60 text-xs mb-2">Paste the entire output between <code class="bg-base-300 px-1 rounded">---&gt;</code> and <code class="bg-base-300 px-1 rounded">&lt;---</code> markers (or just the JSON token).</p>
+
+        <form method="POST" action="{{ url_for('rclone_config.wizard_paste_token', task_id=task_id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <textarea name="token" class="textarea textarea-bordered w-full font-mono text-xs" rows="6"
+                      placeholder='{"access_token":"ya29.a0...","token_type":"Bearer","refresh_token":"1//0e...","expiry":"2026-..."}'></textarea>
+            <div class="flex justify-between items-center mt-4">
+                <a href="{{ url_for('rclone_config.index') }}" class="btn btn-ghost btn-sm">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    Submit Token
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </button>
+            </div>
+        </form>
+
+        <p class="text-base-content/40 text-xs mt-4">Complete this within 5 minutes to avoid session expiry.</p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block help_text %}
+<h3 class="font-bold text-base mb-2">Remote Authentication</h3>
+<p class="mb-3 text-base-content/70">Since you're accessing Gniza from a remote machine, the OAuth redirect cannot work directly. Instead:</p>
+<ol class="list-decimal list-inside text-base-content/70 space-y-1">
+    <li>Install <a href="https://rclone.org/install/" target="_blank" class="link link-primary">rclone</a> on your local machine (laptop/desktop)</li>
+    <li>Run <code class="bg-base-300 px-1 rounded">rclone authorize "{{ provider_type }}"</code></li>
+    <li>Complete the sign-in in your browser</li>
+    <li>Copy the token JSON that rclone displays</li>
+    <li>Paste it into the form on this page</li>
+</ol>
+{% endblock %}

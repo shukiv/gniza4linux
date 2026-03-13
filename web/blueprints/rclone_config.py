@@ -246,12 +246,62 @@ def _ensure_noop_xdg_open():
     return noop_dir
 
 
+def _serve_redirect_on_port(port, redirect_url, timeout_secs=30):
+    """Start a tiny HTTP server on the given port that redirects all requests.
+
+    After rclone's OAuth server shuts down, we take over port 53682 and serve
+    a page that auto-redirects the browser back to gniza.  Runs in a daemon
+    thread and shuts down after *timeout_secs*.
+    """
+    import http.server
+    import time
+
+    html = (
+        '<!DOCTYPE html><html><head>'
+        f'<meta http-equiv="refresh" content="0;url={redirect_url}">'
+        '</head><body>'
+        '<script>'
+        'try { window.close(); } catch(e) {}'
+        f'window.location.replace("{redirect_url}");'
+        '</script>'
+        f'<p>Redirecting to <a href="{redirect_url}">GNIZA</a>...</p>'
+        '</body></html>'
+    )
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
+            self.wfile.write(html.encode())
+
+        def log_message(self, *args):
+            pass  # silence logs
+
+    start = time.time()
+    while time.time() - start < 5:
+        try:
+            srv = http.server.HTTPServer(("127.0.0.1", port), Handler)
+            break
+        except OSError:
+            time.sleep(0.3)
+    else:
+        return  # couldn't bind
+
+    srv.timeout = 1
+    deadline = time.time() + timeout_secs
+    while time.time() < deadline:
+        srv.handle_request()
+    srv.server_close()
+
+
 def _run_bg_config(task_id, name, ptype, state, result_val):
     """Run rclone config create in background thread (for OAuth flows).
 
     Suppresses rclone's browser opening by prepending a no-op xdg-open to PATH,
     then captures the auth URL from rclone's stderr NOTICE line so the waiting
-    page can display it as a clickable link.
+    page can display it as a clickable link.  After rclone finishes, takes over
+    port 53682 to redirect the Success page back to gniza.
     """
     import os
 
@@ -308,6 +358,14 @@ def _run_bg_config(task_id, name, ptype, state, result_val):
                          and not l.startswith("Use \"rclone")]
             err = err_lines[0] if err_lines else err.split("\n")[0]
             _bg_tasks[task_id].update({"status": "error", "error": err, "name": name})
+
+        # After rclone exits, take over port 53682 to redirect the browser
+        # tab (which is showing rclone's "Success!" page) back to gniza.
+        threading.Thread(
+            target=_serve_redirect_on_port,
+            args=(53682, "/rclone-config/"),
+            daemon=True,
+        ).start()
 
     except subprocess.TimeoutExpired:
         proc.kill()

@@ -1,68 +1,67 @@
-<div class="card bg-base-200 shadow mb-6">
-    <div class="card-body">
-        <h2 class="card-title text-base mb-4">Provider Fields</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {% for field in fields %}
-            <fieldset class="fieldset">
-                <label class="fieldset-label">
-                    {{ field.Name }}
-                    {% if field.Required %}<span class="badge badge-warning badge-xs ml-1">Required</span>{% endif %}
-                </label>
+<div class="space-y-4">
+    {% for field in fields %}
+    <div class="flex flex-col md:flex-row md:items-start gap-2 md:gap-6 py-3 {% if not loop.last %}border-b border-base-300{% endif %}">
+        <div class="md:w-1/2 text-sm text-base-content/80">
+            {{ field.Help | linkify if field.Help else field.Name }}
+            {% if field.Required %}<span class="badge badge-warning badge-xs ml-1">Required</span>{% endif %}
+        </div>
+        <div class="md:w-1/2">
+            {% if field.Type == "bool" %}
+            <select name="{{ field.Name }}" class="select select-bordered w-full select-sm">
+                <option value="true" {{ 'selected' if values.get(field.Name, field.Default)|string|lower in ('true', '1') else '' }}>Yes</option>
+                <option value="false" {{ 'selected' if values.get(field.Name, field.Default)|string|lower in ('false', '0', 'none') else '' }}>No</option>
+            </select>
 
-                {% if field.Type == "bool" %}
-                <input type="checkbox" name="{{ field.Name }}" class="toggle toggle-primary toggle-sm"
-                       value="true"
-                       {{ 'checked' if values.get(field.Name, field.Default)|string|lower in ('true', '1') else '' }}>
-
-                {% elif field.IsPassword %}
-                <div x-data="{ show: false }" class="relative">
-                    <input :type="show ? 'text' : 'password'" name="{{ field.Name }}"
-                           class="input w-full pr-12"
-                           value="{{ values.get(field.Name, field.DefaultStr or field.Default or '') }}"
-                           {% if field.Required %}required{% endif %}>
-                    <button type="button" class="btn btn-ghost btn-xs absolute right-1 top-1/2 -translate-y-1/2"
-                            @click="show = !show" x-text="show ? 'Hide' : 'Show'"></button>
-                </div>
-
-                {% elif field.Exclusive and field.Examples %}
-                <select name="{{ field.Name }}" class="select"
-                        {% if field.Required %}required{% endif %}>
-                    <option value="">-- Select --</option>
-                    {% for ex in field.Examples %}
-                    <option value="{{ ex.Value }}"
-                            {{ 'selected' if values.get(field.Name, field.DefaultStr or field.Default or '') == ex.Value else '' }}>
-                        {{ ex.Value }}{% if ex.Help %} — {{ ex.Help[:60] }}{% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
-
-                {% elif field.Type == "int" %}
-                <input type="number" name="{{ field.Name }}" class="input"
-                       value="{{ values.get(field.Name, field.DefaultStr or field.Default or '') }}"
+            {% elif field.IsPassword %}
+            <div x-data="{ show: false }" class="relative">
+                <input :type="show ? 'text' : 'password'" name="{{ field.Name }}"
+                       class="input input-bordered w-full input-sm pr-12"
+                       value="{{ values.get(field.Name, '') }}"
+                       placeholder="{{ field.DefaultStr or '' }}"
                        {% if field.Required %}required{% endif %}>
+                <button type="button" class="btn btn-ghost btn-xs absolute right-1 top-1/2 -translate-y-1/2"
+                        @click="show = !show" x-text="show ? 'Hide' : 'Show'"></button>
+            </div>
 
-                {% elif field.Examples %}
-                <input type="text" name="{{ field.Name }}" class="input"
-                       value="{{ values.get(field.Name, field.DefaultStr or field.Default or '') }}"
-                       list="dl-{{ field.Name }}"
-                       {% if field.Required %}required{% endif %}>
-                <datalist id="dl-{{ field.Name }}">
-                    {% for ex in field.Examples %}
-                    <option value="{{ ex.Value }}">{{ ex.Help[:60] if ex.Help else '' }}</option>
-                    {% endfor %}
-                </datalist>
+            {% elif field.Exclusive and field.Examples %}
+            <select name="{{ field.Name }}" class="select select-bordered w-full select-sm"
+                    {% if field.Required %}required{% endif %}>
+                <option value="">-- Select --</option>
+                {% for ex in field.Examples %}
+                <option value="{{ ex.Value }}"
+                        {{ 'selected' if values.get(field.Name, field.DefaultStr or '') == ex.Value else '' }}>
+                    {{ ex.Value }}{% if ex.Help %} — {{ ex.Help[:80] }}{% endif %}
+                </option>
+                {% endfor %}
+            </select>
 
-                {% else %}
-                <input type="text" name="{{ field.Name }}" class="input"
-                       value="{{ values.get(field.Name, field.DefaultStr or field.Default or '') }}"
-                       {% if field.Required %}required{% endif %}>
-                {% endif %}
+            {% elif field.Type == "int" %}
+            <input type="number" name="{{ field.Name }}" class="input input-bordered w-full input-sm"
+                   value="{{ values.get(field.Name, field.DefaultStr or field.Default or '') }}"
+                   {% if field.Required %}required{% endif %}>
 
-                {% if field.Help %}
-                <p class="text-base-content/50 text-xs mt-1">{{ field.Help.split('\n')[0] | linkify }}</p>
-                {% endif %}
-            </fieldset>
-            {% endfor %}
+            {% elif field.Examples %}
+            <input type="text" name="{{ field.Name }}" class="input input-bordered w-full input-sm"
+                   value="{{ values.get(field.Name, field.DefaultStr or '') }}"
+                   placeholder="{{ field.DefaultStr or '' }}"
+                   list="dl-{{ field.Name }}"
+                   {% if field.Required %}required{% endif %}>
+            <datalist id="dl-{{ field.Name }}">
+                {% for ex in field.Examples %}
+                <option value="{{ ex.Value }}">{{ ex.Help[:80] if ex.Help else '' }}</option>
+                {% endfor %}
+            </datalist>
+
+            {% else %}
+            <input type="text" name="{{ field.Name }}" class="input input-bordered w-full input-sm"
+                   value="{{ values.get(field.Name, field.DefaultStr or '') }}"
+                   placeholder="{{ field.DefaultStr or '' }}"
+                   {% if field.Required %}required{% endif %}>
+            {% endif %}
         </div>
     </div>
+    {% endfor %}
 </div>
+{% if not fields %}
+<p class="text-base-content/50 text-sm">No configuration fields for this provider.</p>
+{% endif %}

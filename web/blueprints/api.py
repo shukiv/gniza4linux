@@ -74,6 +74,46 @@ def browse_children():
 
 # ── SSH remote browsing ──────────────────────────────────────
 
+def _sftp_list_dirs(host, path, port="22", user="root", key="", password="", show_hidden=False):
+    """List directories via sftp (for restricted shells like Hetzner Storage Box)."""
+    sftp_cmd = ["-o", f"Port={port}", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
+    if key:
+        sftp_cmd += ["-o", f"IdentityFile={key}", "-o", "BatchMode=yes"]
+    if password:
+        sftp_cmd = ["sshpass", "-e", "sftp"] + sftp_cmd
+    else:
+        sftp_cmd = ["sftp"] + sftp_cmd
+    sftp_cmd.append(f"{user}@{host}")
+    env = None
+    if password:
+        env = os.environ.copy()
+        env["SSHPASS"] = password
+    sftp_path = path if path and path != "/" else "."
+    try:
+        result = subprocess.run(
+            sftp_cmd, input=f"ls -1 {sftp_path}\nbye\n",
+            capture_output=True, text=True, timeout=15, env=env,
+        )
+        if result.returncode != 0:
+            return None, result.stderr.strip() or "SFTP connection failed"
+        dirs = []
+        for line in result.stdout.strip().splitlines():
+            line = line.strip()
+            if not line or line.startswith("sftp>") or line.startswith("Connected"):
+                continue
+            name = line.rstrip("/").rsplit("/", 1)[-1]
+            if not name or name in (".", ".."):
+                continue
+            if not show_hidden and name.startswith("."):
+                continue
+            dirs.append(name)
+        return sorted(dirs), None
+    except subprocess.TimeoutExpired:
+        return None, "Connection timed out"
+    except OSError as e:
+        return None, str(e)
+
+
 def _ssh_list_dirs(host, path, port="22", user="root", key="", password="", show_hidden=False):
     """List directories on a remote SSH host."""
     quoted = shlex.quote(path)
@@ -97,7 +137,8 @@ def _ssh_list_dirs(host, path, port="22", user="root", key="", password="", show
                 # Path may not exist — fall back to home directory
                 result = subprocess.run(base_cmd + ["ls", "-1p", "."], capture_output=True, text=True, timeout=15, env=env)
                 if result.returncode != 0:
-                    return None, result.stderr.strip() or "Connection failed"
+                    # All SSH commands failed — try sftp as last resort (restricted shell)
+                    return _sftp_list_dirs(host, path, port, user, key, password, show_hidden)
                 path = "/"
         dirs = []
         for line in result.stdout.strip().splitlines():

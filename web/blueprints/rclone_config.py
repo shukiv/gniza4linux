@@ -256,24 +256,11 @@ def _serve_redirect_on_port(port, redirect_url, timeout_secs=30):
     import http.server
     import time
 
-    html = (
-        '<!DOCTYPE html><html><head>'
-        f'<meta http-equiv="refresh" content="0;url={redirect_url}">'
-        '</head><body>'
-        '<script>'
-        'try { window.close(); } catch(e) {}'
-        f'window.location.replace("{redirect_url}");'
-        '</script>'
-        f'<p>Redirecting to <a href="{redirect_url}">GNIZA</a>...</p>'
-        '</body></html>'
-    )
-
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self):
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html")
+            self.send_response(302)
+            self.send_header("Location", redirect_url)
             self.end_headers()
-            self.wfile.write(html.encode())
 
         def log_message(self, *args):
             pass  # silence logs
@@ -363,7 +350,7 @@ def _run_bg_config(task_id, name, ptype, state, result_val):
         # tab (which is showing rclone's "Success!" page) back to gniza.
         threading.Thread(
             target=_serve_redirect_on_port,
-            args=(53682, "/rclone-config/"),
+            args=(53682, "http://127.0.0.1:2323/rclone-config/"),
             daemon=True,
         ).start()
 

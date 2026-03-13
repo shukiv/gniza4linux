@@ -282,7 +282,7 @@ def _serve_redirect_on_port(port, redirect_url, timeout_secs=30):
     srv.server_close()
 
 
-def _run_bg_config(task_id, name, ptype, state, result_val):
+def _run_bg_config(task_id, name, ptype, state, result_val, redirect_base=""):
     """Run rclone config create in background thread (for OAuth flows).
 
     Suppresses rclone's browser opening by prepending a no-op xdg-open to PATH,
@@ -348,9 +348,10 @@ def _run_bg_config(task_id, name, ptype, state, result_val):
 
         # After rclone exits, take over port 53682 to redirect the browser
         # tab (which is showing rclone's "Success!" page) back to gniza.
+        redirect_url = (redirect_base.rstrip("/") + "/rclone-config/") if redirect_base else "http://localhost:2323/rclone-config/"
         threading.Thread(
             target=_serve_redirect_on_port,
-            args=(53682, "http://127.0.0.1:2323/rclone-config/"),
+            args=(53682, redirect_url),
             daemon=True,
         ).start()
 
@@ -380,9 +381,11 @@ def wizard_step():
             import secrets
             task_id = secrets.token_hex(8)
             _bg_tasks[task_id] = {"status": "running"}
+            host_url = request.host_url  # e.g. "http://localhost:2323/"
             t = threading.Thread(
                 target=_run_bg_config,
                 args=(task_id, wiz["name"], wiz["type"], wiz["state"], answer),
+                kwargs={"redirect_base": host_url},
                 daemon=True,
             )
             t.start()

@@ -236,7 +236,7 @@ def create():
 
 # ── Create: Step 2+ — wizard follow-up questions ────────────
 
-def _run_bg_oauth(task_id, name, ptype, config_state, gniza_callback_url):
+def _run_bg_oauth(task_id, name, ptype, config_state, gniza_base_url=""):
     """Run OAuth flow via 'rclone authorize' and feed token back to config create.
 
     Steps:
@@ -265,36 +265,7 @@ def _run_bg_oauth(task_id, name, ptype, config_state, gniza_callback_url):
                     break
 
         if rclone_auth_url:
-            # Fetch rclone's /auth endpoint server-side to get the Google redirect URL.
-            # Use http.client directly (not urllib) to avoid following the redirect.
-            import http.client
-            google_url = ""
-            try:
-                parsed = urllib.parse.urlparse(rclone_auth_url)
-                path = parsed.path
-                if parsed.query:
-                    path += "?" + parsed.query
-                conn = http.client.HTTPConnection(parsed.hostname, parsed.port, timeout=10)
-                conn.request("GET", path)
-                resp = conn.getresponse()
-                google_url = resp.getheader("Location", "")
-                conn.close()
-            except Exception:
-                pass
-
-            if google_url:
-                # Rewrite redirect_uri to point to gniza's OAuth callback proxy
-                parsed_google = urllib.parse.urlparse(google_url)
-                qs = urllib.parse.parse_qs(parsed_google.query, keep_blank_values=True)
-                qs["redirect_uri"] = [gniza_callback_url]
-                new_query = urllib.parse.urlencode(qs, doseq=True)
-                rewritten_url = urllib.parse.urlunparse(
-                    parsed_google._replace(query=new_query)
-                )
-                _bg_tasks[task_id]["auth_url"] = rewritten_url
-            else:
-                # Fallback: show the raw rclone auth URL
-                _bg_tasks[task_id]["auth_url"] = rclone_auth_url
+            _bg_tasks[task_id]["auth_url"] = rclone_auth_url
 
         # Drain remaining stderr
         for _ in proc.stderr:
@@ -316,17 +287,24 @@ def _run_bg_oauth(task_id, name, ptype, config_state, gniza_callback_url):
             })
             return
 
-        # Extract token JSON from stdout
-        token_match = re.search(r'(\{[^{}]*"access_token"[^{}]*\})', stdout)
-        if not token_match:
-            _bg_tasks[task_id].update({
-                "status": "error",
-                "error": "Could not extract token from rclone authorize output",
-                "name": name,
-            })
-            return
-
-        token_json = token_match.group(1)
+        # Extract token JSON from stdout — rclone outputs between arrow markers:
+        #   Paste the following into your remote machine --->
+        #   {"access_token":"...","token_type":"Bearer",...}
+        #   <---End paste
+        paste_match = re.search(r'--->\s*(.+?)\s*<---', stdout, re.DOTALL)
+        if paste_match:
+            token_json = paste_match.group(1).strip()
+        else:
+            # Fallback: grab anything that looks like a JSON object with access_token
+            token_match = re.search(r'(\{.*"access_token".*\})', stdout, re.DOTALL)
+            if not token_match:
+                _bg_tasks[task_id].update({
+                    "status": "error",
+                    "error": "Could not extract token from rclone authorize output",
+                    "name": name,
+                })
+                return
+            token_json = token_match.group(1)
 
         # Now feed the token back to config create via the config_token step
         rc, data, err = _rclone_config_create(
@@ -383,13 +361,9 @@ def wizard_step():
             # Step B: start rclone authorize in background
             task_id = secrets.token_hex(8)
             _bg_tasks[task_id] = {"status": "running"}
-            # Build the gniza callback URL that will proxy to rclone's port 53682
-            gniza_callback = request.host_url.rstrip("/") + url_for(
-                "rclone_config.oauth_callback", task_id=task_id,
-            )
             t = threading.Thread(
                 target=_run_bg_oauth,
-                args=(task_id, wiz["name"], wiz["type"], config_token_state, gniza_callback),
+                args=(task_id, wiz["name"], wiz["type"], config_token_state),
                 daemon=True,
             )
             t.start()

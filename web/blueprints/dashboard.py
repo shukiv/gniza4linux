@@ -134,6 +134,7 @@ def system_stats():
 
     # Memory
     mem = psutil.virtual_memory()
+    swap = psutil.swap_memory()
 
     # Network rates
     net = psutil.net_io_counters()
@@ -157,6 +158,9 @@ def system_stats():
         mem_percent=mem.percent,
         mem_used_gb=mem.used / (1024 ** 3),
         mem_total_gb=mem.total / (1024 ** 3),
+        swap_percent=swap.percent,
+        swap_used_gb=swap.used / (1024 ** 3),
+        swap_total_gb=swap.total / (1024 ** 3),
         net_send_rate=_format_bytes_rate(send_rate),
         net_recv_rate=_format_bytes_rate(recv_rate),
         net_sent_total=_format_bytes(net.bytes_sent),

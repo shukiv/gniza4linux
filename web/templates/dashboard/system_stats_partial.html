@@ -27,6 +27,13 @@
         <div class="stat-desc mt-1 w-full">
             <progress class="progress {{ 'progress-error' if mem_percent > 90 else 'progress-warning' if mem_percent > 70 else 'progress-primary' }} w-full" value="{{ mem_percent|int }}" max="100"></progress>
         </div>
+        {% if swap_total_gb > 0 %}
+        <div class="flex items-baseline justify-between mt-1.5">
+            <span class="text-xs text-base-content/50">Swap {{ "%.0f"|format(swap_percent) }}%</span>
+            <span class="text-xs text-base-content/40 whitespace-nowrap">{{ "%.1f"|format(swap_used_gb) }}/{{ "%.1f"|format(swap_total_gb) }} GB</span>
+        </div>
+        <progress class="progress {{ 'progress-error' if swap_percent > 80 else 'progress-warning' if swap_percent > 50 else 'progress-accent' }} w-full h-1.5" value="{{ swap_percent|int }}" max="100"></progress>
+        {% endif %}
     </div>
 
     <!-- Local Disk -->

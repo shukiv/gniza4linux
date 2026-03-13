@@ -21,14 +21,27 @@
                     <input type="text" name="remote_name" class="input" placeholder="my-remote"
                            required pattern="[A-Za-z0-9_-]+">
                 </fieldset>
-                <fieldset class="fieldset">
+                <fieldset class="fieldset" x-data="{ search: '', open: false, selected: '' }">
                     <label class="fieldset-label">Provider Type</label>
-                    <select name="provider_type" class="select" required id="provider-type-select">
-                        <option value="">-- Select a provider --</option>
-                        {% for p in providers %}
-                        <option value="{{ p.Name }}">{{ p.Name }} — {{ p.Description }}</option>
-                        {% endfor %}
-                    </select>
+                    <input type="hidden" name="provider_type" :value="selected" required id="provider-type-value">
+                    <div class="relative">
+                        <input type="text" class="input w-full" placeholder="Search providers..."
+                               x-model="search" @focus="open = true" @click="open = true"
+                               @keydown.escape="open = false"
+                               autocomplete="off">
+                        <div x-show="open" @click.outside="open = false"
+                             class="absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            {% for p in providers %}
+                            <button type="button"
+                                    x-show="!search || '{{ p.Name }} {{ p.Description }}'.toLowerCase().includes(search.toLowerCase())"
+                                    @click="selected = '{{ p.Name }}'; search = '{{ p.Name }} — {{ p.Description }}'; open = false; $dispatch('provider-selected')"
+                                    class="block w-full text-left px-3 py-2 hover:bg-base-200 text-sm">
+                                <span class="font-medium">{{ p.Name }}</span>
+                                <span class="text-base-content/50"> — {{ p.Description }}</span>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </fieldset>
             </div>
         </div>
@@ -43,20 +56,15 @@
 </form>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var sel = document.getElementById('provider-type-select');
-    if (sel) {
-        sel.addEventListener('change', function() {
-            var val = this.value;
-            if (val) {
-                htmx.ajax('GET', '/rclone-config/fields/' + encodeURIComponent(val), {
-                    target: '#provider-fields',
-                    swap: 'innerHTML'
-                });
-            } else {
-                document.getElementById('provider-fields').textContent = '';
-            }
+document.addEventListener('provider-selected', function() {
+    var val = document.getElementById('provider-type-value').value;
+    if (val) {
+        htmx.ajax('GET', '/rclone-config/fields/' + encodeURIComponent(val), {
+            target: '#provider-fields',
+            swap: 'innerHTML'
         });
+    } else {
+        document.getElementById('provider-fields').textContent = '';
     }
 });
 </script>

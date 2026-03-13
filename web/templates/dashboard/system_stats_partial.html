@@ -27,16 +27,22 @@
         {% endif %}
     </div>
 
-    <!-- Local Disk -->
+    <!-- Disks -->
     <div class="stat px-4 py-3">
-        <div class="stat-title text-xs">Local Disk</div>
+        <div class="stat-title text-xs">{{ 'Disks' if disks|length > 1 else 'Local Disk' }}</div>
+        {% for d in disks %}
+        {% if not loop.first %}<div class="border-t border-base-300 my-1.5"></div>{% endif %}
         <div class="stat-value text-lg flex items-baseline justify-between">
-            <span>{{ "%.0f"|format(disk_percent) }}%</span>
-            <span class="text-xs font-normal text-base-content/50 whitespace-nowrap">{{ "%.0f"|format(disk_used_gb) }}/{{ "%.0f"|format(disk_total_gb) }} GB</span>
+            <span>{{ "%.0f"|format(d.percent) }}%</span>
+            <span class="text-xs font-normal text-base-content/50 whitespace-nowrap">{{ "%.0f"|format(d.used_gb) }}/{{ "%.0f"|format(d.total_gb) }} GB</span>
         </div>
+        {% if disks|length > 1 %}
+        <div class="text-xs text-base-content/40 font-mono">{{ d.mount }}</div>
+        {% endif %}
         <div class="stat-desc mt-1 w-full">
-            <progress class="progress {{ 'progress-error' if disk_percent > 90 else 'progress-warning' if disk_percent > 80 else 'progress-primary' }} w-full" value="{{ disk_percent|int }}" max="100"></progress>
+            <progress class="progress {{ 'progress-error' if d.percent > 90 else 'progress-warning' if d.percent > 80 else 'progress-primary' }} w-full" value="{{ d.percent|int }}" max="100"></progress>
         </div>
+        {% endfor %}
         <div class="flex items-baseline justify-between mt-1.5">
             <span class="text-xs text-base-content/50">IO Wait {{ "%.1f"|format(iowait) }}%</span>
         </div>

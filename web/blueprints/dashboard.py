@@ -148,8 +148,27 @@ def system_stats():
         recv_rate = 0.0
     _prev_net = {"time": now, "bytes_sent": net.bytes_sent, "bytes_recv": net.bytes_recv}
 
-    # Disk usage of backup destination
-    disk = psutil.disk_usage("/")
+    # Disk usage — all real partitions (skip tmpfs, devtmpfs, squashfs, etc.)
+    disks = []
+    seen_devices = set()
+    for part in psutil.disk_partitions(all=False):
+        if part.device in seen_devices:
+            continue
+        if part.fstype in ("tmpfs", "devtmpfs", "squashfs", "overlay", "iso9660"):
+            continue
+        try:
+            usage = psutil.disk_usage(part.mountpoint)
+            if usage.total < 100 * 1024 * 1024:  # skip tiny (<100MB)
+                continue
+            seen_devices.add(part.device)
+            disks.append({
+                "mount": part.mountpoint,
+                "percent": usage.percent,
+                "used_gb": usage.used / (1024 ** 3),
+                "total_gb": usage.total / (1024 ** 3),
+            })
+        except (PermissionError, OSError):
+            continue
 
     return render_template(
         "dashboard/system_stats_partial.html",
@@ -165,7 +184,5 @@ def system_stats():
         net_recv_rate=_format_bytes_rate(recv_rate),
         net_sent_total=_format_bytes(net.bytes_sent),
         net_recv_total=_format_bytes(net.bytes_recv),
-        disk_percent=disk.percent,
-        disk_used_gb=disk.used / (1024 ** 3),
-        disk_total_gb=disk.total / (1024 ** 3),
+        disks=disks,
     )

@@ -17,6 +17,8 @@
     nameValid: {{ 'true' if remote_name else 'false' }},
     nameValue: '{{ remote_name }}',
     requiredError: '',
+    search: '',
+    dropdownOpen: false,
     checkName() {
         this.nameValid = /^[A-Za-z0-9_-]+$/.test(this.nameValue) && this.nameValue.length > 0;
     },
@@ -77,21 +79,21 @@
                                    :class="nameValue ? (nameValid ? 'input-success' : 'input-error') : ''">
                         </fieldset>
 
-                        <fieldset class="fieldset" x-data="{ search: '', open: false }">
+                        <fieldset class="fieldset">
                             <label class="fieldset-label">Select provider</label>
                             <div class="relative">
                                 <input type="text" class="input w-full" placeholder="Type to search providers..."
-                                       :value="open ? search : (providerLabel || search)"
+                                       :value="dropdownOpen ? search : (providerLabel || search)"
                                        @input="search = $event.target.value; providerType = ''; providerLabel = ''"
-                                       @focus="open = true" @click="open = true"
-                                       @keydown.escape="open = false"
+                                       @focus="dropdownOpen = true" @click="dropdownOpen = true"
+                                       @keydown.escape="dropdownOpen = false"
                                        autocomplete="off">
-                                <div x-show="open" @click.outside="open = false"
+                                <div x-show="dropdownOpen" @click.outside="dropdownOpen = false"
                                      class="absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-72 overflow-y-auto">
                                     {% for p in providers %}
                                     <button type="button"
                                             x-show="!search || '{{ p.Name }} {{ p.Description }}'.toLowerCase().includes(search.toLowerCase())"
-                                            @click="providerType = '{{ p.Name }}'; providerLabel = '{{ p.Description }}'; search = ''; open = false;
+                                            @click="providerType = '{{ p.Name }}'; providerLabel = '{{ p.Description }}'; search = ''; dropdownOpen = false;
                                                     htmx.ajax('GET', '/rclone-config/fields/{{ p.Name }}', {target: '#step2-fields', swap: 'innerHTML'});
                                                     htmx.ajax('GET', '/rclone-config/fields/{{ p.Name }}?advanced=1', {target: '#step3-fields', swap: 'innerHTML'})"
                                             class="block w-full text-left px-3 py-2 hover:bg-primary hover:text-primary-content text-sm transition-colors">

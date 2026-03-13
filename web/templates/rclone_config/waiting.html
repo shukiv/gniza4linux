@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}GNIZA - Authenticating {{ name }}{% endblock %}
+{% block page_title %}Authenticating: {{ name }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('rclone_config.index') }}" class="btn btn-ghost btn-sm">&larr; Back to Rclone Remotes</a>
+</div>
+
+<!-- Step indicator -->
+<div class="flex items-center justify-center mb-8">
+    <div class="flex flex-col items-center w-40">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 bg-success text-success-content border-success">1</div>
+        <span class="text-xs mt-1 text-center text-base-content/50">Remote Config</span>
+    </div>
+    <div class="h-0.5 w-24 -mt-4 bg-success"></div>
+    <div class="flex flex-col items-center w-40">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 bg-success text-success-content border-success">2</div>
+        <span class="text-xs mt-1 text-center text-base-content/50">Set up Drive</span>
+    </div>
+    <div class="h-0.5 w-24 -mt-4 bg-primary"></div>
+    <div class="flex flex-col items-center w-40">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 bg-primary text-primary-content border-primary animate-pulse">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <span class="text-xs mt-1 text-center font-medium text-primary">Authentication</span>
+    </div>
+</div>
+
+<div class="card bg-base-200 shadow max-w-lg mx-auto" x-data="{
+    status: 'running',
+    error: '',
+    poll() {
+        fetch('/rclone-config/wizard/poll/{{ task_id }}')
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'running') {
+                    setTimeout(() => this.poll(), 2000);
+                } else if (data.status === 'done') {
+                    this.status = 'done';
+                    window.location.href = data.redirect;
+                } else {
+                    this.status = 'error';
+                    this.error = data.error || 'Authentication failed';
+                }
+            })
+            .catch(() => {
+                setTimeout(() => this.poll(), 3000);
+            });
+    }
+}" x-init="poll()">
+    <div class="card-body text-center">
+        <!-- Running state -->
+        <div x-show="status === 'running'">
+            <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
+            <h2 class="text-lg font-semibold mb-2">Waiting for authentication...</h2>
+            <p class="text-base-content/60 text-sm mb-4">
+                A browser window should have opened for you to authenticate with <strong>{{ provider_type }}</strong>.
+            </p>
+            <p class="text-base-content/50 text-xs">
+                Complete the authentication in the browser window, then this page will automatically redirect you back.
+            </p>
+        </div>
+
+        <!-- Done state -->
+        <div x-show="status === 'done'">
+            <div class="text-success text-5xl mb-4">
+                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h2 class="text-lg font-semibold mb-2">Authentication successful!</h2>
+            <p class="text-base-content/60 text-sm">Redirecting...</p>
+        </div>
+
+        <!-- Error state -->
+        <div x-show="status === 'error'">
+            <div class="text-error text-5xl mb-4">
+                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </div>
+            <h2 class="text-lg font-semibold mb-2">Authentication failed</h2>
+            <p class="text-base-content/60 text-sm mb-4" x-text="error"></p>
+            <a href="{{ url_for('rclone_config.index') }}" class="btn btn-primary btn-sm">Back to Rclone Remotes</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

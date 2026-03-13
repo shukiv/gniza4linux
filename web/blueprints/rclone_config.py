@@ -1,12 +1,17 @@
 import json
 import re
 import subprocess
+import threading
 
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash, session,
+    jsonify,
 )
 
 from web.app import login_required
+
+# Background task tracking for OAuth flows
+_bg_tasks = {}  # task_id -> {"status": "running"|"done"|"error", "result": ..., "error": ...}
 
 bp = Blueprint("rclone_config", __name__, url_prefix="/rclone-config")
 
@@ -228,6 +233,17 @@ def create():
 
 # ── Create: Step 2+ — wizard follow-up questions ────────────
 
+def _run_bg_config(task_id, name, ptype, state, result_val):
+    """Run rclone config create in background thread (for OAuth flows)."""
+    rc, data, err = _rclone_config_create(name, ptype, state=state, result_val=result_val)
+    if data and data.get("State") and data.get("Option"):
+        _bg_tasks[task_id] = {"status": "more_steps", "data": data}
+    elif rc == 0:
+        _bg_tasks[task_id] = {"status": "done", "name": name}
+    else:
+        _bg_tasks[task_id] = {"status": "error", "error": err, "name": name}
+
+
 @bp.route("/wizard", methods=["GET", "POST"])
 @login_required
 def wizard_step():
@@ -238,13 +254,35 @@ def wizard_step():
 
     if request.method == "POST":
         answer = request.form.get("answer", "")
+
+        # For OAuth auto-config steps, run in background and show waiting page
+        option = wiz.get("option", {})
+        is_oauth_step = option.get("Name") in ("config_is_local", "config_token")
+
+        if is_oauth_step and answer.lower() in ("true", "yes"):
+            import secrets
+            task_id = secrets.token_hex(8)
+            _bg_tasks[task_id] = {"status": "running"}
+            t = threading.Thread(
+                target=_run_bg_config,
+                args=(task_id, wiz["name"], wiz["type"], wiz["state"], answer),
+                daemon=True,
+            )
+            t.start()
+            return render_template(
+                "rclone_config/waiting.html",
+                name=wiz["name"],
+                provider_type=wiz["type"],
+                task_id=task_id,
+            )
+
+        # Non-OAuth steps: run synchronously
         rc, data, err = _rclone_config_create(
             wiz["name"], wiz["type"],
             state=wiz["state"], result_val=answer,
         )
 
         if data and data.get("State") and data.get("Option"):
-            # More steps needed
             session["rclone_wizard"] = {
                 "name": wiz["name"],
                 "type": wiz["type"],
@@ -254,13 +292,40 @@ def wizard_step():
             }
             return redirect(url_for("rclone_config.wizard_step"))
 
-        # Done
         session.pop("rclone_wizard", None)
         if rc == 0:
             flash(f"Remote '{wiz['name']}' created successfully.", "success")
         else:
             flash(f"Failed to create remote: {err}", "error")
         return redirect(url_for("rclone_config.index"))
+
+
+@bp.route("/wizard/poll/<task_id>")
+@login_required
+def wizard_poll(task_id):
+    """Poll background OAuth task status."""
+    task = _bg_tasks.get(task_id)
+    if not task:
+        return jsonify({"status": "error", "error": "Task not found"})
+    if task["status"] == "running":
+        return jsonify({"status": "running"})
+    # Clean up completed task
+    _bg_tasks.pop(task_id, None)
+    if task["status"] == "done":
+        session.pop("rclone_wizard", None)
+        return jsonify({"status": "done", "redirect": url_for("rclone_config.index")})
+    if task["status"] == "more_steps":
+        data = task["data"]
+        wiz = session.get("rclone_wizard", {})
+        session["rclone_wizard"] = {
+            "name": wiz.get("name", ""),
+            "type": wiz.get("type", ""),
+            "state": data["State"],
+            "option": data["Option"],
+            "step": wiz.get("step", 2) + 1,
+        }
+        return jsonify({"status": "done", "redirect": url_for("rclone_config.wizard_step")})
+    return jsonify({"status": "error", "error": task.get("error", "Unknown error")})
 
     # GET — render the current question
     option = wiz["option"]

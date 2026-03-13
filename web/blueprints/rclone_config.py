@@ -80,7 +80,15 @@ def _rclone_config_create(name, ptype, params=None, state="", result_val=""):
                 return proc.returncode, json.loads(proc.stdout), proc.stderr.strip()
             except json.JSONDecodeError:
                 return proc.returncode, None, proc.stderr.strip()
-        return proc.returncode, None, proc.stderr.strip() or proc.stdout.strip()
+        # Extract meaningful error — skip usage/help text
+        err = proc.stderr.strip() or proc.stdout.strip()
+        err_lines = [l for l in err.splitlines()
+                     if l.strip() and not l.startswith("Usage:")
+                     and not l.startswith("Flags:")
+                     and not l.startswith("  --")
+                     and not l.startswith("Use \"rclone")]
+        err = err_lines[0] if err_lines else err.split("\n")[0]
+        return proc.returncode, None, err
     except subprocess.TimeoutExpired:
         return 1, None, "Command timed out"
     except OSError as e:

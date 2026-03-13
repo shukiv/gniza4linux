@@ -43,7 +43,7 @@ def _test_remote(remote):
             result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
                 # Restricted shell (e.g. Hetzner Storage Box) — try sftp fallback
-                sftp_cmd = ["-o", f"Port={port}",
+                sftp_cmd = ["-o", f"Port={remote.port}",
                             "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
                 if key:
                     sftp_cmd += ["-o", f"IdentityFile={key}", "-o", "BatchMode=yes"]
@@ -51,7 +51,7 @@ def _test_remote(remote):
                     sftp_cmd = ["sshpass", "-e", "sftp"] + sftp_cmd
                 else:
                     sftp_cmd = ["sftp"] + sftp_cmd
-                sftp_cmd.append(f"{user}@{host}")
+                sftp_cmd.append(f"{remote.user}@{remote.host}")
                 sftp_result = subprocess.run(
                     sftp_cmd, input="bye\n", capture_output=True, text=True, timeout=15, env=env,
                 )

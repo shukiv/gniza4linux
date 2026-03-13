@@ -44,9 +44,13 @@
                     setTimeout(() => this.poll(), 2000);
                 } else if (data.status === 'done') {
                     this.status = 'done';
-                    if (this.authWin && !this.authWin.closed) {
-                        this.authWin.close();
-                    }
+                    // Try to close the auth tab
+                    try {
+                        if (this.authWin && !this.authWin.closed) this.authWin.close();
+                        // Also try by name
+                        let w = window.open('', 'gniza_oauth');
+                        if (w) w.close();
+                    } catch(e) {}
                     window.location.href = data.redirect;
                 } else {
                     this.status = 'error';
@@ -58,7 +62,7 @@
             });
     },
     openAuth() {
-        this.authWin = window.open(this.authUrl, '_blank');
+        this.authWin = window.open(this.authUrl, 'gniza_oauth');
     }
 }" x-init="poll()">
     <div class="card-body text-center">
@@ -72,7 +76,7 @@
                 <div>
                     <p class="text-base-content/60 text-sm mb-3">
                         Click the button below to authenticate with <strong>{{ provider_type }}</strong>.
-                        A new tab will open — sign in there, then this page will redirect automatically.
+                        Sign in there, then come back — this page will redirect automatically.
                     </p>
                     <button @click="openAuth()" class="btn btn-primary btn-sm mb-4">
                         Open Authentication Page

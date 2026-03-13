@@ -9,7 +9,33 @@
 </div>
 
 <form method="POST" action="{{ url_for('remotes.save') }}"
-      x-data="{ remoteType: '{{ remote.type }}', authMethod: '{{ remote.auth_method or 'key' }}', s3Provider: '{{ remote.s3_provider or 'AWS' }}' }">
+      x-data="{
+          remoteType: '{{ remote.type }}', authMethod: '{{ remote.auth_method or 'key' }}', s3Provider: '{{ remote.s3_provider or 'AWS' }}',
+          sshKeys: [], sshKeysLoading: false, sshKeyGenerating: false,
+          loadSshKeys() {
+              this.sshKeysLoading = true;
+              fetch('{{ url_for('wizard.ssh_keys') }}')
+                  .then(r => r.json())
+                  .then(data => { this.sshKeys = data.keys || []; this.sshKeysLoading = false; })
+                  .catch(() => { this.sshKeysLoading = false; });
+          },
+          generateSshKey() {
+              this.sshKeyGenerating = true;
+              fetch('{{ url_for('wizard.ssh_keygen') }}', { method: 'POST' })
+                  .then(r => r.json())
+                  .then(data => {
+                      this.sshKeyGenerating = false;
+                      if (data.ok) { this.loadSshKeys(); }
+                      else { alert(data.error || 'Key generation failed'); }
+                  })
+                  .catch(() => { this.sshKeyGenerating = false; });
+          },
+          copyKey(text, btn) {
+              navigator.clipboard.writeText(text);
+              btn.textContent = 'Copied!';
+              setTimeout(() => btn.textContent = 'Copy', 1500);
+          }
+      }">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% if not is_new %}
     <input type="hidden" name="original_name" value="{{ remote.name }}">
@@ -45,7 +71,110 @@
     </div>
 
     <!-- SSH fields -->
-    <div x-show="remoteType === 'ssh'" x-cloak>
+    <div x-show="remoteType === 'ssh'" x-cloak x-init="$watch('remoteType', v => { if (v === 'ssh' && sshKeys.length === 0) loadSshKeys(); })">
+
+        <!-- Prepare Destination Server -->
+        <div class="collapse collapse-arrow bg-base-200 shadow mb-6">
+            <input type="checkbox" />
+            <div class="collapse-title font-semibold text-sm">
+                Prepare Destination Server
+                <span class="text-base-content/50 font-normal text-xs ml-2">SSH keys, packages, user setup, and sudoers configuration</span>
+            </div>
+            <div class="collapse-content space-y-5 pt-2">
+
+                <!-- 1. SSH Key -->
+                <div>
+                    <h3 class="font-semibold text-sm mb-2">1. Your SSH Key</h3>
+                    <p class="text-base-content/60 text-sm mb-3">Copy your public key to set up SSH access on the destination server.</p>
+                    <div x-show="sshKeysLoading" class="text-base-content/40 text-sm">Loading keys...</div>
+                    <template x-for="key in sshKeys" :key="key.name">
+                        <div class="mb-2">
+                            <div class="text-xs text-base-content/50 mb-1" x-text="key.name"></div>
+                            <div class="relative">
+                                <pre class="bg-base-100 rounded p-3 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all select-all" x-text="key.content"></pre>
+                                <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
+                                        @click="copyKey(key.content, $el)">Copy</button>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="!sshKeysLoading && sshKeys.length === 0" class="text-warning text-sm mb-2">No SSH keys found.</div>
+                    <button type="button" class="btn btn-outline btn-xs"
+                            @click="generateSshKey()" :disabled="sshKeyGenerating">
+                        <span x-show="!sshKeyGenerating">Generate New Key (Ed25519)</span>
+                        <span x-show="sshKeyGenerating" class="loading loading-spinner loading-xs"></span>
+                    </button>
+                </div>
+
+                <div class="divider my-1"></div>
+
+                <!-- 2. Install packages -->
+                <div>
+                    <h3 class="font-semibold text-sm mb-2">2. Install Required Packages</h3>
+                    <p class="text-base-content/60 text-sm mb-2">On the <strong>destination server</strong>:</p>
+                    <div class="relative">
+                        <pre class="bg-base-100 rounded p-3 text-sm font-mono overflow-x-auto select-all">apt-get install ssh sudo rsync</pre>
+                        <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
+                                @click="copyKey('apt-get install ssh sudo rsync', $el)">Copy</button>
+                    </div>
+                </div>
+
+                <div class="divider my-1"></div>
+
+                <!-- 3. Create user -->
+                <div>
+                    <h3 class="font-semibold text-sm mb-2">3. Create a Backup User</h3>
+                    <p class="text-base-content/60 text-sm mb-2">Create a dedicated user for backups:</p>
+                    <div class="relative">
+                        <pre class="bg-base-100 rounded p-3 text-sm font-mono overflow-x-auto select-all">adduser --disabled-password --gecos "GNIZA backup user" gniza</pre>
+                        <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
+                                @click="copyKey('adduser --disabled-password --gecos &quot;GNIZA backup user&quot; gniza', $el)">Copy</button>
+                    </div>
+                </div>
+
+                <div class="divider my-1"></div>
+
+                <!-- 4. Sudoers -->
+                <div>
+                    <h3 class="font-semibold text-sm mb-2">4. Configure Sudoers</h3>
+                    <p class="text-base-content/60 text-sm mb-2">Allow the backup user to run rsync, mkdir, and chown with elevated privileges:</p>
+                    <div class="relative mb-2">
+                        <pre class="bg-base-100 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown" >> /etc/sudoers</pre>
+                        <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
+                                @click="copyKey('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown&quot; >> /etc/sudoers', $el)">Copy</button>
+                    </div>
+                    <p class="text-base-content/40 text-xs">With MySQL:</p>
+                    <div class="relative mt-1 mb-2">
+                        <pre class="bg-base-100 rounded p-3 text-xs font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/mysql" >> /etc/sudoers</pre>
+                        <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
+                                @click="copyKey('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/mysql&quot; >> /etc/sudoers', $el)">Copy</button>
+                    </div>
+                    <p class="text-base-content/40 text-xs">With PostgreSQL:</p>
+                    <div class="relative mt-1 mb-2">
+                        <pre class="bg-base-100 rounded p-3 text-xs font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql" >> /etc/sudoers</pre>
+                        <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
+                                @click="copyKey('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql&quot; >> /etc/sudoers', $el)">Copy</button>
+                    </div>
+                </div>
+
+                <div class="divider my-1"></div>
+
+                <!-- 5. SSH authorized_keys -->
+                <div>
+                    <h3 class="font-semibold text-sm mb-2">5. Set Up SSH Access</h3>
+                    <p class="text-base-content/60 text-sm mb-2">On the destination server, set up SSH authorized keys for the backup user:</p>
+                    <div class="relative">
+                        <pre class="bg-base-100 rounded p-3 text-sm font-mono overflow-x-auto whitespace-pre select-all">mkdir -p /home/gniza/.ssh
+chown gniza:gniza /home/gniza/.ssh
+chmod 700 /home/gniza/.ssh
+echo "<span class="text-primary" x-text="sshKeys.length > 0 ? sshKeys[0].content : '&lt;your-ssh-key&gt;'"></span>" > /home/gniza/.ssh/authorized_keys
+chown gniza:gniza /home/gniza/.ssh/authorized_keys
+chmod 600 /home/gniza/.ssh/authorized_keys</pre>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
         <div class="card bg-base-200 shadow mb-6">
             <div class="card-body">
                 <h2 class="card-title text-base mb-4">SSH Connection</h2>

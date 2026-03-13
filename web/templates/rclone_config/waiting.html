@@ -44,13 +44,8 @@
                     setTimeout(() => this.poll(), 2000);
                 } else if (data.status === 'done') {
                     this.status = 'done';
-                    // Try to close the auth tab
-                    try {
-                        if (this.authWin && !this.authWin.closed) this.authWin.close();
-                        // Also try by name
-                        let w = window.open('', 'gniza_oauth');
-                        if (w) w.close();
-                    } catch(e) {}
+                    // Close the auth popup if we opened one
+                    try { if (this.authWin && !this.authWin.closed) this.authWin.close(); } catch(e) {}
                     window.location.href = data.redirect;
                 } else {
                     this.status = 'error';
@@ -62,7 +57,15 @@
             });
     },
     openAuth() {
-        this.authWin = window.open(this.authUrl, 'gniza_oauth');
+        // Open as a sized popup — browsers allow window.close() on JS-opened popups
+        const w = 500, h = 700;
+        const left = (screen.width - w) / 2;
+        const top = (screen.height - h) / 2;
+        this.authWin = window.open(
+            this.authUrl,
+            'gniza_oauth',
+            'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top + ',menubar=no,toolbar=no,location=yes,status=no'
+        );
     }
 }" x-init="poll()">
     <div class="card-body text-center">

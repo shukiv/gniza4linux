@@ -23,6 +23,7 @@
           addFolder(path) { path = path.trim(); if (path && !this.folderList.includes(path)) this.folderList.push(path); },
           removeFolder(i) { this.folderList.splice(i, 1); }
       }">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% if not is_new %}
     <input type="hidden" name="original_name" value="{{ target.name }}">
     {% endif %}

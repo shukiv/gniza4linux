@@ -3,6 +3,7 @@ import shlex
 import subprocess
 
 from flask import Blueprint, request, render_template
+from markupsafe import escape
 
 from web.app import login_required
 from web.ssh_utils import ssh_cmd
@@ -138,7 +139,7 @@ def browse_ssh():
 
     dirs, err = _ssh_list_dirs(host, path, port, user, key, password, show_hidden=show_hidden)
     if err:
-        return f'<div class="alert alert-error text-sm">{err}</div>'
+        return f'<div class="alert alert-error text-sm">{escape(err)}</div>'
 
     return render_template("components/folder_browser.html",
                            current_path=path, target=target, dirs=dirs,

@@ -156,7 +156,7 @@ fi
 if command -v python3 &>/dev/null; then
     _pip_quiet="--quiet"
     $DEBUG && _pip_quiet=""
-    _pip_pkgs=("textual>=0.40" textual-serve flask waitress psutil)
+    _pip_pkgs=("textual>=0.40" textual-serve flask flask-wtf waitress psutil)
     _venv_dir="$INSTALL_DIR/venv"
 
     # Ensure python3-venv is available (--help succeeds even without ensurepip,

@@ -21,6 +21,7 @@
             </div>
             <form method="POST" x-data="{ locked: {{ lockout_remaining|default(0) }}, timer: null }"
                   x-init="if (locked > 0) { timer = setInterval(() => { locked--; if (locked <= 0) { clearInterval(timer); locked = 0; } }, 1000); }">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <fieldset class="fieldset">
                     <label class="fieldset-label" for="token">Password</label>
                     <input type="password" name="token" id="token" placeholder="Enter your password"

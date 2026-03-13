@@ -5,6 +5,7 @@
 
 {% block content %}
 <form method="POST" action="{{ url_for('settings.save') }}" x-data="{ showApiKey: false }">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <div class="tabs tabs-lift">
 
@@ -338,13 +339,13 @@
     </div>
 </form>
 
-<form id="form-test-email" method="POST" action="{{ url_for('settings.test_notification', channel='email') }}" class="hidden"></form>
-<form id="form-test-telegram" method="POST" action="{{ url_for('settings.test_notification', channel='telegram') }}" class="hidden"></form>
-<form id="form-test-webhook" method="POST" action="{{ url_for('settings.test_notification', channel='webhook') }}" class="hidden"></form>
-<form id="form-test-ntfy" method="POST" action="{{ url_for('settings.test_notification', channel='ntfy') }}" class="hidden"></form>
-<form id="form-test-healthcheck" method="POST" action="{{ url_for('settings.test_notification', channel='healthcheck') }}" class="hidden"></form>
-<form id="form-check-update" method="POST" action="{{ url_for('settings.check_update') }}" class="hidden"></form>
-<form id="form-update-now" method="POST" action="{{ url_for('settings.apply_update') }}" class="hidden"></form>
+<form id="form-test-email" method="POST" action="{{ url_for('settings.test_notification', channel='email') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+<form id="form-test-telegram" method="POST" action="{{ url_for('settings.test_notification', channel='telegram') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+<form id="form-test-webhook" method="POST" action="{{ url_for('settings.test_notification', channel='webhook') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+<form id="form-test-ntfy" method="POST" action="{{ url_for('settings.test_notification', channel='ntfy') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+<form id="form-test-healthcheck" method="POST" action="{{ url_for('settings.test_notification', channel='healthcheck') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+<form id="form-check-update" method="POST" action="{{ url_for('settings.check_update') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+<form id="form-update-now" method="POST" action="{{ url_for('settings.apply_update') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
 <script>
 document.getElementById('btn-check-update').addEventListener('click', function() {
     document.getElementById('form-check-update').submit();

@@ -60,6 +60,7 @@
                         <td class="text-sm font-mono text-base-content/60">{{ s._next_run }}</td>
                         <td>
                             <form method="POST" action="{{ url_for('schedules.toggle', name=s.name) }}" class="inline flex items-center gap-2">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="checkbox" class="toggle toggle-success toggle-sm" {{ 'checked' if s.active == 'yes' else '' }}
                                        onchange="this.form.submit()">
                                 <span class="text-sm {{ 'text-success' if s.active == 'yes' else 'text-base-content/50' }}">{{ 'Enabled' if s.active == 'yes' else 'Disabled' }}</span>
@@ -109,6 +110,7 @@
         <p class="py-4">Are you sure you want to delete schedule <span class="font-mono font-bold" x-text="deleteName"></span>?</p>
         <div class="modal-action">
             <form :action="deleteUrl" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-error">Delete</button>
             </form>
             <button class="btn" @click="showModal = false">Cancel</button>

@@ -24,9 +24,28 @@
         });
       })();
     </script>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="{{ url_for('static', filename='vendor/js/htmx.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/js/sse.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/js/idiomorph-ext.min.js') }}"></script>
+    <script>
+      // Inject CSRF token into all HTMX requests and fetch() POST calls
+      (function() {
+        var token = document.querySelector('meta[name="csrf-token"]').content;
+        document.addEventListener('htmx:configRequest', function(e) {
+          e.detail.headers['X-CSRFToken'] = token;
+        });
+        var _fetch = window.fetch;
+        window.fetch = function(url, opts) {
+          opts = opts || {};
+          if (opts.method && opts.method.toUpperCase() !== 'GET') {
+            opts.headers = opts.headers || {};
+            if (!opts.headers['X-CSRFToken']) opts.headers['X-CSRFToken'] = token;
+          }
+          return _fetch.call(this, url, opts);
+        };
+      })();
+    </script>
     <script>
       document.addEventListener('alpine:init', () => {
         Alpine.store('help', {

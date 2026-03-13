@@ -10,6 +10,7 @@
 
 <form method="POST" action="{{ url_for('remotes.save') }}"
       x-data="{ remoteType: '{{ remote.type }}', authMethod: '{{ remote.auth_method or 'key' }}', s3Provider: '{{ remote.s3_provider or 'AWS' }}' }">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% if not is_new %}
     <input type="hidden" name="original_name" value="{{ remote.name }}">
     {% endif %}

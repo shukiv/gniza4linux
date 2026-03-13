@@ -80,6 +80,7 @@
                         </button>
                         {% if job.status in ("running", "queued") %}
                         <form method="POST" action="{{ url_for('jobs.kill', job_id=job.id) }}" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-error btn-sm" onclick="return confirm('Kill this job?')">Kill</button>
                         </form>
                         {% endif %}

@@ -1,3 +1,4 @@
+import logging
 import secrets
 import time
 from collections import defaultdict
@@ -10,6 +11,7 @@ from flask import (
 from tui.config import CONFIG_DIR, parse_conf
 
 bp = Blueprint("auth", __name__)
+audit = logging.getLogger("gniza.audit")
 
 # Brute-force protection: track failed attempts per IP
 _failed_attempts = defaultdict(list)  # ip -> [timestamp, ...]
@@ -77,6 +79,7 @@ def login():
 
     if request.method == "POST":
         if locked:
+            audit.warning("Login BLOCKED (lockout) from %s", ip)
             flash(f"Too many failed attempts. Try again in {remaining} seconds.", "error")
             return render_template("auth/login.html", lockout_remaining=remaining)
 
@@ -87,9 +90,11 @@ def login():
             session.clear()
             session["logged_in"] = True
             session.permanent = True
+            audit.info("Login SUCCESS from %s", ip)
             return redirect(url_for("dashboard.index"))
 
         _record_failure(ip)
+        audit.warning("Login FAILED from %s", ip)
         # Check if this failure triggered a lockout
         locked, remaining = _is_locked(ip)
         if locked:
@@ -105,5 +110,6 @@ def login():
 
 @bp.route("/logout")
 def logout():
+    audit.info("Logout from %s", request.remote_addr or "unknown")
     session.clear()
     return redirect(url_for("auth.login"))

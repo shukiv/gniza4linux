@@ -199,6 +199,7 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
     <!-- ==================== Step 1: Destination ==================== -->
     <div x-show="step === 1" x-cloak>
         <form method="POST" action="{{ url_for('wizard.save_destination') }}" id="wiz-dest-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="card bg-base-200 shadow mb-6">
                 <div class="card-body">
@@ -430,6 +431,7 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
     <!-- ==================== Step 2: Source ==================== -->
     <div x-show="step === 2" x-cloak>
         <form method="POST" action="{{ url_for('wizard.save_source') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="card bg-base-200 shadow mb-6">
                 <div class="card-body">
@@ -808,6 +810,7 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                 $el.submit();
               "
               id="wiz-schedule-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="card bg-base-200 shadow mb-6">
                 <div class="card-body">
@@ -986,6 +989,7 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                     <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost btn-lg">Go to Dashboard</a>
                     {% if targets and remotes %}
                     <form method="POST" action="{{ url_for('wizard.run_backup') }}" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-primary btn-lg">Run First Backup</button>
                     </form>
                     {% endif %}

@@ -16,6 +16,7 @@
             <p class="text-base-content/60 mb-4">Select a source, destination, and snapshot to restore. The restore job will run in the background.</p>
 
             <form method="POST" action="{{ url_for('restore.run') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <fieldset class="fieldset mb-4">
                     <label class="fieldset-label">Source</label>
                     <select name="target" class="select" required

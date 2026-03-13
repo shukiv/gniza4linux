@@ -8,8 +8,11 @@ from flask import (
     Flask, request, redirect, url_for,
     session, jsonify,
 )
+from flask_wtf.csrf import CSRFProtect
 
 from tui.config import CONFIG_DIR, parse_conf
+
+csrf = CSRFProtect()
 
 
 def login_required(f):
@@ -46,6 +49,28 @@ def create_app():
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24 hours
+
+    # CSRF protection
+    csrf.init_app(app)
+
+    # Security headers
+    @app.after_request
+    def set_security_headers(response):
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data:; "
+            "font-src 'self'; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none'; "
+            "form-action 'self'"
+        )
+        return response
 
     # Navigation items for template context
     nav_items = [

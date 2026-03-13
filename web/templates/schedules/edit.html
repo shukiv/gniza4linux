@@ -15,6 +15,7 @@
         if (document.querySelectorAll('input[name=remotes]:checked').length === 0) { alert('Select at least one destination.'); return; }
         $el.submit();
       ">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {% if not is_new %}
     <input type="hidden" name="original_name" value="{{ schedule.name }}">
     {% endif %}

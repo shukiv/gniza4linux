@@ -1,7 +1,23 @@
-from tui.config import CONFIG_DIR, parse_conf
+from logging.handlers import RotatingFileHandler
+
+from tui.config import CONFIG_DIR, LOG_DIR, parse_conf
 from web.app import create_app
 import sys
 import logging
+
+
+def _setup_audit_log():
+    """Configure audit logger to write to LOG_DIR/audit.log."""
+    audit = logging.getLogger("gniza.audit")
+    audit.setLevel(logging.INFO)
+    if not audit.handlers:
+        log_file = LOG_DIR / "audit.log"
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        handler = RotatingFileHandler(
+            str(log_file), maxBytes=5 * 1024 * 1024, backupCount=3
+        )
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+        audit.addHandler(handler)
 
 
 def main():
@@ -15,6 +31,7 @@ def main():
         elif arg.startswith("--host="):
             host = arg.split("=", 1)[1]
 
+    _setup_audit_log()
     app = create_app()
 
     try:

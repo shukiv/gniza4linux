@@ -200,6 +200,7 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
         <p class="py-4">Are you sure you want to delete destination <span class="font-mono font-bold" x-text="deleteName"></span>?</p>
         <div class="modal-action">
             <form :action="deleteUrl" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-error">Delete</button>
             </form>
             <button class="btn" @click="showModal = false">Cancel</button>

@@ -10,6 +10,7 @@
             <h2 class="card-title">Default Retention Count</h2>
             <p class="text-base-content/60 mb-4">Number of snapshots to keep by default.</p>
             <form method="POST" action="{{ url_for('retention.save_default') }}" class="flex gap-2 items-end">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <fieldset class="fieldset">
                     <input type="number" name="retention_count" value="{{ retention_count }}" class="input w-32" min="1" required>
                 </fieldset>
@@ -24,6 +25,7 @@
             <p class="text-base-content/60 mb-4">Remove old snapshots based on retention policies.</p>
 
             <form method="POST" action="{{ url_for('retention.run') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <fieldset class="fieldset mb-6">
                     <label class="fieldset-label">Source (optional)</label>
                     <select name="target" class="select">

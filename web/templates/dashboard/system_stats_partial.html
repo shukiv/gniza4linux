@@ -1,59 +1,57 @@
 <div class="stats stats-vertical md:stats-horizontal shadow w-full">
     <!-- CPU -->
-    <div class="stat">
-        <div class="stat-title">CPU</div>
+    <div class="stat px-4 py-3">
+        <div class="stat-title text-xs">CPU</div>
         <div class="stat-value text-lg">{{ "%.0f"|format(cpu_percent) }}%</div>
-        <div class="stat-desc mt-1">
+        <div class="stat-desc mt-1 w-full">
             <progress class="progress {{ 'progress-error' if cpu_percent > 90 else 'progress-warning' if cpu_percent > 70 else 'progress-primary' }} w-full" value="{{ cpu_percent|int }}" max="100"></progress>
         </div>
     </div>
 
     <!-- IO Wait -->
-    <div class="stat">
-        <div class="stat-title">IO Wait</div>
+    <div class="stat px-4 py-3">
+        <div class="stat-title text-xs">IO Wait</div>
         <div class="stat-value text-lg">{{ "%.1f"|format(iowait) }}%</div>
-        <div class="stat-desc mt-1">
+        <div class="stat-desc mt-1 w-full">
             <progress class="progress {{ 'progress-error' if iowait > 20 else 'progress-warning' if iowait > 5 else 'progress-success' }} w-full" value="{{ iowait|int }}" max="100"></progress>
         </div>
     </div>
 
     <!-- Memory -->
-    <div class="stat">
-        <div class="stat-title">Memory</div>
+    <div class="stat px-4 py-3">
+        <div class="stat-title text-xs">Memory</div>
         <div class="stat-value text-lg">{{ "%.0f"|format(mem_percent) }}%</div>
-        <div class="stat-desc mt-1">
+        <div class="stat-desc mt-1 w-full">
             <progress class="progress {{ 'progress-error' if mem_percent > 90 else 'progress-warning' if mem_percent > 70 else 'progress-primary' }} w-full" value="{{ mem_percent|int }}" max="100"></progress>
-            <span class="text-xs">{{ "%.1f"|format(mem_used_gb) }} / {{ "%.1f"|format(mem_total_gb) }} GB</span>
+            <div class="text-xs whitespace-nowrap">{{ "%.1f"|format(mem_used_gb) }}/{{ "%.1f"|format(mem_total_gb) }} GB</div>
         </div>
     </div>
 
     <!-- Network -->
-    <div class="stat">
-        <div class="stat-title">Network</div>
-        <div class="stat-value text-lg flex items-center gap-2">
+    <div class="stat px-4 py-3">
+        <div class="stat-title text-xs">Network</div>
+        <div class="stat-value text-base">
             <div class="flex flex-col gap-0.5">
-                <span class="flex items-center gap-1.5 text-sm">
-                    <svg class="w-3.5 h-3.5 text-success shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
-                    <span class="font-mono">{{ net_recv_rate }}</span>
+                <span class="flex items-center gap-1">
+                    <svg class="w-3 h-3 text-success shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
+                    <span class="font-mono whitespace-nowrap">{{ net_recv_rate }}</span>
                 </span>
-                <span class="flex items-center gap-1.5 text-sm">
-                    <svg class="w-3.5 h-3.5 text-info shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-5-5m5 5l5-5"/></svg>
-                    <span class="font-mono">{{ net_send_rate }}</span>
+                <span class="flex items-center gap-1">
+                    <svg class="w-3 h-3 text-info shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-5-5m5 5l5-5"/></svg>
+                    <span class="font-mono whitespace-nowrap">{{ net_send_rate }}</span>
                 </span>
             </div>
         </div>
-        <div class="stat-desc">
-            <span class="text-xs">in / out</span>
-        </div>
+        <div class="stat-desc text-xs">in / out</div>
     </div>
 
     <!-- Local Disk -->
-    <div class="stat">
-        <div class="stat-title">Local Disk</div>
+    <div class="stat px-4 py-3">
+        <div class="stat-title text-xs">Local Disk</div>
         <div class="stat-value text-lg">{{ "%.0f"|format(disk_percent) }}%</div>
-        <div class="stat-desc mt-1">
+        <div class="stat-desc mt-1 w-full">
             <progress class="progress {{ 'progress-error' if disk_percent > 90 else 'progress-warning' if disk_percent > 80 else 'progress-primary' }} w-full" value="{{ disk_percent|int }}" max="100"></progress>
-            <span class="text-xs">{{ "%.0f"|format(disk_used_gb) }} / {{ "%.0f"|format(disk_total_gb) }} GB</span>
+            <div class="text-xs whitespace-nowrap">{{ "%.0f"|format(disk_used_gb) }}/{{ "%.0f"|format(disk_total_gb) }} GB</div>
         </div>
     </div>
 </div>

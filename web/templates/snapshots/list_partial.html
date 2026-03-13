@@ -9,14 +9,23 @@
             <tr>
                 <th>#</th>
                 <th>Snapshot</th>
+                <th>Date</th>
                 <th></th>
             </tr>
         </thead>
         <tbody>
             {% for s in snapshots %}
+            {% set parts = s.replace('T', '-') %}
+            {% set y = parts[0:4] %}
+            {% set mo = parts[5:7] %}
+            {% set d = parts[8:10] %}
+            {% set h = parts[11:13] %}
+            {% set mi = parts[13:15] %}
+            {% set sec = parts[15:17] %}
             <tr class="hover:bg-base-300">
                 <td class="text-base-content/50">{{ loop.index }}</td>
-                <td class="font-mono">{{ s }}</td>
+                <td class="font-mono text-sm text-base-content/50">{{ s }}</td>
+                <td>{{ d }}/{{ mo }}/{{ y }} {{ h }}:{{ mi }}:{{ sec }}</td>
                 <td class="text-right">
                     <button class="btn btn-ghost btn-xs"
                             hx-get="/snapshots/browse/{{ target }}/{{ remote }}/{{ s }}"

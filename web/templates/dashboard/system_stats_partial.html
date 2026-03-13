@@ -23,7 +23,7 @@
             <span class="text-xs text-base-content/50">Swap {{ "%.0f"|format(swap_percent) }}%</span>
             <span class="text-xs text-base-content/40 whitespace-nowrap">{{ "%.1f"|format(swap_used_gb) }}/{{ "%.1f"|format(swap_total_gb) }} GB</span>
         </div>
-        <progress class="progress {{ 'progress-error' if swap_percent > 80 else 'progress-warning' if swap_percent > 50 else 'progress-accent' }} w-full h-1.5" value="{{ swap_percent|int }}" max="100"></progress>
+        <progress class="progress {{ 'progress-error' if swap_percent > 80 else 'progress-warning' if swap_percent > 50 else 'progress-accent' }} w-full" value="{{ swap_percent|int }}" max="100"></progress>
         {% endif %}
     </div>
 
@@ -46,7 +46,7 @@
         <div class="flex items-baseline justify-between mt-1.5">
             <span class="text-xs text-base-content/50">IO Wait {{ "%.1f"|format(iowait) }}%</span>
         </div>
-        <progress class="progress {{ 'progress-error' if iowait > 20 else 'progress-warning' if iowait > 5 else 'progress-success' }} w-full h-1.5" value="{{ iowait|int }}" max="100"></progress>
+        <progress class="progress {{ 'progress-error' if iowait > 20 else 'progress-warning' if iowait > 5 else 'progress-success' }} w-full" value="{{ iowait|int }}" max="100"></progress>
     </div>
 
     <!-- Network -->

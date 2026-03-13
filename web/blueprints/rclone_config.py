@@ -530,6 +530,56 @@ def update(name):
     return redirect(url_for("rclone_config.index"))
 
 
+# ── Test ──────────────────────────────────────────────────────
+
+@bp.route("/<name>/test", methods=["POST"])
+@login_required
+def test(name):
+    """Test an rclone remote by running 'rclone about <remote>:'."""
+    if not _VALID_NAME_RE.match(name):
+        return jsonify({"ok": False, "error": "Invalid remote name."})
+
+    remotes = _get_remotes()
+    if name not in remotes:
+        return jsonify({"ok": False, "error": "Remote not found."})
+
+    try:
+        result = subprocess.run(
+            ["rclone", "about", f"{name}:", "--json"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode == 0:
+            try:
+                info = json.loads(result.stdout)
+                parts = []
+                if "total" in info:
+                    total_gb = info["total"] / (1024**3)
+                    parts.append(f"Total: {total_gb:.1f} GB")
+                if "used" in info:
+                    used_gb = info["used"] / (1024**3)
+                    parts.append(f"Used: {used_gb:.1f} GB")
+                if "free" in info:
+                    free_gb = info["free"] / (1024**3)
+                    parts.append(f"Free: {free_gb:.1f} GB")
+                detail = " | ".join(parts) if parts else "Connected"
+                return jsonify({"ok": True, "detail": detail})
+            except (json.JSONDecodeError, KeyError):
+                return jsonify({"ok": True, "detail": "Connected"})
+        # about not supported — fall back to lsd
+        result2 = subprocess.run(
+            ["rclone", "lsd", f"{name}:", "--max-depth", "0"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result2.returncode == 0:
+            return jsonify({"ok": True, "detail": "Connected"})
+        err = result.stderr.strip() or result2.stderr.strip()
+        return jsonify({"ok": False, "error": err.split("\n")[0] if err else "Connection failed"})
+    except subprocess.TimeoutExpired:
+        return jsonify({"ok": False, "error": "Connection timed out"})
+    except OSError as e:
+        return jsonify({"ok": False, "error": str(e)})
+
+
 # ── Delete ───────────────────────────────────────────────────
 
 @bp.route("/<name>/delete", methods=["POST"])

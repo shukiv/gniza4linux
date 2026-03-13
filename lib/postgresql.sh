@@ -16,7 +16,7 @@ _pgsql_is_remote() {
         _PGSQL_SSH+=(-o BatchMode=yes)
         [[ -n "${TARGET_SOURCE_KEY:-}" ]] && _PGSQL_SSH+=(-i "$TARGET_SOURCE_KEY")
     fi
-    _PGSQL_SSH+=("${TARGET_SOURCE_USER:-root}@${TARGET_SOURCE_HOST}")
+    _PGSQL_SSH+=("${TARGET_SOURCE_USER:-gniza}@${TARGET_SOURCE_HOST}")
     return 0
 }
 

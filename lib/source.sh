@@ -72,7 +72,7 @@ _rsync_from_source_ssh() {
     # Ensure local_dir ends with /
     [[ "$local_dir" != */ ]] && local_dir="$local_dir/"
 
-    local source_spec="${TARGET_SOURCE_USER:-root}@${TARGET_SOURCE_HOST}:${remote_path}"
+    local source_spec="${TARGET_SOURCE_USER:-gniza}@${TARGET_SOURCE_HOST}:${remote_path}"
 
     while (( attempt < max_retries )); do
         ((attempt++)) || true

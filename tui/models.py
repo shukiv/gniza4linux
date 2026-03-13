@@ -14,7 +14,7 @@ class Target:
     source_type: str = "local"
     source_host: str = ""
     source_port: str = "22"
-    source_user: str = "root"
+    source_user: str = "gniza"
     source_auth_method: str = "key"
     source_key: str = ""
     source_password: str = ""
@@ -120,7 +120,7 @@ class Target:
             source_type=data.get("TARGET_SOURCE_TYPE", "local"),
             source_host=data.get("TARGET_SOURCE_HOST", ""),
             source_port=data.get("TARGET_SOURCE_PORT", "22"),
-            source_user=data.get("TARGET_SOURCE_USER", "root"),
+            source_user=data.get("TARGET_SOURCE_USER", "gniza"),
             source_auth_method=data.get("TARGET_SOURCE_AUTH_METHOD", "key"),
             source_key=data.get("TARGET_SOURCE_KEY", ""),
             source_password=data.get("TARGET_SOURCE_PASSWORD", ""),
@@ -160,7 +160,7 @@ class Remote:
     type: str = "local"
     host: str = ""
     port: str = "22"
-    user: str = "root"
+    user: str = "gniza"
     auth_method: str = "key"
     key: str = ""
     password: str = ""
@@ -219,7 +219,7 @@ class Remote:
             type=data.get("REMOTE_TYPE", "ssh"),
             host=data.get("REMOTE_HOST", ""),
             port=data.get("REMOTE_PORT", "22"),
-            user=data.get("REMOTE_USER", "root"),
+            user=data.get("REMOTE_USER", "gniza"),
             auth_method=data.get("REMOTE_AUTH_METHOD", "key"),
             key=data.get("REMOTE_KEY", ""),
             password=data.get("REMOTE_PASSWORD", ""),

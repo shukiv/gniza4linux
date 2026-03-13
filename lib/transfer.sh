@@ -302,7 +302,7 @@ rsync_ssh_to_ssh() {
     # Ensure source_path ends with /
     [[ "$source_path" != */ ]] && source_path="$source_path/"
 
-    local source_spec="${TARGET_SOURCE_USER:-root}@${TARGET_SOURCE_HOST}:${source_path}"
+    local source_spec="${TARGET_SOURCE_USER:-gniza}@${TARGET_SOURCE_HOST}:${source_path}"
 
     # Assemble the remote command string with safe quoting
     # REMOTE_SUDO controls what runs on the DESTINATION side
@@ -585,7 +585,7 @@ transfer_folder_ssh_to_local() {
     rsync_opts+=(--info=progress2 --no-inc-recursive)
 
     [[ "$source_remote_path" != */ ]] && source_remote_path="$source_remote_path/"
-    local source_spec="${TARGET_SOURCE_USER:-root}@${TARGET_SOURCE_HOST}:${source_remote_path}"
+    local source_spec="${TARGET_SOURCE_USER:-gniza}@${TARGET_SOURCE_HOST}:${source_remote_path}"
 
     local attempt=0
     local max_retries="${SSH_RETRIES:-${DEFAULT_SSH_RETRIES:-3}}"

@@ -475,7 +475,7 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                             </fieldset>
                             <fieldset class="fieldset">
                                 <label class="fieldset-label">User</label>
-                                <input type="text" name="source_user" value="root" class="input" placeholder="root">
+                                <input type="text" name="source_user" value="gniza" class="input" placeholder="gniza">
                             </fieldset>
                             <fieldset class="fieldset">
                                 <label class="fieldset-label">Auth Method</label>
@@ -599,7 +599,7 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                                                 target: 'wiz_folders',
                                                 host: host,
                                                 port: document.querySelector('[name=source_port]').value || '22',
-                                                user: document.querySelector('[name=source_user]').value || 'root',
+                                                user: document.querySelector('[name=source_user]').value || 'gniza',
                                                 key: document.querySelector('[name=source_key]')?.value || '',
                                                 password: document.querySelector('[name=source_password]')?.value || ''
                                             });

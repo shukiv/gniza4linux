@@ -55,7 +55,7 @@
                     </fieldset>
                     <fieldset class="fieldset">
                         <label class="fieldset-label">User</label>
-                        <input type="text" name="user" value="{{ remote.user }}" class="input" placeholder="root">
+                        <input type="text" name="user" value="{{ remote.user }}" class="input" placeholder="gniza">
                     </fieldset>
                     <fieldset class="fieldset">
                         <label class="fieldset-label">Auth Method</label>
@@ -120,7 +120,7 @@
                                             path: basePath, target: 'base',
                                             host: host,
                                             port: document.querySelector('[name=port]')?.value || '22',
-                                            user: document.querySelector('[name=user]')?.value || 'root',
+                                            user: document.querySelector('[name=user]')?.value || 'gniza',
                                             key: document.querySelector('[name=key]')?.value || '',
                                             password: document.querySelector('[name=password]')?.value || ''
                                         });

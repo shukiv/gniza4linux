@@ -16,7 +16,7 @@ _mysql_is_remote() {
         _MYSQL_SSH+=(-o BatchMode=yes)
         [[ -n "${TARGET_SOURCE_KEY:-}" ]] && _MYSQL_SSH+=(-i "$TARGET_SOURCE_KEY")
     fi
-    _MYSQL_SSH+=("${TARGET_SOURCE_USER:-root}@${TARGET_SOURCE_HOST}")
+    _MYSQL_SSH+=("${TARGET_SOURCE_USER:-gniza}@${TARGET_SOURCE_HOST}")
     return 0
 }
 

@@ -34,7 +34,7 @@ fi
 readonly DEFAULT_BACKUP_MODE="full"
 readonly DEFAULT_REMOTE_AUTH_METHOD="key"
 readonly DEFAULT_REMOTE_PORT=22
-readonly DEFAULT_REMOTE_USER="root"
+readonly DEFAULT_REMOTE_USER="gniza"
 readonly DEFAULT_REMOTE_BASE="/backups"
 readonly DEFAULT_BWLIMIT=0
 readonly DEFAULT_RETENTION_COUNT=30

@@ -99,6 +99,16 @@ if [[ ${#_to_install[@]} -gt 0 ]]; then
     _pkg_install "${_to_install[@]}" || warn "Could not install some packages: ${_to_install[*]}"
 fi
 
+# Install rclone if not present
+if ! command -v rclone &>/dev/null; then
+    info "Installing rclone..."
+    if curl -fsSL https://rclone.org/install.sh | bash 2>/dev/null; then
+        info "rclone installed."
+    else
+        warn "Could not install rclone automatically. Install it manually: https://rclone.org/install/"
+    fi
+fi
+
 # Verify critical deps
 for cmd in bash rsync; do
     if ! command -v "$cmd" &>/dev/null; then

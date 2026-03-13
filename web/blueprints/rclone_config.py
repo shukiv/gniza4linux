@@ -265,28 +265,22 @@ def _run_bg_oauth(task_id, name, ptype, config_state, gniza_callback_url):
                     break
 
         if rclone_auth_url:
-            # Fetch rclone's /auth endpoint server-side to get the Google redirect
+            # Fetch rclone's /auth endpoint server-side to get the Google redirect URL.
+            # Use http.client directly (not urllib) to avoid following the redirect.
+            import http.client
+            google_url = ""
             try:
-                req = urllib.request.Request(rclone_auth_url)
-                resp = urllib.request.urlopen(req, timeout=10)
-                # Won't reach here — it's a redirect, handled below
-            except urllib.error.HTTPError as e:
-                if e.code in (301, 302, 303, 307, 308):
-                    google_url = e.headers.get("Location", "")
-                else:
-                    google_url = ""
-            except Exception:
-                google_url = ""
-
-            if not google_url:
-                # urllib follows redirects by default for 301/302; get it differently
-                import http.client
                 parsed = urllib.parse.urlparse(rclone_auth_url)
+                path = parsed.path
+                if parsed.query:
+                    path += "?" + parsed.query
                 conn = http.client.HTTPConnection(parsed.hostname, parsed.port, timeout=10)
-                conn.request("GET", parsed.path + "?" + parsed.query if parsed.query else parsed.path)
+                conn.request("GET", path)
                 resp = conn.getresponse()
                 google_url = resp.getheader("Location", "")
                 conn.close()
+            except Exception:
+                pass
 
             if google_url:
                 # Rewrite redirect_uri to point to gniza's OAuth callback proxy

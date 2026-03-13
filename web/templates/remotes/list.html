@@ -37,7 +37,6 @@
                         <td><span hx-get="{{ url_for('remotes.disk', name=r.name) }}" hx-trigger="load" hx-swap="outerHTML">...</span></td>
                         <td>
                             <div class="flex gap-1 items-center">
-                                <a href="{{ url_for('browse.index', type='destinations', name=r.name) }}" class="btn btn-neutral btn-sm">Browse</a>
                                 <a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-primary btn-sm">Edit</a>
                                 <button class="btn btn-success btn-sm"
                                         hx-post="{{ url_for('remotes.test', name=r.name) }}"

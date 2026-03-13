@@ -120,8 +120,6 @@ def create_app():
                 active_page = "settings"
             elif request.endpoint.startswith("docs"):
                 active_page = "docs"
-            elif request.endpoint.startswith("browse"):
-                active_page = "browse"
             elif request.endpoint.startswith("health"):
                 active_page = "health"
         return {
@@ -160,7 +158,6 @@ def create_app():
     from web.blueprints.docs import bp as docs_bp
     from web.blueprints.health import bp as health_bp
     from web.blueprints.rclone_config import bp as rclone_config_bp
-    from web.blueprints.browse import bp as browse_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -180,6 +177,5 @@ def create_app():
     app.register_blueprint(docs_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(rclone_config_bp)
-    app.register_blueprint(browse_bp)
 
     return app

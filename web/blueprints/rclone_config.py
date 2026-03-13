@@ -247,24 +247,31 @@ def _run_bg_oauth(task_id, name, ptype, config_state, gniza_base_url=""):
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         )
 
-        # Read stderr to capture the auth URL
+        # Read stderr line-by-line to capture the auth URL.
+        # IMPORTANT: break as soon as we find it — rclone keeps stderr open.
         rclone_auth_url = None
-        stderr_lines = []
         for line in proc.stderr:
-            stderr_lines.append(line.rstrip())
-            if "http" in line and not rclone_auth_url:
+            if "http" in line:
                 m = re.search(r'(https?://\S+)', line)
                 if m:
                     rclone_auth_url = m.group(1)
+                    break
 
         if rclone_auth_url:
             _bg_tasks[task_id]["auth_url"] = rclone_auth_url
+            log.info("Captured auth URL: %s", rclone_auth_url)
 
-        log.info("rclone authorize stderr: %s", "\n".join(stderr_lines))
+        # Drain remaining stderr in background thread to avoid pipe deadlock
+        def _drain_stderr():
+            for _ in proc.stderr:
+                pass
+        t_drain = threading.Thread(target=_drain_stderr, daemon=True)
+        t_drain.start()
 
         # Read stdout (contains the token between arrow markers)
         stdout = proc.stdout.read()
         proc.wait(timeout=300)
+        t_drain.join(timeout=5)
 
         log.info("rclone authorize rc=%d stdout=%r", proc.returncode, stdout[:500])
 

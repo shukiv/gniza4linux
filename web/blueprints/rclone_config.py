@@ -556,8 +556,21 @@ def oauth_callback(task_id):
     )
     _dbg(f"config create result: rc={rc} data={data} err={err}")
 
+    # Auto-answer follow-up config questions (e.g. config_change_team_drive)
+    max_auto = 5
+    while data and data.get("State") and data.get("Option") and max_auto > 0:
+        opt = data["Option"]
+        opt_name = opt.get("Name", "")
+        default_val = opt.get("DefaultStr", opt.get("Default", "false"))
+        _dbg(f"Auto-answering follow-up: {opt_name} = {default_val}")
+        rc, data, err = _rclone_config_create(
+            name, provider_type, state=data["State"], result_val=str(default_val),
+        )
+        _dbg(f"Follow-up result: rc={rc} data={data} err={err}")
+        max_auto -= 1
+
     if data and data.get("State") and data.get("Option"):
-        _dbg(f"More steps needed: {data.get('Option', {}).get('Name')}")
+        _dbg(f"Still more steps after auto-answer: {data.get('Option', {}).get('Name')}")
         task.update({"status": "more_steps", "data": data})
     elif rc == 0:
         _dbg("SUCCESS — remote created")

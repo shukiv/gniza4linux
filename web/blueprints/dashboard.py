@@ -1,6 +1,8 @@
+import time
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template, flash, request, redirect, url_for
+import psutil
+from flask import Blueprint, render_template, flash, request, redirect, url_for, jsonify
 
 from tui.config import CONFIG_DIR, parse_conf, list_conf_dir
 from tui.models import Schedule
@@ -11,6 +13,24 @@ from web.jobs import web_job_manager
 DASH_LOGS_PER_PAGE = 10
 
 bp = Blueprint("dashboard", __name__)
+
+# Network I/O tracking for rate calculation
+_prev_net = {"time": 0.0, "bytes_sent": 0, "bytes_recv": 0}
+
+# Initialize cpu_percent so next call returns a real value
+psutil.cpu_percent(interval=None)
+
+
+def _format_bytes_rate(bps):
+    """Format bytes/sec into human-readable rate."""
+    if bps < 1024:
+        return f"{bps:.0f} B/s"
+    elif bps < 1024 * 1024:
+        return f"{bps / 1024:.1f} KB/s"
+    elif bps < 1024 * 1024 * 1024:
+        return f"{bps / (1024 * 1024):.1f} MB/s"
+    else:
+        return f"{bps / (1024 * 1024 * 1024):.2f} GB/s"
 
 
 def _load_schedules():
@@ -83,4 +103,49 @@ def index():
         log_page=log_page,
         log_total_pages=log_total_pages,
         errors_past_month=errors_past_month,
+    )
+
+
+@bp.route("/system-stats")
+@login_required
+def system_stats():
+    global _prev_net
+
+    # CPU
+    cpu_percent = psutil.cpu_percent(interval=None)
+
+    # IO wait (Linux only)
+    cpu_times = psutil.cpu_times_percent(interval=None)
+    iowait = getattr(cpu_times, "iowait", 0.0)
+
+    # Memory
+    mem = psutil.virtual_memory()
+
+    # Network rates
+    net = psutil.net_io_counters()
+    now = time.monotonic()
+    elapsed = now - _prev_net["time"] if _prev_net["time"] > 0 else 0
+    if elapsed > 0:
+        send_rate = (net.bytes_sent - _prev_net["bytes_sent"]) / elapsed
+        recv_rate = (net.bytes_recv - _prev_net["bytes_recv"]) / elapsed
+    else:
+        send_rate = 0.0
+        recv_rate = 0.0
+    _prev_net = {"time": now, "bytes_sent": net.bytes_sent, "bytes_recv": net.bytes_recv}
+
+    # Disk usage of backup destination
+    disk = psutil.disk_usage("/")
+
+    return render_template(
+        "dashboard/system_stats_partial.html",
+        cpu_percent=cpu_percent,
+        iowait=iowait,
+        mem_percent=mem.percent,
+        mem_used_gb=mem.used / (1024 ** 3),
+        mem_total_gb=mem.total / (1024 ** 3),
+        net_send_rate=_format_bytes_rate(send_rate),
+        net_recv_rate=_format_bytes_rate(recv_rate),
+        disk_percent=disk.percent,
+        disk_used_gb=disk.used / (1024 ** 3),
+        disk_total_gb=disk.total / (1024 ** 3),
     )

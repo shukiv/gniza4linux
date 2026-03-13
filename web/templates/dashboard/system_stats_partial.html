@@ -1,0 +1,50 @@
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+    <!-- CPU -->
+    <div class="bg-base-200 rounded-lg p-3 text-center">
+        <div class="text-xs text-base-content/50 mb-1">CPU</div>
+        <div class="radial-progress text-primary text-sm" style="--value:{{ cpu_percent|int }}; --size:3.5rem; --thickness:4px;" role="progressbar">
+            {{ "%.0f"|format(cpu_percent) }}%
+        </div>
+    </div>
+
+    <!-- IO Wait -->
+    <div class="bg-base-200 rounded-lg p-3 text-center">
+        <div class="text-xs text-base-content/50 mb-1">IO Wait</div>
+        <div class="radial-progress {{ 'text-error' if iowait > 20 else 'text-warning' if iowait > 5 else 'text-success' }} text-sm" style="--value:{{ iowait|int }}; --size:3.5rem; --thickness:4px;" role="progressbar">
+            {{ "%.1f"|format(iowait) }}%
+        </div>
+    </div>
+
+    <!-- Memory -->
+    <div class="bg-base-200 rounded-lg p-3 text-center">
+        <div class="text-xs text-base-content/50 mb-1">Memory</div>
+        <div class="radial-progress {{ 'text-error' if mem_percent > 90 else 'text-warning' if mem_percent > 70 else 'text-primary' }} text-sm" style="--value:{{ mem_percent|int }}; --size:3.5rem; --thickness:4px;" role="progressbar">
+            {{ "%.0f"|format(mem_percent) }}%
+        </div>
+        <div class="text-xs text-base-content/40 mt-1">{{ "%.1f"|format(mem_used_gb) }} / {{ "%.1f"|format(mem_total_gb) }} GB</div>
+    </div>
+
+    <!-- Network -->
+    <div class="bg-base-200 rounded-lg p-3 text-center">
+        <div class="text-xs text-base-content/50 mb-1">Network</div>
+        <div class="mt-1 space-y-1">
+            <div class="flex items-center justify-center gap-1">
+                <svg class="w-3 h-3 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7-7-7 7"/></svg>
+                <span class="text-sm font-mono">{{ net_recv_rate }}</span>
+            </div>
+            <div class="flex items-center justify-center gap-1">
+                <svg class="w-3 h-3 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7 7 7-7"/></svg>
+                <span class="text-sm font-mono">{{ net_send_rate }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disk -->
+    <div class="bg-base-200 rounded-lg p-3 text-center">
+        <div class="text-xs text-base-content/50 mb-1">Disk /</div>
+        <div class="radial-progress {{ 'text-error' if disk_percent > 90 else 'text-warning' if disk_percent > 80 else 'text-primary' }} text-sm" style="--value:{{ disk_percent|int }}; --size:3.5rem; --thickness:4px;" role="progressbar">
+            {{ "%.0f"|format(disk_percent) }}%
+        </div>
+        <div class="text-xs text-base-content/40 mt-1">{{ "%.0f"|format(disk_used_gb) }} / {{ "%.0f"|format(disk_total_gb) }} GB</div>
+    </div>
+</div>

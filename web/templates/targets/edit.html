@@ -13,8 +13,7 @@
 </script>
 <form method="POST" action="{{ url_for('targets.save') }}"
       x-data="{
-          sourceType: '{{ target.source_type }}',
-          sourceS3Provider: '{{ target.source_s3_provider or "AWS" }}',
+          sourceType: {{ "'rclone'" if target.source_type in ('s3', 'gdrive', 'rclone') else "'" + target.source_type + "'" }},
           mysqlEnabled: {{ 'true' if target.mysql_enabled == 'yes' else 'false' }},
           postgresqlEnabled: {{ 'true' if target.postgresql_enabled == 'yes' else 'false' }},
           crontabEnabled: {{ 'true' if target.crontab_enabled == 'yes' else 'false' }},
@@ -66,16 +65,9 @@
                     <span>SSH</span>
                 </label>
                 <label class="label cursor-pointer gap-2">
-                    <input type="radio" name="source_type" value="s3" class="radio radio-primary" x-model="sourceType">
-                    <span>S3</span>
-                </label>
-                <label class="label cursor-pointer gap-2">
-                    <input type="radio" name="source_type" value="gdrive" class="radio radio-primary" x-model="sourceType">
-                    <span>Google Drive</span>
-                </label>
-                <label class="label cursor-pointer gap-2">
-                    <input type="radio" name="source_type" value="rclone" class="radio radio-primary" x-model="sourceType">
-                    <span>Rclone</span>
+                    <input type="radio" name="source_type" value="rclone" class="radio radio-primary" x-model="sourceType"
+                           :checked="sourceType === 'rclone' || sourceType === 's3' || sourceType === 'gdrive'">
+                    <span>Cloud <span class="text-base-content/50 text-xs">(S3, Google Drive, etc.)</span></span>
                 </label>
             </div>
 
@@ -232,69 +224,9 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                 </div>
             </div>
 
-            <!-- S3 fields -->
-            <div x-show="sourceType === 's3'" x-cloak>
-                <div class="divider text-sm">S3 Configuration</div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Provider</label>
-                        <select name="source_s3_provider" class="select" x-model="sourceS3Provider"
-                                @change="
-                                    if (sourceS3Provider === 'Backblaze') {
-                                        $el.closest('.grid').querySelector('[name=source_s3_endpoint]').value = 'https://s3.us-west-004.backblazeb2.com';
-                                    } else if (sourceS3Provider === 'Wasabi') {
-                                        $el.closest('.grid').querySelector('[name=source_s3_endpoint]').value = 'https://s3.wasabisys.com';
-                                    } else if (sourceS3Provider === 'AWS') {
-                                        $el.closest('.grid').querySelector('[name=source_s3_endpoint]').value = '';
-                                    }
-                                ">
-                            <option value="AWS">AWS</option>
-                            <option value="Backblaze">Backblaze B2</option>
-                            <option value="Wasabi">Wasabi</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </fieldset>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Bucket</label>
-                        <input type="text" name="source_s3_bucket" value="{{ target.source_s3_bucket }}" class="input">
-                    </fieldset>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Region</label>
-                        <input type="text" name="source_s3_region" value="{{ target.source_s3_region }}" class="input" placeholder="us-east-1">
-                    </fieldset>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Endpoint</label>
-                        <input type="text" name="source_s3_endpoint" value="{{ target.source_s3_endpoint }}" class="input" placeholder="https://s3.amazonaws.com">
-                    </fieldset>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Access Key ID</label>
-                        <input type="text" name="source_s3_access_key_id" value="{{ target.source_s3_access_key_id }}" class="input">
-                    </fieldset>
-                    <fieldset class="fieldset md:col-span-2">
-                        <label class="fieldset-label">Secret Access Key</label>
-                        <input type="password" name="source_s3_secret_access_key" value="{{ target.source_s3_secret_access_key }}" class="input">
-                    </fieldset>
-                </div>
-            </div>
-
-            <!-- GDrive fields -->
-            <div x-show="sourceType === 'gdrive'" x-cloak>
-                <div class="divider text-sm">Google Drive Configuration</div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Service Account File</label>
-                        <input type="text" name="source_gdrive_sa_file" value="{{ target.source_gdrive_sa_file }}" class="input" placeholder="/path/to/sa.json">
-                    </fieldset>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Root Folder ID</label>
-                        <input type="text" name="source_gdrive_root_folder_id" value="{{ target.source_gdrive_root_folder_id }}" class="input">
-                    </fieldset>
-                </div>
-            </div>
-
-            <!-- Rclone fields -->
+            <!-- Cloud / Rclone fields -->
             <div x-show="sourceType === 'rclone'" x-cloak>
-                <div class="divider text-sm">Rclone Configuration</div>
+                <div class="divider text-sm">Cloud Storage Configuration</div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <fieldset class="fieldset">
                         <label class="fieldset-label">Config File Path</label>
@@ -593,9 +525,7 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
 <ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
     <li><strong>Local</strong> — Default. Back up folders on this machine.</li>
     <li><strong>SSH</strong> — Pull files from a source server via SSH/rsync.</li>
-    <li><strong>S3</strong> — Pull files from an S3-compatible bucket.</li>
-    <li><strong>Google Drive</strong> — Pull files via service account.</li>
-    <li><strong>Rclone</strong> — Pull files from any rclone-supported remote.</li>
+    <li><strong>Cloud</strong> — Pull files from S3, Google Drive, or any rclone-supported remote.</li>
 </ul>
 <p class="mb-3 text-base-content/70">When using a source server, specify remote paths in the Folders field instead of local paths.</p>
 <h4 class="font-semibold text-sm mb-1">MySQL</h4>

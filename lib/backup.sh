@@ -182,8 +182,15 @@ _backup_target_impl() {
                     log_error "Pipelined transfer failed for folder: $folder"
                     transfer_failed=true
                 fi
+            elif [[ "${TARGET_SOURCE_TYPE}" == "ssh" && "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+                # Direct: SSH source -> local .partial (no staging needed)
+                log_info "Direct transfer from ${TARGET_SOURCE_HOST}: $folder"
+                if ! transfer_folder_ssh_to_local "$target_name" "$folder" "$ts" "$prev"; then
+                    log_error "Direct transfer failed for folder: $folder"
+                    transfer_failed=true
+                fi
             else
-                # Two-hop: pull to local staging, then transfer
+                # Two-hop: pull to local staging, then transfer (s3/gdrive sources, or restricted shell destinations)
                 staging_dir=$(mktemp -d "${WORK_DIR:-/tmp}/gniza-source-XXXXXX")
                 log_info "Pulling from ${TARGET_SOURCE_TYPE} source: $folder"
                 if ! pull_from_source "$folder" "$staging_dir/${folder#/}"; then

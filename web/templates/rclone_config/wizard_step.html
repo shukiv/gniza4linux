@@ -40,7 +40,7 @@
                 </label>
 
                 {% if option.Help %}
-                <div class="bg-base-100 rounded-lg p-3 mb-3 text-sm text-base-content/70 whitespace-pre-line">{{ option.Help }}</div>
+                <div class="bg-base-100 rounded-lg p-3 mb-3 text-sm text-base-content/70 whitespace-pre-line">{{ option.Help | linkify }}</div>
                 {% endif %}
 
                 {% if option.Exclusive and option.Examples %}

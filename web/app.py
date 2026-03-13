@@ -1,4 +1,5 @@
 import hashlib
+import re
 import secrets
 from datetime import datetime
 from functools import wraps
@@ -128,6 +129,16 @@ def create_app():
             "app_version": "0.25",
             "current_year": datetime.now().year,
         }
+
+    # Jinja filter: convert URLs in text to clickable links
+    _url_re = re.compile(r'(https?://[^\s<>"\']+)')
+
+    @app.template_filter("linkify")
+    def linkify_filter(text):
+        from markupsafe import Markup, escape
+        escaped = str(escape(text))
+        result = _url_re.sub(r'<a href="\1" target="_blank" class="link link-primary">\1</a>', escaped)
+        return Markup(result)
 
     from web.blueprints.auth import bp as auth_bp
     from web.blueprints.dashboard import bp as dashboard_bp

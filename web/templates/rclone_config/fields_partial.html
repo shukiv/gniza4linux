@@ -59,7 +59,7 @@
                 {% endif %}
 
                 {% if field.Help %}
-                <p class="text-base-content/50 text-xs mt-1">{{ field.Help.split('\n')[0][:120] }}</p>
+                <p class="text-base-content/50 text-xs mt-1">{{ field.Help.split('\n')[0] | linkify }}</p>
                 {% endif %}
             </fieldset>
             {% endfor %}

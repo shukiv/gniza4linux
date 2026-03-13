@@ -2,32 +2,38 @@
     <!-- CPU -->
     <div class="stat px-4 py-3">
         <div class="stat-title text-xs">CPU</div>
-        <div class="stat-value text-lg">{{ "%.0f"|format(cpu_percent) }}%</div>
-        <div class="stat-desc mt-1 w-full">
-            <progress class="progress {{ 'progress-error' if cpu_percent > 90 else 'progress-warning' if cpu_percent > 70 else 'progress-primary' }} w-full" value="{{ cpu_percent|int }}" max="100"></progress>
+        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-8 mt-1">
+            <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if cpu_percent > 90 else 'bg-warning' if cpu_percent > 70 else 'bg-primary' }}" style="width: {{ cpu_percent|int }}%"></div>
+            <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
+                <span>{{ "%.0f"|format(cpu_percent) }}%</span>
+            </div>
         </div>
-        <div class="flex items-baseline justify-between mt-1.5">
-            <span class="text-xs text-base-content/50">IO Wait {{ "%.1f"|format(iowait) }}%</span>
+        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-6 mt-1">
+            <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if iowait > 20 else 'bg-warning' if iowait > 5 else 'bg-success' }}" style="width: {{ [iowait|int, 100]|min }}%"></div>
+            <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
+                <span><span class="font-normal opacity-60">IO Wait</span> {{ "%.1f"|format(iowait) }}%</span>
+            </div>
         </div>
-        <progress class="progress {{ 'progress-error' if iowait > 20 else 'progress-warning' if iowait > 5 else 'progress-success' }} w-full h-1.5" value="{{ iowait|int }}" max="100"></progress>
     </div>
 
     <!-- Memory -->
     <div class="stat px-4 py-3">
         <div class="stat-title text-xs">Memory</div>
-        <div class="stat-value text-lg flex items-baseline justify-between">
-            <span>{{ "%.0f"|format(mem_percent) }}%</span>
-            <span class="text-xs font-normal text-base-content/50 whitespace-nowrap">{{ "%.1f"|format(mem_used_gb) }}/{{ "%.1f"|format(mem_total_gb) }} GB</span>
-        </div>
-        <div class="stat-desc mt-1 w-full">
-            <progress class="progress {{ 'progress-error' if mem_percent > 90 else 'progress-warning' if mem_percent > 70 else 'progress-primary' }} w-full" value="{{ mem_percent|int }}" max="100"></progress>
+        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-8 mt-1">
+            <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if mem_percent > 90 else 'bg-warning' if mem_percent > 70 else 'bg-primary' }}" style="width: {{ mem_percent|int }}%"></div>
+            <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
+                <span>{{ "%.0f"|format(mem_percent) }}%</span>
+                <span class="opacity-70">{{ "%.1f"|format(mem_used_gb) }}/{{ "%.1f"|format(mem_total_gb) }} GB</span>
+            </div>
         </div>
         {% if swap_total_gb > 0 %}
-        <div class="flex items-baseline justify-between mt-1.5">
-            <span class="text-xs text-base-content/50">Swap {{ "%.0f"|format(swap_percent) }}%</span>
-            <span class="text-xs text-base-content/40 whitespace-nowrap">{{ "%.1f"|format(swap_used_gb) }}/{{ "%.1f"|format(swap_total_gb) }} GB</span>
+        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-6 mt-1">
+            <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if swap_percent > 80 else 'bg-warning' if swap_percent > 50 else 'bg-accent' }}" style="width: {{ swap_percent|int }}%"></div>
+            <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
+                <span><span class="font-normal opacity-60">Swap</span> {{ "%.0f"|format(swap_percent) }}%</span>
+                <span class="opacity-70">{{ "%.1f"|format(swap_used_gb) }}/{{ "%.1f"|format(swap_total_gb) }} GB</span>
+            </div>
         </div>
-        <progress class="progress {{ 'progress-error' if swap_percent > 80 else 'progress-warning' if swap_percent > 50 else 'progress-accent' }} w-full" value="{{ swap_percent|int }}" max="100"></progress>
         {% endif %}
     </div>
 

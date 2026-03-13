@@ -2,13 +2,13 @@
     <!-- CPU -->
     <div class="stat px-4 py-3">
         <div class="stat-title text-xs">CPU</div>
-        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-8 mt-1">
+        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 mt-1">
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if cpu_percent > 90 else 'bg-warning' if cpu_percent > 70 else 'bg-primary' }}" style="width: {{ cpu_percent|int }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
                 <span>{{ "%.0f"|format(cpu_percent) }}%</span>
             </div>
         </div>
-        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-6 mt-1">
+        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 mt-1">
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if iowait > 20 else 'bg-warning' if iowait > 5 else 'bg-success' }}" style="width: {{ [iowait|int, 100]|min }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
                 <span><span class="font-normal opacity-60">IO Wait</span> {{ "%.1f"|format(iowait) }}%</span>
@@ -19,7 +19,7 @@
     <!-- Memory -->
     <div class="stat px-4 py-3">
         <div class="stat-title text-xs">Memory</div>
-        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-8 mt-1">
+        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 mt-1">
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if mem_percent > 90 else 'bg-warning' if mem_percent > 70 else 'bg-primary' }}" style="width: {{ mem_percent|int }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
                 <span>{{ "%.0f"|format(mem_percent) }}%</span>
@@ -27,7 +27,7 @@
             </div>
         </div>
         {% if swap_total_gb > 0 %}
-        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-6 mt-1">
+        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 mt-1">
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if swap_percent > 80 else 'bg-warning' if swap_percent > 50 else 'bg-accent' }}" style="width: {{ swap_percent|int }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
                 <span><span class="font-normal opacity-60">Swap</span> {{ "%.0f"|format(swap_percent) }}%</span>
@@ -42,7 +42,7 @@
         <div class="stat-title text-xs">{{ 'Disks' if disks|length > 1 else 'Local Disk' }}</div>
         {% for d in disks %}
         {% if not loop.first %}<div class="my-1"></div>{% endif %}
-        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 {{ 'h-7' if disks|length > 1 else 'h-8' }} {{ 'mt-1' if loop.first }}">
+        <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 {{ 'mt-1' if loop.first }}">
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if d.percent > 90 else 'bg-warning' if d.percent > 80 else 'bg-primary' }}" style="width: {{ d.percent|int }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
                 <span>{% if disks|length > 1 %}<span class="font-mono font-normal opacity-60">{{ d.mount }}</span> {% endif %}{{ "%.0f"|format(d.percent) }}%</span>

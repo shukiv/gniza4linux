@@ -17,6 +17,7 @@
           sourceS3Provider: '{{ target.source_s3_provider or "AWS" }}',
           mysqlEnabled: {{ 'true' if target.mysql_enabled == 'yes' else 'false' }},
           postgresqlEnabled: {{ 'true' if target.postgresql_enabled == 'yes' else 'false' }},
+          crontabEnabled: {{ 'true' if target.crontab_enabled == 'yes' else 'false' }},
           sourceAuthMethod: '{{ target.source_auth_method or 'key' }}',
           folderList: window._targetFolders || [],
           addFolder(path) { path = path.trim(); if (path && !this.folderList.includes(path)) this.folderList.push(path); },
@@ -361,6 +362,30 @@
         </div>
     </div>
 
+    <!-- Crontab Settings (only for local/ssh sources) -->
+    <div class="card bg-base-200 shadow mb-6" x-show="sourceType === 'local' || sourceType === 'ssh'" x-cloak>
+        <div class="card-body">
+            <div class="flex items-center gap-4 mb-4">
+                <h2 class="card-title text-base">Crontab Backup</h2>
+                <label class="label cursor-pointer gap-2">
+                    <input type="checkbox" name="crontab_enabled" class="toggle toggle-primary toggle-sm"
+                           x-model="crontabEnabled" :true-value="true" :false-value="false"
+                           {{ 'checked' if target.crontab_enabled == 'yes' else '' }}>
+                    <span>Enable</span>
+                </label>
+            </div>
+
+            <div x-show="crontabEnabled" x-cloak>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Users (comma-separated)</label>
+                        <input type="text" name="crontab_users" value="{{ target.crontab_users }}" class="input" placeholder="root">
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Hooks -->
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
@@ -417,4 +442,6 @@
 <p class="text-base-content/70">Enable MySQL to dump databases alongside files. Choose 'All databases' or select specific ones. Leave user/password empty for socket auth.</p>
 <h4 class="font-semibold text-sm mb-1">PostgreSQL</h4>
 <p class="text-base-content/70">Enable PostgreSQL to dump databases alongside files. Uses pg_dump for each database and pg_dumpall for roles. Leave user/password empty for peer auth.</p>
+<h4 class="font-semibold text-sm mb-1">Crontab</h4>
+<p class="text-base-content/70">Enable Crontab to back up user crontabs, /etc/crontab, and /etc/cron.d/ files. Specify which users' crontabs to dump (comma-separated, default: root).</p>
 {% endblock %}

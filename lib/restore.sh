@@ -186,6 +186,42 @@ restore_target() {
         log_info "Skipping PostgreSQL restore (--skip-postgresql)"
     fi
 
+    # Restore crontab files if snapshot contains _crontab/ and target has crontab enabled
+    if [[ "${TARGET_CRONTAB_ENABLED:-no}" == "yes" && "${SKIP_CRONTAB_RESTORE:-}" != "yes" ]]; then
+        log_info "Checking for crontab dumps in snapshot..."
+        local crontab_restore_dir
+        crontab_restore_dir=$(mktemp -d "${WORK_DIR:-/tmp}/gniza-crontab-restore-XXXXXX")
+        mkdir -p "$crontab_restore_dir/_crontab"
+
+        local crontab_found=false
+        if _is_rclone_mode; then
+            local crontab_subpath="targets/${target_name}/current/_crontab"
+            if rclone_from_remote "$crontab_subpath" "$crontab_restore_dir/_crontab" 2>/dev/null; then
+                crontab_found=true
+            fi
+        elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+            local crontab_source="$snap_dir/$ts/_crontab/"
+            if [[ -d "$crontab_source" ]]; then
+                rsync -aHAX "$crontab_source" "$crontab_restore_dir/_crontab/" && crontab_found=true
+            fi
+        else
+            local crontab_source="$snap_dir/$ts/_crontab/"
+            if _rsync_download "$crontab_source" "$crontab_restore_dir/_crontab/" 2>/dev/null; then
+                crontab_found=true
+            fi
+        fi
+
+        if [[ "$crontab_found" == "true" ]] && ls "$crontab_restore_dir/_crontab/"* &>/dev/null; then
+            log_info "Found crontab dumps in snapshot, files available for manual restore"
+            crontab_restore_all "$crontab_restore_dir/_crontab"
+        else
+            log_debug "No crontab dumps found in snapshot"
+        fi
+        rm -rf "$crontab_restore_dir"
+    elif [[ "${SKIP_CRONTAB_RESTORE:-}" == "yes" ]]; then
+        log_info "Skipping crontab restore (--skip-crontab)"
+    fi
+
     _restore_remote_globals
 
     if (( errors > 0 )); then

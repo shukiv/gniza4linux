@@ -45,6 +45,8 @@ class Target:
     postgresql_host: str = "localhost"
     postgresql_port: str = "5432"
     postgresql_extra_opts: str = "--no-owner --no-privileges"
+    crontab_enabled: str = "no"
+    crontab_users: str = "root"
 
     def to_conf(self) -> dict[str, str]:
         data = {
@@ -104,6 +106,10 @@ class Target:
             "TARGET_POSTGRESQL_PORT": self.postgresql_port,
             "TARGET_POSTGRESQL_EXTRA_OPTS": self.postgresql_extra_opts,
         })
+        data.update({
+            "TARGET_CRONTAB_ENABLED": self.crontab_enabled,
+            "TARGET_CRONTAB_USERS": self.crontab_users,
+        })
         return data
 
     @classmethod
@@ -151,6 +157,8 @@ class Target:
             postgresql_host=data.get("TARGET_POSTGRESQL_HOST", "localhost"),
             postgresql_port=data.get("TARGET_POSTGRESQL_PORT", "5432"),
             postgresql_extra_opts=data.get("TARGET_POSTGRESQL_EXTRA_OPTS", "--no-owner --no-privileges"),
+            crontab_enabled=data.get("TARGET_CRONTAB_ENABLED", "no"),
+            crontab_users=data.get("TARGET_CRONTAB_USERS", "root"),
         )
 
 

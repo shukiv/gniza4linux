@@ -188,6 +188,8 @@ def save():
         postgresql_host=form.get("postgresql_host", "localhost"),
         postgresql_port=form.get("postgresql_port", "5432"),
         postgresql_extra_opts=form.get("postgresql_extra_opts", "--no-owner --no-privileges"),
+        crontab_enabled="yes" if form.get("crontab_enabled") else "no",
+        crontab_users=form.get("crontab_users", "root"),
     )
 
     ok, msg = _test_source(target)

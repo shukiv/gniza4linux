@@ -158,6 +158,18 @@ _backup_target_impl() {
         fi
     fi
 
+    # 8.7. Dump crontabs (if enabled)
+    local crontab_dump_dir=""
+    if [[ "${TARGET_CRONTAB_ENABLED:-no}" == "yes" ]]; then
+        log_info "Dumping crontabs for $target_name..."
+        if crontab_dump_all; then
+            crontab_dump_dir="${CRONTAB_DUMP_DIR:-}"
+        else
+            log_warn "Crontab dump failed for $target_name — continuing with file backup"
+            crontab_cleanup_dump
+        fi
+    fi
+
     # 9. Transfer each folder
     local folder
     local transfer_failed=false
@@ -248,9 +260,27 @@ _backup_target_impl() {
         fi
     fi
 
+    # 9.7. Transfer crontab dumps
+    if [[ -n "$crontab_dump_dir" && -d "$crontab_dump_dir/_crontab" ]]; then
+        if [[ "$transfer_failed" != "true" ]] && [[ "$threshold" -gt 0 ]]; then
+            check_remote_disk_space "$threshold" || {
+                log_error "Disk space threshold exceeded — aborting before crontab dump transfer"
+                transfer_failed=true
+            }
+        fi
+        if [[ "$transfer_failed" != "true" ]]; then
+            log_info "Transferring crontab dumps for $target_name..."
+            if ! transfer_folder "$target_name" "$crontab_dump_dir/_crontab" "$ts" "$prev" "_crontab"; then
+                log_error "Transfer failed for crontab dumps"
+                transfer_failed=true
+            fi
+        fi
+    fi
+
     # Cleanup MySQL temp dir
     mysql_cleanup_dump
     pgsql_cleanup_dump
+    crontab_cleanup_dump
 
     if [[ "$transfer_failed" == "true" ]]; then
         log_error "One or more folder transfers failed for $target_name"
@@ -276,6 +306,7 @@ _backup_target_impl() {
     local esc_folders; esc_folders=$(printf '%s' "$TARGET_FOLDERS" | sed 's/["\]/\\&/g')
     local mysql_val; mysql_val=$([ "${TARGET_MYSQL_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
     local pgsql_val; pgsql_val=$([ "${TARGET_POSTGRESQL_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
+    local crontab_val; crontab_val=$([ "${TARGET_CRONTAB_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
     meta_json=$(printf '{
   "target": "%s",
   "hostname": "%s",
@@ -284,10 +315,11 @@ _backup_target_impl() {
   "folders": "%s",
   "mysql_dumps": %s,
   "postgresql_dumps": %s,
+  "crontab_dumps": %s,
   "total_size": %d,
   "mode": "%s",
   "pinned": false
-}' "$esc_target" "$esc_hostname" "$ts" "$duration" "$esc_folders" "$mysql_val" "$pgsql_val" "$total_size" "${BACKUP_MODE:-$DEFAULT_BACKUP_MODE}")
+}' "$esc_target" "$esc_hostname" "$ts" "$duration" "$esc_folders" "$mysql_val" "$pgsql_val" "$crontab_val" "$total_size" "${BACKUP_MODE:-$DEFAULT_BACKUP_MODE}")
 
     if _is_rclone_mode; then
         local meta_subpath="targets/${target_name}/snapshots/${ts}/meta.json"

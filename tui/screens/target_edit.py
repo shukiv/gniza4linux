@@ -158,6 +158,16 @@ class TargetEditScreen(Screen):
                 yield Input(value=target.postgresql_port, placeholder="5432", id="te-pgsql-port", classes="pgsql-field")
                 yield Static("PostgreSQL Extra Options:", classes="pgsql-field")
                 yield Input(value=target.postgresql_extra_opts, placeholder="--no-owner --no-privileges", id="te-pgsql-extra-opts", classes="pgsql-field")
+                yield Static("--- Crontab Backup ---", classes="section-label crontab-section")
+                yield Static("Crontab Enabled:", classes="crontab-section")
+                yield Select(
+                    [("No", "no"), ("Yes", "yes")],
+                    value=target.crontab_enabled,
+                    id="te-crontab-enabled",
+                    classes="crontab-section",
+                )
+                yield Static("Crontab Users (comma-separated):", classes="crontab-field")
+                yield Input(value=target.crontab_users, placeholder="root", id="te-crontab-users", classes="crontab-field")
                 with Horizontal(id="te-buttons"):
                     yield Button("Test & Save", variant="primary", id="btn-save")
                     yield Button("Cancel", id="btn-cancel")
@@ -167,6 +177,7 @@ class TargetEditScreen(Screen):
     def on_mount(self) -> None:
         self._update_mysql_visibility()
         self._update_pgsql_visibility()
+        self._update_crontab_visibility()
         self._update_source_visibility()
 
     _SOURCE_TYPE_MAP = {"Local": "local", "SSH": "ssh", "S3": "s3", "Google Drive": "gdrive"}
@@ -177,6 +188,8 @@ class TargetEditScreen(Screen):
             self._update_mysql_visibility()
         elif event.select.id in ("te-pgsql-enabled", "te-pgsql-mode"):
             self._update_pgsql_visibility()
+        elif event.select.id == "te-crontab-enabled":
+            self._update_crontab_visibility()
         elif event.select.id == "te-source-auth-method":
             self._update_source_visibility()
 
@@ -207,6 +220,12 @@ class TargetEditScreen(Screen):
                 w.display = mode == "specific"
             for w in self.query(".pgsql-all-field"):
                 w.display = mode == "all"
+
+    def _update_crontab_visibility(self) -> None:
+        enabled = str(self.query_one("#te-crontab-enabled", Select).value)
+        is_enabled = enabled == "yes"
+        for w in self.query(".crontab-field"):
+            w.display = is_enabled
 
     def _get_source_type(self) -> str:
         radio = self.query_one("#te-source-type", RadioSet)
@@ -252,6 +271,15 @@ class TargetEditScreen(Screen):
             self._update_pgsql_visibility()
         else:
             for w in self.query(".pgsql-field"):
+                w.display = False
+        # Hide Crontab section for S3/GDrive (no crontab on cloud sources)
+        show_crontab = source_type in ("local", "ssh")
+        for w in self.query(".crontab-section"):
+            w.display = show_crontab
+        if show_crontab:
+            self._update_crontab_visibility()
+        else:
+            for w in self.query(".crontab-field"):
                 w.display = False
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -307,6 +335,7 @@ class TargetEditScreen(Screen):
         mysql_enabled = str(self.query_one("#te-mysql-enabled", Select).value)
         source_type = self._get_source_type()
         pgsql_enabled = str(self.query_one("#te-pgsql-enabled", Select).value)
+        crontab_enabled = str(self.query_one("#te-crontab-enabled", Select).value)
         if not folders and mysql_enabled != "yes" and pgsql_enabled != "yes" and source_type == "local":
             self.notify("At least one folder or MySQL/PostgreSQL backup is required", severity="error")
             return
@@ -356,6 +385,8 @@ class TargetEditScreen(Screen):
             postgresql_host=self.query_one("#te-pgsql-host", Input).value.strip(),
             postgresql_port=self.query_one("#te-pgsql-port", Input).value.strip(),
             postgresql_extra_opts=self.query_one("#te-pgsql-extra-opts", Input).value.strip(),
+            crontab_enabled=crontab_enabled,
+            crontab_users=self.query_one("#te-crontab-users", Input).value.strip(),
         )
 
         if not self._test_source(target):

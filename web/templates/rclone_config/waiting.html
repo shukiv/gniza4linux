@@ -32,6 +32,12 @@
     status: 'running',
     error: '',
     authUrl: '',
+    authPopup: null,
+    opened: false,
+    openAuth() {
+        this.authPopup = window.open(this.authUrl, 'rclone_auth', 'width=600,height=700,scrollbars=yes');
+        this.opened = true;
+    },
     poll() {
         fetch('/rclone-config/wizard/poll/{{ task_id }}')
             .then(r => r.json())
@@ -43,10 +49,16 @@
                     setTimeout(() => this.poll(), 2000);
                 } else if (data.status === 'done') {
                     this.status = 'done';
+                    if (this.authPopup && !this.authPopup.closed) {
+                        this.authPopup.close();
+                    }
                     window.location.href = data.redirect;
                 } else {
                     this.status = 'error';
                     this.error = data.error || 'Authentication failed';
+                    if (this.authPopup && !this.authPopup.closed) {
+                        this.authPopup.close();
+                    }
                 }
             })
             .catch(() => {
@@ -60,19 +72,24 @@
             <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
             <h2 class="text-lg font-semibold mb-2">Waiting for authentication...</h2>
 
-            <!-- Auth URL available — show clickable link -->
+            <!-- Auth URL available — show button to open popup -->
             <template x-if="authUrl">
                 <div>
                     <p class="text-base-content/60 text-sm mb-3">
                         Click the button below to authenticate with <strong>{{ provider_type }}</strong>:
                     </p>
-                    <a :href="authUrl" target="_blank" rel="noopener"
-                       class="btn btn-primary btn-sm mb-4">
-                        Open Authentication Page
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                    </a>
-                    <p class="text-base-content/50 text-xs">
-                        Complete the authentication in the new tab, then this page will automatically redirect you back.
+                    <button @click="openAuth()" class="btn btn-primary btn-sm mb-4" :disabled="opened">
+                        <span x-show="!opened">
+                            Open Authentication Page
+                            <svg class="w-4 h-4 ml-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </span>
+                        <span x-show="opened">Authentication window opened...</span>
+                    </button>
+                    <p class="text-base-content/50 text-xs" x-show="!opened">
+                        A popup window will open for authentication.
+                    </p>
+                    <p class="text-base-content/50 text-xs" x-show="opened">
+                        Complete the sign-in in the popup window. This page will redirect automatically when done.
                     </p>
                 </div>
             </template>

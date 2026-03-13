@@ -134,6 +134,13 @@ def _test_remote(remote):
             root_folder_id=remote.gdrive_root_folder_id,
         )
 
+    if remote.type == "rclone":
+        from tui.rclone_test import test_rclone_generic
+        return test_rclone_generic(
+            config_path=remote.rclone_config_path,
+            remote_name=remote.rclone_remote_name,
+        )
+
     return True, None
 
 
@@ -217,6 +224,8 @@ def save():
         s3_secret_access_key=form.get("s3_secret_access_key", ""),
         gdrive_sa_file=form.get("gdrive_sa_file", ""),
         gdrive_root_folder_id=form.get("gdrive_root_folder_id", ""),
+        rclone_config_path=form.get("rclone_config_path", ""),
+        rclone_remote_name=form.get("rclone_remote_name", ""),
         sudo="yes" if form.get("sudo") else "no",
     )
 

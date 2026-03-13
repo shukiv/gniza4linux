@@ -87,7 +87,7 @@ _backup_target_impl() {
                 }
             fi
             ;;
-        s3|gdrive)
+        s3|gdrive|rclone)
             test_rclone_connection || {
                 log_error "Cannot connect to remote '$remote_name' (${REMOTE_TYPE})"
                 return 1
@@ -133,7 +133,7 @@ _backup_target_impl() {
 
     # 8.5. Dump MySQL databases (if enabled)
     local mysql_dump_dir=""
-    if [[ "${TARGET_MYSQL_ENABLED:-no}" == "yes" && "${TARGET_SOURCE_TYPE:-local}" != "s3" && "${TARGET_SOURCE_TYPE:-local}" != "gdrive" ]]; then
+    if [[ "${TARGET_MYSQL_ENABLED:-no}" == "yes" && "${TARGET_SOURCE_TYPE:-local}" != "s3" && "${TARGET_SOURCE_TYPE:-local}" != "gdrive" && "${TARGET_SOURCE_TYPE:-local}" != "rclone" ]]; then
         log_info "Dumping MySQL databases for $target_name..."
         if mysql_dump_databases; then
             mysql_dump_grants || log_warn "Grants dump failed, continuing with database dumps"
@@ -147,7 +147,7 @@ _backup_target_impl() {
 
     # 8.6. Dump PostgreSQL databases (if enabled)
     local pgsql_dump_dir=""
-    if [[ "${TARGET_POSTGRESQL_ENABLED:-no}" == "yes" && "${TARGET_SOURCE_TYPE:-local}" != "s3" && "${TARGET_SOURCE_TYPE:-local}" != "gdrive" ]]; then
+    if [[ "${TARGET_POSTGRESQL_ENABLED:-no}" == "yes" && "${TARGET_SOURCE_TYPE:-local}" != "s3" && "${TARGET_SOURCE_TYPE:-local}" != "gdrive" && "${TARGET_SOURCE_TYPE:-local}" != "rclone" ]]; then
         log_info "Dumping PostgreSQL databases for $target_name..."
         if pgsql_dump_databases; then
             pgsql_dump_roles || log_warn "Roles dump failed, continuing with database dumps"

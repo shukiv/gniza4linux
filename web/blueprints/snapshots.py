@@ -138,6 +138,44 @@ def _build_rclone_conf(remote_conf):
             root_folder = remote_conf.get("GDRIVE_ROOT_FOLDER_ID", "")
             if root_folder:
                 content += f"root_folder_id = {root_folder}\n"
+        elif rtype == "rclone":
+            # Read the user's rclone config and extract the named remote section
+            rclone_remote_name = remote_conf.get("RCLONE_REMOTE_NAME", "")
+            rclone_config_path = remote_conf.get("RCLONE_CONFIG_PATH", "")
+            if not rclone_remote_name:
+                os.close(fd)
+                os.unlink(path)
+                return None
+            # Find the rclone config file
+            if not rclone_config_path:
+                try:
+                    result = subprocess.run(
+                        ["rclone", "config", "file"],
+                        capture_output=True, text=True, timeout=10,
+                    )
+                    if result.returncode == 0:
+                        for line in result.stdout.strip().splitlines():
+                            line = line.strip()
+                            if line and not line.startswith("Configuration"):
+                                rclone_config_path = line
+                                break
+                except Exception:
+                    pass
+            if not rclone_config_path or not os.path.isfile(rclone_config_path):
+                os.close(fd)
+                os.unlink(path)
+                return None
+            # Parse the named remote section and rewrite as [remote]
+            import configparser
+            cfg = configparser.ConfigParser()
+            cfg.read(rclone_config_path)
+            if rclone_remote_name not in cfg:
+                os.close(fd)
+                os.unlink(path)
+                return None
+            content = "[remote]\n"
+            for key, val in cfg[rclone_remote_name].items():
+                content += f"{key} = {val}\n"
         else:
             os.close(fd)
             os.unlink(path)
@@ -167,6 +205,8 @@ def _rclone_remote_path(remote_conf, subpath=""):
         bucket = remote_conf.get("S3_BUCKET", "")
         return f"remote:{bucket}{base}/{hostname}" + (f"/{subpath}" if subpath else "")
     elif rtype == "gdrive":
+        return f"remote:{base}/{hostname}" + (f"/{subpath}" if subpath else "")
+    elif rtype == "rclone":
         return f"remote:{base}/{hostname}" + (f"/{subpath}" if subpath else "")
     return ""
 
@@ -228,7 +268,7 @@ def _list_snapshot_dir(remote_conf, target, snapshot, subpath=""):
     """List dirs and files at a subpath within a snapshot."""
     rtype = remote_conf.get("REMOTE_TYPE", "ssh")
 
-    if rtype in ("s3", "gdrive"):
+    if rtype in ("s3", "gdrive", "rclone"):
         return _list_dir_rclone(remote_conf, target, snapshot, subpath)
 
     base = _snapshot_base(remote_conf, target, snapshot)
@@ -416,9 +456,9 @@ def download(target, remote, snapshot):
             headers={"Content-Disposition": disp},
         )
 
-    elif rtype in ("s3", "gdrive"):
+    elif rtype in ("s3", "gdrive", "rclone"):
         if item_type == "folder":
-            abort(400, "Folder download is not supported for S3/GDrive destinations.")
+            abort(400, "Folder download is not supported for S3/GDrive/rclone destinations.")
 
         snap_subpath = f"targets/{target}/snapshots/{snapshot}/{subpath}"
         rpath = _rclone_remote_path(remote_conf, snap_subpath)

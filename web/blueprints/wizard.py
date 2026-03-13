@@ -19,9 +19,9 @@ from web.ssh_utils import get_ssh_keys as _get_ssh_keys
 bp = Blueprint("wizard", __name__, url_prefix="/wizard")
 
 _VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
-_VALID_REMOTE_TYPES = {"ssh", "local", "s3", "gdrive"}
+_VALID_REMOTE_TYPES = {"ssh", "local", "s3", "gdrive", "rclone"}
 _VALID_S3_PROVIDERS = {"AWS", "Backblaze", "Wasabi", "Other"}
-_VALID_SOURCE_TYPES = {"local", "ssh", "s3", "gdrive"}
+_VALID_SOURCE_TYPES = {"local", "ssh", "s3", "gdrive", "rclone"}
 _VALID_SCHEDULE_TYPES = {"hourly", "daily", "weekly", "monthly", "custom"}
 
 
@@ -96,6 +96,8 @@ def save_destination():
         s3_secret_access_key=form.get("s3_secret_access_key", ""),
         gdrive_sa_file=form.get("gdrive_sa_file", ""),
         gdrive_root_folder_id=form.get("gdrive_root_folder_id", ""),
+        rclone_config_path=form.get("rclone_config_path", ""),
+        rclone_remote_name=form.get("rclone_remote_name", ""),
     )
 
     ok, msg = _test_remote(remote)
@@ -149,6 +151,8 @@ def save_source():
         source_s3_secret_access_key=form.get("source_s3_secret_access_key", ""),
         source_gdrive_sa_file=form.get("source_gdrive_sa_file", ""),
         source_gdrive_root_folder_id=form.get("source_gdrive_root_folder_id", ""),
+        source_rclone_config_path=form.get("source_rclone_config_path", ""),
+        source_rclone_remote_name=form.get("source_rclone_remote_name", ""),
         mysql_enabled="yes" if form.get("mysql_enabled") else "no",
         mysql_mode=form.get("mysql_mode", "all"),
         mysql_databases=form.get("mysql_databases", ""),

@@ -36,6 +36,10 @@
                     <input type="radio" name="type" value="gdrive" class="radio radio-primary" x-model="remoteType">
                     <span>Google Drive</span>
                 </label>
+                <label class="label cursor-pointer gap-2">
+                    <input type="radio" name="type" value="rclone" class="radio radio-primary" x-model="remoteType">
+                    <span>Rclone</span>
+                </label>
             </div>
         </div>
     </div>
@@ -219,6 +223,26 @@
         </div>
     </div>
 
+    <!-- Rclone fields -->
+    <div x-show="remoteType === 'rclone'" x-cloak>
+        <div class="card bg-base-200 shadow mb-6">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-4">Rclone Configuration</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Remote Name</label>
+                        <input type="text" name="rclone_remote_name" value="{{ remote.rclone_remote_name }}" class="input" placeholder="e.g. mybackblaze">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Config File Path</label>
+                        <input type="text" name="rclone_config_path" value="{{ remote.rclone_config_path }}" class="input" placeholder="Leave empty for default (~/.config/rclone/rclone.conf)">
+                    </fieldset>
+                </div>
+                <div class="text-base-content/50 text-sm mt-3">Run <code class="text-primary">rclone config</code> in your terminal to create and manage remotes.</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Folder Browser Modal -->
     <dialog id="folder_browser_modal_base" class="modal"
             @folder-selected.window="
@@ -254,6 +278,7 @@
     <li><strong>Local</strong> — Local directory or mounted drive.</li>
     <li><strong>S3</strong> — Amazon S3 or compatible storage.</li>
     <li><strong>Google Drive</strong> — Google Drive via service account.</li>
+    <li><strong>Rclone</strong> — Any rclone-supported remote (Backblaze, Dropbox, etc.).</li>
 </ul>
 <h4 class="font-semibold text-sm mb-1">SSH fields</h4>
 <p class="mb-3 text-base-content/70">Host, port, user, and either SSH key or password authentication.</p>

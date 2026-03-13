@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gniza4linux/lib/rclone.sh — Rclone transport layer for S3 and Google Drive remotes
+# gniza4linux/lib/rclone.sh — Rclone transport layer for S3, Google Drive, and generic rclone remotes
 
 [[ -n "${_GNIZA4LINUX_RCLONE_LOADED:-}" ]] && return 0
 _GNIZA4LINUX_RCLONE_LOADED=1
@@ -7,7 +7,7 @@ _GNIZA4LINUX_RCLONE_LOADED=1
 # ── Mode Detection ────────────────────────────────────────────
 
 _is_rclone_mode() {
-    [[ "${REMOTE_TYPE:-ssh}" == "s3" || "${REMOTE_TYPE:-ssh}" == "gdrive" ]]
+    [[ "${REMOTE_TYPE:-ssh}" == "s3" || "${REMOTE_TYPE:-ssh}" == "gdrive" || "${REMOTE_TYPE:-ssh}" == "rclone" ]]
 }
 
 # ── Rclone Config Generation ─────────────────────────────────
@@ -49,6 +49,34 @@ EOF
                 echo "root_folder_id = ${GDRIVE_ROOT_FOLDER_ID}" >> "$tmpfile"
             fi
             ;;
+        rclone)
+            # Generic rclone: extract named remote section from user's rclone.conf
+            local src_conf="${RCLONE_CONFIG_PATH:-}"
+            if [[ -z "$src_conf" ]]; then
+                src_conf=$(rclone config file 2>/dev/null | tail -1) || {
+                    rm -f "$tmpfile"
+                    log_error "Cannot determine rclone config path"
+                    return 1
+                }
+            fi
+            if [[ ! -f "$src_conf" ]]; then
+                rm -f "$tmpfile"
+                log_error "Rclone config file not found: $src_conf"
+                return 1
+            fi
+            local remote_name="${RCLONE_REMOTE_NAME}"
+            # Extract the named section and rename it to [remote]
+            awk -v name="$remote_name" '
+                BEGIN { found=0 }
+                /^\[/ { found = ($0 == "[" name "]") ? 1 : 0 }
+                found { if ($0 == "[" name "]") print "[remote]"; else print }
+            ' "$src_conf" > "$tmpfile"
+            if ! grep -q '^\[remote\]' "$tmpfile"; then
+                rm -f "$tmpfile"
+                log_error "Remote section [${remote_name}] not found in $src_conf"
+                return 1
+            fi
+            ;;
         *)
             rm -f "$tmpfile"
             log_error "Unknown REMOTE_TYPE for rclone: ${REMOTE_TYPE}"
@@ -75,6 +103,9 @@ _rclone_remote_path() {
             echo "remote:${S3_BUCKET}${REMOTE_BASE}/${hostname}${subpath:+/$subpath}"
             ;;
         gdrive)
+            echo "remote:${REMOTE_BASE}/${hostname}${subpath:+/$subpath}"
+            ;;
+        rclone)
             echo "remote:${REMOTE_BASE}/${hostname}${subpath:+/$subpath}"
             ;;
     esac
@@ -377,6 +408,9 @@ test_rclone_connection() {
         gdrive)
             remote_path="remote:${REMOTE_BASE}"
             ;;
+        rclone)
+            remote_path="remote:${REMOTE_BASE}"
+            ;;
         *)
             log_error "Unknown REMOTE_TYPE: ${REMOTE_TYPE}"
             return 1
@@ -413,6 +447,18 @@ print(int(used * 100 / total) if total > 0 else 0)
         s3)
             # S3 has no quota concept
             echo "0"
+            ;;
+        rclone)
+            # Try rclone about if the backend supports it
+            local about_json
+            about_json=$(_rclone_cmd about "remote:" --json 2>/dev/null) || { echo "0"; return 0; }
+            python3 -c "
+import json, sys
+d = json.loads(sys.stdin.read())
+total = d.get('total', 0)
+used = d.get('used', 0)
+print(int(used * 100 / total) if total > 0 else 0)
+" <<< "$about_json" 2>/dev/null || echo "0"
             ;;
     esac
 }
@@ -456,6 +502,28 @@ total_bytes = d.get('bytes', 0)
 count = d.get('count', 0)
 print(f'{fmt(total_bytes)} used, {count} objects (no quota)')
 " <<< "$size_json" 2>/dev/null || echo "N/A"
+            ;;
+        rclone)
+            # Try rclone about --json if the backend supports it
+            local about_json
+            about_json=$(_rclone_cmd about "remote:" --json 2>/dev/null) || { echo "N/A"; return 0; }
+            python3 -c "
+import json, sys
+def fmt(b):
+    for u in ['B','K','M','G','T']:
+        if b < 1024: return f'{b:.1f}{u}'
+        b /= 1024
+    return f'{b:.1f}P'
+d = json.loads(sys.stdin.read())
+total = d.get('total', 0)
+used = d.get('used', 0)
+free = d.get('free', total - used)
+if total > 0:
+    pct = int(used * 100 / total)
+    print(f'{fmt(used)}/{fmt(total)} ({fmt(free)} free) {pct}%')
+else:
+    print(f'{fmt(used)} used')
+" <<< "$about_json" 2>/dev/null || echo "N/A"
             ;;
     esac
 }

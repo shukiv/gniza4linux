@@ -42,6 +42,7 @@ class TargetEditScreen(Screen):
                     yield RadioButton("SSH", value=target.source_type == "ssh")
                     yield RadioButton("S3", value=target.source_type == "s3")
                     yield RadioButton("Google Drive", value=target.source_type == "gdrive")
+                    yield RadioButton("Rclone", value=target.source_type == "rclone")
                 if self._is_new:
                     yield Static("Name:")
                     yield Input(value="", placeholder="Target name", id="te-name")
@@ -83,6 +84,10 @@ class TargetEditScreen(Screen):
                 yield Input(value=target.source_gdrive_sa_file, placeholder="/path/to/sa.json", id="te-source-gdrive-sa-file", classes="source-field source-gdrive-field")
                 yield Static("Root Folder ID:", classes="source-field source-gdrive-field")
                 yield Input(value=target.source_gdrive_root_folder_id, placeholder="folder ID", id="te-source-gdrive-root-folder-id", classes="source-field source-gdrive-field")
+                yield Static("Rclone Config Path:", classes="source-field source-rclone-field")
+                yield Input(value=target.source_rclone_config_path, placeholder="Leave empty for default (~/.config/rclone/rclone.conf)", id="te-source-rclone-config", classes="source-field source-rclone-field")
+                yield Static("Rclone Remote Name:", classes="source-field source-rclone-field")
+                yield Input(value=target.source_rclone_remote_name, placeholder="myremote", id="te-source-rclone-remote", classes="source-field source-rclone-field")
                 yield Static("Folders:")
                 folder_items = [f.strip() for f in target.folders.split(",") if f.strip()]
                 yield TagList(items=folder_items, placeholder="/path/to/folder", widget_id="te-folders", show_browse=True)
@@ -180,7 +185,7 @@ class TargetEditScreen(Screen):
         self._update_crontab_visibility()
         self._update_source_visibility()
 
-    _SOURCE_TYPE_MAP = {"Local": "local", "SSH": "ssh", "S3": "s3", "Google Drive": "gdrive"}
+    _SOURCE_TYPE_MAP = {"Local": "local", "SSH": "ssh", "S3": "s3", "Google Drive": "gdrive", "Rclone": "rclone"}
     _SOURCE_TYPE_RMAP = {v: k for k, v in _SOURCE_TYPE_MAP.items()}
 
     def on_select_changed(self, event: Select.Changed) -> None:
@@ -254,8 +259,12 @@ class TargetEditScreen(Screen):
         elif source_type == "gdrive":
             for w in self.query(".source-gdrive-field"):
                 w.display = True
-        # Hide MySQL section for S3/GDrive (no MySQL on cloud sources)
+        elif source_type == "rclone":
+            for w in self.query(".source-rclone-field"):
+                w.display = True
+        # Hide MySQL section for S3/GDrive/Rclone (no MySQL on cloud sources)
         show_mysql = source_type in ("local", "ssh")
+
         for w in self.query(".mysql-section"):
             w.display = show_mysql
         if show_mysql:
@@ -367,6 +376,8 @@ class TargetEditScreen(Screen):
             source_s3_secret_access_key=self.query_one("#te-source-s3-secret-key", Input).value.strip(),
             source_gdrive_sa_file=self.query_one("#te-source-gdrive-sa-file", Input).value.strip(),
             source_gdrive_root_folder_id=self.query_one("#te-source-gdrive-root-folder-id", Input).value.strip(),
+            source_rclone_config_path=self.query_one("#te-source-rclone-config", Input).value.strip(),
+            source_rclone_remote_name=self.query_one("#te-source-rclone-remote", Input).value.strip(),
             mysql_enabled=mysql_enabled,
             mysql_mode=str(self.query_one("#te-mysql-mode", Select).value),
             mysql_databases=self.query_one("#te-mysql-databases", Input).value.strip(),
@@ -467,6 +478,18 @@ class TargetEditScreen(Screen):
             )
             if not ok:
                 self.notify(f"Google Drive test failed: {err}", severity="error")
+                return False
+            return True
+
+        if target.source_type == "rclone":
+            self.notify("Testing rclone connection...")
+            from tui.rclone_test import test_rclone_generic
+            ok, err = test_rclone_generic(
+                config_path=target.source_rclone_config_path,
+                remote_name=target.source_rclone_remote_name,
+            )
+            if not ok:
+                self.notify(f"Rclone test failed: {err}", severity="error")
                 return False
             return True
 

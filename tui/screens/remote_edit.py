@@ -16,10 +16,10 @@ from tui.widgets.folder_picker import FolderPicker
 
 _NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')
 
-REMOTE_TYPES = [("SSH", "ssh"), ("Local", "local"), ("S3", "s3"), ("Google Drive", "gdrive")]
+REMOTE_TYPES = [("SSH", "ssh"), ("Local", "local"), ("S3", "s3"), ("Google Drive", "gdrive"), ("Rclone", "rclone")]
 
 
-_TYPE_MAP = {"SSH": "ssh", "Local": "local", "S3": "s3", "Google Drive": "gdrive"}
+_TYPE_MAP = {"SSH": "ssh", "Local": "local", "S3": "s3", "Google Drive": "gdrive", "Rclone": "rclone"}
 
 
 class RemoteEditScreen(Screen):
@@ -48,6 +48,7 @@ class RemoteEditScreen(Screen):
                     yield RadioButton("Local", value=remote.type == "local")
                     yield RadioButton("S3", value=remote.type == "s3")
                     yield RadioButton("Google Drive", value=remote.type == "gdrive")
+                    yield RadioButton("Rclone", value=remote.type == "rclone")
                 if self._is_new:
                     yield Static("Name:")
                     yield Input(value="", placeholder="Remote name", id="re-name")
@@ -96,6 +97,11 @@ class RemoteEditScreen(Screen):
                 yield Input(value=remote.gdrive_sa_file, placeholder="/path/to/sa.json", id="re-gdsa", classes="gdrive-field")
                 yield Static("Root Folder ID:", id="lbl-gdfolder", classes="gdrive-field")
                 yield Input(value=remote.gdrive_root_folder_id, id="re-gdfolder", classes="gdrive-field")
+                # Rclone fields
+                yield Static("Rclone Config Path:", id="lbl-rclone-config", classes="rclone-field")
+                yield Input(value=remote.rclone_config_path, placeholder="Leave empty for default (~/.config/rclone/rclone.conf)", id="re-rclone-config", classes="rclone-field")
+                yield Static("Rclone Remote Name:", id="lbl-rclone-remote", classes="rclone-field")
+                yield Input(value=remote.rclone_remote_name, placeholder="myremote", id="re-rclone-remote", classes="rclone-field")
                 with Horizontal(id="re-buttons"):
                     yield Button("Test & Save", variant="primary", id="btn-save")
                     yield Button("Cancel", id="btn-cancel")
@@ -127,6 +133,8 @@ class RemoteEditScreen(Screen):
             w.display = rtype == "s3"
         for w in self.query(".gdrive-field"):
             w.display = rtype == "gdrive"
+        for w in self.query(".rclone-field"):
+            w.display = rtype == "rclone"
         # Toggle key vs password fields based on auth method
         if is_ssh:
             auth_sel = self.query_one("#re-auth", Select)
@@ -221,6 +229,8 @@ class RemoteEditScreen(Screen):
             s3_secret_access_key=self.query_one("#re-s3secret", Input).value,
             gdrive_sa_file=self.query_one("#re-gdsa", Input).value.strip(),
             gdrive_root_folder_id=self.query_one("#re-gdfolder", Input).value.strip(),
+            rclone_config_path=self.query_one("#re-rclone-config", Input).value.strip(),
+            rclone_remote_name=self.query_one("#re-rclone-remote", Input).value.strip(),
             sudo=str(self.query_one("#re-sudo", Select).value),
         )
 
@@ -324,6 +334,18 @@ class RemoteEditScreen(Screen):
             )
             if not ok:
                 self.notify(f"Google Drive test failed: {err}", severity="error")
+                return False
+            return True
+
+        if remote.type == "rclone":
+            self.notify("Testing rclone connection...")
+            from tui.rclone_test import test_rclone_generic
+            ok, err = test_rclone_generic(
+                config_path=remote.rclone_config_path,
+                remote_name=remote.rclone_remote_name,
+            )
+            if not ok:
+                self.notify(f"Rclone test failed: {err}", severity="error")
                 return False
             return True
 

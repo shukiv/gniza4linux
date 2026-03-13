@@ -229,6 +229,10 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                             <input type="radio" name="type" value="gdrive" class="radio radio-primary" x-model="remoteType">
                             <span>Google Drive</span>
                         </label>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="type" value="rclone" class="radio radio-primary" x-model="remoteType">
+                            <span>Rclone</span>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -398,6 +402,26 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                 </div>
             </div>
 
+            <!-- Rclone fields -->
+            <div x-show="remoteType === 'rclone'" x-cloak>
+                <div class="card bg-base-200 shadow mb-6">
+                    <div class="card-body">
+                        <h2 class="card-title text-base mb-4">Rclone Configuration</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Remote Name</label>
+                                <input type="text" name="rclone_remote_name" class="input" placeholder="e.g. mybackblaze">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Config File Path</label>
+                                <input type="text" name="rclone_config_path" class="input" placeholder="Leave empty for default (~/.config/rclone/rclone.conf)">
+                            </fieldset>
+                        </div>
+                        <div class="text-base-content/50 text-sm mt-3">Run <code class="text-primary">rclone config</code> in your terminal to create and manage remotes.</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Folder Browser Modal for base path -->
             <dialog id="folder_browser_modal_wiz_base" class="modal"
                     @folder-selected.window="
@@ -460,6 +484,10 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                         <label class="label cursor-pointer gap-2">
                             <input type="radio" name="source_type" value="gdrive" class="radio radio-primary" x-model="sourceType">
                             <span>Google Drive</span>
+                        </label>
+                        <label class="label cursor-pointer gap-2">
+                            <input type="radio" name="source_type" value="rclone" class="radio radio-primary" x-model="sourceType">
+                            <span>Rclone</span>
                         </label>
                     </div>
 
@@ -561,6 +589,22 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                                 <input type="text" name="source_gdrive_root_folder_id" class="input">
                             </fieldset>
                         </div>
+                    </div>
+
+                    <!-- Rclone source fields -->
+                    <div x-show="sourceType === 'rclone'" x-cloak>
+                        <div class="divider text-sm">Rclone Configuration</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Remote Name</label>
+                                <input type="text" name="source_rclone_remote_name" class="input" placeholder="e.g. mybackblaze">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Config File Path</label>
+                                <input type="text" name="source_rclone_config_path" class="input" placeholder="Leave empty for default (~/.config/rclone/rclone.conf)">
+                            </fieldset>
+                        </div>
+                        <div class="text-base-content/50 text-sm mt-3">Run <code class="text-primary">rclone config</code> in your terminal to create and manage remotes.</div>
                     </div>
                 </div>
             </div>

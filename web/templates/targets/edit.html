@@ -49,6 +49,10 @@
                     <input type="radio" name="source_type" value="gdrive" class="radio radio-primary" x-model="sourceType">
                     <span>Google Drive</span>
                 </label>
+                <label class="label cursor-pointer gap-2">
+                    <input type="radio" name="source_type" value="rclone" class="radio radio-primary" x-model="sourceType">
+                    <span>Rclone</span>
+                </label>
             </div>
 
             <!-- SSH fields -->
@@ -159,6 +163,22 @@
                         <input type="text" name="source_gdrive_root_folder_id" value="{{ target.source_gdrive_root_folder_id }}" class="input">
                     </fieldset>
                 </div>
+            </div>
+
+            <!-- Rclone fields -->
+            <div x-show="sourceType === 'rclone'" x-cloak>
+                <div class="divider text-sm">Rclone Configuration</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Remote Name</label>
+                        <input type="text" name="source_rclone_remote_name" value="{{ target.source_rclone_remote_name }}" class="input" placeholder="e.g. mybackblaze">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Config File Path</label>
+                        <input type="text" name="source_rclone_config_path" value="{{ target.source_rclone_config_path }}" class="input" placeholder="Leave empty for default (~/.config/rclone/rclone.conf)">
+                    </fieldset>
+                </div>
+                <div class="text-base-content/50 text-sm mt-3">Run <code class="text-primary">rclone config</code> in your terminal to create and manage remotes.</div>
             </div>
         </div>
     </div>
@@ -437,6 +457,7 @@
     <li><strong>SSH</strong> — Pull files from a source server via SSH/rsync.</li>
     <li><strong>S3</strong> — Pull files from an S3-compatible bucket.</li>
     <li><strong>Google Drive</strong> — Pull files via service account.</li>
+    <li><strong>Rclone</strong> — Pull files from any rclone-supported remote.</li>
 </ul>
 <p class="mb-3 text-base-content/70">When using a source server, specify remote paths in the Folders field instead of local paths.</p>
 <h4 class="font-semibold text-sm mb-1">MySQL</h4>

@@ -88,6 +88,8 @@ load_target() {
     TARGET_SOURCE_S3_SECRET_ACCESS_KEY="${TARGET_SOURCE_S3_SECRET_ACCESS_KEY:-}"
     TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE="${TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE:-}"
     TARGET_SOURCE_GDRIVE_ROOT_FOLDER_ID="${TARGET_SOURCE_GDRIVE_ROOT_FOLDER_ID:-}"
+    TARGET_SOURCE_RCLONE_CONFIG_PATH="${TARGET_SOURCE_RCLONE_CONFIG_PATH:-}"
+    TARGET_SOURCE_RCLONE_REMOTE_NAME="${TARGET_SOURCE_RCLONE_REMOTE_NAME:-}"
 
     log_debug "Loaded target '$name': folders=${TARGET_FOLDERS} enabled=${TARGET_ENABLED}"
 }
@@ -150,6 +152,23 @@ validate_target() {
                 gdrive)
                     if [[ -z "${TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE}" ]]; then
                         log_error "Target '$name': service account file is required for Google Drive source"
+                        ((errors++)) || true
+                    fi
+                    ;;
+                rclone)
+                    if ! command -v rclone &>/dev/null; then
+                        log_error "Target '$name': rclone is required for rclone source (install: https://rclone.org/install/)"
+                        ((errors++)) || true
+                    fi
+                    if [[ -z "${TARGET_SOURCE_RCLONE_REMOTE_NAME:-}" ]]; then
+                        log_error "Target '$name': TARGET_SOURCE_RCLONE_REMOTE_NAME is required for rclone source"
+                        ((errors++)) || true
+                    elif [[ ! "$TARGET_SOURCE_RCLONE_REMOTE_NAME" =~ ^[A-Za-z0-9_-]+$ ]]; then
+                        log_error "Target '$name': Invalid rclone remote name (use letters, numbers, hyphens, underscores)"
+                        ((errors++)) || true
+                    fi
+                    if [[ -n "${TARGET_SOURCE_RCLONE_CONFIG_PATH:-}" && ! -f "${TARGET_SOURCE_RCLONE_CONFIG_PATH}" ]]; then
+                        log_error "Target '$name': TARGET_SOURCE_RCLONE_CONFIG_PATH not found: $TARGET_SOURCE_RCLONE_CONFIG_PATH"
                         ((errors++)) || true
                     fi
                     ;;

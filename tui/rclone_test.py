@@ -1,6 +1,7 @@
 """Shared rclone connection testing for S3 and Google Drive."""
 
 import os
+import re
 import subprocess
 import tempfile
 
@@ -14,6 +15,32 @@ def test_rclone_s3(bucket, region="us-east-1", endpoint="",
         return False, "S3 access key and secret are required"
     conf = _build_s3_config(bucket, region, endpoint, access_key_id, secret_access_key, provider)
     return _run_rclone_test(conf, f"remote:{bucket}")
+
+
+def test_rclone_generic(config_path="", remote_name=""):
+    """Test a generic rclone remote. Returns (ok: bool, error_msg: str|None)."""
+    if not remote_name:
+        return False, "No rclone remote name specified"
+    if not re.match(r'^[A-Za-z0-9_-]+$', remote_name):
+        return False, "Invalid rclone remote name (use letters, numbers, hyphens, underscores)"
+    cmd = ["rclone", "lsd", f"{remote_name}:"]
+    if config_path:
+        cmd += ["--config", config_path]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        if result.returncode == 0:
+            return True, None
+        err = result.stderr.strip()
+        for line in err.splitlines():
+            if "ERROR" in line or "Failed" in line or "error" in line.lower():
+                return False, line.strip()
+        return False, err or "Connection failed"
+    except FileNotFoundError:
+        return False, "rclone is not installed"
+    except subprocess.TimeoutExpired:
+        return False, "Connection timed out"
+    except OSError as e:
+        return False, f"Connection test failed: {e}"
 
 
 def test_rclone_gdrive(sa_file, root_folder_id=""):

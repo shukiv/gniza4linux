@@ -488,6 +488,10 @@ HELPEOF
                             echo "SA File:        $TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE"
                             echo "Root Folder ID: ${TARGET_SOURCE_GDRIVE_ROOT_FOLDER_ID:-(root)}"
                             ;;
+                        rclone)
+                            echo "Config Path:    ${TARGET_SOURCE_RCLONE_CONFIG_PATH:-(default)}"
+                            echo "Remote Name:    $TARGET_SOURCE_RCLONE_REMOTE_NAME"
+                            ;;
                     esac
                     if [[ "$TARGET_MYSQL_ENABLED" == "yes" ]]; then
                         echo ""
@@ -604,6 +608,11 @@ HELPEOF
                         gdrive)
                             echo "SA File:        ${GDRIVE_SERVICE_ACCOUNT_FILE:-}"
                             echo "Root Folder ID: ${GDRIVE_ROOT_FOLDER_ID:-(root)}"
+                            echo "Base path:      $REMOTE_BASE"
+                            ;;
+                        rclone)
+                            echo "Config path:    ${RCLONE_CONFIG_PATH:-(default)}"
+                            echo "Remote name:    ${RCLONE_REMOTE_NAME:-}"
                             echo "Base path:      $REMOTE_BASE"
                             ;;
                     esac

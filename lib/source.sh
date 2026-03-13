@@ -33,6 +33,13 @@ pull_from_source() {
             rm -f "${_SOURCE_RCLONE_CONF:-}"; _SOURCE_RCLONE_CONF=""
             return $rc
             ;;
+        rclone)
+            _build_source_rclone_config "rclone"
+            _rclone_from_source "$remote_path" "$local_dir"
+            local rc=$?
+            rm -f "${_SOURCE_RCLONE_CONF:-}"; _SOURCE_RCLONE_CONF=""
+            return $rc
+            ;;
         *)
             log_error "Unknown source type: ${TARGET_SOURCE_TYPE}"
             return 1
@@ -158,6 +165,29 @@ type = drive
 service_account_file = ${TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE:-}
 root_folder_id = ${TARGET_SOURCE_GDRIVE_ROOT_FOLDER_ID:-}
 EOF
+    elif [[ "$src_type" == "rclone" ]]; then
+        # Extract named remote section from user's rclone.conf, rename to [gniza-source]
+        local src_conf="${TARGET_SOURCE_RCLONE_CONFIG_PATH:-}"
+        if [[ -z "$src_conf" ]]; then
+            src_conf=$(rclone config file 2>/dev/null | tail -1) || {
+                log_error "Cannot determine rclone config path for source"
+                return 1
+            }
+        fi
+        if [[ ! -f "$src_conf" ]]; then
+            log_error "Source rclone config file not found: $src_conf"
+            return 1
+        fi
+        local remote_name="${TARGET_SOURCE_RCLONE_REMOTE_NAME}"
+        awk -v name="$remote_name" '
+            BEGIN { found=0 }
+            /^\[/ { found = ($0 == "[" name "]") ? 1 : 0 }
+            found { if ($0 == "[" name "]") print "[gniza-source]"; else print }
+        ' "$src_conf" > "$_SOURCE_RCLONE_CONF"
+        if ! grep -q '^\[gniza-source\]' "$_SOURCE_RCLONE_CONF"; then
+            log_error "Remote section [${remote_name}] not found in $src_conf"
+            return 1
+        fi
     fi
 
     chmod 600 "$_SOURCE_RCLONE_CONF"
@@ -176,6 +206,8 @@ _rclone_from_source() {
     local rclone_src="gniza-source:${remote_path}"
     if [[ "${TARGET_SOURCE_TYPE}" == "s3" && -n "${TARGET_SOURCE_S3_BUCKET:-}" ]]; then
         rclone_src="gniza-source:${TARGET_SOURCE_S3_BUCKET}/${remote_path#/}"
+    elif [[ "${TARGET_SOURCE_TYPE}" == "rclone" ]]; then
+        rclone_src="gniza-source:${remote_path#/}"
     fi
 
     log_debug "rclone (source pull): $rclone_src -> $local_dir"

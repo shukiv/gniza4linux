@@ -27,6 +27,8 @@ class Target:
     source_s3_secret_access_key: str = ""
     source_gdrive_sa_file: str = ""
     source_gdrive_root_folder_id: str = ""
+    source_rclone_config_path: str = ""
+    source_rclone_remote_name: str = ""
     mysql_enabled: str = "no"
     mysql_mode: str = "all"
     mysql_databases: str = ""
@@ -84,6 +86,11 @@ class Target:
                 "TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE": self.source_gdrive_sa_file,
                 "TARGET_SOURCE_GDRIVE_ROOT_FOLDER_ID": self.source_gdrive_root_folder_id,
             })
+        elif self.source_type == "rclone":
+            data.update({
+                "TARGET_SOURCE_RCLONE_CONFIG_PATH": self.source_rclone_config_path,
+                "TARGET_SOURCE_RCLONE_REMOTE_NAME": self.source_rclone_remote_name,
+            })
         data.update({
             "TARGET_MYSQL_ENABLED": self.mysql_enabled,
             "TARGET_MYSQL_MODE": self.mysql_mode,
@@ -139,6 +146,8 @@ class Target:
             source_s3_secret_access_key=data.get("TARGET_SOURCE_S3_SECRET_ACCESS_KEY", ""),
             source_gdrive_sa_file=data.get("TARGET_SOURCE_GDRIVE_SERVICE_ACCOUNT_FILE", ""),
             source_gdrive_root_folder_id=data.get("TARGET_SOURCE_GDRIVE_ROOT_FOLDER_ID", ""),
+            source_rclone_config_path=data.get("TARGET_SOURCE_RCLONE_CONFIG_PATH", ""),
+            source_rclone_remote_name=data.get("TARGET_SOURCE_RCLONE_REMOTE_NAME", ""),
             mysql_enabled=data.get("TARGET_MYSQL_ENABLED", "no"),
             mysql_mode=data.get("TARGET_MYSQL_MODE", "all"),
             mysql_databases=data.get("TARGET_MYSQL_DATABASES", ""),
@@ -183,6 +192,8 @@ class Remote:
     s3_secret_access_key: str = ""
     gdrive_sa_file: str = ""
     gdrive_root_folder_id: str = ""
+    rclone_config_path: str = ""
+    rclone_remote_name: str = ""
 
     def to_conf(self) -> dict[str, str]:
         data: dict[str, str] = {"REMOTE_TYPE": self.type}
@@ -218,6 +229,13 @@ class Remote:
                 "GDRIVE_ROOT_FOLDER_ID": self.gdrive_root_folder_id,
                 "REMOTE_BASE": self.base,
             })
+        elif self.type == "rclone":
+            data.update({
+                "RCLONE_CONFIG_PATH": self.rclone_config_path,
+                "RCLONE_REMOTE_NAME": self.rclone_remote_name,
+                "REMOTE_BASE": self.base,
+                "BWLIMIT": self.bwlimit,
+            })
         return data
 
     @classmethod
@@ -242,6 +260,8 @@ class Remote:
             s3_secret_access_key=data.get("S3_SECRET_ACCESS_KEY", ""),
             gdrive_sa_file=data.get("GDRIVE_SERVICE_ACCOUNT_FILE", ""),
             gdrive_root_folder_id=data.get("GDRIVE_ROOT_FOLDER_ID", ""),
+            rclone_config_path=data.get("RCLONE_CONFIG_PATH", ""),
+            rclone_remote_name=data.get("RCLONE_REMOTE_NAME", ""),
         )
 
 

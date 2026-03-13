@@ -28,6 +28,8 @@ declare -g _SAVED_S3_ENDPOINT=""
 declare -g _SAVED_S3_BUCKET=""
 declare -g _SAVED_GDRIVE_SERVICE_ACCOUNT_FILE=""
 declare -g _SAVED_GDRIVE_ROOT_FOLDER_ID=""
+declare -g _SAVED_RCLONE_CONFIG_PATH=""
+declare -g _SAVED_RCLONE_REMOTE_NAME=""
 declare -g CURRENT_REMOTE_NAME=""
 
 _save_remote_globals() {
@@ -49,6 +51,8 @@ _save_remote_globals() {
     _SAVED_S3_BUCKET="${S3_BUCKET:-}"
     _SAVED_GDRIVE_SERVICE_ACCOUNT_FILE="${GDRIVE_SERVICE_ACCOUNT_FILE:-}"
     _SAVED_GDRIVE_ROOT_FOLDER_ID="${GDRIVE_ROOT_FOLDER_ID:-}"
+    _SAVED_RCLONE_CONFIG_PATH="${RCLONE_CONFIG_PATH:-}"
+    _SAVED_RCLONE_REMOTE_NAME="${RCLONE_REMOTE_NAME:-}"
 }
 
 _restore_remote_globals() {
@@ -70,6 +74,8 @@ _restore_remote_globals() {
     S3_BUCKET="$_SAVED_S3_BUCKET"
     GDRIVE_SERVICE_ACCOUNT_FILE="$_SAVED_GDRIVE_SERVICE_ACCOUNT_FILE"
     GDRIVE_ROOT_FOLDER_ID="$_SAVED_GDRIVE_ROOT_FOLDER_ID"
+    RCLONE_CONFIG_PATH="$_SAVED_RCLONE_CONFIG_PATH"
+    RCLONE_REMOTE_NAME="$_SAVED_RCLONE_REMOTE_NAME"
     CURRENT_REMOTE_NAME=""
 }
 
@@ -133,6 +139,10 @@ load_remote() {
     S3_BUCKET="${S3_BUCKET:-}"
     GDRIVE_SERVICE_ACCOUNT_FILE="${GDRIVE_SERVICE_ACCOUNT_FILE:-}"
     GDRIVE_ROOT_FOLDER_ID="${GDRIVE_ROOT_FOLDER_ID:-}"
+
+    # Generic rclone defaults
+    RCLONE_CONFIG_PATH="${RCLONE_CONFIG_PATH:-}"
+    RCLONE_REMOTE_NAME="${RCLONE_REMOTE_NAME:-}"
 
     # shellcheck disable=SC2034  # used by callers
     CURRENT_REMOTE_NAME="$name"
@@ -229,8 +239,25 @@ validate_remote() {
                 ((errors++)) || true
             fi
             ;;
+        rclone)
+            if ! command -v rclone &>/dev/null; then
+                log_error "Remote '$name': rclone is required for rclone remotes (install: https://rclone.org/install/)"
+                ((errors++)) || true
+            fi
+            if [[ -z "${RCLONE_REMOTE_NAME:-}" ]]; then
+                log_error "Remote '$name': RCLONE_REMOTE_NAME is required"
+                ((errors++)) || true
+            elif [[ ! "$RCLONE_REMOTE_NAME" =~ ^[A-Za-z0-9_-]+$ ]]; then
+                log_error "Remote '$name': Invalid rclone remote name (use letters, numbers, hyphens, underscores)"
+                ((errors++)) || true
+            fi
+            if [[ -n "${RCLONE_CONFIG_PATH:-}" && ! -f "${RCLONE_CONFIG_PATH}" ]]; then
+                log_error "Remote '$name': RCLONE_CONFIG_PATH not found: $RCLONE_CONFIG_PATH"
+                ((errors++)) || true
+            fi
+            ;;
         *)
-            log_error "Remote '$name': REMOTE_TYPE must be 'ssh', 'local', 's3', or 'gdrive', got: $REMOTE_TYPE"
+            log_error "Remote '$name': REMOTE_TYPE must be 'ssh', 'local', 's3', 'gdrive', or 'rclone', got: $REMOTE_TYPE"
             ((errors++)) || true
             ;;
     esac
@@ -251,7 +278,7 @@ test_remote_connection() {
         local)
             _test_local_connection
             ;;
-        s3|gdrive)
+        s3|gdrive|rclone)
             test_rclone_connection
             ;;
         *)
@@ -333,7 +360,7 @@ remote_disk_usage_pct() {
         local)
             df_out=$(df "$base" 2>/dev/null || df / 2>/dev/null) || return 1
             ;;
-        s3|gdrive)
+        s3|gdrive|rclone)
             rclone_disk_usage_pct
             return
             ;;
@@ -379,7 +406,7 @@ remote_disk_info_short() {
         local)
             df_out=$(df -h "$base" 2>/dev/null || df -h / 2>/dev/null) || return 1
             ;;
-        s3|gdrive)
+        s3|gdrive|rclone)
             rclone_disk_info_short
             ;;
         *)

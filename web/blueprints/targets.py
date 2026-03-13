@@ -97,6 +97,13 @@ def _test_source(target):
             root_folder_id=target.source_gdrive_root_folder_id,
         )
 
+    if target.source_type == "rclone":
+        from tui.rclone_test import test_rclone_generic
+        return test_rclone_generic(
+            config_path=target.source_rclone_config_path,
+            remote_name=target.source_rclone_remote_name,
+        )
+
     return True, None
 
 
@@ -186,6 +193,8 @@ def save():
         source_s3_secret_access_key=form.get("source_s3_secret_access_key", ""),
         source_gdrive_sa_file=form.get("source_gdrive_sa_file", ""),
         source_gdrive_root_folder_id=form.get("source_gdrive_root_folder_id", ""),
+        source_rclone_config_path=form.get("source_rclone_config_path", ""),
+        source_rclone_remote_name=form.get("source_rclone_remote_name", ""),
         mysql_enabled="yes" if form.get("mysql_enabled") else "no",
         mysql_mode=form.get("mysql_mode", "all"),
         mysql_databases=form.get("mysql_databases", ""),

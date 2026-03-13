@@ -3,7 +3,7 @@ import re
 import subprocess
 
 from flask import (
-    Blueprint, render_template, request, redirect, url_for, flash,
+    Blueprint, render_template, request, redirect, url_for, flash, session,
 )
 
 from web.app import login_required
@@ -59,6 +59,36 @@ def _get_provider_options(provider_type):
     return []
 
 
+def _rclone_config_create(name, ptype, params=None, state="", result_val=""):
+    """Call rclone config create with optional state/result for multi-step flow.
+    Returns (return_code, parsed_json_or_None, stderr)."""
+    cmd = ["rclone", "config", "create", name, ptype]
+    if params:
+        for k, v in params.items():
+            if v:
+                cmd.append(f"{k}={v}")
+    cmd.append("--non-interactive")
+    cmd.append("--obscure")
+    if state:
+        cmd += ["--state", state]
+    if result_val:
+        cmd += ["--result", result_val]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        if proc.returncode == 0 and proc.stdout.strip():
+            try:
+                return proc.returncode, json.loads(proc.stdout), proc.stderr.strip()
+            except json.JSONDecodeError:
+                return proc.returncode, None, proc.stderr.strip()
+        return proc.returncode, None, proc.stderr.strip() or proc.stdout.strip()
+    except subprocess.TimeoutExpired:
+        return 1, None, "Command timed out"
+    except OSError as e:
+        return 1, None, str(e)
+
+
+# ── List ────────────────────────────────────────────────────
+
 @bp.route("/")
 @login_required
 def index():
@@ -71,6 +101,8 @@ def index():
         })
     return render_template("rclone_config/list.html", remotes=remote_list)
 
+
+# ── Create: Step 1 — pick name + provider + fill fields ─────
 
 @bp.route("/new")
 @login_required
@@ -90,11 +122,17 @@ def new():
 @bp.route("/fields/<provider_type>")
 @login_required
 def fields(provider_type):
+    advanced = request.args.get("advanced", "") == "1"
     providers = _get_providers()
     provider_names = [p["Name"] for p in providers]
     if provider_type not in provider_names:
         return '<div class="alert alert-error">Unknown provider type.</div>'
-    options = _get_provider_options(provider_type)
+    all_opts = []
+    for p in providers:
+        if p.get("Name") == provider_type:
+            all_opts = p.get("Options", [])
+            break
+    options = [o for o in all_opts if bool(o.get("Advanced", False)) == advanced]
     return render_template(
         "rclone_config/fields_partial.html",
         fields=options,
@@ -119,32 +157,96 @@ def create():
         flash("Invalid provider type.", "error")
         return redirect(url_for("rclone_config.new"))
 
-    # Check required fields
-    options = _get_provider_options(provider_type)
-    for opt in options:
-        if opt.get("Required") and not form.get(opt["Name"], "").strip():
+    # Get ALL options (non-advanced + advanced) for this provider
+    all_options = []
+    for p in _get_providers():
+        if p.get("Name") == provider_type:
+            all_options = p.get("Options", [])
+            break
+
+    # Check required non-advanced fields
+    for opt in all_options:
+        if not opt.get("Advanced") and opt.get("Required") and not form.get(opt["Name"], "").strip():
             flash(f"Field '{opt['Name']}' is required.", "error")
             return redirect(url_for("rclone_config.new"))
 
-    # Build key=value pairs for rclone config create
-    cmd = ["rclone", "config", "create", remote_name, provider_type]
-    for opt in options:
+    # Build params from all submitted form fields
+    params = {}
+    for opt in all_options:
         val = form.get(opt["Name"], "")
         if val:
-            cmd.append(f"{opt['Name']}={val}")
-    cmd += ["--non-interactive", "--obscure"]
+            params[opt["Name"]] = val
 
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-        if result.returncode == 0:
-            flash(f"Remote '{remote_name}' created successfully.", "success")
-        else:
-            flash(f"Failed to create remote: {result.stderr.strip() or result.stdout.strip()}", "error")
-    except (subprocess.TimeoutExpired, OSError) as e:
-        flash(f"Failed to create remote: {e}", "error")
+    rc, data, err = _rclone_config_create(remote_name, provider_type, params=params)
+
+    # Check if rclone needs more steps (OAuth, etc.)
+    if data and data.get("State") and data.get("Option"):
+        # Store wizard state in session
+        session["rclone_wizard"] = {
+            "name": remote_name,
+            "type": provider_type,
+            "state": data["State"],
+            "option": data["Option"],
+            "step": 2,
+        }
+        return redirect(url_for("rclone_config.wizard_step"))
+
+    if rc == 0:
+        flash(f"Remote '{remote_name}' created successfully.", "success")
+    else:
+        flash(f"Failed to create remote: {err}", "error")
 
     return redirect(url_for("rclone_config.index"))
 
+
+# ── Create: Step 2+ — wizard follow-up questions ────────────
+
+@bp.route("/wizard", methods=["GET", "POST"])
+@login_required
+def wizard_step():
+    wiz = session.get("rclone_wizard")
+    if not wiz:
+        flash("No wizard in progress.", "error")
+        return redirect(url_for("rclone_config.index"))
+
+    if request.method == "POST":
+        answer = request.form.get("answer", "")
+        rc, data, err = _rclone_config_create(
+            wiz["name"], wiz["type"],
+            state=wiz["state"], result_val=answer,
+        )
+
+        if data and data.get("State") and data.get("Option"):
+            # More steps needed
+            session["rclone_wizard"] = {
+                "name": wiz["name"],
+                "type": wiz["type"],
+                "state": data["State"],
+                "option": data["Option"],
+                "step": wiz["step"] + 1,
+            }
+            return redirect(url_for("rclone_config.wizard_step"))
+
+        # Done
+        session.pop("rclone_wizard", None)
+        if rc == 0:
+            flash(f"Remote '{wiz['name']}' created successfully.", "success")
+        else:
+            flash(f"Failed to create remote: {err}", "error")
+        return redirect(url_for("rclone_config.index"))
+
+    # GET — render the current question
+    option = wiz["option"]
+    return render_template(
+        "rclone_config/wizard_step.html",
+        name=wiz["name"],
+        provider_type=wiz["type"],
+        step=wiz["step"],
+        option=option,
+    )
+
+
+# ── Edit ─────────────────────────────────────────────────────
 
 @bp.route("/<name>/edit")
 @login_required
@@ -215,6 +317,8 @@ def update(name):
 
     return redirect(url_for("rclone_config.index"))
 
+
+# ── Delete ───────────────────────────────────────────────────
 
 @bp.route("/<name>/delete", methods=["POST"])
 @login_required

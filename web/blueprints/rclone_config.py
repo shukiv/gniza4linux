@@ -573,7 +573,16 @@ def oauth_callback(task_id):
         _dbg(f"Still more steps after auto-answer: {data.get('Option', {}).get('Name')}")
         task.update({"status": "more_steps", "data": data})
     elif rc == 0:
-        _dbg("SUCCESS — remote created")
+        # The wizard flow doesn't persist the token — set it directly
+        _dbg(f"Wizard done, setting token directly via config update")
+        try:
+            subprocess.run(
+                ["rclone", "config", "update", name, f"token={rclone_token}", "--non-interactive", "--obscure"],
+                capture_output=True, text=True, timeout=15,
+            )
+        except Exception as e:
+            _dbg(f"Token update failed: {e}")
+        _dbg("SUCCESS — remote created with token")
         task.update({"status": "done", "name": name})
     else:
         _dbg(f"FAILED: {err}")

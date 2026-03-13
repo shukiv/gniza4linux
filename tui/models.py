@@ -18,7 +18,7 @@ class Target:
     source_auth_method: str = "key"
     source_key: str = ""
     source_password: str = ""
-    source_sudo: str = "no"
+    source_sudo: str = "yes"
     source_s3_bucket: str = ""
     source_s3_region: str = "us-east-1"
     source_s3_endpoint: str = ""
@@ -124,7 +124,7 @@ class Target:
             source_auth_method=data.get("TARGET_SOURCE_AUTH_METHOD", "key"),
             source_key=data.get("TARGET_SOURCE_KEY", ""),
             source_password=data.get("TARGET_SOURCE_PASSWORD", ""),
-            source_sudo=data.get("TARGET_SOURCE_SUDO", "no"),
+            source_sudo=data.get("TARGET_SOURCE_SUDO", "yes"),
             source_s3_bucket=data.get("TARGET_SOURCE_S3_BUCKET", ""),
             source_s3_region=data.get("TARGET_SOURCE_S3_REGION", "us-east-1"),
             source_s3_endpoint=data.get("TARGET_SOURCE_S3_ENDPOINT", ""),
@@ -164,7 +164,7 @@ class Remote:
     auth_method: str = "key"
     key: str = ""
     password: str = ""
-    sudo: str = "no"
+    sudo: str = "yes"
     base: str = "/backups"
     bwlimit: str = "0"
     s3_provider: str = "AWS"
@@ -223,7 +223,7 @@ class Remote:
             auth_method=data.get("REMOTE_AUTH_METHOD", "key"),
             key=data.get("REMOTE_KEY", ""),
             password=data.get("REMOTE_PASSWORD", ""),
-            sudo=data.get("REMOTE_SUDO", "no"),
+            sudo=data.get("REMOTE_SUDO", "yes"),
             base=data.get("REMOTE_BASE", "/backups"),
             bwlimit=data.get("BWLIMIT", "0"),
             s3_provider=data.get("S3_PROVIDER", "AWS"),

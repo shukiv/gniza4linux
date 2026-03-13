@@ -81,16 +81,16 @@
                             <label class="fieldset-label">Select provider</label>
                             <div class="relative">
                                 <input type="text" class="input w-full" placeholder="Type to search providers..."
-                                       x-model="search" @focus="open = true" @click="open = true"
+                                       :value="open ? search : (providerLabel || search)"
+                                       @input="search = $event.target.value; providerType = ''; providerLabel = ''"
+                                       @focus="open = true" @click="open = true"
                                        @keydown.escape="open = false"
-                                       :value="providerLabel || search"
-                                       @input="providerType = ''; providerLabel = ''"
                                        autocomplete="off">
                                 <div x-show="open" @click.outside="open = false"
                                      class="absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-72 overflow-y-auto">
                                     {% for p in providers %}
                                     <button type="button"
-                                            x-show="!search || '{{ p.Name }} {{ p.Description }}'.toLowerCase().includes((search || '').toLowerCase())"
+                                            x-show="!search || '{{ p.Name }} {{ p.Description }}'.toLowerCase().includes(search.toLowerCase())"
                                             @click="providerType = '{{ p.Name }}'; providerLabel = '{{ p.Description }}'; search = ''; open = false;
                                                     htmx.ajax('GET', '/rclone-config/fields/{{ p.Name }}', {target: '#step2-fields', swap: 'innerHTML'});
                                                     htmx.ajax('GET', '/rclone-config/fields/{{ p.Name }}?advanced=1', {target: '#step3-fields', swap: 'innerHTML'})"

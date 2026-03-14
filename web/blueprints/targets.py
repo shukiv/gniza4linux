@@ -10,8 +10,8 @@ from markupsafe import escape
 from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Target
 from web.app import login_required
-from web.helpers import load_targets, get_rclone_remotes, _VALID_NAME_RE
-from web.ssh_utils import ssh_cmd, get_ssh_keys as _get_ssh_keys
+from web.helpers import load_targets, get_rclone_remotes, _VALID_NAME_RE, paginate, format_bytes_short
+from web.ssh_utils import ssh_cmd, sftp_cmd as build_sftp_cmd, get_ssh_keys as _get_ssh_keys
 
 bp = Blueprint("targets", __name__, url_prefix="/sources")
 
@@ -46,15 +46,7 @@ def _test_source(target):
             if result.returncode != 0:
                 # Restricted shells (e.g. Hetzner Storage Box) reject commands but accept sftp.
                 # Fall back to sftp connection test.
-                sftp_cmd = ["-o", f"Port={port}",
-                            "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
-                if key:
-                    sftp_cmd += ["-o", f"IdentityFile={key}", "-o", "BatchMode=yes"]
-                if password:
-                    sftp_cmd = ["sshpass", "-e", "sftp"] + sftp_cmd
-                else:
-                    sftp_cmd = ["sftp"] + sftp_cmd
-                sftp_cmd.append(f"{user}@{host}")
+                sftp_cmd = build_sftp_cmd(host, port, user, key, password)
                 sftp_result = subprocess.run(
                     sftp_cmd, input="bye\n", capture_output=True, text=True, timeout=15, env=env,
                 )
@@ -117,22 +109,8 @@ def index():
     except Exception:
         targets = []
         flash("Failed to load sources.", "error")
-    total = len(targets)
-    per_page = 20
-    total_pages = max(1, (total + per_page - 1) // per_page)
-    page = min(page, total_pages)
-    start = (page - 1) * per_page
-    targets = targets[start:start + per_page]
+    targets, page, total_pages = paginate(targets, page)
     return render_template("targets/list.html", targets=targets, page=page, total_pages=total_pages)
-
-
-def _fmt_bytes(b):
-    if b < 1024 ** 3:
-        return f"{b / (1024 ** 2):.0f}M"
-    elif b < 1024 ** 4:
-        return f"{b / (1024 ** 3):.1f}G"
-    else:
-        return f"{b / (1024 ** 4):.1f}T"
 
 
 def _source_disk_info(target):
@@ -145,7 +123,7 @@ def _source_disk_info(target):
         try:
             usage = shutil.disk_usage(first_folder)
             pct = int(usage.used * 100 / usage.total) if usage.total else 0
-            return f"{_fmt_bytes(usage.used)}/{_fmt_bytes(usage.total)} ({pct}%)"
+            return f"{format_bytes_short(usage.used)}/{format_bytes_short(usage.total)} ({pct}%)"
         except OSError:
             return None
 
@@ -191,9 +169,9 @@ def _source_disk_info(target):
                 used = data.get("used")
                 if total and used:
                     pct = int(used * 100 / total) if total else 0
-                    return f"{_fmt_bytes(used)}/{_fmt_bytes(total)} ({pct}%)"
+                    return f"{format_bytes_short(used)}/{format_bytes_short(total)} ({pct}%)"
                 elif used:
-                    return f"{_fmt_bytes(used)} used"
+                    return f"{format_bytes_short(used)} used"
         except (subprocess.TimeoutExpired, OSError, ValueError):
             pass
         return None

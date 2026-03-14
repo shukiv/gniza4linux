@@ -23,6 +23,19 @@ def ssh_cmd(host, port="22", user="root", key="", password=""):
     return ssh_opts
 
 
+def sftp_cmd(host, port="22", user="root", key="", password=""):
+    """Build an SFTP command list."""
+    opts = ["-o", f"Port={port}", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
+    if key:
+        opts += ["-o", f"IdentityFile={key}", "-o", "BatchMode=yes"]
+    if password:
+        cmd = ["sshpass", "-e", "sftp"] + opts
+    else:
+        cmd = ["sftp"] + opts
+    cmd.append(f"{user}@{host}")
+    return cmd
+
+
 def ssh_cmd_from_conf(remote_conf):
     """Build SSH command prefix from remote config dict.
 

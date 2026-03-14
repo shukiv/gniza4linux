@@ -7,7 +7,7 @@ from markupsafe import escape
 
 from web.app import login_required
 from web.helpers import get_rclone_remotes, _VALID_NAME_RE
-from web.ssh_utils import ssh_cmd
+from web.ssh_utils import ssh_cmd, sftp_cmd as build_sftp_cmd
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -75,14 +75,7 @@ def browse_children():
 
 def _sftp_list_dirs(host, path, port="22", user="root", key="", password="", show_hidden=False):
     """List directories via sftp (for restricted shells like Hetzner Storage Box)."""
-    sftp_cmd = ["-o", f"Port={port}", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
-    if key:
-        sftp_cmd += ["-o", f"IdentityFile={key}", "-o", "BatchMode=yes"]
-    if password:
-        sftp_cmd = ["sshpass", "-e", "sftp"] + sftp_cmd
-    else:
-        sftp_cmd = ["sftp"] + sftp_cmd
-    sftp_cmd.append(f"{user}@{host}")
+    sftp_cmd = build_sftp_cmd(host, port, user, key, password)
     env = None
     if password:
         env = os.environ.copy()

@@ -9,7 +9,7 @@ from tui.config import CONFIG_DIR, parse_conf, write_conf, list_conf_dir
 from tui.models import Schedule
 from web.app import login_required
 from web.backend import run_cli_sync
-from web.helpers import _VALID_NAME_RE
+from web.helpers import _VALID_NAME_RE, paginate, parse_schedule_day
 from web.jobs import web_job_manager
 
 bp = Blueprint("schedules", __name__, url_prefix="/schedules")
@@ -179,12 +179,7 @@ def index():
     except Exception:
         schedules = []
         flash("Failed to load schedules.", "error")
-    total = len(schedules)
-    per_page = 20
-    total_pages = max(1, (total + per_page - 1) // per_page)
-    page = min(page, total_pages)
-    start = (page - 1) * per_page
-    schedules = schedules[start:start + per_page]
+    schedules, page, total_pages = paginate(schedules, page)
     return render_template("schedules/list.html", schedules=schedules, page=page, total_pages=total_pages)
 
 
@@ -235,15 +230,7 @@ def save():
 
     schedule_type = form.get("schedule", "daily")
 
-    day = ""
-    if schedule_type == "daily":
-        day = ",".join(form.getlist("day"))
-    elif schedule_type == "weekly":
-        day = form.get("weekly_day", "")
-    elif schedule_type == "monthly":
-        day = form.get("monthly_day", "")
-    elif schedule_type == "hourly":
-        day = form.get("hourly_interval", "1")
+    day = parse_schedule_day(schedule_type, form)
 
     selected_targets = form.getlist("targets")
     selected_remotes = form.getlist("remotes")

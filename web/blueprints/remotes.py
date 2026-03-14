@@ -9,8 +9,8 @@ from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Remote
 from web.app import login_required
 from web.backend import run_cli_sync
-from web.helpers import load_remotes, get_rclone_remotes, _VALID_NAME_RE
-from web.ssh_utils import ssh_cmd, get_ssh_keys as _get_ssh_keys
+from web.helpers import load_remotes, get_rclone_remotes, _VALID_NAME_RE, paginate
+from web.ssh_utils import ssh_cmd, sftp_cmd as build_sftp_cmd, get_ssh_keys as _get_ssh_keys
 
 bp = Blueprint("remotes", __name__, url_prefix="/destinations")
 _VALID_S3_PROVIDERS = {"AWS", "Backblaze", "Wasabi", "Other"}
@@ -40,15 +40,7 @@ def _test_remote(remote):
             result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
             if result.returncode != 0:
                 # Restricted shell (e.g. Hetzner Storage Box) — try sftp fallback
-                sftp_cmd = ["-o", f"Port={remote.port}",
-                            "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
-                if key:
-                    sftp_cmd += ["-o", f"IdentityFile={key}", "-o", "BatchMode=yes"]
-                if password:
-                    sftp_cmd = ["sshpass", "-e", "sftp"] + sftp_cmd
-                else:
-                    sftp_cmd = ["sftp"] + sftp_cmd
-                sftp_cmd.append(f"{remote.user}@{remote.host}")
+                sftp_cmd = build_sftp_cmd(remote.host, remote.port, remote.user, key, password)
                 sftp_result = subprocess.run(
                     sftp_cmd, input="bye\n", capture_output=True, text=True, timeout=15, env=env,
                 )
@@ -152,12 +144,7 @@ def index():
     except Exception:
         remotes = []
         flash("Failed to load destinations.", "error")
-    total = len(remotes)
-    per_page = 20
-    total_pages = max(1, (total + per_page - 1) // per_page)
-    page = min(page, total_pages)
-    start = (page - 1) * per_page
-    remotes = remotes[start:start + per_page]
+    remotes, page, total_pages = paginate(remotes, page)
     return render_template("remotes/list.html", remotes=remotes, page=page, total_pages=total_pages)
 
 

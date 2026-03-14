@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, flash, request, redirect, url_for
 from tui.config import CONFIG_DIR, parse_conf, list_conf_dir
 from tui.models import Schedule
 from web.app import login_required
-from web.helpers import load_targets, load_remotes
+from web.helpers import load_targets, load_remotes, paginate, format_bytes
 from web.jobs import web_job_manager
 
 DASH_LOGS_PER_PAGE = 10
@@ -33,20 +33,6 @@ def _format_bytes_rate(bps):
         return f"{bps / (1024 * 1024 * 1024):.2f} GB/s"
 
 
-def _format_bytes(b):
-    """Format bytes into human-readable size."""
-    if b < 1024:
-        return f"{b} B"
-    elif b < 1024 * 1024:
-        return f"{b / 1024:.1f} KB"
-    elif b < 1024 * 1024 * 1024:
-        return f"{b / (1024 * 1024):.1f} MB"
-    elif b < 1024 ** 4:
-        return f"{b / (1024 ** 3):.1f} GB"
-    else:
-        return f"{b / (1024 ** 4):.2f} TB"
-
-
 def _load_schedules():
     schedules = []
     for name in list_conf_dir("schedules.d"):
@@ -70,11 +56,7 @@ def _load_finished_jobs(page=1):
     all_jobs = web_job_manager.list_jobs()
     finished = [j for j in all_jobs if j.status not in ("running", "queued")]
     finished.sort(key=lambda j: j.finished_at or j.started_at, reverse=True)
-    total = len(finished)
-    total_pages = max(1, (total + DASH_LOGS_PER_PAGE - 1) // DASH_LOGS_PER_PAGE)
-    page = min(page, total_pages)
-    start = (page - 1) * DASH_LOGS_PER_PAGE
-    return finished[start:start + DASH_LOGS_PER_PAGE], page, total_pages
+    return paginate(finished, page, DASH_LOGS_PER_PAGE)
 
 
 @bp.route("/")
@@ -182,7 +164,7 @@ def system_stats():
         swap_total_gb=swap.total / (1024 ** 3),
         net_send_rate=_format_bytes_rate(send_rate),
         net_recv_rate=_format_bytes_rate(recv_rate),
-        net_sent_total=_format_bytes(net.bytes_sent),
-        net_recv_total=_format_bytes(net.bytes_recv),
+        net_sent_total=format_bytes(net.bytes_sent),
+        net_recv_total=format_bytes(net.bytes_recv),
         disks=disks,
     )

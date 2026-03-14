@@ -5,6 +5,7 @@ from flask import (
 )
 
 from web.app import login_required
+from web.helpers import paginate
 from web.jobs import web_job_manager
 
 bp = Blueprint("jobs", __name__, url_prefix="/jobs")
@@ -21,25 +22,25 @@ def _build_job_progress(jobs):
     return result
 
 
+def _load_active_jobs(page):
+    """Load active jobs with pagination."""
+    all_jobs = web_job_manager.list_jobs()
+    jobs = [j for j in all_jobs if j.status in ("running", "queued")]
+    jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
+    has_running = any(j.status == "running" for j in jobs)
+    has_queued = any(j.status == "queued" for j in jobs)
+    page_jobs, page, total_pages = paginate(jobs, page)
+    job_progress = _build_job_progress(page_jobs)
+    return page_jobs, has_running, has_queued, page, total_pages, job_progress
+
+
 @bp.route("/")
 @login_required
 def index():
     page = request.args.get("page", 1, type=int)
     if page < 1:
         page = 1
-    all_jobs = web_job_manager.list_jobs()
-    # Running Tasks page shows only active jobs; finished jobs are on the Logs page
-    jobs = [j for j in all_jobs if j.status in ("running", "queued")]
-    jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
-    has_running = any(j.status == "running" for j in jobs)
-    has_queued = any(j.status == "queued" for j in jobs)
-    total = len(jobs)
-    per_page = 20
-    total_pages = max(1, (total + per_page - 1) // per_page)
-    page = min(page, total_pages)
-    start = (page - 1) * per_page
-    page_jobs = jobs[start:start + per_page]
-    job_progress = _build_job_progress(page_jobs)
+    page_jobs, has_running, has_queued, page, total_pages, job_progress = _load_active_jobs(page)
     return render_template("jobs/index.html", jobs=page_jobs, has_running=has_running,
                            has_queued=has_queued, page=page, total_pages=total_pages,
                            job_progress=job_progress)
@@ -51,18 +52,7 @@ def table():
     page = request.args.get("page", 1, type=int)
     if page < 1:
         page = 1
-    all_jobs = web_job_manager.list_jobs()
-    jobs = [j for j in all_jobs if j.status in ("running", "queued")]
-    jobs.sort(key=lambda j: (0 if j.status == "running" else 1, -j.started_at.timestamp()))
-    has_running = any(j.status == "running" for j in jobs)
-    has_queued = any(j.status == "queued" for j in jobs)
-    total = len(jobs)
-    per_page = 20
-    total_pages = max(1, (total + per_page - 1) // per_page)
-    page = min(page, total_pages)
-    start = (page - 1) * per_page
-    page_jobs = jobs[start:start + per_page]
-    job_progress = _build_job_progress(page_jobs)
+    page_jobs, has_running, has_queued, page, total_pages, job_progress = _load_active_jobs(page)
     return render_template("jobs/table_partial.html", jobs=page_jobs, has_running=has_running,
                            has_queued=has_queued, page=page, total_pages=total_pages,
                            job_progress=job_progress)

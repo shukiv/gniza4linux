@@ -155,6 +155,7 @@ def create_app():
     from web.blueprints.docs import bp as docs_bp
     from web.blueprints.health import bp as health_bp
     from web.blueprints.rclone_config import bp as rclone_config_bp
+    from web.blueprints.retention import bp as retention_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -173,5 +174,6 @@ def create_app():
     app.register_blueprint(docs_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(rclone_config_bp)
+    app.register_blueprint(retention_bp)
 
     return app

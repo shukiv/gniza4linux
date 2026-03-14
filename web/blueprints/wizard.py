@@ -11,7 +11,7 @@ from web.app import login_required
 from web.blueprints.remotes import _test_remote
 from web.blueprints.targets import _test_source, _lines_to_csv
 from web.blueprints.schedules import _reinstall_cron
-from web.helpers import get_rclone_remotes, _VALID_NAME_RE
+from web.helpers import get_rclone_remotes, _VALID_NAME_RE, parse_schedule_day
 from web.jobs import web_job_manager
 from web.ssh_utils import get_ssh_keys as _get_ssh_keys
 
@@ -201,15 +201,7 @@ def save_schedule():
         flash("Invalid schedule type.", "error")
         return redirect(url_for("wizard.index") + "?step=3")
 
-    day = ""
-    if schedule_type == "daily":
-        day = ",".join(form.getlist("day"))
-    elif schedule_type == "weekly":
-        day = form.get("weekly_day", "")
-    elif schedule_type == "monthly":
-        day = form.get("monthly_day", "")
-    elif schedule_type == "hourly":
-        day = form.get("hourly_interval", "1")
+    day = parse_schedule_day(schedule_type, form)
 
     selected_targets = form.getlist("targets")
     selected_remotes = form.getlist("remotes")

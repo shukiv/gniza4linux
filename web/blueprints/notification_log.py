@@ -4,6 +4,7 @@ from flask import Blueprint, render_template, request
 
 from tui.config import LOG_DIR
 from web.app import login_required
+from web.helpers import paginate
 
 bp = Blueprint("notification_log", __name__, url_prefix="/notification-log")
 
@@ -60,14 +61,11 @@ def index():
 
     entries = _parse_notification_log()
     total = len(entries)
-    total_pages = max(1, (total + ENTRIES_PER_PAGE - 1) // ENTRIES_PER_PAGE)
-    page = min(page, total_pages)
-    start = (page - 1) * ENTRIES_PER_PAGE
-    end = start + ENTRIES_PER_PAGE
+    page_entries, page, total_pages = paginate(entries, page, ENTRIES_PER_PAGE)
 
     return render_template(
         "notification_log/index.html",
-        entries=entries[start:end],
+        entries=page_entries,
         page=page,
         total_pages=total_pages,
         total=total,

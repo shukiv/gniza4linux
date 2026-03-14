@@ -337,38 +337,3 @@ list_snapshot_contents() {
 
     _restore_remote_globals
 }
-
-# Read meta.json from a snapshot.
-# Usage: get_snapshot_meta <target_name> <snapshot_timestamp> <remote_name>
-get_snapshot_meta() {
-    local target_name="$1"
-    local snapshot_ts="${2:-latest}"
-    local remote_name="$3"
-
-    _save_remote_globals
-    load_remote "$remote_name" || {
-        log_error "Failed to load remote: $remote_name"
-        _restore_remote_globals
-        return 1
-    }
-
-    local ts; ts=$(resolve_snapshot_timestamp "$target_name" "$snapshot_ts") || {
-        log_error "Cannot resolve snapshot: $snapshot_ts"
-        _restore_remote_globals
-        return 1
-    }
-
-    if _is_rclone_mode; then
-        local snap_subpath="targets/${target_name}/snapshots/${ts}/meta.json"
-        rclone_cat "$snap_subpath"
-    elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
-        local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-        cat "$snap_dir/$ts/meta.json" 2>/dev/null
-    else
-        local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-        local sq_meta; sq_meta="$(shquote "$snap_dir/$ts/meta.json")"
-        remote_exec "cat '${sq_meta}'" 2>/dev/null
-    fi
-
-    _restore_remote_globals
-}

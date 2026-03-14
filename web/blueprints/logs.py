@@ -6,6 +6,7 @@ from flask import (
 )
 
 from web.app import login_required
+from web.helpers import paginate
 from web.jobs import web_job_manager
 from tui.config import LOG_DIR
 
@@ -39,12 +40,7 @@ def index():
     finished = [j for j in all_jobs if j.status not in ("running", "queued")]
     finished.sort(key=lambda j: j.finished_at or j.started_at, reverse=True)
 
-    total = len(finished)
-    total_pages = max(1, (total + LOGS_PER_PAGE - 1) // LOGS_PER_PAGE)
-    page = min(page, total_pages)
-    start = (page - 1) * LOGS_PER_PAGE
-    end = start + LOGS_PER_PAGE
-    page_jobs = finished[start:end]
+    page_jobs, page, total_pages = paginate(finished, page, LOGS_PER_PAGE)
 
     # Build log file sizes
     log_sizes = {}

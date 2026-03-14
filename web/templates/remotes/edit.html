@@ -11,7 +11,7 @@
 <form method="POST" action="{{ url_for('remotes.save') }}"
       x-data="{
           remoteType: {{ "'rclone'" if remote.type in ('s3', 'gdrive', 'rclone') else "'" + remote.type + "'" }}, authMethod: '{{ remote.auth_method or 'key' }}',
-          sshKeys: [], sshKeysLoading: false, sshKeyGenerating: false,
+          sshKeys: [], sshKeysLoading: false, sshKeyGenerating: false, selectedKeyIdx: 0,
           loadSshKeys() {
               this.sshKeysLoading = true;
               fetch('{{ url_for('wizard.ssh_keys') }}')
@@ -78,20 +78,23 @@
                 <!-- 1. SSH Key -->
                 <div>
                     <h3 class="font-semibold text-sm mb-2">1. Your SSH Key</h3>
-                    <p class="text-base-content/60 text-sm mb-3">Copy your public key to set up SSH access on the destination server.</p>
+                    <p class="text-base-content/60 text-sm mb-3">Select a key and copy it to set up SSH access on the destination server.</p>
                     <div x-show="sshKeysLoading" class="text-base-content/40 text-sm">Loading keys...</div>
-                    <template x-for="key in sshKeys" :key="key.name">
-                        <div class="mb-2">
-                            <div class="text-xs text-base-content/50 mb-1" x-text="key.name"></div>
-                            <div class="relative">
-                                <pre class="bg-base-100 rounded p-3 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all select-all" x-text="key.content"></pre>
-                                <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
-                                        @click="copyKey(key.content, $el)">Copy</button>
-                            </div>
+                    <div x-show="!sshKeysLoading && sshKeys.length > 0">
+                        <select class="select select-sm mb-3 w-full max-w-xs" x-model="selectedKeyIdx"
+                                @change="selectedKeyIdx = parseInt($event.target.value)">
+                            <template x-for="(key, idx) in sshKeys" :key="key.name">
+                                <option :value="idx" :selected="idx === selectedKeyIdx" x-text="key.name"></option>
+                            </template>
+                        </select>
+                        <div class="relative" x-show="sshKeys[selectedKeyIdx]">
+                            <pre class="bg-base-100 rounded p-3 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all select-all" x-text="sshKeys[selectedKeyIdx]?.content"></pre>
+                            <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
+                                    @click="copyKey(sshKeys[selectedKeyIdx].content, $el)">Copy</button>
                         </div>
-                    </template>
+                    </div>
                     <div x-show="!sshKeysLoading && sshKeys.length === 0" class="text-warning text-sm mb-2">No SSH keys found.</div>
-                    <button type="button" class="btn btn-outline btn-xs"
+                    <button type="button" class="btn btn-outline btn-xs mt-2"
                             @click="generateSshKey()" :disabled="sshKeyGenerating">
                         <span x-show="!sshKeyGenerating">Generate New Key (Ed25519)</span>
                         <span x-show="sshKeyGenerating" class="loading loading-spinner loading-xs"></span>
@@ -159,7 +162,7 @@
                         <pre class="bg-base-100 rounded p-3 text-sm font-mono overflow-x-auto whitespace-pre select-all">mkdir -p /home/gniza/.ssh
 chown gniza:gniza /home/gniza/.ssh
 chmod 700 /home/gniza/.ssh
-echo "<span class="text-primary" x-text="sshKeys.length > 0 ? sshKeys[0].content : '&lt;your-ssh-key&gt;'"></span>" > /home/gniza/.ssh/authorized_keys
+echo "<span class="text-primary" x-text="sshKeys[selectedKeyIdx] ? sshKeys[selectedKeyIdx].content : '&lt;your-ssh-key&gt;'"></span>" > /home/gniza/.ssh/authorized_keys
 chown gniza:gniza /home/gniza/.ssh/authorized_keys
 chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                     </div>

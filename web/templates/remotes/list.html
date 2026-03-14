@@ -42,10 +42,7 @@
                                         hx-post="{{ url_for('remotes.test', name=r.name) }}"
                                         hx-target="body"
                                         hx-swap="beforeend"
-                                        hx-disabled-elt="this"
-                                        hx-indicator="this">
-                                    <span class="htmx-indicator loading loading-spinner loading-xs"></span>
-                                    <span>Test</span>
+                                    Test
                                 </button>
                                 <button class="btn btn-error btn-sm"
                                         @click="deleteName = '{{ r.name }}'; deleteUrl = '{{ url_for('remotes.delete', name=r.name) }}'; showModal = true">

@@ -65,6 +65,9 @@
       });
     </script>
     <script defer src="{{ url_for('static', filename='vendor/js/alpine.min.js') }}"></script>
+    <style>.btn.htmx-request { pointer-events: none; opacity: .7; }
+    .btn.htmx-request::after { content: ''; display: inline-block; width: .75rem; height: .75rem; margin-left: .4rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .5s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }</style>
 </head>
 <body class="min-h-screen bg-base-100 text-base">
 

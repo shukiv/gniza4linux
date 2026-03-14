@@ -5,7 +5,7 @@
         <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 mt-1">
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if cpu_percent > 90 else 'bg-warning' if cpu_percent > 70 else 'bg-primary' }}" style="width: {{ cpu_percent|int }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
-                <span>{{ "%.0f"|format(cpu_percent) }}%</span>
+                <span><span class="font-normal opacity-60">CPU</span> {{ "%.0f"|format(cpu_percent) }}%</span>
             </div>
         </div>
         <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 mt-1">
@@ -22,7 +22,7 @@
         <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 mt-1">
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if mem_percent > 90 else 'bg-warning' if mem_percent > 70 else 'bg-primary' }}" style="width: {{ mem_percent|int }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
-                <span>{{ "%.0f"|format(mem_percent) }}%</span>
+                <span><span class="font-normal opacity-60">Memory</span> {{ "%.0f"|format(mem_percent) }}%</span>
                 <span class="opacity-70">{{ "%.1f"|format(mem_used_gb) }}/{{ "%.1f"|format(mem_total_gb) }} GB</span>
             </div>
         </div>
@@ -46,7 +46,6 @@
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if d.percent > 90 else 'bg-warning' if d.percent > 80 else 'bg-primary' }}" style="width: {{ d.percent|int }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
                 <span>{% if disks|length > 1 %}<span class="font-mono font-normal opacity-60">{{ d.mount }}</span> {% endif %}{{ "%.0f"|format(d.percent) }}%</span>
-                <span class="opacity-70">{{ "%.0f"|format(d.used_gb) }}/{{ "%.0f"|format(d.total_gb) }} GB</span>
             </div>
         </div>
         {% endfor %}

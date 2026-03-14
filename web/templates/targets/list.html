@@ -46,8 +46,11 @@
                                 <button class="btn btn-success btn-sm"
                                         hx-post="{{ url_for('targets.test', name=t.name) }}"
                                         hx-target="body"
-                                        hx-swap="beforeend">
-                                    Test
+                                        hx-swap="beforeend"
+                                        hx-disabled-elt="this"
+                                        hx-indicator="this">
+                                    <span class="htmx-indicator loading loading-spinner loading-xs"></span>
+                                    <span>Test</span>
                                 </button>
                                 <button class="btn btn-error btn-sm"
                                         @click="deleteName = '{{ t.name }}'; deleteUrl = '{{ url_for('targets.delete', name=t.name) }}'; showModal = true">

@@ -230,7 +230,9 @@ _backup_target_impl() {
                     transfer_failed=true
                     continue
                 fi
-                if ! transfer_folder "$target_name" "$staging_dir/${folder#/}" "$ts" "$prev" "${folder#/}"; then
+                local rel_dest="${folder#/}"
+                [[ -z "$rel_dest" ]] && rel_dest="."
+                if ! transfer_folder "$target_name" "$staging_dir/${folder#/}" "$ts" "$prev" "$rel_dest"; then
                     log_error "Transfer failed for folder: $folder"
                     transfer_failed=true
                 fi

@@ -124,6 +124,29 @@ def index():
     return render_template("targets/list.html", targets=targets, page=page, total_pages=total_pages)
 
 
+@bp.route("/<name>/test", methods=["POST"])
+@login_required
+def test(name):
+    if not _VALID_NAME_RE.match(name):
+        return render_template("remotes/test_result.html", result={"status": "error", "message": "Invalid name."})
+    conf_path = CONFIG_DIR / "targets.d" / f"{name}.conf"
+    if not conf_path.is_file():
+        return render_template("remotes/test_result.html", result={"status": "error", "message": "Source not found."})
+    data = parse_conf(conf_path)
+    target = Target.from_conf(name, data)
+    try:
+        ok, msg = _test_source(target)
+        if ok is True:
+            result = {"status": "success", "message": msg or "Connection successful."}
+        elif ok is None:
+            result = {"status": "success", "message": msg or "Connected with warnings."}
+        else:
+            result = {"status": "error", "message": msg or "Connection failed."}
+    except Exception as e:
+        result = {"status": "error", "message": str(e)}
+    return render_template("remotes/test_result.html", result=result)
+
+
 @bp.route("/new")
 @login_required
 def new():

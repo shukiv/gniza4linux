@@ -43,6 +43,12 @@
                         <td>
                             <div class="flex gap-1">
                                 <a href="{{ url_for('targets.edit', name=t.name) }}" class="btn btn-primary btn-sm">Edit</a>
+                                <button class="btn btn-success btn-sm"
+                                        hx-post="{{ url_for('targets.test', name=t.name) }}"
+                                        hx-target="body"
+                                        hx-swap="beforeend">
+                                    Test
+                                </button>
                                 <button class="btn btn-error btn-sm"
                                         @click="deleteName = '{{ t.name }}'; deleteUrl = '{{ url_for('targets.delete', name=t.name) }}'; showModal = true">
                                     Delete

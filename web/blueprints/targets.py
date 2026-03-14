@@ -1,9 +1,11 @@
 import os
+import shutil
 import subprocess
 
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
 )
+from markupsafe import escape
 
 from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Target
@@ -122,6 +124,100 @@ def index():
     start = (page - 1) * per_page
     targets = targets[start:start + per_page]
     return render_template("targets/list.html", targets=targets, page=page, total_pages=total_pages)
+
+
+def _fmt_bytes(b):
+    if b < 1024 ** 3:
+        return f"{b / (1024 ** 2):.0f}M"
+    elif b < 1024 ** 4:
+        return f"{b / (1024 ** 3):.1f}G"
+    else:
+        return f"{b / (1024 ** 4):.1f}T"
+
+
+def _source_disk_info(target):
+    """Get disk info string for a source."""
+    first_folder = "/"
+    if target.folders:
+        first_folder = target.folders.split(",")[0].strip() or "/"
+
+    if target.source_type == "local":
+        try:
+            usage = shutil.disk_usage(first_folder)
+            pct = int(usage.used * 100 / usage.total) if usage.total else 0
+            return f"{_fmt_bytes(usage.used)}/{_fmt_bytes(usage.total)} ({pct}%)"
+        except OSError:
+            return None
+
+    if target.source_type == "ssh":
+        host = target.source_host
+        port = target.source_port or "22"
+        user = target.source_user or "root"
+        key = target.source_key if target.source_auth_method == "key" else ""
+        password = target.source_password if target.source_auth_method == "password" else ""
+        cmd = ssh_cmd(host, port, user, key, password)
+        env = None
+        if password:
+            env = os.environ.copy()
+            env["SSHPASS"] = password
+        try:
+            result = subprocess.run(
+                cmd + [f"df -h '{first_folder}' 2>/dev/null | tail -1"],
+                capture_output=True, text=True, timeout=15, env=env,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                parts = result.stdout.strip().split()
+                if len(parts) >= 5:
+                    return f"{parts[2]}/{parts[1]} ({parts[4]})"
+        except (subprocess.TimeoutExpired, OSError):
+            pass
+        return None
+
+    if target.source_type == "rclone":
+        cmd = ["rclone", "about", "--json"]
+        config_path = target.source_rclone_config_path
+        if config_path:
+            cmd += ["--config", config_path]
+        remote_name = target.source_rclone_remote_name
+        if not remote_name:
+            return None
+        cmd.append(f"{remote_name}:")
+        try:
+            import json
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            if result.returncode == 0:
+                data = json.loads(result.stdout)
+                total = data.get("total")
+                used = data.get("used")
+                if total and used:
+                    pct = int(used * 100 / total) if total else 0
+                    return f"{_fmt_bytes(used)}/{_fmt_bytes(total)} ({pct}%)"
+                elif used:
+                    return f"{_fmt_bytes(used)} used"
+        except (subprocess.TimeoutExpired, OSError, ValueError):
+            pass
+        return None
+
+    return None
+
+
+@bp.route("/<name>/disk")
+@login_required
+def disk(name):
+    if not _VALID_NAME_RE.match(name):
+        return '<span class="text-error text-xs">Invalid</span>'
+    conf_path = CONFIG_DIR / "targets.d" / f"{name}.conf"
+    if not conf_path.is_file():
+        return '<span class="text-base-content/40 text-xs">N/A</span>'
+    try:
+        data = parse_conf(conf_path)
+        target = Target.from_conf(name, data)
+        info = _source_disk_info(target)
+        if info:
+            return f'<span class="text-xs">{escape(info)}</span>'
+        return '<span class="text-base-content/40 text-xs">N/A</span>'
+    except Exception:
+        return '<span class="text-base-content/40 text-xs">N/A</span>'
 
 
 @bp.route("/<name>/test", methods=["POST"])

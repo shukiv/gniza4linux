@@ -22,6 +22,7 @@
                         <th>Name</th>
                         <th>Type</th>
                         <th>Folders</th>
+                        <th>Disk</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -32,6 +33,7 @@
                         <td class="font-mono font-medium">{{ t.name }}</td>
                         <td><span class="badge badge-outline badge-md">{{ t.source_type }}</span></td>
                         <td class="max-w-xs truncate text-base-content/60">{{ t.folders }}</td>
+                        <td><span hx-get="{{ url_for('targets.disk', name=t.name) }}" hx-trigger="load" hx-swap="outerHTML">...</span></td>
                         <td>
                             <form method="POST" action="{{ url_for('targets.toggle', name=t.name) }}" class="inline flex items-center gap-2">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -96,6 +98,7 @@
 <ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
     <li><strong>Name</strong> — Unique source identifier.</li>
     <li><strong>Folders</strong> — Comma-separated paths to back up.</li>
+    <li><strong>Disk</strong> — Available space on the source (loaded in background).</li>
     <li><strong>Enabled</strong> — Whether the source is active.</li>
 </ul>
 <h4 class="font-semibold text-sm mb-1">Tips</h4>

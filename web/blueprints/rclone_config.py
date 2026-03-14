@@ -137,9 +137,12 @@ def index():
     remotes = _get_remotes()
     remote_list = []
     for name, config in remotes.items():
+        rtype = config.get("type", "unknown")
         remote_list.append({
             "name": name,
-            "type": config.get("type", "unknown"),
+            "type": rtype,
+            "has_oauth": rtype in _OAUTH_PROVIDERS,
+            "has_client_id": bool(config.get("client_id")),
         })
     return render_template("rclone_config/list.html", remotes=remote_list)
 
@@ -772,6 +775,59 @@ def wizard_paste_url(task_id):
             provider_type=task["type"],
             task_id=task_id,
         )
+
+
+# ── Reconnect (re-authenticate existing OAuth remotes) ───────
+
+@bp.route("/<name>/reconnect", methods=["POST"])
+@login_required
+def reconnect(name):
+    """Start OAuth re-authentication for an existing remote that already has
+    client_id/client_secret saved in its rclone config."""
+    if not _VALID_NAME_RE.match(name):
+        flash("Invalid remote name.", "error")
+        return redirect(url_for("rclone_config.index"))
+
+    remotes = _get_remotes()
+    if name not in remotes:
+        flash(f"Remote '{name}' not found.", "error")
+        return redirect(url_for("rclone_config.index"))
+
+    config = remotes[name]
+    provider_type = config.get("type", "")
+    client_id = config.get("client_id", "")
+    client_secret = config.get("client_secret", "")
+
+    if provider_type not in _OAUTH_PROVIDERS:
+        flash(f"Provider '{provider_type}' does not use OAuth.", "error")
+        return redirect(url_for("rclone_config.index"))
+
+    if not client_id or not client_secret:
+        flash("This remote has no client_id / client_secret saved. "
+              "Edit the remote and add them first.", "error")
+        return redirect(url_for("rclone_config.index"))
+
+    # Build params from the existing config (preserves all settings)
+    params = {k: v for k, v in config.items() if v and k != "token"}
+
+    # Start a fresh rclone config create — for an existing remote this updates it
+    rc, data, err = _rclone_config_create(name, provider_type, params=params)
+
+    if not (data and data.get("State") and data.get("Option")):
+        flash(f"Failed to start reconnect flow: {err or 'unexpected response'}", "error")
+        return redirect(url_for("rclone_config.index"))
+
+    # Store wizard state with the existing credentials
+    session["rclone_wizard"] = {
+        "name": name,
+        "type": provider_type,
+        "state": data["State"],
+        "option": data["Option"],
+        "step": 2,
+        "client_id": client_id,
+        "client_secret": client_secret,
+    }
+    return redirect(url_for("rclone_config.wizard_step"))
 
 
 # ── Edit ─────────────────────────────────────────────────────

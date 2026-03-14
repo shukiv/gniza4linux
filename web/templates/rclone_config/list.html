@@ -45,6 +45,12 @@
                                     <span x-show="testing" class="loading loading-spinner loading-xs"></span>
                                 </button>
                                 <a href="{{ url_for('rclone_config.edit', name=r.name) }}" class="btn btn-primary btn-sm">Edit</a>
+                                {% if r.has_oauth and r.has_client_id %}
+                                <form method="POST" action="{{ url_for('rclone_config.reconnect', name=r.name) }}" class="inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-warning btn-sm">Reconnect</button>
+                                </form>
+                                {% endif %}
                                 <button class="btn btn-error btn-sm"
                                         @click="deleteName = '{{ r.name }}'; deleteUrl = '{{ url_for('rclone_config.delete', name=r.name) }}'; showModal = true">
                                     Delete

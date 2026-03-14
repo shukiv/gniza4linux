@@ -1,7 +1,6 @@
 <div class="stats stats-vertical md:stats-horizontal shadow w-full">
     <!-- CPU -->
     <div class="stat px-4 py-3">
-        <div class="stat-title text-xs">CPU</div>
         <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 mt-1">
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if cpu_percent > 90 else 'bg-warning' if cpu_percent > 70 else 'bg-primary' }}" style="width: {{ cpu_percent|int }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
@@ -18,7 +17,6 @@
 
     <!-- Memory -->
     <div class="stat px-4 py-3">
-        <div class="stat-title text-xs">Memory</div>
         <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 mt-1">
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if mem_percent > 90 else 'bg-warning' if mem_percent > 70 else 'bg-primary' }}" style="width: {{ mem_percent|int }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
@@ -39,7 +37,6 @@
 
     <!-- Disks -->
     <div class="stat px-4 py-3">
-        <div class="stat-title text-xs">{{ 'Disks' if disks|length > 1 else 'Local Disk' }}</div>
         {% for d in disks %}
         {% if not loop.first %}<div class="my-1"></div>{% endif %}
         <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 {{ 'mt-1' if loop.first }}">
@@ -53,7 +50,6 @@
 
     <!-- Network -->
     <div class="stat px-4 py-3">
-        <div class="stat-title text-xs">Network</div>
         <div class="stat-value text-base">
             <div class="flex flex-col gap-0.5">
                 <span class="flex items-center gap-1">

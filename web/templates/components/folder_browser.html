@@ -12,8 +12,16 @@
 </div>
 
 <div class="flex items-center justify-between mb-2">
-    {% if current_path != '/' %}
-    {% if ssh %}
+    {% if current_path != '/' and (not rclone or current_path != '') %}
+    {% if rclone %}
+    <a class="btn btn-ghost btn-xs font-mono gap-1 cursor-pointer"
+       hx-get="{{ url_for('api.browse_rclone', path=current_path.rsplit('/', 1)[0], target=target, remote_name=rclone_remote_name, config_path=rclone_config_path, show_hidden=sh) }}"
+       hx-target="closest .folder-browser-box"
+       hx-swap="innerHTML">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        ..
+    </a>
+    {% elif ssh %}
     <a class="btn btn-ghost btn-xs font-mono gap-1 cursor-pointer"
        hx-get="{{ url_for('api.browse_ssh', path=current_path.rsplit('/', 1)[0] or '/', target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password, show_hidden=sh) }}"
        hx-target="closest .folder-browser-box"
@@ -36,7 +44,14 @@
 
     <label class="label cursor-pointer gap-2 text-xs">
         <span class="label-text text-xs">Show hidden</span>
-        {% if ssh %}
+        {% if rclone %}
+        <input type="checkbox" class="toggle toggle-xs"
+               {{ 'checked' if show_hidden else '' }}
+               hx-get="{{ url_for('api.browse_rclone', path=current_path, target=target, remote_name=rclone_remote_name, config_path=rclone_config_path) }}"
+               hx-target="closest .folder-browser-box"
+               hx-swap="innerHTML"
+               hx-vals='js:{show_hidden: event.target.checked ? "1" : ""}'>
+        {% elif ssh %}
         <input type="checkbox" class="toggle toggle-xs"
                {{ 'checked' if show_hidden else '' }}
                hx-get="{{ url_for('api.browse_ssh', path=current_path, target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password) }}"
@@ -57,9 +72,15 @@
 <div class="overflow-y-auto max-h-80 border border-base-300 rounded-lg">
     <ul class="menu menu-xs bg-base-100 rounded-lg w-full [&_li>details]:w-full">
         {% for d in dirs %}
+        {% if rclone %}
+        {% set child_path = (current_path + '/' + d) if current_path else d %}
+        {% else %}
         {% set child_path = current_path.rstrip('/') + '/' + d %}
+        {% endif %}
         <li>
-            {% if ssh %}
+            {% if rclone %}
+            <details hx-get="{{ url_for('api.browse_rclone_children', path=child_path, target=target, remote_name=rclone_remote_name, config_path=rclone_config_path, show_hidden=sh) }}"
+            {% elif ssh %}
             <details hx-get="{{ url_for('api.browse_ssh_children', path=child_path, target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password, show_hidden=sh) }}"
             {% else %}
             <details hx-get="{{ url_for('api.browse_children', path=child_path, target=target, show_hidden=sh) }}"

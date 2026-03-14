@@ -236,7 +236,7 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                     <div class="flex gap-2">
                         <input type="text" name="base" id="base-path-input" value="{{ remote.base }}" class="input font-mono flex-1" placeholder="/backups">
                         <button type="button" class="btn btn-outline"
-                                x-show="remoteType === 'local' || remoteType === 'ssh'"
+                                x-show="remoteType === 'local' || remoteType === 'ssh' || remoteType === 'rclone'"
                                 @click="
                                     let url;
                                     if (remoteType === 'ssh') {
@@ -252,6 +252,17 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                                             password: document.querySelector('[name=password]')?.value || ''
                                         });
                                         url = '/api/browse/ssh?' + params.toString();
+                                    } else if (remoteType === 'rclone') {
+                                        let remoteName = document.querySelector('[name=rclone_remote_name]')?.value;
+                                        if (!remoteName) { alert('Select an rclone remote first'); return; }
+                                        let configPath = document.querySelector('[name=rclone_config_path]')?.value || '';
+                                        let basePath = document.getElementById('base-path-input')?.value || '';
+                                        let params = new URLSearchParams({
+                                            path: basePath, target: 'base',
+                                            remote_name: remoteName,
+                                            config_path: configPath
+                                        });
+                                        url = '/api/browse/rclone?' + params.toString();
                                     } else {
                                         let localBase = document.getElementById('base-path-input')?.value || '/';
                                         url = '/api/browse?path=' + encodeURIComponent(localBase) + '&target=base';

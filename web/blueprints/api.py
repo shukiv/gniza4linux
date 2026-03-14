@@ -6,7 +6,7 @@ from flask import Blueprint, request, render_template
 from markupsafe import escape
 
 from web.app import login_required
-from web.helpers import get_rclone_remotes
+from web.helpers import get_rclone_remotes, _VALID_NAME_RE
 from web.ssh_utils import ssh_cmd
 
 bp = Blueprint("api", __name__, url_prefix="/api")
@@ -213,6 +213,92 @@ def browse_ssh_children():
                            show_hidden=show_hidden,
                            ssh=True, ssh_host=host, ssh_port=port,
                            ssh_user=user, ssh_key=key, ssh_password=password)
+
+
+def _rclone_list_dirs(remote_name, path="", config_path="", show_hidden=False):
+    """List directories on an rclone remote."""
+    cmd = ["rclone", "lsf", "--dirs-only"]
+    if config_path:
+        cmd += ["--config", config_path]
+    # Build remote:path string
+    rpath = f"{remote_name}:{path}"
+    cmd.append(rpath)
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        if result.returncode != 0:
+            err = result.stderr.strip() or "Failed to list remote path"
+            return None, err
+        dirs = []
+        for line in result.stdout.strip().splitlines():
+            name = line.strip().rstrip("/")
+            if not name:
+                continue
+            if not show_hidden and name.startswith("."):
+                continue
+            dirs.append(name)
+        return sorted(dirs), None
+    except FileNotFoundError:
+        return None, "rclone is not installed"
+    except subprocess.TimeoutExpired:
+        return None, "Connection timed out"
+    except OSError as e:
+        return None, str(e)
+
+
+@bp.route("/browse/rclone")
+@login_required
+def browse_rclone():
+    """Browse directories on an rclone remote."""
+    remote_name = request.args.get("remote_name", "")
+    config_path = request.args.get("config_path", "")
+    path = request.args.get("path", "")
+    target = request.args.get("target", "")
+    show_hidden = request.args.get("show_hidden", "") == "1"
+
+    if not remote_name or not _VALID_NAME_RE.match(remote_name):
+        return '<div class="alert alert-error text-sm">Invalid remote name</div>'
+    if config_path and not os.path.isfile(config_path):
+        return '<div class="alert alert-error text-sm">Invalid config path</div>'
+    if '..' in path.split('/'):
+        return '<div class="alert alert-error text-sm">Invalid path</div>'
+
+    dirs, err = _rclone_list_dirs(remote_name, path, config_path, show_hidden=show_hidden)
+    if err:
+        return f'<div class="alert alert-error text-sm">{escape(err)}</div>'
+
+    return render_template("components/folder_browser.html",
+                           current_path=path, target=target, dirs=dirs,
+                           show_hidden=show_hidden,
+                           rclone=True, rclone_remote_name=remote_name,
+                           rclone_config_path=config_path)
+
+
+@bp.route("/browse/rclone/children")
+@login_required
+def browse_rclone_children():
+    """Return child folders on an rclone remote for lazy loading."""
+    remote_name = request.args.get("remote_name", "")
+    config_path = request.args.get("config_path", "")
+    path = request.args.get("path", "")
+    target = request.args.get("target", "")
+    show_hidden = request.args.get("show_hidden", "") == "1"
+
+    if not remote_name or not _VALID_NAME_RE.match(remote_name):
+        return ""
+    if config_path and not os.path.isfile(config_path):
+        return ""
+    if '..' in path.split('/'):
+        return ""
+
+    dirs, err = _rclone_list_dirs(remote_name, path, config_path, show_hidden=show_hidden)
+    if err or dirs is None:
+        return ""
+
+    return render_template("components/folder_browser_children.html",
+                           parent_path=path, target=target, dirs=dirs,
+                           show_hidden=show_hidden,
+                           rclone=True, rclone_remote_name=remote_name,
+                           rclone_config_path=config_path)
 
 
 @bp.route("/rclone-remotes")

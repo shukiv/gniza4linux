@@ -66,12 +66,6 @@
                 <div class="divider text-sm text-base-content/50">Cloud Storage Configuration</div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <fieldset class="fieldset">
-                        <label class="fieldset-label">Config File Path</label>
-                        <input type="text" name="rclone_config_path" value="{{ remote.rclone_config_path }}" class="input" placeholder="Leave empty for default (~/.config/rclone/rclone.conf)"
-                               hx-get="/api/rclone-remotes" hx-trigger="change" hx-target="#rclone-remote-select"
-                               hx-include="[name='rclone_config_path']">
-                    </fieldset>
-                    <fieldset class="fieldset">
                         <label class="fieldset-label">Remote Name</label>
                         <select name="rclone_remote_name" id="rclone-remote-select" class="select">
                             {% if rclone_remotes %}
@@ -83,6 +77,12 @@
                             <option value="">No remotes found</option>
                             {% endif %}
                         </select>
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Config File Path</label>
+                        <input type="text" name="rclone_config_path" value="{{ remote.rclone_config_path }}" class="input" placeholder="Leave empty for default (~/.config/rclone/rclone.conf)"
+                               hx-get="/api/rclone-remotes" hx-trigger="change" hx-target="#rclone-remote-select"
+                               hx-include="[name='rclone_config_path']">
                     </fieldset>
                 </div>
                 <div class="text-base-content/50 text-sm mt-3">

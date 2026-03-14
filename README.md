@@ -23,7 +23,7 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 - **Retry logic** — Automatic SSH reconnection with exponential backoff
 - **Include/exclude filters** — Rsync glob patterns per source
 - **Terminal UI** — Full-featured TUI powered by [Textual](https://textual.textualize.io/)
-- **Web dashboard** — Access the TUI from any browser with HTTP Basic Auth
+- **Web dashboard** — Browser-based dashboard with system stats (CPU, Memory, multi-partition Disks, IO Wait, Network), plus full backup management
 - **CLI** — Scriptable commands for automation and cron
 - **Root and user mode** — System-wide (`/etc/gniza`) or per-user (`~/.config/gniza`)
 
@@ -524,7 +524,7 @@ Multi-channel notifications on backup success or failure.
 
 **Report includes**: Status, source count (total/succeeded/failed), duration, failed source list, log file path, hostname, and timestamp.
 
-**Notification log**: All notifications are logged to `notification.log` (replaces the old `email.log`; old entries are still displayed for backward compatibility).
+**Notification log**: All notifications are logged to `notification.log` (replaces the old `email.log`). The notification log viewer also reads historical entries from `email.log`.
 
 ## Disk Space Safety
 

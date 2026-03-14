@@ -699,6 +699,28 @@ gniza --cli destinations disk-info-short --name=backup-server
 
 Shows used/total space, free space, and usage percentage. Works with SSH and local destinations.
 
+### Rclone Remotes Management
+
+The web dashboard includes a Rclone Remotes page (`/rclone-config/`) for managing rclone remote configurations directly from the browser:
+
+- **List** all configured rclone remotes
+- **Create** new remotes (Google Drive with OAuth, S3, and other rclone-supported providers)
+- **Edit** existing remote configurations
+- **Delete** remotes
+- **Test** remote connectivity
+
+#### Google Drive OAuth (Remote Access)
+
+When accessing the web dashboard from a non-localhost IP, Google Drive OAuth uses a "paste redirect URL" approach. Google blocks non-localhost redirect URIs for installed app client IDs, so the flow works as follows:
+
+1. The user initiates Google Drive authentication from the web dashboard
+2. Google's consent screen opens in a new tab
+3. After authorizing, Google redirects to `127.0.0.1:53682` which shows an error page (since the dashboard is on a remote server)
+4. The user copies the full URL from the browser's address bar
+5. The user pastes the URL back into the gniza web dashboard to complete authentication
+
+When accessing from localhost, OAuth works seamlessly with a direct redirect.
+
 ---
 
 ## Backup
@@ -1237,7 +1259,7 @@ Notifications include:
 
 ### Notification Log
 
-All sent notifications are recorded in `notification.log` (5-column format). This replaces the old `email.log` file. Old `email.log` entries are still displayed in the web dashboard for backward compatibility.
+All sent notifications are recorded in `notification.log` (5-column format). This replaces the old `email.log` file. The notification log viewer (`/notification-log/`) reads both `notification.log` and historical `email.log` entries.
 
 ### Test Notifications
 
@@ -1311,7 +1333,7 @@ All three interfaces (TUI, Web, CLI) maintain full feature parity:
 
 | Screen | Description |
 |--------|-------------|
-| **Dashboard** | Overview with sources, destinations, schedules tables, and last backup log with status |
+| **Dashboard** | System stats (CPU, IO Wait, Memory, Swap, multi-partition Disks, Network bandwidth) with progress bars, plus sources, destinations, schedules tables, and last backup log with status |
 | **Sources** | Create, edit, delete sources with toggle enable/disable (shows "Enabled"/"Disabled" text next to the toggle). Supports all source types (local, SSH, S3, Google Drive), MySQL backup, hooks, include/exclude filters |
 | **Destinations** | Create, edit, delete destinations. Test connection (result shown as toast notification), view disk usage inline. Supports SSH, local, S3, Google Drive |
 | **Schedules** | Create, edit, delete schedules with toggle active/inactive. Supports hourly, daily (multi-day), weekly, monthly, and custom cron |
@@ -1321,6 +1343,8 @@ All three interfaces (TUI, Web, CLI) maintain full feature parity:
 | **Snapshots** | Browse snapshots by source and destination. View file tree with HTMX-loaded directory expansion |
 | **Retention** | Run retention cleanup per source or all. Edit default retention count |
 | **Logs** | Paginated log viewer with status detection (success/error/skipped). View full log content |
+| **Rclone Remotes** | Manage rclone remote configurations: list, create, edit, delete, and test remotes. Supports Google Drive OAuth and S3 providers |
+| **Notification Log** | View all sent notifications from `notification.log` and historical `email.log` entries |
 | **Settings** | Edit all global settings organized in sections: General, Notifications, SSH, Web. Send test notifications |
 
 ### Authentication

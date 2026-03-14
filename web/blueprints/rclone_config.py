@@ -803,9 +803,9 @@ def reconnect(name):
         return redirect(url_for("rclone_config.index"))
 
     if not client_id or not client_secret:
-        flash("This remote has no client_id / client_secret saved. "
-              "Edit the remote and add them first.", "error")
-        return redirect(url_for("rclone_config.index"))
+        flash("This remote needs client_id and client_secret before reconnecting. "
+              "Add them below, then try Reconnect again.", "error")
+        return redirect(url_for("rclone_config.edit", name=name))
 
     # Build params from the existing config (preserves all settings)
     params = {k: v for k, v in config.items() if v and k != "token"}

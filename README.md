@@ -1,14 +1,14 @@
 # GNIZA - Linux Backup Manager
 
-A complete Linux backup solution that works as a **stand-alone backup tool** or a **centralized backup server**. Pull files from local directories, remote SSH servers, S3 buckets, or Google Drive, and push them to any combination of SSH, local, S3, or Google Drive destinations — all with incremental rsync snapshots, hardlink deduplication, and automatic retention.
+A complete Linux backup solution that works as a **stand-alone backup tool** or a **centralized backup server**. Pull files from local directories, remote SSH servers, S3 buckets, Google Drive, or Google Photos, and push them to any combination of SSH, local, S3, Google Drive, or Google Photos destinations — all with incremental rsync snapshots, hardlink deduplication, and automatic retention.
 
 Manage everything through a terminal UI, web dashboard, or CLI.
 
 ## Features
 
 - **Stand-alone or backup server** — Back up the local machine, or pull from remote servers without installing anything on them
-- **Remote sources** — Pull files from SSH servers, S3 buckets, or Google Drive before backing up
-- **Multiple destination types** — Push to SSH, local drives (USB/NFS), S3 (AWS, Backblaze B2, Wasabi), or Google Drive
+- **Remote sources** — Pull files from SSH servers, S3 buckets, Google Drive, or Google Photos before backing up
+- **Multiple destination types** — Push to SSH, local drives (USB/NFS), S3 (AWS, Backblaze B2, Wasabi), Google Drive, or Google Photos
 - **Incremental snapshots** — rsync `--link-dest` hardlink deduplication across snapshots
 - **MySQL/MariaDB backup** — Dump all or selected databases with grants, routines, and triggers
 - **PostgreSQL backup** — Dump all or selected databases with roles via pg_dump + gzip
@@ -23,13 +23,13 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 - **Retry logic** — Automatic SSH reconnection with exponential backoff
 - **Include/exclude filters** — Rsync glob patterns per source
 - **Terminal UI** — Full-featured TUI powered by [Textual](https://textual.textualize.io/)
-- **Web dashboard** — Browser-based dashboard with system stats (CPU, Memory, multi-partition Disks, IO Wait, Network), plus full backup management
+- **Web dashboard** — Browser-based dashboard with system stats (CPU, Memory, multi-partition Disks, IO Wait, Network), plus full backup management. Source list shows disk usage per source (local, SSH, and rclone)
 - **CLI** — Scriptable commands for automation and cron
 - **Root and user mode** — System-wide (`/etc/gniza`) or per-user (`~/.config/gniza`)
 
 ## Use Cases
 
-**Stand-alone backup** — Install gniza on any Linux server or workstation. Define local folders as sources and back them up to an SSH server, USB drive, S3, or Google Drive.
+**Stand-alone backup** — Install gniza on any Linux server or workstation. Define local folders as sources and back them up to an SSH server, USB drive, S3, Google Drive, or Google Photos.
 
 **Backup server** — Install gniza on a central server. Define remote SSH sources pointing to your production servers. gniza pulls their files and stores snapshots on local drives or cloud storage — no agent needed on the source machines.
 
@@ -72,7 +72,7 @@ gniza uninstall
 ### Dependencies
 
 - **Required**: bash 4+, rsync
-- **Optional**: ssh, curl (SMTP/Telegram/Webhook/ntfy/Healthchecks notifications), sshpass (password auth), rclone (S3/Google Drive)
+- **Optional**: ssh, curl (SMTP/Telegram/Webhook/ntfy/Healthchecks notifications), sshpass (password auth), rclone (S3/Google Drive/Google Photos)
 - **TUI/Web**: python3, textual, textual-serve (installed automatically)
 
 ## Quick Start
@@ -99,8 +99,8 @@ gniza --cli backup --all
 
 Launch with `gniza` (no arguments). The TUI provides:
 
-- **Sources** — Create, edit, delete backup sources with folder browser and Test & Save connection validation
-- **Destinations** — Configure SSH, local, S3, or Google Drive destinations with Test & Save connection validation
+- **Sources** — Create, edit, delete backup sources with folder browser (local, SSH, and rclone) and Test & Save connection validation
+- **Destinations** — Configure SSH, local, S3, Google Drive, or Google Photos destinations with Test & Save connection validation
 - **Backup** — Run backups with source/destination selection
 - **Restore** — Browse snapshots and restore to original location or custom directory
 - **Running Tasks** — Monitor active backup/restore jobs with live log output. Jobs show "Skipped" when all targets are disabled
@@ -173,14 +173,15 @@ Back up a remote server by pulling files over SSH:
 
 gniza connects to the remote server, pulls the specified folders to a local staging area, then pushes the data to the configured destination using the standard snapshot pipeline.
 
-### S3 / Google Drive Source
+### S3 / Google Drive / Google Photos Source
 
 Pull files from cloud storage before backing them up:
 
 - **S3**: Set `TARGET_SOURCE_TYPE="s3"` with bucket, region, and credentials
 - **Google Drive**: Set `TARGET_SOURCE_TYPE="gdrive"` with a service account JSON file
+- **Google Photos**: Set `TARGET_SOURCE_TYPE="gphotos"` with OAuth credentials
 
-Requires `rclone` to be installed.
+Requires `rclone` to be installed. Google OAuth (Drive and Photos) requires your own Client ID and Client Secret, as rclone's built-in defaults are blocked by Google.
 
 ## Snapshot Structure
 
@@ -324,7 +325,7 @@ TARGET_POST_HOOK=""             # Shell command after backup
 TARGET_ENABLED="yes"
 
 # Remote source (pull from another machine)
-TARGET_SOURCE_TYPE="local"      # local | ssh | s3 | gdrive
+TARGET_SOURCE_TYPE="local"      # local | ssh | s3 | gdrive | gphotos
 
 # SSH source
 TARGET_SOURCE_HOST=""
@@ -482,7 +483,7 @@ Auto-detects `mysqldump` or `mariadb-dump`.
 
 ## PostgreSQL Backup
 
-gniza can dump PostgreSQL databases alongside file backups. Available for local and SSH sources only (not S3/Google Drive).
+gniza can dump PostgreSQL databases alongside file backups. Available for local and SSH sources only (not S3/Google Drive/Google Photos).
 
 - **All databases**: Set `TARGET_POSTGRESQL_MODE="all"` to dump every user database
 - **Specific databases**: Set `TARGET_POSTGRESQL_MODE="specific"` and list them in `TARGET_POSTGRESQL_DATABASES`

@@ -46,8 +46,8 @@ Key features:
 - **Atomic snapshots** — `.partial` directory renamed on success
 - **Built-in MySQL/MariaDB** dump support
 - **Built-in PostgreSQL** dump support
-- **Multiple source types**: local, SSH, S3, Google Drive
-- **Multiple destination types**: local, SSH, S3, Google Drive
+- **Multiple source types**: local, SSH, S3, Google Drive, Google Photos
+- **Multiple destination types**: local, SSH, S3, Google Drive, Google Photos
 - **Automatic retention** and pruning
 - **Multi-channel notifications** (Email, Telegram, Webhook, ntfy, Healthchecks.io) on success/failure
 - **Three interfaces**: Web Dashboard, Terminal UI (TUI), and CLI
@@ -162,7 +162,7 @@ TYPE=local
 BASE=/mnt/backup-drive/gniza
 ```
 
-S3 and Google Drive destinations are also supported — configure through the web dashboard.
+S3, Google Drive, and Google Photos destinations are also supported — configure through the web dashboard.
 
 ### Step 5: Run Your First Backup
 
@@ -264,7 +264,7 @@ GNIZA backs up files and MySQL databases from **sources** to **destinations** us
 
 **Stand-alone mode**: Install gniza on any Linux machine. Define local folders as sources and back them up to an SSH server, USB drive, S3 bucket, or Google Drive.
 
-**Backup server mode**: Install gniza on a central server. Define remote SSH servers, S3 buckets, or Google Drive accounts as sources. gniza pulls files from them and stores snapshots locally or on another destination — no agent needed on the source machines.
+**Backup server mode**: Install gniza on a central server. Define remote SSH servers, S3 buckets, Google Drive, or Google Photos accounts as sources. gniza pulls files from them and stores snapshots locally or on another destination — no agent needed on the source machines.
 
 **Hybrid**: Mix local and remote sources freely. Back up local configs alongside files pulled from multiple remote servers.
 
@@ -319,7 +319,7 @@ bash scripts/install.sh          # user mode
 | ssh | No | SSH sources and destinations |
 | sshpass | No | Password-based SSH authentication |
 | curl | No | Notifications (SMTP, Telegram, Webhook, ntfy, Healthchecks) |
-| rclone | No | S3 and Google Drive support |
+| rclone | No | S3, Google Drive, and Google Photos support |
 | python3 | No | TUI and web dashboard |
 | textual | No | Terminal UI framework |
 | flask | No | Web dashboard framework |
@@ -336,13 +336,13 @@ After installation, run `gniza` to launch the TUI. On first run, the setup wizar
 
 ### Sources
 
-A **source** defines *what* to back up: a set of folders, optional filters, hooks, and MySQL database settings. Sources can pull data from local directories, remote SSH servers, S3 buckets, or Google Drive.
+A **source** defines *what* to back up: a set of folders, optional filters, hooks, and MySQL database settings. Sources can pull data from local directories, remote SSH servers, S3 buckets, Google Drive, or Google Photos.
 
 Config location: `<config_dir>/targets.d/<name>.conf`
 
 ### Destinations
 
-A **destination** defines *where* to store backup snapshots. Destinations can be SSH servers, local drives (USB/NFS), S3 buckets, or Google Drive.
+A **destination** defines *where* to store backup snapshots. Destinations can be SSH servers, local drives (USB/NFS), S3 buckets, Google Drive, or Google Photos.
 
 Config location: `<config_dir>/remotes.d/<name>.conf`
 
@@ -661,7 +661,7 @@ Requires `rclone`.
 
 | Field | Default | Description |
 |-------|---------|-------------|
-| `REMOTE_TYPE` | `ssh` | `ssh`, `local`, `s3`, or `gdrive` |
+| `REMOTE_TYPE` | `ssh` | `ssh`, `local`, `s3`, `gdrive`, or `gphotos` |
 | `REMOTE_HOST` | (required for SSH) | Hostname or IP |
 | `REMOTE_PORT` | `22` | SSH port |
 | `REMOTE_USER` | `root` | SSH username |
@@ -704,22 +704,29 @@ Shows used/total space, free space, and usage percentage. Works with SSH and loc
 The web dashboard includes a Rclone Remotes page (`/rclone-config/`) for managing rclone remote configurations directly from the browser:
 
 - **List** all configured rclone remotes
-- **Create** new remotes (Google Drive with OAuth, S3, and other rclone-supported providers)
+- **Create** new remotes (Google Drive and Google Photos with OAuth, S3, and other rclone-supported providers)
 - **Edit** existing remote configurations
 - **Delete** remotes
+- **Reconnect** existing OAuth remotes (re-authenticate using stored client_id/client_secret from rclone config)
 - **Test** remote connectivity
 
-#### Google Drive OAuth (Remote Access)
+#### Google OAuth (Custom Credentials)
 
-When accessing the web dashboard from a non-localhost IP, Google Drive OAuth uses a "paste redirect URL" approach. Google blocks non-localhost redirect URIs for installed app client IDs, so the flow works as follows:
+Google OAuth for both Google Drive and Google Photos requires your own Client ID and Client Secret. Rclone's built-in defaults are blocked by Google, so you must create credentials in the Google Cloud Console. The credentials are persisted to the rclone config after authentication.
 
-1. The user initiates Google Drive authentication from the web dashboard
+#### Google Drive / Google Photos OAuth (Remote Access)
+
+When accessing the web dashboard from a non-localhost IP, Google OAuth (Drive and Photos) uses a "paste redirect URL" approach. Google blocks non-localhost redirect URIs for installed app client IDs, so the flow works as follows:
+
+1. The user initiates Google Drive or Google Photos authentication from the web dashboard
 2. Google's consent screen opens in a new tab
 3. After authorizing, Google redirects to `127.0.0.1:53682` which shows an error page (since the dashboard is on a remote server)
 4. The user copies the full URL from the browser's address bar
 5. The user pastes the URL back into the gniza web dashboard to complete authentication
 
 When accessing from localhost, OAuth works seamlessly with a direct redirect.
+
+Google Photos uses the `photoslibrary` scope for accessing photo and video content.
 
 ---
 
@@ -1114,7 +1121,7 @@ In the TUI, toggle the "Restore MySQL databases" switch.
 
 ## PostgreSQL Backup
 
-GNIZA can dump PostgreSQL databases alongside file backups using `pg_dump` (plain format) + gzip. Available for **local and SSH sources only** (not S3 or Google Drive).
+GNIZA can dump PostgreSQL databases alongside file backups using `pg_dump` (plain format) + gzip. Available for **local and SSH sources only** (not S3, Google Drive, or Google Photos).
 
 ### Enabling PostgreSQL Backup
 
@@ -1333,9 +1340,9 @@ All three interfaces (TUI, Web, CLI) maintain full feature parity:
 
 | Screen | Description |
 |--------|-------------|
-| **Dashboard** | System stats (CPU, IO Wait, Memory, Swap, multi-partition Disks, Network bandwidth) with progress bars, plus sources, destinations, schedules tables, and last backup log with status |
-| **Sources** | Create, edit, delete sources with toggle enable/disable (shows "Enabled"/"Disabled" text next to the toggle). Supports all source types (local, SSH, S3, Google Drive), MySQL backup, hooks, include/exclude filters |
-| **Destinations** | Create, edit, delete destinations. Test connection (result shown as toast notification), view disk usage inline. Supports SSH, local, S3, Google Drive |
+| **Dashboard** | System stats with inline bar labels (e.g., "CPU 4%", "Memory 87%", "IO Wait 0.2%"), disk bars showing percentage only, and a "Network Current (Total)" section. Plus sources, destinations, schedules tables, and last backup log with status |
+| **Sources** | Create, edit, delete sources with toggle enable/disable (shows "Enabled"/"Disabled" text next to the toggle). Supports all source types (local, SSH, S3, Google Drive, Google Photos), MySQL backup, hooks, include/exclude filters. Sources list shows disk usage column loaded async via HTMX (local, SSH, rclone). Cloud editors include an rclone explanation text |
+| **Destinations** | Create, edit, delete destinations. Test connection (result shown as toast notification), view disk usage inline. Supports SSH, Local, Cloud (radio button order). Cloud Storage Configuration appears inside the Destination Type card with a divider separator, Remote Name dropdown first. Cloud editors include an rclone explanation text |
 | **Schedules** | Create, edit, delete schedules with toggle active/inactive. Supports hourly, daily (multi-day), weekly, monthly, and custom cron |
 | **Backup** | Select source and destination, or back up all. Starts a background job and redirects to Running Tasks |
 | **Restore** | Select source, destination, and snapshot. Options for custom restore path, specific folder, and skip MySQL |
@@ -1343,7 +1350,7 @@ All three interfaces (TUI, Web, CLI) maintain full feature parity:
 | **Snapshots** | Browse snapshots by source and destination. View file tree with HTMX-loaded directory expansion |
 | **Retention** | Run retention cleanup per source or all. Edit default retention count |
 | **Logs** | Paginated log viewer with status detection (success/error/skipped). View full log content |
-| **Rclone Remotes** | Manage rclone remote configurations: list, create, edit, delete, and test remotes. Supports Google Drive OAuth and S3 providers |
+| **Rclone Remotes** | Manage rclone remote configurations: list, create, edit, delete, reconnect (re-authenticate OAuth), and test remotes. Supports Google Drive OAuth, Google Photos OAuth, and S3 providers. Requires custom Google Client ID/Secret |
 | **Notification Log** | View all sent notifications from `notification.log` and historical `email.log` entries |
 | **Settings** | Edit all global settings organized in sections: General, Notifications, SSH, Web. Send test notifications |
 
@@ -1369,10 +1376,11 @@ The source and destination edit forms include a **Browse** button for selecting 
 
 - **Local sources/destinations**: Browses the server's local filesystem
 - **SSH sources**: Browses the remote server's filesystem over SSH (reads connection details from the form fields)
+- **Rclone (cloud) sources/destinations**: Browses remote folders on rclone remotes (Google Drive, Google Photos, S3, etc.)
 
 The browser uses a DaisyUI file tree with collapsible folders. Subdirectories are lazy-loaded via HTMX when you expand a folder. Click "Select" to pick the current path.
 
-For SSH browsing, fill in the host, port, user, and key/password fields before clicking Browse. The browser connects to the remote server to list directories in real time.
+For SSH browsing, fill in the host, port, user, and key/password fields before clicking Browse. The browser connects to the remote server to list directories in real time. For rclone browsing, select the rclone remote name first.
 
 ### Mobile Access
 
@@ -1472,7 +1480,7 @@ Launch with `gniza` (no arguments). Requires Python 3 and Textual.
 | Screen | Description |
 |--------|-------------|
 | **Sources** | Create, edit, delete, and view backup sources |
-| **Destinations** | Configure SSH, local, S3, or Google Drive destinations |
+| **Destinations** | Configure SSH, local, S3, Google Drive, or Google Photos destinations |
 | **Backup** | Select sources and destinations, run backups |
 | **Restore** | Browse snapshots, restore to original or custom location |
 | **Running Tasks** | Monitor active jobs with live log output and progress. Shows "skip" status when all targets are disabled |
@@ -1729,7 +1737,8 @@ Log files are named using local time (e.g., `gniza-20260307-040001.log`) to matc
 |-------------------|---------|
 | SSH | Key-based (RSA/ECDSA/Ed25519), password (via sshpass) |
 | S3 | Access Key ID + Secret Access Key |
-| Google Drive | Service account JSON file |
+| Google Drive | Service account JSON file, or OAuth with custom Client ID/Secret |
+| Google Photos | OAuth with custom Client ID/Secret (photoslibrary scope) |
 | Web dashboard | HTTP Basic Auth |
 
 ---
@@ -1791,7 +1800,10 @@ The destination disk usage exceeds the threshold. Free space or adjust `DISK_USA
 - Re-install entries: `gniza --cli schedule install` (this regenerates all entries with current flags)
 
 **rclone required**
-S3 and Google Drive sources/destinations require rclone. Install from https://rclone.org/install/.
+S3, Google Drive, and Google Photos sources/destinations require rclone. Install from https://rclone.org/install/.
+
+**Google OAuth not working**
+Google OAuth for Drive and Photos requires your own Client ID and Client Secret (rclone's built-in defaults are blocked by Google). Create OAuth credentials in the Google Cloud Console. If an existing remote's token expires, use the "Reconnect" button on the Rclone Remotes page to re-authenticate.
 
 **TUI not launching**
 Ensure Python 3 and Textual are installed: `python3 -c "import textual"`. The installer normally handles this.

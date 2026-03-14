@@ -22,13 +22,18 @@ _bg_tasks = {}  # task_id -> {"status": "running"|"done"|"error", "result": ...,
 # OAuth provider settings (extend this dict for other providers)
 _OAUTH_PROVIDERS = {
     "drive": {
-        "client_id": "202264815644.apps.googleusercontent.com",
-        "client_secret": "X4Z3ca8xfWDb1Voo-F9a7ZxJ",
         "auth_url": "https://accounts.google.com/o/oauth2/auth",
         "token_url": "https://oauth2.googleapis.com/token",
         "scope": "https://www.googleapis.com/auth/drive",
     },
+    "google photos": {
+        "auth_url": "https://accounts.google.com/o/oauth2/auth",
+        "token_url": "https://oauth2.googleapis.com/token",
+        "scope": "https://www.googleapis.com/auth/photoslibrary.readonly",
+    },
 }
+
+
 
 bp = Blueprint("rclone_config", __name__, url_prefix="/rclone-config")
 
@@ -237,13 +242,15 @@ def create():
 
     # Check if rclone needs more steps (OAuth, etc.)
     if data and data.get("State") and data.get("Option"):
-        # Store wizard state in session
+        # Store wizard state in session (include custom OAuth credentials if provided)
         session["rclone_wizard"] = {
             "name": remote_name,
             "type": provider_type,
             "state": data["State"],
             "option": data["Option"],
             "step": 2,
+            "client_id": params.get("client_id", ""),
+            "client_secret": params.get("client_secret", ""),
         }
         return redirect(url_for("rclone_config.wizard_step"))
 
@@ -382,7 +389,11 @@ def wizard_step():
             oauth_cfg = _OAUTH_PROVIDERS.get(provider_type)
             is_local = _is_localhost_request()
 
-            if oauth_cfg:
+            # Get custom client_id/client_secret from wizard session (set during create)
+            custom_client_id = wiz.get("client_id", "")
+            custom_client_secret = wiz.get("client_secret", "")
+
+            if oauth_cfg and custom_client_id and custom_client_secret:
                 task_id = secrets.token_hex(8)
 
                 if is_local:
@@ -396,7 +407,7 @@ def wizard_step():
                     redirect_uri = "http://127.0.0.1:53682/auth"
 
                 auth_params = urllib.parse.urlencode({
-                    "client_id": oauth_cfg["client_id"],
+                    "client_id": custom_client_id,
                     "redirect_uri": redirect_uri,
                     "response_type": "code",
                     "scope": oauth_cfg["scope"],
@@ -413,6 +424,8 @@ def wizard_step():
                     "type": wiz["type"],
                     "config_token_state": config_token_state,
                     "redirect_uri": redirect_uri,
+                    "client_id": custom_client_id,
+                    "client_secret": custom_client_secret,
                 }
 
                 template = "rclone_config/waiting.html" if is_local else "rclone_config/waiting_remote.html"
@@ -422,6 +435,12 @@ def wizard_step():
                     provider_type=wiz["type"],
                     task_id=task_id,
                 )
+            elif oauth_cfg and (not custom_client_id or not custom_client_secret):
+                # OAuth provider but missing custom credentials
+                flash("Google OAuth requires your own Client ID and Client Secret. "
+                      "Go to Google Cloud Console > APIs & Services > Credentials to create them, "
+                      "then fill in the client_id and client_secret fields.", "error")
+                return redirect(url_for("rclone_config.index"))
             else:
                 # Legacy rclone authorize fallback for non-OAuth providers
                 task_id = secrets.token_hex(8)
@@ -503,11 +522,17 @@ def oauth_callback(task_id):
         task.update({"status": "error", "error": f"No OAuth config for provider: {provider_type}"})
         return render_template("rclone_config/oauth_done.html")
 
+    task_client_id = task.get("client_id", "")
+    task_client_secret = task.get("client_secret", "")
+    if not task_client_id or not task_client_secret:
+        task.update({"status": "error", "error": "Missing OAuth credentials"})
+        return render_template("rclone_config/oauth_done.html")
+
     # Exchange authorization code for tokens
     token_data = urllib.parse.urlencode({
         "code": code,
-        "client_id": oauth_cfg["client_id"],
-        "client_secret": oauth_cfg["client_secret"],
+        "client_id": task_client_id,
+        "client_secret": task_client_secret,
         "redirect_uri": task["redirect_uri"],
         "grant_type": "authorization_code",
     }).encode()
@@ -654,10 +679,16 @@ def wizard_paste_url(task_id):
         flash(f"No OAuth config for provider: {provider_type}", "error")
         return redirect(url_for("rclone_config.index"))
 
+    task_client_id = task.get("client_id", "")
+    task_client_secret = task.get("client_secret", "")
+    if not task_client_id or not task_client_secret:
+        flash("Missing OAuth credentials. Please set client_id and client_secret.", "error")
+        return redirect(url_for("rclone_config.index"))
+
     token_data = urllib.parse.urlencode({
         "code": code,
-        "client_id": oauth_cfg["client_id"],
-        "client_secret": oauth_cfg["client_secret"],
+        "client_id": task_client_id,
+        "client_secret": task_client_secret,
         "redirect_uri": task["redirect_uri"],
         "grant_type": "authorization_code",
     }).encode()

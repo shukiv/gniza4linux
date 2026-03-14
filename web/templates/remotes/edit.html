@@ -223,6 +223,40 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
         </div>
     </div>
 
+    <!-- Cloud / Rclone fields -->
+    <div x-show="remoteType === 'rclone'" x-cloak>
+        <div class="card bg-base-200 shadow mb-6">
+            <div class="card-body">
+                <h2 class="card-title text-base mb-4">Cloud Storage Configuration</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Config File Path</label>
+                        <input type="text" name="rclone_config_path" value="{{ remote.rclone_config_path }}" class="input" placeholder="Leave empty for default (~/.config/rclone/rclone.conf)"
+                               hx-get="/api/rclone-remotes" hx-trigger="change" hx-target="#rclone-remote-select"
+                               hx-include="[name='rclone_config_path']">
+                    </fieldset>
+                    <fieldset class="fieldset">
+                        <label class="fieldset-label">Remote Name</label>
+                        <select name="rclone_remote_name" id="rclone-remote-select" class="select">
+                            {% if rclone_remotes %}
+                            <option value="">-- Select a remote --</option>
+                            {% for r in rclone_remotes %}
+                            <option value="{{ r }}" {% if r == remote.rclone_remote_name %}selected{% endif %}>{{ r }}</option>
+                            {% endfor %}
+                            {% else %}
+                            <option value="">No remotes found</option>
+                            {% endif %}
+                        </select>
+                    </fieldset>
+                </div>
+                <div class="text-base-content/50 text-sm mt-3">
+                    <a href="/rclone-config/" class="link link-primary">Manage rclone remotes</a> or run <code class="text-primary">rclone config</code> in your terminal.
+                    <br><span class="text-xs text-base-content/40">Rclone is a command-line tool that connects to 70+ cloud storage providers (Google Drive, S3, Dropbox, OneDrive, etc.). Create a remote first, then select it here.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Basic Settings -->
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
@@ -287,40 +321,6 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                     <label class="fieldset-label">Bandwidth Limit (KB/s, 0=unlimited)</label>
                     <input type="text" name="bwlimit" value="{{ remote.bwlimit }}" class="input" placeholder="0">
                 </fieldset>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cloud / Rclone fields -->
-    <div x-show="remoteType === 'rclone'" x-cloak>
-        <div class="card bg-base-200 shadow mb-6">
-            <div class="card-body">
-                <h2 class="card-title text-base mb-4">Cloud Storage Configuration</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Config File Path</label>
-                        <input type="text" name="rclone_config_path" value="{{ remote.rclone_config_path }}" class="input" placeholder="Leave empty for default (~/.config/rclone/rclone.conf)"
-                               hx-get="/api/rclone-remotes" hx-trigger="change" hx-target="#rclone-remote-select"
-                               hx-include="[name='rclone_config_path']">
-                    </fieldset>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Remote Name</label>
-                        <select name="rclone_remote_name" id="rclone-remote-select" class="select">
-                            {% if rclone_remotes %}
-                            <option value="">-- Select a remote --</option>
-                            {% for r in rclone_remotes %}
-                            <option value="{{ r }}" {% if r == remote.rclone_remote_name %}selected{% endif %}>{{ r }}</option>
-                            {% endfor %}
-                            {% else %}
-                            <option value="">No remotes found</option>
-                            {% endif %}
-                        </select>
-                    </fieldset>
-                </div>
-                <div class="text-base-content/50 text-sm mt-3">
-                    <a href="/rclone-config/" class="link link-primary">Manage rclone remotes</a> or run <code class="text-primary">rclone config</code> in your terminal.
-                    <br><span class="text-xs text-base-content/40">Rclone is a command-line tool that connects to 70+ cloud storage providers (Google Drive, S3, Dropbox, OneDrive, etc.). Create a remote first, then select it here.</span>
-                </div>
             </div>
         </div>
     </div>

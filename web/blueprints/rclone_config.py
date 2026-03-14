@@ -29,7 +29,7 @@ _OAUTH_PROVIDERS = {
     "google photos": {
         "auth_url": "https://accounts.google.com/o/oauth2/auth",
         "token_url": "https://oauth2.googleapis.com/token",
-        "scope": "https://www.googleapis.com/auth/photoslibrary.readonly",
+        "scope": "https://www.googleapis.com/auth/photoslibrary",
     },
 }
 

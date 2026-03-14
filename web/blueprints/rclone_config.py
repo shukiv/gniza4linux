@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import re
 import subprocess
 import threading
@@ -9,10 +8,11 @@ import urllib.request
 
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash, session,
-    jsonify, Response,
+    jsonify,
 )
 
 from web.app import login_required
+from web.helpers import _VALID_NAME_RE
 
 log = logging.getLogger("gniza.rclone_oauth")
 
@@ -31,8 +31,6 @@ _OAUTH_PROVIDERS = {
 }
 
 bp = Blueprint("rclone_config", __name__, url_prefix="/rclone-config")
-
-_VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 
 
 def _is_localhost_request():
@@ -572,7 +570,7 @@ def oauth_callback(task_id):
             log.warning("Failed to persist token via config update: %s", e)
         task.update({"status": "done", "name": name})
     else:
-        _dbg(f"FAILED: {err}")
+        log.error("OAuth finalize failed: %s", err)
         task.update({
             "status": "error",
             "error": err or "Failed to finalize remote configuration",

@@ -1,5 +1,4 @@
 import os
-import re
 import subprocess
 
 from flask import (
@@ -9,12 +8,10 @@ from flask import (
 from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Target
 from web.app import login_required
-from web.helpers import load_targets, get_rclone_remotes
+from web.helpers import load_targets, get_rclone_remotes, _VALID_NAME_RE
 from web.ssh_utils import ssh_cmd, get_ssh_keys as _get_ssh_keys
 
 bp = Blueprint("targets", __name__, url_prefix="/sources")
-
-_VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 
 
 def _lines_to_csv(text: str) -> str:

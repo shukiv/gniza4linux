@@ -1,15 +1,12 @@
 import json
-import re
 
 from flask import Blueprint, render_template
 
 from web.app import login_required
 from web.backend import run_cli_sync
-from web.helpers import load_remotes
+from web.helpers import load_remotes, _VALID_NAME_RE
 
 bp = Blueprint("health", __name__, url_prefix="/health")
-
-_VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 
 
 @bp.route("/")

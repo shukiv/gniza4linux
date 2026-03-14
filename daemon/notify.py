@@ -447,9 +447,3 @@ def send_stale_alert(stale_sources):
 
     body = "\n".join(lines)
     _dispatch_notification(settings, subject, body, is_success=False)
-
-
-# Backward compatibility alias
-def send_test_email():
-    """Send a test email. Returns (success: bool, message: str)."""
-    return send_test_notification("email")

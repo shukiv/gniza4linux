@@ -112,8 +112,6 @@ def create_app():
                 active_page = "snapshots"
             elif request.endpoint.startswith("notification_log"):
                 active_page = "notification log"
-            elif request.endpoint.startswith("email_log"):
-                active_page = "notification log"
             elif request.endpoint.startswith("logs"):
                 active_page = "logs"
             elif request.endpoint.startswith("settings"):
@@ -151,7 +149,6 @@ def create_app():
     from web.blueprints.schedules import bp as schedules_bp
     from web.blueprints.snapshots import bp as snapshots_bp
     from web.blueprints.logs import bp as logs_bp
-    from web.blueprints.email_log import bp as email_log_bp
     from web.blueprints.notification_log import bp as notification_log_bp
     from web.blueprints.wizard import bp as wizard_bp
     from web.blueprints.api import bp as api_bp
@@ -170,7 +167,6 @@ def create_app():
     app.register_blueprint(schedules_bp)
     app.register_blueprint(snapshots_bp)
     app.register_blueprint(logs_bp)
-    app.register_blueprint(email_log_bp)
     app.register_blueprint(notification_log_bp)
     app.register_blueprint(wizard_bp)
     app.register_blueprint(api_bp)

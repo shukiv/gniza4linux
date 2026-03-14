@@ -5,6 +5,8 @@
 __pycache__/
 *.pyc
 
+textual-mcp.log
+
 # Non-essential files kept locally only
 FEATURES.md
 logo.txt

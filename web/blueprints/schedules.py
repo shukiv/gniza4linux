@@ -1,5 +1,4 @@
 import os
-import re
 from datetime import datetime, timedelta
 
 from flask import (
@@ -10,11 +9,10 @@ from tui.config import CONFIG_DIR, parse_conf, write_conf, list_conf_dir
 from tui.models import Schedule
 from web.app import login_required
 from web.backend import run_cli_sync
+from web.helpers import _VALID_NAME_RE
 from web.jobs import web_job_manager
 
 bp = Blueprint("schedules", __name__, url_prefix="/schedules")
-
-_VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 
 
 def _reinstall_cron():

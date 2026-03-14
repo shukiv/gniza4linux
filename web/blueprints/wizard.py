@@ -1,5 +1,3 @@
-import os
-import re
 import subprocess
 from pathlib import Path
 
@@ -7,19 +5,18 @@ from flask import (
     Blueprint, render_template, request, redirect, url_for, flash, jsonify,
 )
 
-from tui.config import CONFIG_DIR, parse_conf, write_conf, list_conf_dir
+from tui.config import CONFIG_DIR, write_conf, list_conf_dir
 from tui.models import Remote, Target, Schedule
 from web.app import login_required
 from web.blueprints.remotes import _test_remote
 from web.blueprints.targets import _test_source, _lines_to_csv
 from web.blueprints.schedules import _reinstall_cron
-from web.helpers import get_rclone_remotes
+from web.helpers import get_rclone_remotes, _VALID_NAME_RE
 from web.jobs import web_job_manager
 from web.ssh_utils import get_ssh_keys as _get_ssh_keys
 
 bp = Blueprint("wizard", __name__, url_prefix="/wizard")
 
-_VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 _VALID_REMOTE_TYPES = {"ssh", "local", "s3", "gdrive", "rclone"}
 _VALID_S3_PROVIDERS = {"AWS", "Backblaze", "Wasabi", "Other"}
 _VALID_SOURCE_TYPES = {"local", "ssh", "s3", "gdrive", "rclone"}

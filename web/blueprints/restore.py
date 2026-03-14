@@ -8,11 +8,10 @@ from flask import (
 from tui.config import list_conf_dir
 from web.app import login_required
 from web.backend import run_cli_sync
+from web.helpers import _VALID_NAME_RE
 from web.jobs import web_job_manager
 
 bp = Blueprint("restore", __name__, url_prefix="/restore")
-
-_VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 _VALID_SNAPSHOT_RE = re.compile(r'^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*$')
 
 _FORBIDDEN_DEST_PREFIXES = ("/bin", "/sbin", "/usr/bin", "/usr/sbin", "/usr/lib", "/boot", "/dev", "/proc", "/sys", "/etc", "/lib", "/lib64")

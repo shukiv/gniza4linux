@@ -144,10 +144,3 @@ def test_notification(channel):
     except Exception as e:
         flash(f"Error: {e}", "error")
     return redirect(url_for("settings.index", tab="notifications"))
-
-
-@bp.route("/test-email", methods=["POST"])
-@login_required
-def test_email():
-    """Backward compatibility route."""
-    return test_notification("email")

@@ -1,9 +1,12 @@
 """Shared helper functions for web blueprints."""
 
+import re
 import subprocess
 
 from tui.config import parse_conf, CONFIG_DIR, list_conf_dir
 from tui.models import Target, Remote
+
+_VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 
 
 def get_rclone_remotes(config_path=""):

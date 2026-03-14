@@ -2,7 +2,7 @@ import time
 from datetime import datetime, timedelta
 
 import psutil
-from flask import Blueprint, render_template, flash, request, redirect, url_for, jsonify
+from flask import Blueprint, render_template, flash, request, redirect, url_for
 
 from tui.config import CONFIG_DIR, parse_conf, list_conf_dir
 from tui.models import Schedule

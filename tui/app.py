@@ -92,7 +92,6 @@ class GnizaApp(App):
 
     def _open_help_modal(self) -> None:
         from tui.widgets import HelpModal
-        from tui.docs import SCREEN_DOCS
         try:
             panel = self.screen.query_one("#docs-panel")
             content = panel._content

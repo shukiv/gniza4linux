@@ -1,16 +1,13 @@
-import re
-
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
 )
 
 from tui.config import CONFIG_DIR, list_conf_dir, parse_conf, update_conf_key
 from web.app import login_required
+from web.helpers import _VALID_NAME_RE
 from web.jobs import web_job_manager
 
 bp = Blueprint("retention", __name__, url_prefix="/retention")
-
-_VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 
 
 @bp.route("/")

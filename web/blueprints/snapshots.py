@@ -11,11 +11,10 @@ from flask import (
 from tui.config import CONFIG_DIR, list_conf_dir, parse_conf
 from web.app import login_required
 from web.backend import run_cli_sync
+from web.helpers import _VALID_NAME_RE
 from web.ssh_utils import ssh_cmd_from_conf
 
 bp = Blueprint("snapshots", __name__, url_prefix="/snapshots")
-
-_VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 _VALID_SNAPSHOT_RE = re.compile(r'^[A-Za-z0-9_.\-]+$')
 # Block path traversal
 _VALID_SUBPATH_RE = re.compile(r'^[A-Za-z0-9_./ -]*$')

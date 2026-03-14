@@ -1,5 +1,3 @@
-import re
-from datetime import datetime
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -10,7 +8,6 @@ from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
 from tui.jobs import job_manager
-from tui.config import LOG_DIR
 from tui.widgets import DocsPanel
 
 

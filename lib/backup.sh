@@ -170,6 +170,25 @@ _backup_target_impl() {
         fi
     fi
 
+    # 8.9. Ensure .partial snapshot directory exists on destination
+    local snap_dir_pre; snap_dir_pre=$(get_snapshot_dir "$target_name")
+    if _is_rclone_mode; then
+        : # rclone handles directory creation automatically
+    elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+        mkdir -p "$snap_dir_pre/${ts}.partial" || {
+            log_error "Failed to create local .partial directory"
+            snaplog_cleanup
+            return 1
+        }
+    else
+        local sq_pre; sq_pre="$(shquote "$snap_dir_pre/${ts}.partial")"
+        if ! remote_exec "mkdir -p '${sq_pre}'" 2>/dev/null; then
+            log_error "Failed to create remote .partial directory"
+            snaplog_cleanup
+            return 1
+        fi
+    fi
+
     # 9. Transfer each folder
     local folder
     local transfer_failed=false

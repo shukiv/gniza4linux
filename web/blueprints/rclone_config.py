@@ -588,12 +588,15 @@ def oauth_callback(task_id):
     if data and data.get("State") and data.get("Option"):
         task.update({"status": "more_steps", "data": data})
     elif rc == 0:
-        # The wizard flow doesn't persist the token — set it directly
+        # The wizard flow doesn't persist credentials — set them directly
         try:
-            subprocess.run(
-                ["rclone", "config", "update", name, f"token={rclone_token}", "--non-interactive", "--obscure"],
-                capture_output=True, text=True, timeout=15,
-            )
+            update_cmd = ["rclone", "config", "update", name, f"token={rclone_token}"]
+            if task.get("client_id"):
+                update_cmd.append(f"client_id={task['client_id']}")
+            if task.get("client_secret"):
+                update_cmd.append(f"client_secret={task['client_secret']}")
+            update_cmd += ["--non-interactive", "--obscure"]
+            subprocess.run(update_cmd, capture_output=True, text=True, timeout=15)
         except Exception as e:
             log.warning("Failed to persist token via config update: %s", e)
         task.update({"status": "done", "name": name})
@@ -757,10 +760,13 @@ def wizard_paste_url(task_id):
         return redirect(url_for("rclone_config.wizard_step"))
     elif rc == 0:
         try:
-            subprocess.run(
-                ["rclone", "config", "update", name, f"token={rclone_token}", "--non-interactive", "--obscure"],
-                capture_output=True, text=True, timeout=15,
-            )
+            update_cmd = ["rclone", "config", "update", name, f"token={rclone_token}"]
+            if task.get("client_id"):
+                update_cmd.append(f"client_id={task['client_id']}")
+            if task.get("client_secret"):
+                update_cmd.append(f"client_secret={task['client_secret']}")
+            update_cmd += ["--non-interactive", "--obscure"]
+            subprocess.run(update_cmd, capture_output=True, text=True, timeout=15)
         except Exception as e:
             log.warning("Failed to persist token via config update: %s", e)
         _bg_tasks.pop(task_id, None)

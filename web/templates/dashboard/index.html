@@ -55,7 +55,6 @@
                         <th>Name</th>
                         <th>Type</th>
                         <th>Folders</th>
-                        <th>Destination</th>
                         <th>Status</th>
                         <th></th>
                     </tr>
@@ -66,7 +65,6 @@
                         <td class="font-mono font-medium">{{ t.name }}</td>
                         <td>{{ t.source_type }}</td>
                         <td class="max-w-xs truncate text-base-content/60">{{ t.folders }}</td>
-                        <td>{{ t.remote or '--' }}</td>
                         <td>
                             {% if t.enabled == 'yes' %}
                             <span class="badge badge-success badge-md gap-1">Enabled</span>

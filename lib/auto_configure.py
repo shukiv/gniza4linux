@@ -6,31 +6,32 @@ import tempfile
 from pathlib import Path
 
 from tui.config import CONFIG_DIR, write_conf
-from tui.models import Remote
+from tui.models import Remote, Target
 
 _CROC_CODE_RE = re.compile(r'^[a-zA-Z0-9-]+$')
-_DEST_NAME_RE = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
+_NAME_RE = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
 _USERNAME_RE = re.compile(r'^[a-z_][a-z0-9_-]*$')
 _HOST_RE = re.compile(r'^[a-zA-Z0-9._-]+$')
 
 
-def receive_and_configure(code: str, dest_name: str, timeout: int = 120) -> tuple[Remote | None, str | None]:
+def _receive_and_validate(code: str, name: str, config_subdir: str, label: str, timeout: int = 120):
     """
-    Receive remote config via croc, save SSH key, return (Remote, None) or (None, error_msg).
+    Shared: receive via croc, validate JSON, save SSH key.
+    Returns (data_dict, ssh_key_path, error_msg). On error, data and key are None.
     """
     if not _CROC_CODE_RE.match(code):
-        return None, "Invalid croc code format. Use only letters, numbers, and hyphens."
+        return None, None, "Invalid croc code format. Use only letters, numbers, and hyphens."
 
-    if not _DEST_NAME_RE.match(dest_name):
-        return None, "Invalid destination name. Use only letters, numbers, hyphens, and underscores."
+    if not _NAME_RE.match(name):
+        return None, None, f"Invalid {label} name. Use only letters, numbers, hyphens, and underscores."
 
-    conf_path = CONFIG_DIR / "remotes.d" / f"{dest_name}.conf"
+    conf_path = CONFIG_DIR / config_subdir / f"{name}.conf"
     if conf_path.exists():
-        return None, f"Destination '{dest_name}' already exists."
+        return None, None, f"{label.capitalize()} '{name}' already exists."
 
+    json_path = None
     tmpdir = tempfile.mkdtemp(prefix="gniza-autoconf-")
     try:
-        # Receive file via croc (CROC_SECRET for v10+, code as arg for older)
         env = os.environ.copy()
         env["CROC_SECRET"] = code
         result = subprocess.run(
@@ -43,51 +44,56 @@ def receive_and_configure(code: str, dest_name: str, timeout: int = 120) -> tupl
         )
         if result.returncode != 0:
             stderr = result.stderr.strip()
-            return None, f"croc receive failed: {stderr or 'unknown error'}"
+            return None, None, f"croc receive failed: {stderr or 'unknown error'}"
 
-        # Find the received file
         received = [f for f in os.listdir(tmpdir) if os.path.isfile(os.path.join(tmpdir, f))]
         if not received:
-            return None, "No file received from croc."
+            return None, None, "No file received from croc."
 
         json_path = os.path.join(tmpdir, received[0])
         with open(json_path, "r") as f:
             data = json.load(f)
 
-        # Validate payload
         if data.get("type") != "gniza-remote-setup":
-            return None, "Invalid payload: not a gniza remote setup file."
+            return None, None, "Invalid payload: not a gniza remote setup file."
         if data.get("version") != 1:
-            return None, f"Unsupported payload version: {data.get('version')}"
+            return None, None, f"Unsupported payload version: {data.get('version')}"
 
-        # Validate payload fields
+        # Validate fields
         host = data.get("host", "")
         if not host or not _HOST_RE.match(host):
-            return None, f"Invalid host in payload: {host!r}"
+            return None, None, f"Invalid host in payload: {host!r}"
         port = data.get("port", "22")
         try:
             port_int = int(port)
             if not (1 <= port_int <= 65535):
                 raise ValueError
         except (ValueError, TypeError):
-            return None, f"Invalid port in payload: {port!r}"
+            return None, None, f"Invalid port in payload: {port!r}"
         user = data.get("user", "gniza")
         if not _USERNAME_RE.match(user):
-            return None, f"Invalid user in payload: {user!r}"
+            return None, None, f"Invalid user in payload: {user!r}"
         base = data.get("base", "/backups")
         if ".." in base:
-            return None, f"Invalid base path in payload (contains '..'): {base!r}"
+            return None, None, f"Invalid base path in payload (contains '..'): {base!r}"
+
+        # Normalize validated fields back into data
+        data["host"] = host
+        data["port"] = str(port_int)
+        data["user"] = user
+        data["base"] = base
+        sudo = data.get("sudo", "yes")
+        data["sudo"] = sudo if sudo in ("yes", "no") else "yes"
 
         # Save private key
         ssh_dir = Path.home() / ".ssh"
         ssh_dir.mkdir(mode=0o700, exist_ok=True)
-        ssh_key_path = ssh_dir / f"gniza_{dest_name}"
+        ssh_key_path = ssh_dir / f"gniza_{name}"
 
         if ssh_key_path.exists():
-            return None, f"SSH key file already exists: {ssh_key_path}. Remove it first or use a different name."
+            return None, None, f"SSH key file already exists: {ssh_key_path}. Remove it first or use a different name."
 
         private_key = data.get("private_key", "")
-        # Unescape \\n to actual newlines
         private_key = private_key.replace("\\n", "\n")
         if not private_key.endswith("\n"):
             private_key += "\n"
@@ -95,36 +101,58 @@ def receive_and_configure(code: str, dest_name: str, timeout: int = 120) -> tupl
         ssh_key_path.write_text(private_key)
         ssh_key_path.chmod(0o600)
 
-        # Build Remote object
-        sudo = data.get("sudo", "yes")
-        if sudo not in ("yes", "no"):
-            sudo = "yes"
-        remote = Remote(
-            name=dest_name,
-            type="ssh",
-            host=host,
-            port=str(port_int),
-            user=user,
-            auth_method="key",
-            key=str(ssh_key_path),
-            base=base,
-            sudo=sudo,
-        )
-
-        return remote, None
+        return data, ssh_key_path, None
 
     except subprocess.TimeoutExpired:
-        return None, f"croc receive timed out after {timeout} seconds."
+        return None, None, f"croc receive timed out after {timeout} seconds."
     except json.JSONDecodeError as e:
-        # Show file content for debugging
         try:
-            preview = Path(json_path).read_text()[:200]
+            preview = Path(json_path).read_text()[:200] if json_path else "(no file)"
         except Exception:
             preview = "(could not read)"
-        return None, f"Invalid JSON in received file: {e}\nFile content: {preview!r}"
+        return None, None, f"Invalid JSON in received file: {e}\nFile content: {preview!r}"
     except OSError as e:
-        return None, f"File error: {e}"
+        return None, None, f"File error: {e}"
     finally:
-        # Clean up temp dir
         import shutil
         shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def receive_and_configure(code: str, dest_name: str, timeout: int = 120) -> tuple[Remote | None, str | None]:
+    """Receive remote config via croc, return (Remote, None) or (None, error_msg)."""
+    data, ssh_key_path, error = _receive_and_validate(code, dest_name, "remotes.d", "destination", timeout)
+    if error:
+        return None, error
+
+    remote = Remote(
+        name=dest_name,
+        type="ssh",
+        host=data["host"],
+        port=data["port"],
+        user=data["user"],
+        auth_method="key",
+        key=str(ssh_key_path),
+        base=data["base"],
+        sudo=data["sudo"],
+    )
+    return remote, None
+
+
+def receive_and_configure_source(code: str, source_name: str, folders: str = "", timeout: int = 120) -> tuple[Target | None, str | None]:
+    """Receive remote config via croc, return (Target, None) or (None, error_msg)."""
+    data, ssh_key_path, error = _receive_and_validate(code, source_name, "targets.d", "source", timeout)
+    if error:
+        return None, error
+
+    target = Target(
+        name=source_name,
+        folders=folders,
+        source_type="ssh",
+        source_host=data["host"],
+        source_port=data["port"],
+        source_user=data["user"],
+        source_auth_method="key",
+        source_key=str(ssh_key_path),
+        source_sudo=data["sudo"],
+    )
+    return target, None

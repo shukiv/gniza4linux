@@ -7,6 +7,7 @@ from flask import (
 )
 from markupsafe import escape
 
+from lib.auto_configure import receive_and_configure_source
 from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Target
 from web.app import login_required
@@ -321,6 +322,43 @@ def save():
 
     write_conf(CONFIG_DIR / "targets.d" / f"{target.name}.conf", target.to_conf())
     flash(f"Source '{target.name}' saved.", "success")
+    return redirect(url_for("targets.index"))
+
+
+@bp.route("/auto-configure")
+@login_required
+def auto_configure():
+    return render_template("targets/auto_configure.html")
+
+
+@bp.route("/auto-configure", methods=["POST"])
+@login_required
+def auto_configure_receive():
+    form = request.form
+    source_name = form.get("name", "").strip()
+    code = form.get("code", "").strip()
+    folders = form.get("folders", "").strip()
+
+    if not source_name:
+        flash("Source name is required.", "error")
+        return render_template("targets/auto_configure.html")
+    if not code:
+        flash("Croc code is required.", "error")
+        return render_template("targets/auto_configure.html")
+
+    target, error = receive_and_configure_source(code, source_name, folders)
+    if error:
+        flash(error, "error")
+        return render_template("targets/auto_configure.html")
+
+    ok, msg = _test_source(target)
+    if ok is False:
+        write_conf(CONFIG_DIR / "targets.d" / f"{target.name}.conf", target.to_conf())
+        flash(f"Source '{target.name}' saved but connection test failed: {msg}", "warning")
+        return redirect(url_for("targets.index"))
+
+    write_conf(CONFIG_DIR / "targets.d" / f"{target.name}.conf", target.to_conf())
+    flash(f"Source '{target.name}' auto-configured successfully!", "success")
     return redirect(url_for("targets.index"))
 
 

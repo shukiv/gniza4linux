@@ -94,6 +94,8 @@ Sources (what to back up):
                                         Create a new source
   sources delete --name=NAME            Delete a source
   sources show --name=NAME              Show full source configuration
+  sources auto-configure --name=NAME --code=CODE [--folders=PATHS]
+                                        Auto-configure from remote setup script
 
 Destinations (where to store backups):
   destinations list                          List all configured destinations
@@ -423,6 +425,8 @@ Actions:
                         Create a new source
   delete --name=NAME    Delete a source
   show --name=NAME      Show full source configuration
+  auto-configure --name=NAME --code=CODE [--folders=PATHS]
+                        Auto-configure from remote setup script
   help                  Show this help
 
 Examples:
@@ -430,6 +434,7 @@ Examples:
   gniza sources add --name=mysite --folders=/var/www
   gniza sources show --name=mysite
   gniza sources delete --name=mysite
+  gniza sources auto-configure --name=webserver --code=abc-def-ghi --folders=/var/www,/etc
 HELPEOF
                     exit 0
                     ;;
@@ -521,8 +526,32 @@ HELPEOF
                         echo "Extra opts:     $TARGET_POSTGRESQL_EXTRA_OPTS"
                     fi
                     ;;
+                auto-configure)
+                    local code=""
+                    code=$(_parse_flag "--code" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+                    folders=$(_parse_flag "--folders" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+                    [[ -z "$name" ]] && die "sources auto-configure requires --name=NAME"
+                    [[ -z "$code" ]] && die "sources auto-configure requires --code=CODE"
+                    if [[ ! "$name" =~ ^[A-Za-z0-9_-]+$ ]]; then
+                        die "Invalid source name. Use only letters, numbers, hyphens, and underscores."
+                    fi
+                    if [[ ! "$code" =~ ^[a-zA-Z0-9-]+$ ]]; then
+                        die "Invalid croc code format"
+                    fi
+                    info "Receiving configuration via croc..."
+                    PYTHONPATH="$GNIZA_DIR" "$GNIZA_PYTHON" -c "
+from lib.auto_configure import receive_and_configure_source
+target, error = receive_and_configure_source('$code', '$name', '${folders:-}')
+if error:
+    print(f'ERROR: {error}')
+    exit(1)
+from tui.config import CONFIG_DIR, write_conf
+write_conf(CONFIG_DIR / 'targets.d' / f'{target.name}.conf', target.to_conf())
+print(f'Source \"{target.name}\" configured successfully.')
+"
+                    ;;
                 *)
-                    die "Unknown sources action: $action (expected list|add|delete|show)"
+                    die "Unknown sources action: $action (expected list|add|delete|show|auto-configure)"
                     ;;
             esac
             ;;

@@ -30,13 +30,16 @@ def receive_and_configure(code: str, dest_name: str, timeout: int = 120) -> tupl
 
     tmpdir = tempfile.mkdtemp(prefix="gniza-autoconf-")
     try:
-        # Receive file via croc
+        # Receive file via croc (CROC_SECRET for v10+, code as arg for older)
+        env = os.environ.copy()
+        env["CROC_SECRET"] = code
         result = subprocess.run(
-            ["croc", "--yes", "--overwrite", code],
+            ["croc", "--yes", "--overwrite"],
             cwd=tmpdir,
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=env,
         )
         if result.returncode != 0:
             stderr = result.stderr.strip()

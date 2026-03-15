@@ -221,7 +221,7 @@ echo ""
 info "Waiting for the GNIZA server to receive the configuration..."
 echo ""
 
-croc send --code "$CROC_CODE" "$JSON_TMP"
+CROC_SECRET="$CROC_CODE" croc send "$JSON_TMP"
 
 echo ""
 info "Configuration sent successfully. You can close this terminal."

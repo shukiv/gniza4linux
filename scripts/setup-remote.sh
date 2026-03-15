@@ -86,6 +86,12 @@ _apt_update() {
     fi
 }
 
+if ! command -v sudo &>/dev/null; then
+    info "Installing sudo..."
+    _apt_update
+    _pkg_install sudo || die "Failed to install sudo. Install it manually and retry."
+fi
+
 if ! command -v rsync &>/dev/null; then
     info "Installing rsync..."
     _apt_update

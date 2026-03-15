@@ -116,7 +116,12 @@ def receive_and_configure(code: str, dest_name: str, timeout: int = 120) -> tupl
     except subprocess.TimeoutExpired:
         return None, f"croc receive timed out after {timeout} seconds."
     except json.JSONDecodeError as e:
-        return None, f"Invalid JSON in received file: {e}"
+        # Show file content for debugging
+        try:
+            preview = Path(json_path).read_text()[:200]
+        except Exception:
+            preview = "(could not read)"
+        return None, f"Invalid JSON in received file: {e}\nFile content: {preview!r}"
     except OSError as e:
         return None, f"File error: {e}"
     finally:

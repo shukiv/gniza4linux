@@ -109,6 +109,16 @@ if ! command -v rclone &>/dev/null; then
     fi
 fi
 
+# Install croc if not present (used for auto-configure destinations)
+if ! command -v croc &>/dev/null; then
+    info "Installing croc..."
+    if curl -fsSL https://getcroc.schollz.com | bash 2>/dev/null; then
+        info "croc installed."
+    else
+        warn "Could not install croc automatically. Install it manually: https://github.com/schollz/croc"
+    fi
+fi
+
 # Verify critical deps
 for cmd in bash rsync; do
     if ! command -v "$cmd" &>/dev/null; then

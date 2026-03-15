@@ -21,6 +21,8 @@ if [[ -d "$INSTALL_DIR" ]]; then
     mkdir -p "$INSTALL_DIR/web" "$INSTALL_DIR/etc"
     cp -r web/* "$INSTALL_DIR/web/"
     cp -r etc/* "$INSTALL_DIR/etc/"
+    mkdir -p "$INSTALL_DIR/scripts"
+    cp -r scripts/* "$INSTALL_DIR/scripts/"
     # Sync user service files if systemd user dir exists
     if [[ -d "${HOME}/.config/systemd/user" ]]; then
         sed -e "s|/usr/local/gniza|${INSTALL_DIR}|g" \

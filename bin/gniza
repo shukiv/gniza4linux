@@ -102,6 +102,7 @@ Destinations (where to store backups):
   destinations show --name=NAME              Show full destination configuration
   destinations test --name=NAME              Validate destination connectivity
   destinations disk-info-short --name=NAME   Show destination disk usage (used/total/free)
+  destinations auto-configure --name=NAME --code=CODE  Auto-configure from remote setup script
 
 Operations:
   backup [--source=NAME] [--destination=NAME] [--all]
@@ -545,6 +546,7 @@ Actions:
   show --name=NAME              Show full destination configuration
   test --name=NAME              Validate destination connectivity
   disk-info-short --name=NAME   Show destination disk usage (used/total/free)
+  auto-configure --name=NAME --code=CODE  Auto-configure from remote setup script
   help                          Show this help
 
 Examples:
@@ -552,6 +554,7 @@ Examples:
   gniza destinations show --name=offsite
   gniza destinations test --name=offsite
   gniza destinations delete --name=offsite
+  gniza destinations auto-configure --name=offsite --code=alpha-bravo-charlie
 HELPEOF
                     exit 0
                     ;;
@@ -629,8 +632,38 @@ HELPEOF
                     load_remote "$name"
                     remote_disk_info_short
                     ;;
+                auto-configure)
+                    local code=""
+                    code=$(_parse_flag "--code" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+                    [[ -z "$name" ]] && die "destinations auto-configure requires --name=NAME"
+                    [[ -z "$code" ]] && die "destinations auto-configure requires --code=CODE"
+                    # Validate name (letters, numbers, hyphens, underscores only)
+                    if [[ ! "$name" =~ ^[A-Za-z0-9_-]+$ ]]; then
+                        die "Invalid destination name. Use only letters, numbers, hyphens, and underscores."
+                    fi
+                    # Validate code (alphanumeric + hyphens only)
+                    if [[ ! "$code" =~ ^[a-zA-Z0-9-]+$ ]]; then
+                        die "Invalid croc code format"
+                    fi
+                    info "Receiving configuration via croc..."
+                    PYTHONPATH="$GNIZA_DIR" "$GNIZA_PYTHON" -c "
+from lib.auto_configure import receive_and_configure
+remote, error = receive_and_configure('$code', '$name')
+if error:
+    print(f'ERROR: {error}')
+    exit(1)
+from tui.config import CONFIG_DIR, write_conf
+write_conf(CONFIG_DIR / 'remotes.d' / f'{remote.name}.conf', remote.to_conf())
+print(f'Destination \"{remote.name}\" configured successfully.')
+"
+                    # Test the new destination
+                    info "Testing connection..."
+                    validate_remote "$name"
+                    test_remote_connection
+                    echo "Destination '$name' is valid and reachable."
+                    ;;
                 *)
-                    die "Unknown destinations action: $action (expected list|add|delete|show|test|disk-info-short)"
+                    die "Unknown destinations action: $action (expected list|add|delete|show|test|disk-info-short|auto-configure)"
                     ;;
             esac
             ;;

@@ -12,6 +12,7 @@ Complete reference for GNIZA, a Linux backup manager that works as a stand-alone
 - [Concepts](#concepts)
 - [Sources](#sources)
 - [Destinations](#destinations)
+- [Auto Remote Configuration](#auto-remote-configuration)
 - [Backup](#backup)
 - [Restore](#restore)
 - [Snapshots](#snapshots)
@@ -138,7 +139,7 @@ ENABLED=yes
 
 ### Step 4: Configure a Destination (Where to Store Backups)
 
-A **destination** defines where GNIZA stores snapshots. Configure via web (Destinations > Add), TUI, or config file.
+A **destination** defines where GNIZA stores snapshots. Configure via web (Destinations > Add), TUI, or config file. For SSH destinations, you can also use [Auto Remote Configuration](#auto-remote-configuration) to skip manual setup.
 
 **SSH destination:**
 
@@ -320,6 +321,7 @@ bash scripts/install.sh          # user mode
 | sshpass | No | Password-based SSH authentication |
 | curl | No | Notifications (SMTP, Telegram, Webhook, ntfy, Healthchecks) |
 | rclone | No | S3, Google Drive, and Google Photos support |
+| croc | No | Auto remote configuration (installed automatically by setup-remote.sh) |
 | python3 | No | TUI and web dashboard |
 | textual | No | Terminal UI framework |
 | flask | No | Web dashboard framework |
@@ -549,6 +551,8 @@ gniza --cli destinations add --name=backup-server
 
 This creates a config template. Edit it manually or use the TUI to configure.
 
+**Auto-configure**: For SSH destinations, you can use the auto-configure flow to skip manual setup entirely. See [Auto Remote Configuration](#auto-remote-configuration).
+
 ### Destination Types
 
 #### SSH Destination
@@ -727,6 +731,62 @@ When accessing the web dashboard from a non-localhost IP, Google OAuth (Drive an
 When accessing from localhost, OAuth works seamlessly with a direct redirect.
 
 Google Photos uses the `photoslibrary` scope for accessing photo and video content.
+
+---
+
+## Auto Remote Configuration
+
+GNIZA can automatically configure a remote server as a backup destination using [croc](https://github.com/schollz/croc) for secure, one-time config transfer. This eliminates manual SSH key setup and config entry.
+
+### How It Works
+
+1. **On the remote server**: Run `setup-remote.sh` to prepare the server (creates a backup user, generates SSH keys, configures sudoers, and sends the config via croc)
+2. **On the GNIZA server**: Enter the croc code in the web dashboard or CLI to receive the config and create the destination automatically
+
+### Step 1: Run the Setup Script on the Remote Server
+
+```bash
+curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/setup-remote.sh | sudo bash
+```
+
+The script:
+- Installs rsync and croc if not present
+- Creates a dedicated backup user (default: `gniza`)
+- Generates an Ed25519 SSH key pair
+- Configures sudoers for passwordless rsync/mkdir/chown
+- Creates the base backup directory (default: `/backups`)
+- Displays a croc code to enter in the GNIZA dashboard
+
+Options:
+```
+--user=NAME   Backup user to create (default: gniza)
+--base=PATH   Base backup directory (default: /backups)
+--port=PORT   SSH port override (default: auto-detect from sshd_config)
+```
+
+### Step 2: Import the Configuration
+
+**Web dashboard**: Navigate to Destinations > Auto-Configure (`/destinations/auto-configure`). Enter a name for the new destination and the croc code shown by the remote script.
+
+**CLI**:
+```bash
+gniza destinations auto-configure --name=offsite --code=alpha-bravo-charlie
+```
+
+GNIZA receives the JSON payload via croc, saves the private SSH key to `~/.ssh/gniza_<name>`, and creates the destination config file with all connection details pre-filled.
+
+### What Gets Configured
+
+The auto-configure process creates an SSH destination with:
+- Host, port, and username from the remote server
+- Private SSH key saved locally and referenced in the config
+- Base backup directory path
+- Sudo enabled for rsync operations
+
+### Requirements
+
+- **Remote server**: root access (to create users and configure sudoers)
+- **GNIZA server**: `croc` must be installed (the remote setup script installs it automatically on the remote side)
 
 ---
 
@@ -1342,7 +1402,7 @@ All three interfaces (TUI, Web, CLI) maintain full feature parity:
 |--------|-------------|
 | **Dashboard** | System stats with inline bar labels (e.g., "CPU 4%", "Memory 87%", "IO Wait 0.2%"), disk bars showing percentage only, and a "Network Current (Total)" section. Plus sources, destinations, schedules tables, and last backup log with status |
 | **Sources** | Create, edit, delete sources with toggle enable/disable (shows "Enabled"/"Disabled" text next to the toggle). Supports all source types (local, SSH, S3, Google Drive, Google Photos), MySQL backup, hooks, include/exclude filters. Sources list shows disk usage column loaded async via HTMX (local, SSH, rclone). Cloud editors include an rclone explanation text |
-| **Destinations** | Create, edit, delete destinations. Test connection (result shown as toast notification), view disk usage inline. Supports SSH, Local, Cloud (radio button order). Cloud Storage Configuration appears inside the Destination Type card with a divider separator, Remote Name dropdown first. Cloud editors include an rclone explanation text |
+| **Destinations** | Create, edit, delete destinations. Test connection (result shown as toast notification), view disk usage inline. Auto-configure SSH destinations via croc (`/destinations/auto-configure`). Supports SSH, Local, Cloud (radio button order). Cloud Storage Configuration appears inside the Destination Type card with a divider separator, Remote Name dropdown first. Cloud editors include an rclone explanation text |
 | **Schedules** | Create, edit, delete schedules with toggle active/inactive. Supports hourly, daily (multi-day), weekly, monthly, and custom cron |
 | **Backup** | Select source and destination, or back up all. Starts a background job and redirects to Running Tasks |
 | **Restore** | Select source, destination, and snapshot. Options for custom restore path, specific folder, and skip MySQL |
@@ -1554,6 +1614,7 @@ gniza --cli destinations delete --name=NAME                # Delete a destinatio
 gniza --cli destinations show --name=NAME                  # Show destination details
 gniza --cli destinations test --name=NAME                  # Test connectivity
 gniza --cli destinations disk-info-short --name=NAME       # Show disk usage
+gniza destinations auto-configure --name=NAME --code=CODE  # Auto-configure from remote setup
 ```
 
 ### Backup

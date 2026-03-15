@@ -9,7 +9,10 @@
 
 <div class="flex items-center justify-between mb-6">
     <h2 class="text-xl font-semibold">Backup Destinations</h2>
-    <a href="{{ url_for('remotes.new') }}" class="btn btn-primary btn-sm">+ Add Destination</a>
+    <div class="flex gap-2">
+        <a href="{{ url_for('remotes.auto_configure') }}" class="btn btn-secondary btn-sm">Auto-Configure</a>
+        <a href="{{ url_for('remotes.new') }}" class="btn btn-primary btn-sm">+ Add Destination</a>
+    </div>
 </div>
 
 <div class="card bg-base-200 shadow">

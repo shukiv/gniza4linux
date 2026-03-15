@@ -5,6 +5,7 @@ from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
 )
 
+from lib.auto_configure import receive_and_configure
 from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Remote
 from web.app import login_required
@@ -236,6 +237,44 @@ def delete(name):
         flash(f"Destination '{name}' deleted.", "success")
     else:
         flash("Destination not found.", "error")
+    return redirect(url_for("remotes.index"))
+
+
+@bp.route("/auto-configure")
+@login_required
+def auto_configure():
+    return render_template("remotes/auto_configure.html")
+
+
+@bp.route("/auto-configure", methods=["POST"])
+@login_required
+def auto_configure_receive():
+    form = request.form
+    dest_name = form.get("name", "").strip()
+    code = form.get("code", "").strip()
+
+    if not dest_name:
+        flash("Destination name is required.", "error")
+        return render_template("remotes/auto_configure.html")
+    if not code:
+        flash("Croc code is required.", "error")
+        return render_template("remotes/auto_configure.html")
+
+    remote, error = receive_and_configure(code, dest_name)
+    if error:
+        flash(error, "error")
+        return render_template("remotes/auto_configure.html")
+
+    # Test connection
+    ok, msg = _test_remote(remote)
+    if ok is False:
+        # Still save the config even if test fails — user can fix later
+        write_conf(CONFIG_DIR / "remotes.d" / f"{remote.name}.conf", remote.to_conf())
+        flash(f"Destination '{remote.name}' saved but connection test failed: {msg}", "warning")
+        return redirect(url_for("remotes.index"))
+
+    write_conf(CONFIG_DIR / "remotes.d" / f"{remote.name}.conf", remote.to_conf())
+    flash(f"Destination '{remote.name}' auto-configured successfully!", "success")
     return redirect(url_for("remotes.index"))
 
 

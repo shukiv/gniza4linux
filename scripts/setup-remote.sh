@@ -175,7 +175,7 @@ info "Public IP:  ${PUBLIC_IP:-(could not detect)}"
 info "SSH port:   $SSH_PORT"
 
 # -- Generate croc code --------------------------------------
-CROC_CODE=$(LC_ALL=C tr -dc 'a-z' < /dev/urandom | fold -w5 | head -3 | paste -sd'-')
+CROC_CODE=$(head -c 500 /dev/urandom | LC_ALL=C tr -dc 'a-z' | head -c 15 | sed 's/.\{5\}/&-/g;s/-$//')
 
 # -- Build JSON payload ---------------------------------------
 PRIVATE_KEY_CONTENT=$(cat "$KEY_PATH")

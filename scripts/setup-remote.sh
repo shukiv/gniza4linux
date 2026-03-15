@@ -17,15 +17,18 @@ die()   { error "$1"; exit 1; }
 BACKUP_USER="gniza"
 BASE_DIR="/backups"
 SSH_PORT=""
+FOLDERS=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --user=*)  BACKUP_USER="${1#*=}" ;;
-        --user)    shift; BACKUP_USER="${1:-gniza}" ;;
-        --base=*)  BASE_DIR="${1#*=}" ;;
-        --base)    shift; BASE_DIR="${1:-/backups}" ;;
-        --port=*)  SSH_PORT="${1#*=}" ;;
-        --port)    shift; SSH_PORT="${1:-}" ;;
+        --user=*)    BACKUP_USER="${1#*=}" ;;
+        --user)      shift; BACKUP_USER="${1:-gniza}" ;;
+        --base=*)    BASE_DIR="${1#*=}" ;;
+        --base)      shift; BASE_DIR="${1:-/backups}" ;;
+        --port=*)    SSH_PORT="${1#*=}" ;;
+        --port)      shift; SSH_PORT="${1:-}" ;;
+        --folders=*) FOLDERS="${1#*=}" ;;
+        --folders)   shift; FOLDERS="${1:-}" ;;
         --help|-h)
             cat <<EOF
 Usage: setup-remote.sh [OPTIONS]
@@ -34,10 +37,11 @@ Prepare this server as a GNIZA backup destination and share
 the configuration via croc for automatic import.
 
 Options:
-  --user=NAME   Backup user to create (default: gniza)
-  --base=PATH   Base backup directory (default: /backups)
-  --port=PORT   SSH port override (default: auto-detect from sshd_config)
-  --help        Show this help
+  --user=NAME       Backup user to create (default: gniza)
+  --base=PATH       Base backup directory (default: /backups)
+  --port=PORT       SSH port override (default: auto-detect from sshd_config)
+  --folders=PATHS   Comma-separated folders to back up (default: ask interactively)
+  --help            Show this help
 EOF
             exit 0
             ;;
@@ -180,6 +184,17 @@ _code=""
 for _ in $(seq 15); do _code+="${_chars:RANDOM%26:1}"; done
 CROC_CODE="${_code:0:5}-${_code:5:5}-${_code:10:5}"
 
+# -- Ask which folders to back up ------------------------------
+if [[ -z "$FOLDERS" ]]; then
+    echo ""
+    echo "${C_BOLD}Which folders should be backed up from this server?${C_RESET}"
+    echo "  Enter comma-separated paths, or press Enter for the default."
+    echo ""
+    read -rp "  Folders [/etc,/home,/var]: " FOLDERS </dev/tty || true
+    FOLDERS="${FOLDERS:-/etc,/home,/var}"
+fi
+info "Folders:    $FOLDERS"
+
 # -- Build JSON payload ---------------------------------------
 PRIVATE_KEY_CONTENT=$(cat "$KEY_PATH")
 
@@ -204,7 +219,8 @@ jq -n \
     --arg private_key "$PRIVATE_KEY_CONTENT" \
     --arg base "$BASE_DIR" \
     --arg sudo "yes" \
-    '{version:$version, type:$type, hostname:$hostname, host:$host, host_public:$host_public, port:$port, user:$user, private_key:$private_key, base:$base, sudo:$sudo}' \
+    --arg folders "$FOLDERS" \
+    '{version:$version, type:$type, hostname:$hostname, host:$host, host_public:$host_public, port:$port, user:$user, private_key:$private_key, base:$base, sudo:$sudo, folders:$folders}' \
     > "$JSON_TMP"
 
 # -- Send via croc --------------------------------------------

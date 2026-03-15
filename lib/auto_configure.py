@@ -144,6 +144,10 @@ def receive_and_configure_source(code: str, source_name: str, folders: str = "",
     if error:
         return None, error
 
+    # Use folders from form, fall back to payload
+    if not folders:
+        folders = data.get("folders", "")
+
     target = Target(
         name=source_name,
         folders=folders,

@@ -337,7 +337,7 @@ def auto_configure_receive():
     form = request.form
     source_name = form.get("name", "").strip()
     code = form.get("code", "").strip()
-    folders = form.get("folders", "").strip()
+    folders = _lines_to_csv(form.get("folders", ""))
 
     if not source_name:
         flash("Source name is required.", "error")

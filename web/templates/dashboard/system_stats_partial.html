@@ -1,6 +1,6 @@
 <div class="stats stats-vertical md:stats-horizontal shadow w-full">
     <!-- CPU -->
-    <div class="stat px-4 py-3">
+    <div class="stat px-4 py-3 flex-1 min-w-0">
         <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 mt-1">
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if cpu_percent > 90 else 'bg-warning' if cpu_percent > 70 else 'bg-primary' }}" style="width: {{ cpu_percent|int }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
@@ -16,7 +16,7 @@
     </div>
 
     <!-- Memory -->
-    <div class="stat px-4 py-3">
+    <div class="stat px-4 py-3 flex-1 min-w-0">
         <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 mt-1">
             <div class="absolute inset-y-0 left-0 rounded-btn {{ 'bg-error' if mem_percent > 90 else 'bg-warning' if mem_percent > 70 else 'bg-primary' }}" style="width: {{ mem_percent|int }}%"></div>
             <div class="absolute inset-0 flex items-center justify-between px-2 text-xs font-semibold">
@@ -36,7 +36,7 @@
     </div>
 
     <!-- Disks -->
-    <div class="stat px-4 py-3">
+    <div class="stat px-4 py-3 flex-1 min-w-0">
         {% for d in disks %}
         {% if not loop.first %}<div class="my-1"></div>{% endif %}
         <div class="relative w-full rounded-btn overflow-hidden bg-base-300 h-7 {{ 'mt-1' if loop.first }}">
@@ -49,7 +49,7 @@
     </div>
 
     <!-- Network -->
-    <div class="stat px-4 py-3">
+    <div class="stat px-4 py-3 flex-1 min-w-0">
         <div class="text-xs text-base-content/50 mb-1 pl-5">Network <span class="opacity-60">Current (Total)</span></div>
         <div class="stat-value text-base">
             <div class="flex flex-col gap-0.5">

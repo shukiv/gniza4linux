@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -eo
 
 # Colors - force enable when piped (curl | bash), since output still goes to terminal
 C_GREEN=$'\033[0;32m'

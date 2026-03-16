@@ -111,7 +111,7 @@ ssh user@remote-server
 
 ### Step 3: Configure a Source (What to Back Up)
 
-A **source** defines what data GNIZA should back up. Configure via web (Sources > Add), TUI, or config file.
+A **source** defines what data GNIZA should back up. Configure via web (Sources > Add), TUI, or config file. For SSH sources, you can also use [Auto Remote Configuration](#auto-remote-configuration) to skip manual setup.
 
 **Local source** — back up folders on the same machine:
 
@@ -736,48 +736,87 @@ Google Photos uses the `photoslibrary` scope for accessing photo and video conte
 
 ## Auto Remote Configuration
 
-GNIZA can automatically configure a remote server as a backup destination using [croc](https://github.com/schollz/croc) for secure, one-time config transfer. This eliminates manual SSH key setup and config entry.
+GNIZA can automatically configure a remote server as a backup **source** or **destination** using [croc](https://github.com/schollz/croc) for secure, one-time config transfer. This eliminates manual SSH key setup and config entry.
 
 ### How It Works
 
-1. **On the remote server**: Run `setup-remote.sh` to prepare the server (creates a backup user, generates SSH keys, configures sudoers, and sends the config via croc)
-2. **On the GNIZA server**: Enter the croc code in the web dashboard or CLI to receive the config and create the destination automatically
+1. **On the remote server**: Run `setup-remote.sh` — it asks whether this server is a source (back up files FROM it) or a destination (store backups ON it), then prepares the server and displays a croc code
+2. **On the GNIZA server**: Enter the croc code in the web dashboard or CLI to receive the config and create the source or destination automatically
 
 ### Step 1: Run the Setup Script on the Remote Server
 
+**As a source** (back up files from this server):
+
 ```bash
-curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/setup-remote.sh | sudo bash
+curl -fsSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/setup-remote.sh | sudo bash -s -- --source
+```
+
+The script asks which folders to back up (default: `/etc,/home,/var`).
+
+**As a destination** (store backups on this server):
+
+```bash
+curl -fsSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/setup-remote.sh | sudo bash -s -- --destination
+```
+
+The script asks where to store backups (default: `~gniza/backups`).
+
+**Interactive mode** (no flag — the script asks):
+
+```bash
+curl -fsSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/setup-remote.sh | sudo bash
 ```
 
 The script:
-- Installs rsync and croc if not present
+- Asks whether this server is a **source** or **destination**
+- Installs rsync, sudo, jq, and croc if not present
 - Creates a dedicated backup user (default: `gniza`)
 - Generates an Ed25519 SSH key pair
 - Configures sudoers for passwordless rsync/mkdir/chown
-- Creates the base backup directory (default: `/backups`)
+- **Source mode**: asks which folders to back up
+- **Destination mode**: asks for the base backup directory and creates it
 - Displays a croc code to enter in the GNIZA dashboard
 
 Options:
 ```
---user=NAME   Backup user to create (default: gniza)
---base=PATH   Base backup directory (default: /backups)
---port=PORT   SSH port override (default: auto-detect from sshd_config)
+--source          Set up as a backup source
+--destination     Set up as a backup destination
+--user=NAME       Backup user to create (default: gniza)
+--base=PATH       Base backup directory (default: ~user/backups, destination only)
+--folders=PATHS   Comma-separated folders to back up (source only)
+--port=PORT       SSH port override (default: auto-detect from sshd_config)
 ```
 
 ### Step 2: Import the Configuration
 
-**Web dashboard**: Navigate to Destinations > Auto-Configure (`/destinations/auto-configure`). Enter a name for the new destination and the croc code shown by the remote script.
+**Web dashboard**:
+- For sources: navigate to **Sources > Auto-Configure** (`/sources/auto-configure`)
+- For destinations: navigate to **Destinations > Auto-Configure** (`/destinations/auto-configure`)
+
+Enter a name and the croc code shown by the remote script. For sources, you can also specify or override the folders to back up.
 
 **CLI**:
 ```bash
+# Auto-configure a destination
 gniza destinations auto-configure --name=offsite --code=alpha-bravo-charlie
+
+# Auto-configure a source
+gniza sources auto-configure --name=webserver --code=alpha-bravo-charlie
+# Optionally override folders:
+gniza sources auto-configure --name=webserver --code=alpha-bravo-charlie --folders=/var/www,/etc
 ```
 
-GNIZA receives the JSON payload via croc, saves the private SSH key to `~/.ssh/gniza_<name>`, and creates the destination config file with all connection details pre-filled.
+GNIZA receives the JSON payload via croc, saves the private SSH key to `~/.ssh/gniza_<name>`, and creates the config file with all connection details pre-filled.
 
 ### What Gets Configured
 
-The auto-configure process creates an SSH destination with:
+**Source auto-configure** creates an SSH source with:
+- Host, port, and username from the remote server
+- Private SSH key saved locally and referenced in the config
+- Folders to back up (from the setup script prompt or web form)
+- Sudo enabled for rsync operations
+
+**Destination auto-configure** creates an SSH destination with:
 - Host, port, and username from the remote server
 - Private SSH key saved locally and referenced in the config
 - Base backup directory path
@@ -786,7 +825,7 @@ The auto-configure process creates an SSH destination with:
 ### Requirements
 
 - **Remote server**: root access (to create users and configure sudoers)
-- **GNIZA server**: `croc` must be installed (the remote setup script installs it automatically on the remote side)
+- **Both servers**: `croc` must be installed (the setup script installs it on the remote; the GNIZA installer installs it on the GNIZA server)
 
 ---
 
@@ -1603,6 +1642,8 @@ gniza --cli sources list                              # List all sources
 gniza --cli sources add --name=NAME --folders=PATHS   # Create a source
 gniza --cli sources delete --name=NAME                # Delete a source
 gniza --cli sources show --name=NAME                  # Show source details
+gniza sources auto-configure --name=NAME --code=CODE  # Auto-configure from remote setup
+  [--folders=PATHS]                                   # Optional: override folders
 ```
 
 ### Destinations

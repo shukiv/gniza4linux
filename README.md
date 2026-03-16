@@ -9,7 +9,7 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 - **Stand-alone or backup server** — Back up the local machine, or pull from remote servers without installing anything on them
 - **Remote sources** — Pull files from SSH servers, S3 buckets, Google Drive, or Google Photos before backing up
 - **Multiple destination types** — Push to SSH, local drives (USB/NFS), S3 (AWS, Backblaze B2, Wasabi), Google Drive, or Google Photos
-- **Auto remote configuration** — Run a setup script on the remote server and import its config via [croc](https://github.com/schollz/croc) — no manual SSH key or config entry needed
+- **Auto remote configuration** — Run a setup script on the remote server (as source or destination), choose what to back up or where to store, and import the config via [croc](https://github.com/schollz/croc) — no manual SSH key or config entry needed
 - **Incremental snapshots** — rsync `--link-dest` hardlink deduplication across snapshots
 - **MySQL/MariaDB backup** — Dump all or selected databases with grants, routines, and triggers
 - **PostgreSQL backup** — Dump all or selected databases with roles via pg_dump + gzip
@@ -219,6 +219,8 @@ Sources:
   sources add --name=NAME --folders=PATHS
   sources delete --name=NAME
   sources show --name=NAME
+  sources auto-configure --name=NAME --code=CODE [--folders=PATHS]
+                                        Auto-configure from remote setup script
 
 Destinations:
   destinations list                          List all configured destinations

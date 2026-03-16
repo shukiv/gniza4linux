@@ -16,7 +16,7 @@ die()   { error "$1"; exit 1; }
 # -- Parse arguments ------------------------------------------
 MODE=""
 BACKUP_USER="gniza"
-BASE_DIR="/backups"
+BASE_DIR=""
 SSH_PORT=""
 FOLDERS=""
 
@@ -45,7 +45,7 @@ Mode (required):
 
 Options:
   --user=NAME       Backup user to create (default: gniza)
-  --base=PATH       Base backup directory (default: /backups, destination only)
+  --base=PATH       Base backup directory (default: ~user/backups, destination only)
   --port=PORT       SSH port override (default: auto-detect from sshd_config)
   --folders=PATHS   Comma-separated folders to back up (source only)
   --help            Show this help
@@ -185,6 +185,8 @@ fi
 
 # -- Ask for base directory (destination only) -----------------
 if [[ "$MODE" == "destination" ]]; then
+    _default_base="$USER_HOME/backups"
+    [[ -z "$BASE_DIR" ]] && BASE_DIR="$_default_base"
     echo ""
     echo "${C_BOLD}Where should backups be stored on this server?${C_RESET}"
     echo "  Enter a path, or press Enter for the default."

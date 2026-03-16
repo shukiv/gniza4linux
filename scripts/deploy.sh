@@ -46,4 +46,25 @@ if systemctl --user is-active gniza-daemon.service &>/dev/null; then
     echo "Daemon restarted"
 fi
 
+# Build and publish .deb package
+DEB_REPO_HOST="deb.gniza.app"
+DEB_REPO_PATH="/var/www/deb.gniza.app"
+DEB_DISTROS="stable bookworm trixie noble jammy"
+
+if bash scripts/build-deb.sh; then
+    VERSION="$(grep -oP 'GNIZA4LINUX_VERSION="\K[^"]+' lib/constants.sh)"
+    DEB_FILE="dist/gniza_${VERSION}_all.deb"
+    if [[ -f "$DEB_FILE" ]]; then
+        echo "Uploading .deb to ${DEB_REPO_HOST}..."
+        scp "$DEB_FILE" "root@${DEB_REPO_HOST}:/tmp/gniza_${VERSION}_all.deb"
+        for distro in $DEB_DISTROS; do
+            ssh "root@${DEB_REPO_HOST}" "reprepro -b ${DEB_REPO_PATH} includedeb ${distro} /tmp/gniza_${VERSION}_all.deb" 2>&1 || true
+        done
+        ssh "root@${DEB_REPO_HOST}" "rm -f /tmp/gniza_${VERSION}_all.deb"
+        echo "Published gniza ${VERSION} to deb repo (${DEB_DISTROS})"
+    fi
+else
+    echo "WARNING: .deb build failed, skipping repo publish"
+fi
+
 echo "Done"

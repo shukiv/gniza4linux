@@ -38,11 +38,23 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 
 ## Installation
 
+### APT Repository (Debian/Ubuntu) — Recommended
+
+```bash
+curl -fsSL https://deb.gniza.app/gniza.gpg | sudo gpg --dearmor -o /usr/share/keyrings/gniza-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/gniza-archive-keyring.gpg] https://deb.gniza.app stable main" | sudo tee /etc/apt/sources.list.d/gniza.list
+sudo apt update && sudo apt install gniza
+```
+
+Supports: Debian stable, bookworm, trixie, and Ubuntu noble, jammy.
+
+### One-Line Installer
+
 ```bash
 curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
 ```
 
-That's it. The installer handles dependencies, config directories, Python venv, web dashboard, and systemd services.
+The installer handles dependencies, config directories, Python venv, web dashboard, and systemd services.
 
 <details>
 <summary>More install options</summary>
@@ -51,13 +63,6 @@ That's it. The installer handles dependencies, config directories, Python venv, 
 
 ```bash
 curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | bash
-```
-
-**Debian/Ubuntu (.deb package):**
-
-```bash
-wget https://git.linux-hosting.co.il/shukivaknin/gniza4linux/releases/download/latest/gniza_0.25_all.deb
-sudo dpkg -i gniza_0.25_all.deb && sudo apt-get -f install
 ```
 
 **From source:**

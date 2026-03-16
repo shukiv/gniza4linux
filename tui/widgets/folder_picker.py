@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Optional
 
 from pathlib import Path
 
@@ -13,7 +14,7 @@ class _DirOnly(DirectoryTree):
         return [p for p in paths if p.is_dir()]
 
 
-class FolderPicker(ModalScreen[str | None]):
+class FolderPicker(ModalScreen[Optional[str]]):
 
     BINDINGS = [("escape", "cancel", "Cancel")]
 

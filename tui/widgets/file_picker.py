@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Optional
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -7,7 +8,7 @@ from textual.widgets import DirectoryTree, Static, Button
 from textual.containers import Horizontal, Vertical
 
 
-class FilePicker(ModalScreen[str | None]):
+class FilePicker(ModalScreen[Optional[str]]):
 
     BINDINGS = [("escape", "cancel", "Cancel")]
 

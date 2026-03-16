@@ -92,9 +92,6 @@ def _receive_and_validate(code: str, name: str, config_subdir: str, label: str, 
         ssh_dir.mkdir(mode=0o700, exist_ok=True)
         ssh_key_path = ssh_dir / f"gniza_{name}"
 
-        if ssh_key_path.exists():
-            return None, None, f"SSH key file already exists: {ssh_key_path}. Remove it first or use a different name."
-
         private_key = data.get("private_key", "")
         private_key = private_key.replace("\\n", "\n")
         if not private_key.endswith("\n"):

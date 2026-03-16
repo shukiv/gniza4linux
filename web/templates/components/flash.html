@@ -6,10 +6,11 @@
     if (!toast) return;
     {% for category, message in messages %}
     var alert = document.createElement('div');
-    alert.className = 'alert {{ "alert-error" if category == "error" else "alert-warning" if category == "warning" else "alert-success" if category == "success" else "alert-info" }} shadow-lg';
+    alert.className = 'alert {{ "alert-error" if category == "error" else "alert-warning" if category == "warning" else "alert-success" if category == "success" else "alert-info" }} shadow-lg cursor-pointer';
     var span = document.createElement('span');
     span.textContent = {{ message|tojson }};
     alert.appendChild(span);
+    alert.addEventListener('click', function() { this.remove(); });
     toast.appendChild(alert);
     setTimeout(function() { alert.remove(); }, 7000);
     {% endfor %}

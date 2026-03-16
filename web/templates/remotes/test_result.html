@@ -3,10 +3,11 @@
     var toast = document.getElementById('gniza-toast');
     if (!toast) return;
     var alert = document.createElement('div');
-    alert.className = 'alert {{ "alert-success" if result.status == "success" else "alert-error" }} shadow-lg';
+    alert.className = 'alert {{ "alert-success" if result.status == "success" else "alert-error" }} shadow-lg cursor-pointer';
     var span = document.createElement('span');
     span.textContent = {{ result.message|tojson }};
     alert.appendChild(span);
+    alert.addEventListener('click', function() { this.remove(); });
     toast.appendChild(alert);
     setTimeout(function() { alert.remove(); }, 7000);
 })();

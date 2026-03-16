@@ -267,7 +267,10 @@ enable_web="${enable_web:-y}"
 if [ "$enable_web" = "y" ] || [ "$enable_web" = "Y" ]; then
     # Set up web password (preserve existing value)
     api_key="$(grep '^WEB_API_KEY=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_API_KEY="//' | sed 's/"$//' || true)"
-    if [[ -z "$api_key" ]]; then
+    _key_existed=false
+    if [[ -n "$api_key" ]]; then
+        _key_existed=true
+    else
         api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
     fi
     if ! grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
@@ -390,7 +393,12 @@ if [ "${WEB_INSTALLED:-}" = "yes" ]; then
     else
         echo "  URL:      http://$(hostname -I 2>/dev/null | awk '{print $1}'):2323"
     fi
-    echo "  Password: $WEB_PASS"
+    if $_key_existed; then
+        echo "  Password: (using existing password from gniza.conf)"
+        echo "  Reset:    gniza web reset-password"
+    else
+        echo "  Password: $WEB_PASS"
+    fi
     echo ""
 fi
 echo "Get started:"

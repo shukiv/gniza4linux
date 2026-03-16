@@ -64,7 +64,8 @@ _rsync_from_source_ssh() {
         [[ -n "${TARGET_SOURCE_KEY:-}" ]] && ssh_opts+=(-i "$TARGET_SOURCE_KEY")
     fi
 
-    local rsync_ssh="ssh ${ssh_opts[*]}"
+    local rsync_ssh
+    rsync_ssh="ssh $(printf '%s ' "${ssh_opts[@]}")"
     local rsync_path="rsync --fake-super"
     [[ "${TARGET_SOURCE_SUDO:-no}" == "yes" ]] && rsync_path="sudo rsync --fake-super"
     local rsync_opts=(-aHAX --numeric-ids --sparse --rsync-path="$rsync_path")

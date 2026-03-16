@@ -555,7 +555,8 @@ transfer_folder_ssh_to_local() {
         ssh_opts+=(-o BatchMode=yes)
         [[ -n "${TARGET_SOURCE_KEY:-}" ]] && ssh_opts+=(-i "$TARGET_SOURCE_KEY")
     fi
-    local rsync_ssh="ssh ${ssh_opts[*]}"
+    local rsync_ssh
+    rsync_ssh="ssh $(printf '%s ' "${ssh_opts[@]}")"
 
     # --rsync-path controls what runs on the SOURCE side
     local rsync_path="rsync --fake-super"

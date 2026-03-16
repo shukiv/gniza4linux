@@ -172,16 +172,8 @@ fi
 chmod 600 "$AUTH_KEYS"
 chown -R "$BACKUP_USER:$BACKUP_USER" "$SSH_DIR"
 
-# -- Configure sudoers ----------------------------------------
-SUDOERS_LINE="$BACKUP_USER ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown"
+# -- Configure sudoers (will be updated after database prompts) --
 SUDOERS_FILE="/etc/sudoers.d/gniza-$BACKUP_USER"
-if [[ -f "$SUDOERS_FILE" ]] && grep -qF "$SUDOERS_LINE" "$SUDOERS_FILE" 2>/dev/null; then
-    info "Sudoers already configured."
-else
-    echo "$SUDOERS_LINE" > "$SUDOERS_FILE"
-    chmod 440 "$SUDOERS_FILE"
-    info "Sudoers configured: $SUDOERS_FILE"
-fi
 
 # -- Ask for base directory (destination only) -----------------
 if [[ "$MODE" == "destination" ]]; then
@@ -209,7 +201,46 @@ if [[ "$MODE" == "source" ]]; then
         FOLDERS="${FOLDERS:-/etc,/home,/var}"
     fi
     info "Folders:    $FOLDERS"
+
+    # -- Ask about MySQL backup --
+    MYSQL_ENABLED="no"
+    if command -v mysql &>/dev/null || command -v mysqldump &>/dev/null || command -v mariadb-dump &>/dev/null; then
+        echo ""
+        read -rp "  MySQL/MariaDB detected. Back up databases? (y/n) [y]: " _mysql_choice </dev/tty || true
+        _mysql_choice="${_mysql_choice:-y}"
+        if [[ "$_mysql_choice" == "y" || "$_mysql_choice" == "Y" ]]; then
+            MYSQL_ENABLED="yes"
+            info "MySQL:      enabled"
+        fi
+    fi
+
+    # -- Ask about PostgreSQL backup --
+    POSTGRESQL_ENABLED="no"
+    if command -v psql &>/dev/null || command -v pg_dump &>/dev/null; then
+        echo ""
+        read -rp "  PostgreSQL detected. Back up databases? (y/n) [y]: " _pg_choice </dev/tty || true
+        _pg_choice="${_pg_choice:-y}"
+        if [[ "$_pg_choice" == "y" || "$_pg_choice" == "Y" ]]; then
+            POSTGRESQL_ENABLED="yes"
+            info "PostgreSQL: enabled"
+        fi
+    fi
 fi
+
+# -- Write sudoers (after database prompts so we know what's needed) --
+SUDOERS_CMDS="/usr/bin/rsync, /bin/mkdir, /bin/chown"
+if [[ "${MYSQL_ENABLED:-no}" == "yes" ]]; then
+    SUDOERS_CMDS+=", /usr/bin/mysqldump, /usr/bin/mysql"
+    # Also add mariadb paths if they exist
+    [[ -x /usr/bin/mariadb-dump ]] && SUDOERS_CMDS+=", /usr/bin/mariadb-dump"
+fi
+if [[ "${POSTGRESQL_ENABLED:-no}" == "yes" ]]; then
+    SUDOERS_CMDS+=", /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql"
+fi
+SUDOERS_LINE="$BACKUP_USER ALL = NOPASSWD: $SUDOERS_CMDS"
+echo "$SUDOERS_LINE" > "$SUDOERS_FILE"
+chmod 440 "$SUDOERS_FILE"
+info "Sudoers:    $SUDOERS_FILE"
 
 # -- Detect server info ---------------------------------------
 HOSTNAME=$(hostname)
@@ -258,7 +289,9 @@ jq -n \
     --arg base "$BASE_DIR" \
     --arg sudo "yes" \
     --arg folders "${FOLDERS:-}" \
-    '{version:$version, type:$type, mode:$mode, hostname:$hostname, host:$host, host_public:$host_public, port:$port, user:$user, private_key:$private_key, base:$base, sudo:$sudo, folders:$folders}' \
+    --arg mysql_enabled "${MYSQL_ENABLED:-no}" \
+    --arg postgresql_enabled "${POSTGRESQL_ENABLED:-no}" \
+    '{version:$version, type:$type, mode:$mode, hostname:$hostname, host:$host, host_public:$host_public, port:$port, user:$user, private_key:$private_key, base:$base, sudo:$sudo, folders:$folders, mysql_enabled:$mysql_enabled, postgresql_enabled:$postgresql_enabled}' \
     > "$JSON_TMP"
 
 # -- Send via croc --------------------------------------------

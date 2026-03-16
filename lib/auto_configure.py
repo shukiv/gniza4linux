@@ -150,6 +150,9 @@ def receive_and_configure_source(code: str, source_name: str, folders: str = "",
     if not folders:
         folders = data.get("folders", "")
 
+    mysql_enabled = data.get("mysql_enabled", "no")
+    postgresql_enabled = data.get("postgresql_enabled", "no")
+
     target = Target(
         name=source_name,
         folders=folders,
@@ -160,5 +163,7 @@ def receive_and_configure_source(code: str, source_name: str, folders: str = "",
         source_auth_method="key",
         source_key=str(ssh_key_path),
         source_sudo=data["sudo"],
+        mysql_enabled=mysql_enabled if mysql_enabled in ("yes", "no") else "no",
+        postgresql_enabled=postgresql_enabled if postgresql_enabled in ("yes", "no") else "no",
     )
     return target, None

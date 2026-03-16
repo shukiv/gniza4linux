@@ -1055,17 +1055,23 @@ Manage the web dashboard.
 Actions:
   start [--port=PORT] [--host=HOST]
                         Start the web dashboard (default: port 2323, host 0.0.0.0)
+  restart               Restart the web dashboard service
+  stop                  Stop the web dashboard service
   install-service       Install as a systemd service (auto-starts on boot)
   remove-service        Stop and remove the systemd service
   status                Show service status
+  logs                  Show recent service logs
   reset-password        Generate a new random login password
   help                  Show this help
 
 Examples:
   gniza web                              Start the web dashboard
   gniza web start --port=8080            Start on a custom port
+  gniza web restart                      Restart the service
+  gniza web stop                         Stop the service
   gniza web install-service              Install as systemd service
   gniza web status                       Check service status
+  gniza web logs                         View service logs
   gniza web reset-password               Generate a new password
 HELPEOF
             exit 0
@@ -1159,7 +1165,28 @@ SVCEOF
                 systemctl --user restart gniza-web 2>/dev/null && echo "Web service restarted." || true
             fi
             ;;
-        *) die "Unknown web action: $_web_action (expected start|install-service|remove-service|reset-password|status)" ;;
+        restart)
+            if [[ $EUID -eq 0 ]]; then
+                systemctl restart gniza-web && echo "Web service restarted." || die "Failed to restart web service."
+            else
+                systemctl --user restart gniza-web && echo "Web service restarted." || die "Failed to restart web service."
+            fi
+            ;;
+        stop)
+            if [[ $EUID -eq 0 ]]; then
+                systemctl stop gniza-web && echo "Web service stopped." || die "Failed to stop web service."
+            else
+                systemctl --user stop gniza-web && echo "Web service stopped." || die "Failed to stop web service."
+            fi
+            ;;
+        logs)
+            if [[ $EUID -eq 0 ]]; then
+                journalctl -u gniza-web -n 50 --no-pager
+            else
+                journalctl --user -u gniza-web -n 50 --no-pager
+            fi
+            ;;
+        *) die "Unknown web action: $_web_action (expected start|stop|restart|install-service|remove-service|reset-password|status|logs)" ;;
     esac
 elif [[ "$SUBCOMMAND" == "daemon" ]]; then
     _daemon_action="${SUBCMD_ARGS[0]:-start}"
@@ -1172,16 +1199,22 @@ Manage the background health daemon.
 
 Actions:
   start [--interval=N]  Start the daemon in foreground (default interval: from config or 10s)
+  restart               Restart the daemon service
+  stop                  Stop the daemon service
   install-service       Install as a systemd service (auto-starts on boot)
   remove-service        Stop and remove the systemd service
   status                Show service status
+  logs                  Show recent service logs
   help                  Show this help
 
 Examples:
   gniza daemon                           Start the daemon
   gniza daemon start --interval=30       Start with 30s check interval
+  gniza daemon restart                   Restart the service
+  gniza daemon stop                      Stop the service
   gniza daemon install-service           Install as systemd service
   gniza daemon status                    Check service status
+  gniza daemon logs                      View service logs
 HELPEOF
             exit 0
             ;;
@@ -1249,7 +1282,28 @@ SVCEOF
                 systemctl --user status gniza-daemon 2>/dev/null || echo "GNIZA daemon service is not installed."
             fi
             ;;
-        *) die "Unknown daemon action: $_daemon_action (expected start|install-service|remove-service|status)" ;;
+        restart)
+            if [[ $EUID -eq 0 ]]; then
+                systemctl restart gniza-daemon && echo "Daemon restarted." || die "Failed to restart daemon."
+            else
+                systemctl --user restart gniza-daemon && echo "Daemon restarted." || die "Failed to restart daemon."
+            fi
+            ;;
+        stop)
+            if [[ $EUID -eq 0 ]]; then
+                systemctl stop gniza-daemon && echo "Daemon stopped." || die "Failed to stop daemon."
+            else
+                systemctl --user stop gniza-daemon && echo "Daemon stopped." || die "Failed to stop daemon."
+            fi
+            ;;
+        logs)
+            if [[ $EUID -eq 0 ]]; then
+                journalctl -u gniza-daemon -n 50 --no-pager
+            else
+                journalctl --user -u gniza-daemon -n 50 --no-pager
+            fi
+            ;;
+        *) die "Unknown daemon action: $_daemon_action (expected start|stop|restart|install-service|remove-service|status|logs)" ;;
     esac
 elif [[ "$SUBCOMMAND" == "update" || "$SUBCOMMAND" == "upgrade" ]]; then
     _update_script="$GNIZA_DIR/scripts/update.sh"

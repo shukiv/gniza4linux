@@ -72,6 +72,12 @@
 <body class="min-h-screen bg-base-100 text-base">
 
 <div id="gniza-toast" class="toast toast-top toast-end z-50 gap-2"></div>
+<script>
+function gnizaCopy(text) {
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text); }
+    else { var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+}
+</script>
 {% include "components/flash.html" %}
 
 {% block body %}

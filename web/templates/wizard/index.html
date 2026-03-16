@@ -94,7 +94,7 @@
                             <div class="relative">
                                 <pre class="bg-base-300 rounded p-3 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all select-all" x-text="key.content"></pre>
                                 <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
-                                        @click="navigator.clipboard.writeText(key.content)">Copy</button>
+                                        @click="gnizaCopy(key.content)">Copy</button>
                             </div>
                         </div>
                     </template>
@@ -125,7 +125,7 @@
                 <div class="relative">
                     <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">apt-get install ssh sudo rsync</pre>
                     <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
-                            @click="navigator.clipboard.writeText('apt-get install ssh sudo rsync')">Copy</button>
+                            @click="gnizaCopy('apt-get install ssh sudo rsync')">Copy</button>
                 </div>
             </div>
         </div>
@@ -138,7 +138,7 @@
                 <div class="relative">
                     <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">adduser --disabled-password --gecos "GNIZA backup user" gniza</pre>
                     <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
-                            @click="navigator.clipboard.writeText('adduser --disabled-password --gecos &quot;GNIZA backup user&quot; gniza')">Copy</button>
+                            @click="gnizaCopy('adduser --disabled-password --gecos &quot;GNIZA backup user&quot; gniza')">Copy</button>
                 </div>
             </div>
         </div>
@@ -151,25 +151,25 @@
                 <div class="relative mb-3">
                     <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown" >> /etc/sudoers</pre>
                     <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
-                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown&quot; >> /etc/sudoers')">Copy</button>
+                            @click="gnizaCopy('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown&quot; >> /etc/sudoers')">Copy</button>
                 </div>
                 <p class="text-base-content/40 text-xs">If MySQL backup is needed, add:</p>
                 <div class="relative mt-1">
                     <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/mysql" >> /etc/sudoers</pre>
                     <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
-                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/mysql&quot; >> /etc/sudoers')">Copy</button>
+                            @click="gnizaCopy('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/mysql&quot; >> /etc/sudoers')">Copy</button>
                 </div>
                 <p class="text-base-content/40 text-xs mt-2">If PostgreSQL backup is needed, add:</p>
                 <div class="relative mt-1">
                     <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql" >> /etc/sudoers</pre>
                     <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
-                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql&quot; >> /etc/sudoers')">Copy</button>
+                            @click="gnizaCopy('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql&quot; >> /etc/sudoers')">Copy</button>
                 </div>
                 <p class="text-base-content/40 text-xs mt-2">If both MySQL and PostgreSQL are needed:</p>
                 <div class="relative mt-1">
                     <pre class="bg-base-300 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/mysql, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql" >> /etc/sudoers</pre>
                     <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
-                            @click="navigator.clipboard.writeText('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/mysql, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql&quot; >> /etc/sudoers')">Copy</button>
+                            @click="gnizaCopy('echo &quot;gniza ALL = NOPASSWD: /usr/bin/rsync, /bin/mkdir, /bin/chown, /usr/bin/mysqldump, /usr/bin/mysql, /usr/bin/pg_dump, /usr/bin/pg_dumpall, /usr/bin/psql&quot; >> /etc/sudoers')">Copy</button>
                 </div>
             </div>
         </div>

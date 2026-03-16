@@ -254,24 +254,41 @@ jq -n \
     > "$JSON_TMP"
 
 # -- Send via croc --------------------------------------------
-echo ""
-echo "${C_BOLD}${C_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
-echo ""
-echo "  Server is ready. Enter this code in the GNIZA dashboard"
 if [[ "$MODE" == "source" ]]; then
-    echo "  under ${C_BOLD}Sources > Auto-Configure${C_RESET}:"
+    _nav="Sources > Auto-Configure"
 else
-    echo "  under ${C_BOLD}Destinations > Auto-Configure${C_RESET}:"
+    _nav="Destinations > Auto-Configure"
 fi
+
 echo ""
-echo "  ${C_BOLD}${C_GREEN}$CROC_CODE${C_RESET}"
+echo "${C_BOLD}${C_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
+echo "${C_BOLD}${C_GREEN}                    SETUP COMPLETE${C_RESET}"
+echo "${C_BOLD}${C_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
+echo ""
+echo "  This server is ready. Now go to your GNIZA dashboard"
+echo "  and complete the connection:"
+echo ""
+echo "  ${C_BOLD}1.${C_RESET} Open ${C_BOLD}${_nav}${C_RESET}"
+echo "  ${C_BOLD}2.${C_RESET} Enter a name for this server"
+echo "  ${C_BOLD}3.${C_RESET} Paste the code below and click ${C_BOLD}Receive & Configure${C_RESET}"
+echo ""
+echo "      ┌─────────────────────────────────┐"
+echo "      │                                 │"
+echo "      │   ${C_BOLD}${C_GREEN}$CROC_CODE${C_RESET}   │"
+echo "      │                                 │"
+echo "      └─────────────────────────────────┘"
+echo ""
+echo "  ${C_YELLOW}This code expires when the transfer completes or"
+echo "  when you close this terminal.${C_RESET}"
 echo ""
 echo "${C_BOLD}${C_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
 echo ""
-info "Waiting for the GNIZA server to receive the configuration..."
+info "Waiting for the GNIZA server to receive..."
 echo ""
 
 CROC_SECRET="$CROC_CODE" croc send "$JSON_TMP" < /dev/null 2>/dev/null
 
 echo ""
-info "Configuration sent successfully. You can close this terminal."
+echo "${C_BOLD}${C_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
+info "Configuration sent successfully! You can close this terminal."
+echo "${C_BOLD}${C_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"

@@ -183,11 +183,17 @@ else
     info "Sudoers configured: $SUDOERS_FILE"
 fi
 
-# -- Create base directory (destination only) ------------------
+# -- Ask for base directory (destination only) -----------------
 if [[ "$MODE" == "destination" ]]; then
+    echo ""
+    echo "${C_BOLD}Where should backups be stored on this server?${C_RESET}"
+    echo "  Enter a path, or press Enter for the default."
+    echo ""
+    read -rp "  Base directory [$BASE_DIR]: " _base_input </dev/tty || true
+    BASE_DIR="${_base_input:-$BASE_DIR}"
     mkdir -p "$BASE_DIR"
     chown "$BACKUP_USER:$BACKUP_USER" "$BASE_DIR"
-    info "Base directory ready: $BASE_DIR"
+    info "Base directory: $BASE_DIR"
 fi
 
 # -- Ask which folders to back up (source only) ----------------

@@ -23,7 +23,7 @@
     <div class="card-body p-0">
         {% if schedules %}
         <div class="overflow-x-auto">
-            <table class="table">
+            <table class="table table-sm whitespace-nowrap">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -60,8 +60,8 @@
                             {{ s.time }}
                             {% endif %}
                         </td>
-                        <td class="max-w-xs truncate text-base-content/60">{{ s.targets or '--' }}</td>
-                        <td class="max-w-xs truncate text-base-content/60">{{ s.remotes or '--' }}</td>
+                        <td class="max-w-[200px] truncate text-base-content/60">{{ s.targets or '--' }}</td>
+                        <td class="text-base-content/60">{{ s.remotes or '--' }}</td>
                         <td class="text-sm font-mono text-base-content/60">{{ s._last_run }}</td>
                         <td class="text-sm font-mono text-base-content/60">{{ s._next_run }}</td>
                         <td>

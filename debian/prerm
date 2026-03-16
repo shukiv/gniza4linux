@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    remove|upgrade)
+        systemctl stop gniza-web 2>/dev/null || true
+        systemctl stop gniza-daemon 2>/dev/null || true
+        ;;
+esac
+
+exit 0

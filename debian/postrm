@@ -1,0 +1,58 @@
+#!/bin/bash
+set -e
+
+INSTALL_DIR="/usr/local/gniza"
+[ -n "$INSTALL_DIR" ] || exit 1
+
+case "$1" in
+    remove)
+        # Disable and remove services
+        systemctl disable gniza-web 2>/dev/null || true
+        systemctl disable gniza-daemon 2>/dev/null || true
+        rm -f /etc/systemd/system/gniza-web.service
+        rm -f /etc/systemd/system/gniza-daemon.service
+        systemctl daemon-reload 2>/dev/null || true
+
+        # Remove venv, workdir, __pycache__ — leave config and logs
+        rm -rf "$INSTALL_DIR/venv"
+        rm -rf "$INSTALL_DIR/workdir"
+        find "$INSTALL_DIR" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+
+        # Remove dangling symlink
+        rm -f /usr/local/bin/gniza
+        ;;
+
+    purge)
+        # Remove everything
+        rm -rf /etc/gniza/
+        rm -rf /var/log/gniza/
+        rm -rf "$INSTALL_DIR/"
+
+        # Remove service files (in case remove didn't run cleanly)
+        rm -f /etc/systemd/system/gniza-web.service
+        rm -f /etc/systemd/system/gniza-daemon.service
+        systemctl daemon-reload 2>/dev/null || true
+
+        # Clean cron entries tagged with gniza4linux
+        current_crontab=$(crontab -l 2>/dev/null) || current_crontab=""
+        if [ -n "$current_crontab" ]; then
+            filtered=""
+            skip_next=false
+            while IFS= read -r line; do
+                if echo "$line" | grep -q "^# gniza4linux:"; then
+                    skip_next=true
+                    continue
+                fi
+                if [ "$skip_next" = "true" ]; then
+                    skip_next=false
+                    continue
+                fi
+                filtered="${filtered}${line}
+"
+            done <<< "$current_crontab"
+            echo "$filtered" | crontab - 2>/dev/null || true
+        fi
+        ;;
+esac
+
+exit 0

@@ -70,9 +70,15 @@ If you have ever set up backups with raw rsync, tar, or tools like Dirvish, you 
 
 ### Step 1: Installation
 
-GNIZA can be installed with a single command. The installer detects whether you are running as root or a regular user.
+**Debian/Ubuntu (.deb package):**
 
-**As root (system-wide):**
+```
+wget https://git.linux-hosting.co.il/shukivaknin/gniza4linux/releases/download/latest/gniza_0.25_all.deb
+sudo dpkg -i gniza_0.25_all.deb
+sudo apt-get -f install   # resolve dependencies
+```
+
+**Quick install as root (system-wide):**
 
 ```
 curl -sL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
@@ -80,7 +86,7 @@ curl -sL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main
 
 Installs to: `/usr/local/gniza` (app), `/etc/gniza/` (config), `/var/log/gniza/` (logs)
 
-**As regular user:**
+**Quick install as regular user:**
 
 ```
 curl -sL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | bash
@@ -285,7 +291,18 @@ All three interfaces provide the same capabilities. When adding a new feature, i
 
 ## Installation
 
-### Quick Install
+### Debian/Ubuntu (.deb package)
+
+```bash
+# Download the latest .deb
+wget https://git.linux-hosting.co.il/shukivaknin/gniza4linux/releases/download/latest/gniza_0.25_all.deb
+
+# Install
+sudo dpkg -i gniza_0.25_all.deb
+sudo apt-get -f install   # resolve dependencies
+```
+
+### Quick Install (any Linux)
 
 ```bash
 # Root mode (system-wide)
@@ -1746,7 +1763,11 @@ gniza --cli test-email                                # Alias for test-notificat
 
 ```bash
 gniza --version                                       # Show version
-gniza uninstall                                       # Uninstall gniza
+gniza uninstall                                       # Uninstall gniza (script-based install)
+
+# Debian/Ubuntu package
+sudo apt remove gniza                                 # Remove (keeps config/logs)
+sudo apt purge gniza                                  # Full removal
 ```
 
 ---

@@ -38,19 +38,32 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 
 ## Installation
 
-### One-liner (root)
+### Option 1: Debian/Ubuntu (.deb package)
+
+```bash
+# Download the latest .deb
+wget https://git.linux-hosting.co.il/shukivaknin/gniza4linux/releases/download/latest/gniza_0.25_all.deb
+
+# Install
+sudo dpkg -i gniza_0.25_all.deb
+sudo apt-get -f install   # resolve dependencies
+```
+
+### Option 2: Quick install (any Linux)
+
+**Root (system-wide):**
 
 ```bash
 curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
 ```
 
-### One-liner (user mode)
+**User mode:**
 
 ```bash
 curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | bash
 ```
 
-### From source
+### Option 3: From source
 
 ```bash
 git clone https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git
@@ -67,6 +80,11 @@ The installer detects dependencies, sets up config directories, and optionally l
 ### Uninstall
 
 ```bash
+# Debian/Ubuntu package
+sudo apt remove gniza      # remove (keeps config/logs)
+sudo apt purge gniza       # full removal
+
+# Script-based install
 gniza uninstall
 ```
 

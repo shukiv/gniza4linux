@@ -1,0 +1,15 @@
+Package: gniza
+Version: {{VERSION}}
+Section: admin
+Priority: optional
+Architecture: all
+Depends: bash, rsync, curl, openssh-client, python3, python3-venv
+Recommends: sshpass, rclone
+Suggests: croc
+Maintainer: Shuki Vaknin <shuki@linux-hosting.co.il>
+Homepage: https://git.linux-hosting.co.il/shukivaknin/gniza4linux
+Description: Linux backup manager with web dashboard and TUI
+ Gniza is a backup manager for Linux that provides incremental backups
+ using rsync with hardlink deduplication. Features include a web dashboard,
+ terminal UI, scheduled backups, and support for local, SSH, S3, and
+ Google Drive sources and destinations.

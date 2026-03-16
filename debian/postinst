@@ -1,0 +1,93 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    configure)
+        ;;
+    *)
+        exit 0
+        ;;
+esac
+
+INSTALL_DIR="/usr/local/gniza"
+CONFIG_DIR="/etc/gniza"
+LOG_DIR="/var/log/gniza"
+WORK_DIR="/usr/local/gniza/workdir"
+
+# -- Create config directories --
+mkdir -p "$CONFIG_DIR/targets.d" "$CONFIG_DIR/remotes.d" "$CONFIG_DIR/schedules.d"
+chmod 700 "$CONFIG_DIR" "$CONFIG_DIR/targets.d" "$CONFIG_DIR/remotes.d" "$CONFIG_DIR/schedules.d"
+
+# -- Create log and work directories --
+mkdir -p "$LOG_DIR"
+mkdir -p "$WORK_DIR"
+
+# -- Copy main config (only if not exists) --
+if [ ! -f "$CONFIG_DIR/gniza.conf" ]; then
+    cp "$INSTALL_DIR/etc/gniza.conf.example" "$CONFIG_DIR/gniza.conf"
+    chmod 600 "$CONFIG_DIR/gniza.conf"
+fi
+
+# -- Copy example configs --
+for example in target.conf.example remote.conf.example schedule.conf.example; do
+    if [ -f "$INSTALL_DIR/etc/$example" ]; then
+        cp "$INSTALL_DIR/etc/$example" "$CONFIG_DIR/$example"
+    fi
+done
+
+# -- Generate WEB_API_KEY if not set --
+if ! grep -q "^WEB_API_KEY=" "$CONFIG_DIR/gniza.conf" 2>/dev/null; then
+    api_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+    echo "WEB_API_KEY=\"${api_key}\"" >> "$CONFIG_DIR/gniza.conf"
+fi
+chmod 600 "$CONFIG_DIR/gniza.conf"
+
+# -- Create Python venv and install dependencies --
+_venv_dir="$INSTALL_DIR/venv"
+if [ ! -d "$_venv_dir" ] || [ ! -f "$_venv_dir/bin/pip" ]; then
+    if python3 -m venv "$_venv_dir" 2>/dev/null; then
+        echo "gniza: Python venv created at $_venv_dir"
+    else
+        echo "gniza: WARNING — failed to create Python venv. Install python3-venv and run: python3 -m venv $_venv_dir" >&2
+    fi
+fi
+
+if [ -f "$_venv_dir/bin/pip" ]; then
+    if "$_venv_dir/bin/pip" install --quiet "textual>=0.40" textual-serve flask flask-wtf waitress psutil 2>/dev/null; then
+        echo "gniza: Python dependencies installed."
+    else
+        echo "gniza: WARNING — failed to install Python dependencies (no network?). Run manually:" >&2
+        echo "  $_venv_dir/bin/pip install 'textual>=0.40' textual-serve flask flask-wtf waitress psutil" >&2
+    fi
+fi
+
+# -- Install systemd service files --
+if [ -f "$INSTALL_DIR/etc/gniza-web.service" ]; then
+    cp "$INSTALL_DIR/etc/gniza-web.service" /etc/systemd/system/gniza-web.service
+fi
+if [ -f "$INSTALL_DIR/etc/gniza-daemon.service" ]; then
+    cp "$INSTALL_DIR/etc/gniza-daemon.service" /etc/systemd/system/gniza-daemon.service
+fi
+systemctl daemon-reload 2>/dev/null || true
+
+# -- Enable and manage services --
+if [ -n "$2" ]; then
+    # Upgrade: restart services if they were running
+    if systemctl is-active gniza-web &>/dev/null; then
+        systemctl restart gniza-web || true
+    fi
+    if systemctl is-active gniza-daemon &>/dev/null; then
+        systemctl restart gniza-daemon || true
+    fi
+else
+    # Fresh install: enable and start services
+    systemctl enable gniza-daemon 2>/dev/null || true
+    systemctl start gniza-daemon 2>/dev/null || true
+fi
+
+# -- Clean up .git/ from pre-deb installations --
+if [ -d "$INSTALL_DIR/.git" ] && [ ! -L "$INSTALL_DIR/.git" ]; then
+    rm -rf "$INSTALL_DIR/.git"
+fi
+
+exit 0

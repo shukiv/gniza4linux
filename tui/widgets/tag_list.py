@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Tag list widget — displays items as removable tags with an add input."""
 
 from textual.app import ComposeResult

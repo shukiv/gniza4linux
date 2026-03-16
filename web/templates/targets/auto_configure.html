@@ -35,7 +35,7 @@
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
             <h2 class="card-title text-base mb-2">Step 2: Receive Configuration</h2>
-            <p class="text-base-content/60 text-sm mb-4">Enter the croc code displayed by the remote setup script, a name for this source, and the folders to back up.</p>
+            <p class="text-base-content/60 text-sm mb-4">Enter the croc code displayed by the remote setup script and a name for this source.</p>
             <form method="POST" action="{{ url_for('targets.auto_configure_receive') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -52,12 +52,6 @@
                                title="Letters, numbers, and hyphens only">
                     </fieldset>
                 </div>
-                <fieldset class="fieldset mb-4">
-                    <label class="fieldset-label">Folders to Back Up</label>
-                    <textarea name="folders" class="textarea w-full font-mono" rows="3"
-                              placeholder="/etc&#10;/home&#10;/var/www"></textarea>
-                    <p class="text-base-content/40 text-xs mt-1">One folder per line. You can change this later in the source settings.</p>
-                </fieldset>
                 <button type="submit" class="btn btn-primary">Receive &amp; Configure</button>
             </form>
         </div>

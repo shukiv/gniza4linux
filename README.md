@@ -38,44 +38,38 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 
 ## Installation
 
-### Option 1: Debian/Ubuntu (.deb package)
-
-```bash
-# Download the latest .deb
-wget https://git.linux-hosting.co.il/shukivaknin/gniza4linux/releases/download/latest/gniza_0.25_all.deb
-
-# Install
-sudo dpkg -i gniza_0.25_all.deb
-sudo apt-get -f install   # resolve dependencies
-```
-
-### Option 2: Quick install (any Linux)
-
-**Root (system-wide):**
-
 ```bash
 curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
 ```
 
-**User mode:**
+That's it. The installer handles dependencies, config directories, Python venv, web dashboard, and systemd services.
+
+<details>
+<summary>More install options</summary>
+
+**User mode (no root):**
 
 ```bash
 curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | bash
 ```
 
-### Option 3: From source
+**Debian/Ubuntu (.deb package):**
+
+```bash
+wget https://git.linux-hosting.co.il/shukivaknin/gniza4linux/releases/download/latest/gniza_0.25_all.deb
+sudo dpkg -i gniza_0.25_all.deb && sudo apt-get -f install
+```
+
+**From source:**
 
 ```bash
 git clone https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git
-cd gniza4linux
-sudo bash scripts/install.sh    # root mode
-# or
-bash scripts/install.sh          # user mode
+cd gniza4linux && sudo bash scripts/install.sh
 ```
 
 Root mode installs to `/usr/local/gniza`. User mode installs to `~/.local/share/gniza`.
 
-The installer detects dependencies, sets up config directories, and optionally launches a setup wizard.
+</details>
 
 ### Uninstall
 

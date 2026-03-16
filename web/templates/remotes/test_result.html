@@ -1,11 +1,13 @@
-<div id="test-toast" class="toast toast-top toast-end z-50">
-    <div class="alert {{ 'alert-success' if result.status == 'success' else 'alert-error' }} shadow-lg">
-        <span>{{ result.message }}</span>
-    </div>
-</div>
 <script>
-setTimeout(function() {
-    var toast = document.getElementById('test-toast');
-    if (toast) toast.remove();
-}, 7000);
+(function() {
+    var toast = document.getElementById('gniza-toast');
+    if (!toast) return;
+    var alert = document.createElement('div');
+    alert.className = 'alert {{ "alert-success" if result.status == "success" else "alert-error" }} shadow-lg';
+    var span = document.createElement('span');
+    span.textContent = {{ result.message|tojson }};
+    alert.appendChild(span);
+    toast.appendChild(alert);
+    setTimeout(function() { alert.remove(); }, 7000);
+})();
 </script>

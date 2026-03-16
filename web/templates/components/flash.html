@@ -1,17 +1,19 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-<div class="toast toast-top toast-end z-50 gap-2">
-    {% for category, message in messages %}
-    <div class="alert {{ 'alert-error' if category == 'error' else 'alert-warning' if category == 'warning' else 'alert-success' if category == 'success' else 'alert-info' }} shadow-lg">
-        <span>{{ message }}</span>
-    </div>
-    {% endfor %}
-</div>
 <script>
-setTimeout(function() {
-    var toast = document.querySelector('.toast');
-    if (toast) toast.style.display = 'none';
-}, 7000);
+(function() {
+    var toast = document.getElementById('gniza-toast');
+    if (!toast) return;
+    {% for category, message in messages %}
+    var alert = document.createElement('div');
+    alert.className = 'alert {{ "alert-error" if category == "error" else "alert-warning" if category == "warning" else "alert-success" if category == "success" else "alert-info" }} shadow-lg';
+    var span = document.createElement('span');
+    span.textContent = {{ message|tojson }};
+    alert.appendChild(span);
+    toast.appendChild(alert);
+    setTimeout(function() { alert.remove(); }, 7000);
+    {% endfor %}
+})();
 </script>
 {% endif %}
 {% endwith %}

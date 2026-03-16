@@ -1,8 +1,8 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-<div class="toast toast-top toast-end z-50">
+<div class="toast toast-top toast-end z-50 gap-2">
     {% for category, message in messages %}
-    <div class="alert {{ 'alert-error' if category == 'error' else 'alert-success' if category == 'success' else 'alert-info' }} shadow-lg">
+    <div class="alert {{ 'alert-error' if category == 'error' else 'alert-warning' if category == 'warning' else 'alert-success' if category == 'success' else 'alert-info' }} shadow-lg">
         <span>{{ message }}</span>
     </div>
     {% endfor %}

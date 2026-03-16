@@ -5,8 +5,18 @@
 {% block page_title %}Logs{% endblock %}
 
 {% block content %}
-{% if jobs %}
-<div class="flex justify-end mb-4">
+{% set total_all = status_counts.values()|sum %}
+<div class="flex items-center justify-between mb-4">
+    <div class="flex gap-1 flex-wrap">
+        <a href="{{ url_for('logs.index') }}" class="btn btn-sm {{ 'btn-primary' if not status_filter else 'btn-ghost' }}">All <span class="badge badge-sm ml-1">{{ total_all }}</span></a>
+        <a href="{{ url_for('logs.index', status='success') }}" class="btn btn-sm {{ 'btn-success' if status_filter == 'success' else 'btn-ghost' }}">Success <span class="badge badge-sm ml-1">{{ status_counts.get('success', 0) }}</span></a>
+        <a href="{{ url_for('logs.index', status='failed') }}" class="btn btn-sm {{ 'btn-error' if status_filter == 'failed' else 'btn-ghost' }}">Failed <span class="badge badge-sm ml-1">{{ status_counts.get('failed', 0) }}</span></a>
+        <a href="{{ url_for('logs.index', status='skipped') }}" class="btn btn-sm {{ 'btn-warning' if status_filter == 'skipped' else 'btn-ghost' }}">Skipped <span class="badge badge-sm ml-1">{{ status_counts.get('skipped', 0) }}</span></a>
+        {% if status_counts.get('unknown', 0) > 0 %}
+        <a href="{{ url_for('logs.index', status='unknown') }}" class="btn btn-sm {{ 'btn-neutral' if status_filter == 'unknown' else 'btn-ghost' }}">Unknown <span class="badge badge-sm ml-1">{{ status_counts.get('unknown', 0) }}</span></a>
+        {% endif %}
+    </div>
+    {% if jobs %}
     <form method="POST" action="{{ url_for('logs.clear') }}" onsubmit="return confirm('Delete all finished job logs? This cannot be undone.')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn btn-error btn-sm">
@@ -14,8 +24,8 @@
             Clear Logs
         </button>
     </form>
+    {% endif %}
 </div>
-{% endif %}
 <div class="card bg-base-200 shadow">
     <div class="card-body p-0">
         {% if jobs %}
@@ -93,7 +103,7 @@
             </table>
         </div>
 
-        {{ pagination(page, total_pages, url_for('logs.index') + '?page=') }}
+        {{ pagination(page, total_pages, url_for('logs.index', status=status_filter) + '&page=' if status_filter else url_for('logs.index') + '?page=') }}
         {% else %}
         <div class="p-8 text-center text-base-content/40">
             <p>No completed jobs found</p>

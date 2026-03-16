@@ -36,9 +36,19 @@ def index():
     if page < 1:
         page = 1
 
+    status_filter = request.args.get("status", "").lower()
+
     all_jobs = web_job_manager.list_jobs()
     finished = [j for j in all_jobs if j.status not in ("running", "queued")]
+    if status_filter and status_filter != "all":
+        finished = [j for j in finished if j.status == status_filter]
     finished.sort(key=lambda j: j.finished_at or j.started_at, reverse=True)
+
+    # Count by status (before filtering for the badge counts)
+    all_finished = [j for j in all_jobs if j.status not in ("running", "queued")]
+    status_counts = {}
+    for j in all_finished:
+        status_counts[j.status] = status_counts.get(j.status, 0) + 1
 
     page_jobs, page, total_pages = paginate(finished, page, LOGS_PER_PAGE)
 
@@ -57,6 +67,8 @@ def index():
         page=page,
         total_pages=total_pages,
         log_sizes=log_sizes,
+        status_filter=status_filter,
+        status_counts=status_counts,
     )
 
 

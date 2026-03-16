@@ -14,6 +14,7 @@ error() { echo "${C_RED}[ERROR]${C_RESET} $*" >&2; }
 die()   { error "$1"; exit 1; }
 
 # -- Parse arguments ------------------------------------------
+MODE=""
 BACKUP_USER="gniza"
 BASE_DIR="/backups"
 SSH_PORT=""
@@ -21,26 +22,32 @@ FOLDERS=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --user=*)    BACKUP_USER="${1#*=}" ;;
-        --user)      shift; BACKUP_USER="${1:-gniza}" ;;
-        --base=*)    BASE_DIR="${1#*=}" ;;
-        --base)      shift; BASE_DIR="${1:-/backups}" ;;
-        --port=*)    SSH_PORT="${1#*=}" ;;
-        --port)      shift; SSH_PORT="${1:-}" ;;
-        --folders=*) FOLDERS="${1#*=}" ;;
-        --folders)   shift; FOLDERS="${1:-}" ;;
+        --source)      MODE="source" ;;
+        --destination) MODE="destination" ;;
+        --user=*)      BACKUP_USER="${1#*=}" ;;
+        --user)        shift; BACKUP_USER="${1:-gniza}" ;;
+        --base=*)      BASE_DIR="${1#*=}" ;;
+        --base)        shift; BASE_DIR="${1:-/backups}" ;;
+        --port=*)      SSH_PORT="${1#*=}" ;;
+        --port)        shift; SSH_PORT="${1:-}" ;;
+        --folders=*)   FOLDERS="${1#*=}" ;;
+        --folders)     shift; FOLDERS="${1:-}" ;;
         --help|-h)
             cat <<EOF
-Usage: setup-remote.sh [OPTIONS]
+Usage: setup-remote.sh --source|--destination [OPTIONS]
 
-Prepare this server as a GNIZA backup destination and share
-the configuration via croc for automatic import.
+Prepare this server for GNIZA and share the configuration
+via croc for automatic import.
+
+Mode (required):
+  --source        Set up as a backup source (what to back up)
+  --destination   Set up as a backup destination (where to store)
 
 Options:
   --user=NAME       Backup user to create (default: gniza)
-  --base=PATH       Base backup directory (default: /backups)
+  --base=PATH       Base backup directory (default: /backups, destination only)
   --port=PORT       SSH port override (default: auto-detect from sshd_config)
-  --folders=PATHS   Comma-separated folders to back up (default: ask interactively)
+  --folders=PATHS   Comma-separated folders to back up (source only)
   --help            Show this help
 EOF
             exit 0
@@ -49,6 +56,24 @@ EOF
     esac
     shift
 done
+
+# -- Ask for mode if not specified ----------------------------
+if [[ -z "$MODE" ]]; then
+    echo ""
+    echo "${C_BOLD}How will this server be used with GNIZA?${C_RESET}"
+    echo ""
+    echo "  1) ${C_BOLD}Source${C_RESET}       — back up files FROM this server"
+    echo "  2) ${C_BOLD}Destination${C_RESET}  — store backups ON this server"
+    echo ""
+    read -rp "  Choose [1/2]: " _mode_choice </dev/tty || true
+    case "${_mode_choice:-1}" in
+        1|source)      MODE="source" ;;
+        2|destination) MODE="destination" ;;
+        *) die "Invalid choice. Use 1 (source) or 2 (destination)." ;;
+    esac
+fi
+
+info "Mode: ${C_BOLD}${MODE}${C_RESET}"
 
 # -- Require root ---------------------------------------------
 [[ $EUID -eq 0 ]] || die "This script must be run as root (use sudo)."
@@ -158,10 +183,25 @@ else
     info "Sudoers configured: $SUDOERS_FILE"
 fi
 
-# -- Create base directory ------------------------------------
-mkdir -p "$BASE_DIR"
-chown "$BACKUP_USER:$BACKUP_USER" "$BASE_DIR"
-info "Base directory ready: $BASE_DIR"
+# -- Create base directory (destination only) ------------------
+if [[ "$MODE" == "destination" ]]; then
+    mkdir -p "$BASE_DIR"
+    chown "$BACKUP_USER:$BACKUP_USER" "$BASE_DIR"
+    info "Base directory ready: $BASE_DIR"
+fi
+
+# -- Ask which folders to back up (source only) ----------------
+if [[ "$MODE" == "source" ]]; then
+    if [[ -z "$FOLDERS" ]]; then
+        echo ""
+        echo "${C_BOLD}Which folders should be backed up from this server?${C_RESET}"
+        echo "  Enter comma-separated paths, or press Enter for the default."
+        echo ""
+        read -rp "  Folders [/etc,/home,/var]: " FOLDERS </dev/tty || true
+        FOLDERS="${FOLDERS:-/etc,/home,/var}"
+    fi
+    info "Folders:    $FOLDERS"
+fi
 
 # -- Detect server info ---------------------------------------
 HOSTNAME=$(hostname)
@@ -184,17 +224,6 @@ _code=""
 for _ in $(seq 15); do _code+="${_chars:RANDOM%26:1}"; done
 CROC_CODE="${_code:0:5}-${_code:5:5}-${_code:10:5}"
 
-# -- Ask which folders to back up ------------------------------
-if [[ -z "$FOLDERS" ]]; then
-    echo ""
-    echo "${C_BOLD}Which folders should be backed up from this server?${C_RESET}"
-    echo "  Enter comma-separated paths, or press Enter for the default."
-    echo ""
-    read -rp "  Folders [/etc,/home,/var]: " FOLDERS </dev/tty || true
-    FOLDERS="${FOLDERS:-/etc,/home,/var}"
-fi
-info "Folders:    $FOLDERS"
-
 # -- Build JSON payload ---------------------------------------
 PRIVATE_KEY_CONTENT=$(cat "$KEY_PATH")
 
@@ -211,6 +240,7 @@ fi
 jq -n \
     --argjson version 1 \
     --arg type "gniza-remote-setup" \
+    --arg mode "$MODE" \
     --arg hostname "$HOSTNAME" \
     --arg host "$LAN_IP" \
     --arg host_public "$PUBLIC_IP" \
@@ -219,8 +249,8 @@ jq -n \
     --arg private_key "$PRIVATE_KEY_CONTENT" \
     --arg base "$BASE_DIR" \
     --arg sudo "yes" \
-    --arg folders "$FOLDERS" \
-    '{version:$version, type:$type, hostname:$hostname, host:$host, host_public:$host_public, port:$port, user:$user, private_key:$private_key, base:$base, sudo:$sudo, folders:$folders}' \
+    --arg folders "${FOLDERS:-}" \
+    '{version:$version, type:$type, mode:$mode, hostname:$hostname, host:$host, host_public:$host_public, port:$port, user:$user, private_key:$private_key, base:$base, sudo:$sudo, folders:$folders}' \
     > "$JSON_TMP"
 
 # -- Send via croc --------------------------------------------
@@ -228,7 +258,11 @@ echo ""
 echo "${C_BOLD}${C_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
 echo ""
 echo "  Server is ready. Enter this code in the GNIZA dashboard"
-echo "  or CLI to complete the configuration:"
+if [[ "$MODE" == "source" ]]; then
+    echo "  under ${C_BOLD}Sources > Auto-Configure${C_RESET}:"
+else
+    echo "  under ${C_BOLD}Destinations > Auto-Configure${C_RESET}:"
+fi
 echo ""
 echo "  ${C_BOLD}${C_GREEN}$CROC_CODE${C_RESET}"
 echo ""

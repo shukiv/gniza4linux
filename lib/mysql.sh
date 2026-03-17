@@ -41,6 +41,9 @@ _mysql_run_cmd() {
         fi
     else
         # Local: set MYSQL_PWD if needed, then eval
+        # SAFETY: All interpolated values in $cmd_str are escaped via printf '%q'
+        # in the calling functions (_mysql_build_conn_str, mysql_dump_databases,
+        # mysql_dump_grants). Do not pass unescaped user input.
         if [[ -n "${TARGET_MYSQL_PASSWORD:-}" ]]; then
             MYSQL_PWD="$TARGET_MYSQL_PASSWORD" eval "$cmd_str"
         else

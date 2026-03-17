@@ -41,6 +41,9 @@ _pgsql_run_cmd() {
         fi
     else
         # Local: set PGPASSWORD if needed, then eval
+        # SAFETY: All interpolated values in $cmd_str are escaped via printf '%q'
+        # in the calling functions (_pgsql_build_conn_str, pgsql_dump_databases,
+        # pgsql_dump_roles). Do not pass unescaped user input.
         if [[ -n "${TARGET_POSTGRESQL_PASSWORD:-}" ]]; then
             PGPASSWORD="$TARGET_POSTGRESQL_PASSWORD" eval "$cmd_str"
         else

@@ -31,6 +31,10 @@ _crontab_run_cmd() {
             "${_CRONTAB_SSH[@]}" "$cmd_str"
         fi
     else
+        # SAFETY: All interpolated values in $cmd_str are escaped via printf '%q'
+        # in the calling functions (crontab_dump_all). Usernames are validated
+        # against ^[a-zA-Z0-9._-]+$ and filenames against the same pattern
+        # before interpolation. Do not pass unescaped user input.
         eval "$cmd_str"
     fi
 }

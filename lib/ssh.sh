@@ -20,6 +20,9 @@ build_ssh_opts() {
         opts+=(-o "StrictHostKeyChecking=yes")
         opts+=(-o "BatchMode=yes")
     fi
+    opts+=(-o "ControlMaster=auto")
+    opts+=(-o "ControlPath=/tmp/gniza-ssh-%r@%h:%p")
+    opts+=(-o "ControlPersist=60")
     opts+=(-p "$REMOTE_PORT")
     opts+=(-o "ConnectTimeout=$SSH_TIMEOUT")
     opts+=(-o "ServerAliveInterval=60")

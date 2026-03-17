@@ -224,7 +224,8 @@ class SettingsScreen(Screen):
         old_api_key = old_data.get("WEB_API_KEY", "")
         write_conf(conf_path, settings.to_conf())
 
-        if settings.web_api_key != old_api_key:
+        import hmac
+        if not hmac.compare_digest(settings.web_api_key, old_api_key):
             if os.geteuid() == 0:
                 subprocess.run(["systemctl", "restart", "gniza-web"], check=False)
             else:

@@ -78,7 +78,8 @@ def save():
     old_api_key = old_data.get("WEB_API_KEY", "")
     write_conf(CONFIG_DIR / "gniza.conf", settings.to_conf())
 
-    if settings.web_api_key != old_api_key:
+    import hmac
+    if not hmac.compare_digest(settings.web_api_key, old_api_key):
         flash("Settings saved. Password changed — restarting web service...", "success")
 
         def _delayed_restart():

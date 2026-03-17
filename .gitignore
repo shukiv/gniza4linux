@@ -9,6 +9,16 @@ textual-mcp.log
 
 dist/
 
+# Demo recording scripts and output (local only)
+scripts/record-*.py
+scripts/record-*.sh
+scripts/autoconfig-web-receiver.py
+demo*.tape
+demo*.mp4
+demo*.gif
+demo*.webm
+ship-safe-report.html
+
 # Non-essential files kept locally only
 FEATURES.md
 logo.txt

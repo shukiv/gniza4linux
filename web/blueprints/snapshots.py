@@ -412,7 +412,9 @@ def download(target, remote, snapshot):
         if item_type == "file":
             if not os.path.isfile(real_path):
                 abort(404, "File not found.")
-            return send_file(real_path, as_attachment=True, download_name=filename)
+            # Sanitize filename to prevent header injection
+            safe_name = os.path.basename(filename).replace("\n", "").replace("\r", "")
+            return send_file(real_path, as_attachment=True, download_name=safe_name)
         else:
             if not os.path.isdir(real_path):
                 abort(404, "Directory not found.")

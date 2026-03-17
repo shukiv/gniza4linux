@@ -699,7 +699,7 @@ Requires `rclone`.
 
 | Field | Default | Description |
 |-------|---------|-------------|
-| `REMOTE_TYPE` | `ssh` | `ssh`, `local`, `s3`, `gdrive`, or `gphotos` |
+| `REMOTE_TYPE` | `ssh` | `ssh`, `local`, `s3`, `gdrive`, `gphotos`, or `rclone` |
 | `REMOTE_HOST` | (required for SSH) | Hostname or IP |
 | `REMOTE_PORT` | `22` | SSH port |
 | `REMOTE_USER` | `root` | SSH username |

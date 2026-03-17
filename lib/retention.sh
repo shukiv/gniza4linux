@@ -18,31 +18,34 @@ enforce_retention() {
         return 0
     fi
 
+    # Pre-fetch all pinned snapshots in a single call (avoids N SSH connections)
+    local pinned_snaps=""
+    if _is_rclone_mode; then
+        : # rclone checked per-snapshot (no batch grep available)
+    elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+        local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
+        pinned_snaps=$(grep -rl '"pinned".*true' "$snap_dir"/*/meta.json 2>/dev/null \
+            | while read -r f; do basename "$(dirname "$f")"; done) || true
+    else
+        local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
+        local sq_snap; sq_snap="$(shquote "$snap_dir")"
+        pinned_snaps=$(remote_exec "grep -rl '\"pinned\".*true' '${sq_snap}'/*/meta.json 2>/dev/null | while read -r f; do basename \"\$(dirname \"\$f\")\"; done" 2>/dev/null) || true
+    fi
+
     local count=0
     local pruned=0
     while IFS= read -r snap; do
         [[ -z "$snap" ]] && continue
 
-        # Check if pinned before counting
+        # Check if pinned (pre-fetched for SSH/local, per-snapshot for rclone)
         local is_pinned=false
         if _is_rclone_mode; then
             local meta; meta=$(rclone_cat "targets/${target_name}/snapshots/${snap}/meta.json" 2>/dev/null) || true
             if [[ -n "$meta" ]] && echo "$meta" | grep -q '"pinned":\s*true'; then
                 is_pinned=true
             fi
-        elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
-            local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-            local meta_file="$snap_dir/$snap/meta.json"
-            if [[ -f "$meta_file" ]] && grep -q '"pinned":\s*true' "$meta_file" 2>/dev/null; then
-                is_pinned=true
-            fi
-        else
-            local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-            local sq_meta; sq_meta="$(shquote "$snap_dir/$snap/meta.json")"
-            local meta_content; meta_content=$(remote_exec "cat '${sq_meta}' 2>/dev/null" 2>/dev/null) || true
-            if [[ -n "$meta_content" ]] && echo "$meta_content" | grep -q '"pinned":\s*true'; then
-                is_pinned=true
-            fi
+        elif echo "$pinned_snaps" | grep -qxF "$snap"; then
+            is_pinned=true
         fi
 
         if [[ "$is_pinned" == "true" ]]; then

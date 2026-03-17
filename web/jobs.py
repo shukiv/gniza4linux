@@ -51,10 +51,13 @@ class WebJobManager:
     def __init__(self):
         self._jobs = {}
         self._lock = threading.Lock()
+        self._cache_time = 0.0
+        self._cache_ttl = 1.5  # seconds
         self.load_registry()
 
     def create_and_start(self, kind, label, *cli_args):
         """Create a job. If under concurrency limit, start it; otherwise queue it."""
+        self._invalidate_cache()
         with self._lock:
             job_id = uuid.uuid4().hex[:8]
             log_path = LOG_DIR / f"gniza-job-{job_id}.log"
@@ -195,6 +198,7 @@ class WebJobManager:
                 logger.warning(f"Failed to kill remote rsync on {remote['host']}: {e}")
 
     def kill_job(self, job_id):
+        self._invalidate_cache()
         job = self._jobs.get(job_id)
         if not job:
             return "not found"
@@ -236,6 +240,7 @@ class WebJobManager:
         return "killed"
 
     def remove_finished(self):
+        self._invalidate_cache()
         self._jobs = {k: v for k, v in self._jobs.items() if v.status in ("running", "queued")}
         self._save_registry()
 
@@ -326,8 +331,15 @@ class WebJobManager:
             finally:
                 fcntl.flock(lock_fh, fcntl.LOCK_UN)
 
+    def _invalidate_cache(self):
+        self._cache_time = 0.0
+
     def load_registry(self):
-        """Load jobs from shared JSON registry."""
+        """Load jobs from shared JSON registry (with TTL cache)."""
+        import time as _time
+        now = _time.monotonic()
+        if now - self._cache_time < self._cache_ttl:
+            return
         entries = self._flock_read()
         if not entries:
             self._jobs = {}
@@ -403,6 +415,8 @@ class WebJobManager:
             )
             refreshed[job_id] = job
         self._jobs = refreshed
+        import time as _time
+        self._cache_time = _time.monotonic()
         if changed:
             self._save_registry()
             self._dispatch_queue()

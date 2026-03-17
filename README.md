@@ -276,7 +276,9 @@ Notifications:
 
 Other:
   logs [--last] [--tail=N]
-  web start | install-service | remove-service | status [--port=PORT]
+  health [--destination=NAME] [--json]     Check backup health
+  update [--check] [--force]               Update gniza to latest version
+  web start | install-service | remove-service | status | reset-password [--port=PORT]
   daemon start | install-service | remove-service | status
   uninstall
 ```
@@ -470,6 +472,15 @@ S3_ENDPOINT="https://s3.wasabisys.com"
 REMOTE_TYPE="gdrive"
 GDRIVE_SERVICE_ACCOUNT_FILE="/path/to/service-account.json"
 GDRIVE_ROOT_FOLDER_ID=""       # Optional folder ID
+```
+
+**Rclone destination** (any rclone-supported remote):
+
+```ini
+REMOTE_TYPE="rclone"
+RCLONE_CONFIG_PATH="/path/to/rclone.conf"
+RCLONE_REMOTE_NAME="myremote"
+REMOTE_BASE="/backups"
 ```
 
 ### Schedule Config (`schedules.d/nightly.conf`)

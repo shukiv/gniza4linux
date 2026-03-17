@@ -38,7 +38,8 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 
 ## Installation
 
-### APT Repository (Debian/Ubuntu) — Recommended
+<details open>
+<summary><b>APT Repository (Debian/Ubuntu) — Recommended</b></summary>
 
 ```bash
 curl -fsSL https://deb.gniza.app/gniza.gpg | sudo gpg --dearmor -o /usr/share/keyrings/gniza-archive-keyring.gpg
@@ -46,26 +47,27 @@ echo "deb [signed-by=/usr/share/keyrings/gniza-archive-keyring.gpg] https://deb.
 sudo apt update && sudo apt install gniza
 ```
 
-Supports: Debian stable, bookworm, trixie, and Ubuntu noble, jammy.
+Supports: Debian stable, bookworm, trixie, and Ubuntu noble, jammy. Updates via `sudo apt upgrade gniza`.
 
-### One-Line Installer
-
-```bash
-curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
-```
-
-The installer handles dependencies, config directories, Python venv, web dashboard, and systemd services.
+</details>
 
 <details>
-<summary>More install options</summary>
-
-**User mode (no root):**
+<summary><b>One-Line Installer (any Linux)</b></summary>
 
 ```bash
+# Root mode (system-wide)
+curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
+
+# User mode (no root)
 curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | bash
 ```
 
-**From source:**
+The installer handles dependencies, config directories, Python venv, web dashboard, and systemd services. Root mode installs to `/usr/local/gniza`, user mode to `~/.local/share/gniza`.
+
+</details>
+
+<details>
+<summary><b>From Source</b></summary>
 
 ```bash
 git clone https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git

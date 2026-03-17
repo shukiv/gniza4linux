@@ -291,7 +291,8 @@ All three interfaces provide the same capabilities. When adding a new feature, i
 
 ## Installation
 
-### APT Repository (Debian/Ubuntu) — Recommended
+<details open>
+<summary><b>APT Repository (Debian/Ubuntu) — Recommended</b></summary>
 
 Add the official GNIZA repository for automatic updates via `apt`:
 
@@ -317,7 +318,10 @@ sudo apt remove gniza      # remove (keeps config/logs)
 sudo apt purge gniza        # full removal
 ```
 
-### Quick Install (any Linux)
+</details>
+
+<details>
+<summary><b>One-Line Installer (any Linux)</b></summary>
 
 ```bash
 # Root mode (system-wide)
@@ -327,7 +331,12 @@ curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/mai
 curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | bash
 ```
 
-### From Source
+The installer handles dependencies, config directories, Python venv, web dashboard, and systemd services.
+
+</details>
+
+<details>
+<summary><b>From Source</b></summary>
 
 ```bash
 git clone https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git
@@ -335,6 +344,8 @@ cd gniza4linux
 sudo bash scripts/install.sh    # root mode
 bash scripts/install.sh          # user mode
 ```
+
+</details>
 
 ### Install Paths
 

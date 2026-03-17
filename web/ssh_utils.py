@@ -7,8 +7,7 @@ def ssh_cmd(host, port="22", user="root", key="", password=""):
     """Build an SSH command list."""
     ssh_opts = [
         "ssh",
-        "-o", "StrictHostKeyChecking=no",
-        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "StrictHostKeyChecking=yes",
         "-o", "LogLevel=ERROR",
         "-o", "ConnectTimeout=10",
         "-p", port or "22",
@@ -25,7 +24,7 @@ def ssh_cmd(host, port="22", user="root", key="", password=""):
 
 def sftp_cmd(host, port="22", user="root", key="", password=""):
     """Build an SFTP command list."""
-    opts = ["-o", f"Port={port}", "-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"]
+    opts = ["-o", f"Port={port}", "-o", "StrictHostKeyChecking=yes", "-o", "ConnectTimeout=10"]
     if key:
         opts += ["-o", f"IdentityFile={key}", "-o", "BatchMode=yes"]
     if password:
@@ -50,8 +49,7 @@ def ssh_cmd_from_conf(remote_conf):
 
     ssh_opts = [
         "ssh",
-        "-o", "StrictHostKeyChecking=no",
-        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "StrictHostKeyChecking=yes",
         "-o", "LogLevel=ERROR",
         "-o", "ConnectTimeout=10",
         "-p", port or "22",

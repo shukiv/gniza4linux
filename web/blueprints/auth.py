@@ -9,6 +9,7 @@ from flask import (
 )
 
 from tui.config import CONFIG_DIR, parse_conf
+from web.app import csrf
 
 bp = Blueprint("auth", __name__)
 audit = logging.getLogger("gniza.audit")
@@ -72,6 +73,7 @@ def _clear_failures(ip):
 
 
 @bp.route("/login", methods=["GET", "POST"])
+@csrf.exempt
 def login():
     _periodic_cleanup()
     ip = request.remote_addr or "unknown"

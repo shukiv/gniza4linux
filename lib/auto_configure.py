@@ -7,8 +7,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from tui.config import CONFIG_DIR, write_conf
-from tui.models import Remote, Target
+from lib.config import CONFIG_DIR, write_conf
+from lib.models import Remote, Target
 
 _CROC_CODE_RE = re.compile(r'^[a-zA-Z0-9-]+$')
 _NAME_RE = re.compile(r'^[A-Za-z0-9_-]{1,64}$')

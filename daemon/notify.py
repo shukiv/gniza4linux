@@ -13,7 +13,7 @@ from datetime import datetime
 from email.mime.text import MIMEText
 from pathlib import Path
 
-from tui.config import CONFIG_DIR, LOG_DIR, parse_conf
+from lib.config import CONFIG_DIR, LOG_DIR, parse_conf
 
 logger = logging.getLogger("gniza-daemon")
 

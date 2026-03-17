@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 from lib.job_utils import detect_return_code, is_skipped_job
-from tui.config import (
+from lib.config import (
     get_log_retain_days, get_max_concurrent_jobs, parse_conf,
     CONFIG_DIR, LOG_DIR, WORK_DIR,
 )

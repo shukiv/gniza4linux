@@ -18,7 +18,7 @@ def main():
         handler = logging.StreamHandler()
     else:
         # Log to the gniza log directory
-        from tui.config import LOG_DIR
+        from lib.config import LOG_DIR
         from pathlib import Path
         log_dir = Path(LOG_DIR)
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -38,7 +38,7 @@ def main():
     # Get interval
     interval = args.interval
     if interval is None:
-        from tui.config import get_daemon_interval
+        from lib.config import get_daemon_interval
         interval = get_daemon_interval()
 
     from daemon.core import run

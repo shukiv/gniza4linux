@@ -15,7 +15,7 @@ import tempfile
 import uuid
 from datetime import datetime
 
-from tui.config import WORK_DIR
+from lib.config import WORK_DIR
 
 REGISTRY_FILE = WORK_DIR / "gniza-jobs.json"
 

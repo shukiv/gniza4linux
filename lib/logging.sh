@@ -23,6 +23,7 @@ init_logging() {
     # (all output is already captured in the job's log file)
     if [[ -n "${GNIZA_DAEMON_TRACKED:-}" ]]; then
         LOG_FILE=""
+        _CONFIGURED_LOG_LEVEL_NUM=$(_log_level_num "${LOG_LEVEL:-$DEFAULT_LOG_LEVEL}")
         return 0
     fi
 
@@ -31,6 +32,9 @@ init_logging() {
 
     LOG_FILE="$log_dir/gniza-$(date +%Y%m%d-%H%M%S).log"
     touch "$LOG_FILE" || die "Cannot write to log file: $LOG_FILE"
+
+    # Cache the configured log level number to avoid repeated subshell calls in _log()
+    _CONFIGURED_LOG_LEVEL_NUM=$(_log_level_num "${LOG_LEVEL:-$DEFAULT_LOG_LEVEL}")
 
     # Redirect stdout+stderr into the log file so rsync progress output
     # (and any other subprocess output) is captured for the web UI.
@@ -65,9 +69,8 @@ _log() {
     local upper="${level^^}"
     local line="[$ts] [$upper] $msg"
 
-    local configured_level="${LOG_LEVEL:-$DEFAULT_LOG_LEVEL}"
     local level_num; level_num=$(_log_level_num "$level")
-    local configured_num; configured_num=$(_log_level_num "$configured_level")
+    local configured_num="${_CONFIGURED_LOG_LEVEL_NUM:-1}"
 
     # Log file: always write info/warn/error; debug only when LOG_LEVEL=debug
     if [[ -n "$LOG_FILE" ]]; then

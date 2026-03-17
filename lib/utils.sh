@@ -4,6 +4,14 @@
 [[ -n "${_GNIZA4LINUX_UTILS_LOADED:-}" ]] && return 0
 _GNIZA4LINUX_UTILS_LOADED=1
 
+_GNIZA_CACHED_HOSTNAME=""
+_get_hostname() {
+    if [[ -z "$_GNIZA_CACHED_HOSTNAME" ]]; then
+        _GNIZA_CACHED_HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+    fi
+    echo "$_GNIZA_CACHED_HOSTNAME"
+}
+
 die() {
     local code="${2:-$EXIT_FATAL}"
     if [[ -n "${LOG_FILE:-}" ]]; then

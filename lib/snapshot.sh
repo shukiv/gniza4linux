@@ -6,7 +6,7 @@ _GNIZA4LINUX_SNAPSHOT_LOADED=1
 
 get_remote_target_base() {
     local target_name="$1"
-    local hostname; hostname=$(hostname -f)
+    local hostname; hostname=$(_get_hostname)
     echo "${REMOTE_BASE}/${hostname}/targets/${target_name}"
 }
 
@@ -149,7 +149,7 @@ list_remote_targets() {
         return
     fi
 
-    local hostname; hostname=$(hostname -f)
+    local hostname; hostname=$(_get_hostname)
     local targets_dir="${REMOTE_BASE}/${hostname}/targets"
 
     if [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then

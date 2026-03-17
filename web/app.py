@@ -13,6 +13,18 @@ from flask_wtf.csrf import CSRFProtect
 
 from tui.config import CONFIG_DIR, parse_conf
 
+
+def _get_version():
+    try:
+        constants = Path(__file__).resolve().parent.parent / "lib" / "constants.sh"
+        for line in constants.read_text().splitlines():
+            m = re.match(r'(?:readonly\s+)?GNIZA4LINUX_VERSION="([^"]+)"', line)
+            if m:
+                return m.group(1)
+    except Exception:
+        pass
+    return "0.0"
+
 csrf = CSRFProtect()
 
 
@@ -42,9 +54,19 @@ def create_app():
         print(f"  Set WEB_API_KEY in gniza.conf to set a password.")
         print(f"{'='*60}\n")
 
+    # Read or generate salt
+    salt = conf.get("WEB_SALT", "")
+    if not salt:
+        # Use a deterministic fallback based on the machine ID + install path
+        try:
+            machine_id = Path("/etc/machine-id").read_text().strip()
+        except Exception:
+            machine_id = str(Path(__file__).resolve())
+        salt = hashlib.sha256(machine_id.encode()).hexdigest()[:32]
+
     # Derive secret_key from password — never use the credential itself as signing key
     app.secret_key = hashlib.pbkdf2_hmac(
-        'sha256', stored_key.encode(), b'gniza-flask-session', 100_000
+        'sha256', stored_key.encode(), salt.encode(), 100_000
     ).hex()
     app.config["API_KEY"] = stored_key
     app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -124,7 +146,7 @@ def create_app():
             "nav_items": nav_items,
             "active_page": active_page,
             "app_name": "GNIZA",
-            "app_version": "0.25",
+            "app_version": _get_version(),
             "current_year": datetime.now().year,
         }
 

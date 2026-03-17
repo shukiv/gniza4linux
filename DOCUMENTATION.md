@@ -135,25 +135,23 @@ A **source** defines what data GNIZA should back up. Configure via web (Sources 
 **Local source** — back up folders on the same machine:
 
 ```ini
-[target]
-NAME=home
-SOURCE_TYPE=local
-FOLDERS=/home/user
-ENABLED=yes
+TARGET_NAME="home"
+TARGET_SOURCE_TYPE="local"
+TARGET_FOLDERS="/home/user"
+TARGET_ENABLED="yes"
 ```
 
 **Remote SSH source** — pull from a remote server (agentless):
 
 ```ini
-[target]
-NAME=webserver
-SOURCE_TYPE=ssh
-SOURCE_HOST=192.168.1.100
-SOURCE_USER=backup
-SOURCE_PORT=22
-SOURCE_AUTH_METHOD=key
-FOLDERS=/var/www,/etc
-ENABLED=yes
+TARGET_NAME="webserver"
+TARGET_SOURCE_TYPE="ssh"
+TARGET_SOURCE_HOST="192.168.1.100"
+TARGET_SOURCE_USER="backup"
+TARGET_SOURCE_PORT="22"
+TARGET_SOURCE_AUTH_METHOD="key"
+TARGET_FOLDERS="/var/www,/etc"
+TARGET_ENABLED="yes"
 ```
 
 ### Step 4: Configure a Destination (Where to Store Backups)
@@ -163,23 +161,19 @@ A **destination** defines where GNIZA stores snapshots. Configure via web (Desti
 **SSH destination:**
 
 ```ini
-[remote]
-NAME=backup-server
-TYPE=ssh
-HOST=backup.example.com
-USER=backup
-PORT=22
-AUTH_METHOD=key
-BASE=/home/backup/gniza
+REMOTE_TYPE="ssh"
+REMOTE_HOST="backup.example.com"
+REMOTE_USER="backup"
+REMOTE_PORT="22"
+REMOTE_AUTH_METHOD="key"
+REMOTE_BASE="/home/backup/gniza"
 ```
 
 **Local destination** (USB drive, NFS mount):
 
 ```ini
-[remote]
-NAME=usb-drive
-TYPE=local
-BASE=/mnt/backup-drive/gniza
+REMOTE_TYPE="local"
+REMOTE_BASE="/mnt/backup-drive/gniza"
 ```
 
 S3, Google Drive, and Google Photos destinations are also supported — configure through the web dashboard.
@@ -189,8 +183,8 @@ S3, Google Drive, and Google Photos destinations are also supported — configur
 With a source and destination configured:
 
 - **Web:** Backup page > select source > Run Backup
-- **TUI:** `gniza --tui` > Backup screen
-- **CLI:** `gniza --cli --backup home`
+- **TUI:** `gniza` > Backup screen
+- **CLI:** `gniza --cli backup --source=home`
 
 What happens during a backup:
 
@@ -207,18 +201,16 @@ What happens during a backup:
 Enable MySQL backup in your source config:
 
 ```ini
-[target]
-NAME=webserver
-SOURCE_TYPE=ssh
-SOURCE_HOST=192.168.1.100
-SOURCE_USER=backup
-FOLDERS=/var/www,/etc
-MYSQL_ENABLED=yes
-MYSQL_USER=backup
-MYSQL_PASS=secretpassword
-MYSQL_DATABASES=all
-MYSQL_GRANTS=yes
-ENABLED=yes
+TARGET_NAME="webserver"
+TARGET_SOURCE_TYPE="ssh"
+TARGET_SOURCE_HOST="192.168.1.100"
+TARGET_SOURCE_USER="backup"
+TARGET_FOLDERS="/var/www,/etc"
+TARGET_MYSQL_ENABLED="yes"
+TARGET_MYSQL_USER="backup"
+TARGET_MYSQL_PASSWORD="secretpassword"
+TARGET_MYSQL_MODE="all"
+TARGET_ENABLED="yes"
 ```
 
 For SSH sources, `mysqldump` runs on the **remote machine**. Dumps are stored alongside file snapshots.
@@ -228,12 +220,10 @@ For SSH sources, `mysqldump` runs on the **remote machine**. Dumps are stored al
 ### Step 7: Schedule Automatic Backups
 
 ```ini
-[schedule]
-NAME=nightly
-SCHEDULE=daily
-TIME=02:00
-TARGETS=home,webserver
-ACTIVE=yes
+SCHEDULE="daily"
+SCHEDULE_TIME="02:00"
+TARGETS="home,webserver"
+SCHEDULE_ACTIVE="yes"
 ```
 
 Frequencies: `daily`, `weekly`, `monthly`. Each schedule can have its own `RETENTION_COUNT`.
@@ -242,14 +232,14 @@ Frequencies: `daily`, `weekly`, `monthly`. Each schedule can have its own `RETEN
 
 GNIZA automatically prunes old snapshots:
 
-- **Global default:** Set `RETENTION_COUNT=7` in `gniza.conf`
+- **Global default:** Set `RETENTION_COUNT=30` in `gniza.conf`
 - **Per-schedule override:** Add `RETENTION_COUNT` to any schedule config
 - **Snapshot pinning:** Pin important snapshots to protect them from pruning
 
 ### Step 9: Browsing and Restoring
 
 - **Web:** Snapshots page > select source > browse files > download or restore
-- **CLI:** `gniza --cli --restore home --snapshot 2026-03-10_020000 --target /home/user`
+- **CLI:** `gniza --cli restore --source=home --snapshot=2026-03-10T020000 --dest=/home/user`
 - **Manual:** Snapshots are regular directories — `cp` or `rsync` directly
 
 ```
@@ -561,6 +551,8 @@ Common uses:
 - Flush caches or application buffers
 - Trigger database snapshots
 - Send custom notifications
+
+> **Security note**: Hooks execute as the gniza process user with full shell access. Restrict config file permissions (mode 600) and audit hook commands carefully.
 
 ### Viewing a Source
 

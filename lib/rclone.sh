@@ -96,7 +96,7 @@ _cleanup_rclone_config() {
 
 _rclone_remote_path() {
     local subpath="${1:-}"
-    local hostname; hostname=$(hostname -f)
+    local hostname; hostname=$(_get_hostname)
 
     case "${REMOTE_TYPE}" in
         s3)

@@ -436,16 +436,17 @@ def download(target, remote, snapshot):
             env["SSHPASS"] = sshpass_pw
 
         sq = shlex.quote(full_path)
+        safe_name = os.path.basename(filename).replace("\n", "").replace("\r", "").replace('"', "")
         if item_type == "file":
             remote_cmd = f"cat {sq}"
             content_type = "application/octet-stream"
-            disp = f'attachment; filename="{filename}"'
+            disp = f'attachment; filename="{safe_name}"'
         else:
             parent = os.path.dirname(full_path)
             basename = os.path.basename(full_path)
             remote_cmd = f"tar czf - -C {shlex.quote(parent)} {shlex.quote(basename)}"
             content_type = "application/gzip"
-            disp = f'attachment; filename="{filename}.tar.gz"'
+            disp = f'attachment; filename="{safe_name}.tar.gz"'
 
         proc = subprocess.Popen(
             cmd + [remote_cmd],
@@ -481,10 +482,11 @@ def download(target, remote, snapshot):
                 except OSError:
                     pass
 
+        safe_name = os.path.basename(filename).replace("\n", "").replace("\r", "").replace('"', "")
         return Response(
             stream_and_cleanup(),
             mimetype="application/octet-stream",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
         )
 
     else:

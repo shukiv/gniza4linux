@@ -308,9 +308,9 @@ class Schedule:
 class AppSettings:
     backup_mode: str = "incremental"
     bwlimit: str = "0"
-    retention_count: str = "7"
-    log_level: str = "INFO"
-    log_retain: str = "30"
+    retention_count: str = "30"
+    log_level: str = "info"
+    log_retain: str = "90"
     notify_email: str = ""
     notify_on: str = "failure"
     smtp_host: str = ""
@@ -347,8 +347,8 @@ class AppSettings:
         return cls(
             backup_mode=data.get("BACKUP_MODE", "incremental"),
             bwlimit=data.get("BWLIMIT", "0"),
-            retention_count=data.get("RETENTION_COUNT", "7"),
-            log_level=data.get("LOG_LEVEL", "INFO"),
+            retention_count=data.get("RETENTION_COUNT", "30"),
+            log_level=data.get("LOG_LEVEL", "info"),
             log_retain=data.get("LOG_RETAIN", "90"),
             notify_email=data.get("NOTIFY_EMAIL", ""),
             notify_on=data.get("NOTIFY_ON", "failure"),

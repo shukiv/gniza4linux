@@ -3,7 +3,7 @@
 from pathlib import Path
 
 
-def ssh_cmd(host, port="22", user="root", key="", password=""):
+def ssh_cmd(host, port="22", user="gniza", key="", password=""):
     """Build an SSH command list."""
     ssh_opts = [
         "ssh",
@@ -42,7 +42,7 @@ def ssh_cmd_from_conf(remote_conf):
     """
     host = remote_conf.get("REMOTE_HOST", "")
     port = remote_conf.get("REMOTE_PORT", "22")
-    user = remote_conf.get("REMOTE_USER", "root")
+    user = remote_conf.get("REMOTE_USER", "gniza")
     key = remote_conf.get("REMOTE_KEY", "")
     password = remote_conf.get("REMOTE_PASSWORD", "")
     auth = remote_conf.get("REMOTE_AUTH_METHOD", "key")

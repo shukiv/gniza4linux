@@ -3,11 +3,12 @@ import logging
 import re
 import subprocess
 import threading
+import time
 import urllib.parse
 import urllib.request
 
 from flask import (
-    Blueprint, render_template, request, redirect, url_for, flash, session,
+    Blueprint, abort, render_template, request, redirect, url_for, flash, session,
     jsonify,
 )
 
@@ -397,7 +398,7 @@ def wizard_step():
             custom_client_secret = wiz.get("client_secret", "")
 
             if oauth_cfg and custom_client_id and custom_client_secret:
-                task_id = secrets.token_hex(8)
+                task_id = secrets.token_hex(16)
 
                 if is_local:
                     # Localhost: redirect comes back to gniza directly
@@ -429,6 +430,7 @@ def wizard_step():
                     "redirect_uri": redirect_uri,
                     "client_id": custom_client_id,
                     "client_secret": custom_client_secret,
+                    "expires_at": time.time() + 600,
                 }
 
                 template = "rclone_config/waiting.html" if is_local else "rclone_config/waiting_remote.html"
@@ -446,8 +448,8 @@ def wizard_step():
                 return redirect(url_for("rclone_config.index"))
             else:
                 # Legacy rclone authorize fallback for non-OAuth providers
-                task_id = secrets.token_hex(8)
-                _bg_tasks[task_id] = {"status": "running"}
+                task_id = secrets.token_hex(16)
+                _bg_tasks[task_id] = {"status": "running", "expires_at": time.time() + 600}
                 t = threading.Thread(
                     target=_run_bg_oauth,
                     args=(task_id, wiz["name"], wiz["type"], config_token_state),
@@ -504,8 +506,10 @@ def oauth_callback(task_id):
     """
     task = _bg_tasks.get(task_id)
     if not task:
-        flash("OAuth session not found or expired.", "error")
-        return redirect(url_for("rclone_config.index"))
+        abort(404)
+    if task.get("expires_at", 0) < time.time():
+        _bg_tasks.pop(task_id, None)
+        abort(410, "OAuth session expired")
 
     # Check for error from Google
     error = request.args.get("error")
@@ -600,6 +604,7 @@ def oauth_callback(task_id):
         except Exception as e:
             log.warning("Failed to persist token via config update: %s", e)
         task.update({"status": "done", "name": name})
+        _bg_tasks.pop(task_id, None)
     else:
         log.error("OAuth finalize failed: %s", err)
         task.update({
@@ -607,6 +612,7 @@ def oauth_callback(task_id):
             "error": err or "Failed to finalize remote configuration",
             "name": name,
         })
+        _bg_tasks.pop(task_id, None)
 
     return render_template("rclone_config/oauth_done.html")
 

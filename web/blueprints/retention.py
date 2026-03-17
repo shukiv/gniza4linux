@@ -15,7 +15,7 @@ bp = Blueprint("retention", __name__, url_prefix="/retention")
 def index():
     targets = list_conf_dir("targets.d")
     data = parse_conf(CONFIG_DIR / "gniza.conf")
-    retention_count = data.get("RETENTION_COUNT", "7")
+    retention_count = data.get("RETENTION_COUNT", "30")
     return render_template("retention/index.html", targets=targets, retention_count=retention_count)
 
 

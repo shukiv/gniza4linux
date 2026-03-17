@@ -167,7 +167,7 @@ class WebJobManager:
             if not host or host not in log_text:
                 continue
             remotes_to_clean.append({
-                "user": conf.get("REMOTE_USER", "root"),
+                "user": conf.get("REMOTE_USER", "gniza"),
                 "host": host,
                 "port": conf.get("REMOTE_PORT", "22"),
                 "key": conf.get("REMOTE_KEY", ""),
@@ -180,8 +180,7 @@ class WebJobManager:
             pkill_pattern = f"rsync.*{remote['base']}" if remote["base"] else "rsync --fake-super"
             ssh_cmd = ["ssh", "-p", remote["port"],
                        "-o", "ConnectTimeout=5",
-                       "-o", "StrictHostKeyChecking=no",
-                       "-o", "UserKnownHostsFile=/dev/null",
+                       "-o", "StrictHostKeyChecking=accept-new",
                        "-o", "LogLevel=ERROR"]
             if remote["auth_method"] != "password":
                 ssh_cmd += ["-o", "BatchMode=yes"]

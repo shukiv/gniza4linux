@@ -211,7 +211,7 @@ Requires `rclone` to be installed. Google OAuth (Drive and Photos) requires your
 ## Snapshot Structure
 
 ```
-<base>/<hostname>/sources/<name>/snapshots/<YYYY-MM-DDTHHMMSS>/
+<base>/<hostname>/targets/<name>/snapshots/<YYYY-MM-DDTHHMMSS>/
 +-- meta.json           # Metadata (source, timestamp, duration, pinned)
 +-- manifest.txt        # File listing
 +-- var/www/            # Backed-up directories
@@ -222,6 +222,8 @@ Requires `rclone` to be installed. Google OAuth (Drive and Photos) requires your
 +-- _postgresql/        # PostgreSQL dumps (if enabled)
     +-- dbname.sql.gz
     +-- _roles.sql.gz
++-- _crontab/           # Crontab dumps (if enabled)
+    +-- root.crontab
 ```
 
 During transfer, snapshots are stored in a `.partial` directory. On success, the directory is renamed to the final timestamp. Interrupted backups leave no incomplete snapshots.
@@ -524,6 +526,15 @@ gniza can dump PostgreSQL databases alongside file backups. Available for local 
 
 Dumps are stored in the `_postgresql/` subdirectory within each snapshot.
 
+## Crontab Backup
+
+gniza can back up user crontabs alongside file backups.
+
+- Set `TARGET_CRONTAB_ENABLED="yes"` in the source config
+- Set `TARGET_CRONTAB_USERS=""` (empty = all users, or comma-separated list)
+- Dumps are stored in the `_crontab/` directory within each snapshot
+- Restore with `--skip-crontab` to skip crontab restoration
+
 ## Scheduling
 
 gniza manages cron entries for automated backups.
@@ -577,6 +588,8 @@ TARGET_POST_HOOK="systemctl start myapp"
 
 - **Pre-hook failure** aborts the backup
 - **Post-hook failure** is logged as a warning
+
+> **Security note**: Hooks execute as the gniza process user with full shell access. Restrict config file permissions (mode 600) and audit hook commands carefully.
 
 ## License
 

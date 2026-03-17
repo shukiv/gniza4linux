@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Optional
 import os
+import shlex
 import subprocess
 
 from textual.app import ComposeResult
@@ -56,7 +57,7 @@ class RemoteFolderPicker(ModalScreen[Optional[str]]):
         key = self._key if self._auth_method == "key" else ""
         password = self._password if self._auth_method == "password" else ""
         cmd = ssh_cmd(self._host, self._port, self._user, key, password) + [
-            f"find {path!r} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
+            f"find {shlex.quote(path)} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
         ]
         env = None
         if self._auth_method == "password" and self._password:

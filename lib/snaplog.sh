@@ -16,26 +16,21 @@ _snaplog_tee() {
     # Progress lines go to a small .progress file (for the TUI/web progress bar).
     # Everything else (stats, errors) goes to stderr → LOG_FILE / job log.
     local progress_file="${WORK_DIR}/gniza-progress-${GNIZA_JOB_ID:-$$}.txt"
-    local buf=""
-    # Read character-by-character to handle \r (rsync --info=progress2) and \n
-    while IFS= read -r -d '' -n 1 ch || [[ -n "$buf" ]]; do
-        if [[ "$ch" == $'\n' || "$ch" == $'\r' || -z "$ch" ]]; then
-            if [[ -n "$buf" ]]; then
-                if [[ "$buf" =~ [0-9]+% ]] && [[ "$buf" == *xfr#* || "$buf" == *to-chk=* || "$buf" == *B/s* ]]; then
-                    printf '%s\n' "$buf" > "$progress_file"
-                else
-                    echo "$buf" >&2
-                    # Also append non-progress output to transfer log for ssh→ssh
-                    # (which uses --verbose instead of --log-file)
-                    if [[ -n "${_TRANSFER_LOG:-}" ]]; then
-                        echo "$buf" >> "$_TRANSFER_LOG"
-                    fi
-                fi
-                buf=""
-            fi
-            [[ -z "$ch" ]] && break
+    # Use line-based reading instead of char-by-char for performance.
+    # rsync --info=progress2 uses \r for in-place updates; tr converts to \n.
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        # Check if this is a progress line (rsync --info=progress2 output)
+        if [[ "$line" =~ [0-9]+% ]] && [[ "$line" == *xfr#* || "$line" == *to-chk=* || "$line" == *B/s* ]]; then
+            # Progress line — write to progress file (overwrite)
+            printf '%s\n' "$line" > "$progress_file"
         else
-            buf+="$ch"
+            # Regular line — pass to stderr and log
+            printf '%s\n' "$line" >&2
+            # Also append non-progress output to transfer log for ssh→ssh
+            # (which uses --verbose instead of --log-file)
+            if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+                printf '%s\n' "$line" >> "$_TRANSFER_LOG"
+            fi
         fi
     done
     # Don't delete progress file here — snaplog_cleanup handles it
@@ -86,7 +81,7 @@ snaplog_generate() {
 == gniza backup summary ==
 Target:     ${target}
 Remote:     ${remote}
-Hostname:   $(hostname -f)
+Hostname:   $(_get_hostname)
 Timestamp:  ${ts}
 Started:    ${start_fmt}
 Finished:   ${end_fmt}
@@ -140,12 +135,8 @@ _snaplog_append_transfer_log() {
     [[ -z "${_TRANSFER_LOG:-}" || ! -s "$_TRANSFER_LOG" ]] && return 0
     # Count transferred files from rsync log format:
     # "2026/03/09 05:03:07 [719348] <f+++++++++ path/to/file"
-    local count=0
-    while IFS= read -r line; do
-        if [[ "$line" =~ \[([0-9]+)\]\ [\<\>][fd][[:alnum:].+]+\ (.+) ]]; then
-            (( count++ ))
-        fi
-    done < "$_TRANSFER_LOG"
+    local count
+    count=$(grep -cE '\[[0-9]+\] [<>][fd][[:alnum:].+]+ ' "$_TRANSFER_LOG" 2>/dev/null) || count=0
     # Append full transfer log content (timestamps, change indicators, separators)
     local output
     output=$(printf '\n=== Transfer details (%d files) ===\n' "$count"; cat "$_TRANSFER_LOG"; echo "=== End transfer details ===")

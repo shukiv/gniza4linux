@@ -31,7 +31,7 @@ else
 fi
 
 # Defaults
-readonly DEFAULT_BACKUP_MODE="full"
+readonly DEFAULT_BACKUP_MODE="incremental"
 readonly DEFAULT_REMOTE_AUTH_METHOD="key"
 readonly DEFAULT_REMOTE_PORT=22
 readonly DEFAULT_REMOTE_USER="gniza"

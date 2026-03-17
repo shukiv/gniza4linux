@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+from markupsafe import escape
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
 )
@@ -289,7 +290,7 @@ def disk(name):
     try:
         rc, stdout, stderr = run_cli_sync("destinations", "disk-info-short", f"--name={name}", timeout=30)
         if rc == 0 and stdout.strip():
-            return f'<span class="text-xs">{stdout.strip()}</span>'
+            return f'<span class="text-xs">{escape(stdout.strip())}</span>'
         return '<span class="text-base-content/40 text-xs">N/A</span>'
     except Exception:
         return '<span class="text-base-content/40 text-xs">timeout</span>'

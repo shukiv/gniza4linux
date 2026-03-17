@@ -107,6 +107,10 @@ has_remotes() {
 # Usage: load_remote <name>
 load_remote() {
     local name="$1"
+    if [[ ! "$name" =~ ^[a-zA-Z][a-zA-Z0-9_-]*$ ]]; then
+        log_error "Invalid remote name: $name"
+        return 1
+    fi
     local conf="$CONFIG_DIR/remotes.d/${name}.conf"
 
     if [[ ! -f "$conf" ]]; then
@@ -130,6 +134,10 @@ load_remote() {
     REMOTE_BASE="${REMOTE_BASE:-$DEFAULT_REMOTE_BASE}"
     BWLIMIT="${BWLIMIT:-$DEFAULT_BWLIMIT}"
     RSYNC_EXTRA_OPTS="${RSYNC_EXTRA_OPTS:-}"
+    if [[ -n "${RSYNC_EXTRA_OPTS:-}" ]] && [[ ! "$RSYNC_EXTRA_OPTS" =~ ^[a-zA-Z0-9\ ._=/,-]+$ ]]; then
+        log_error "RSYNC_EXTRA_OPTS from remote config contains invalid characters"
+        RSYNC_EXTRA_OPTS=""
+    fi
 
     # Cloud-specific defaults
     S3_ACCESS_KEY_ID="${S3_ACCESS_KEY_ID:-}"

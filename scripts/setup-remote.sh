@@ -263,18 +263,21 @@ info "LAN IP:     $LAN_IP"
 info "Public IP:  ${PUBLIC_IP:-(could not detect)}"
 info "SSH port:   $SSH_PORT"
 
-# -- Generate croc code (no pipes — pipefail+SIGPIPE kills pipe chains)
-_chars="abcdefghijklmnopqrstuvwxyz"
-_code=""
-for _ in $(seq 15); do _code+="${_chars:RANDOM%26:1}"; done
-CROC_CODE="${_code:0:5}-${_code:5:5}-${_code:10:5}"
+# -- Generate croc code using cryptographic randomness
+if command -v python3 &>/dev/null; then
+    CROC_CODE=$(python3 -c "import secrets,string; c=''.join(secrets.choice(string.ascii_lowercase) for _ in range(15)); print(f'{c[:5]}-{c[5:10]}-{c[10:15]}')")
+else
+    CROC_CODE=$(cat /dev/urandom | tr -dc 'a-z' | head -c 15 | sed 's/\(.....\)/\1-/g;s/-$//')
+fi
 
 # -- Build JSON payload ---------------------------------------
 PRIVATE_KEY_CONTENT=$(cat "$KEY_PATH")
 
+_old_umask=$(umask)
+umask 077
 JSON_TMP=$(mktemp /tmp/gniza-remote-XXXXXX.json)
+umask "$_old_umask"
 _TMPFILES+=("$JSON_TMP")
-chmod 600 "$JSON_TMP"
 
 # Install jq if needed for safe JSON construction
 if ! command -v jq &>/dev/null; then

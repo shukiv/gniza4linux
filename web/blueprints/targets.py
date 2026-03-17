@@ -1,4 +1,5 @@
 import os
+import shlex
 import shutil
 import subprocess
 
@@ -141,7 +142,7 @@ def _source_disk_info(target):
             env["SSHPASS"] = password
         try:
             result = subprocess.run(
-                cmd + [f"df -h '{first_folder}' 2>/dev/null | tail -1"],
+                cmd + [f"df -h {shlex.quote(first_folder)} 2>/dev/null | tail -1"],
                 capture_output=True, text=True, timeout=15, env=env,
             )
             if result.returncode == 0 and result.stdout.strip():

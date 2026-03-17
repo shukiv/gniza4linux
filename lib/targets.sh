@@ -32,6 +32,10 @@ has_targets() {
 # Usage: load_target <name>
 load_target() {
     local name="$1"
+    if [[ ! "$name" =~ ^[a-zA-Z][a-zA-Z0-9_-]*$ ]]; then
+        log_error "Invalid target name: $name"
+        return 1
+    fi
     local conf="$CONFIG_DIR/targets.d/${name}.conf"
 
     if [[ ! -f "$conf" ]]; then

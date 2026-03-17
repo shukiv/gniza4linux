@@ -539,9 +539,11 @@ HELPEOF
                         die "Invalid croc code format"
                     fi
                     info "Receiving configuration via croc..."
+                    GNIZA_AC_CODE="$code" GNIZA_AC_NAME="$name" GNIZA_AC_FOLDERS="${folders:-}" \
                     PYTHONPATH="$GNIZA_DIR" "$GNIZA_PYTHON" -c "
+import os
 from lib.auto_configure import receive_and_configure_source
-target, error = receive_and_configure_source('$code', '$name', '${folders:-}')
+target, error = receive_and_configure_source(os.environ['GNIZA_AC_CODE'], os.environ['GNIZA_AC_NAME'], os.environ.get('GNIZA_AC_FOLDERS', ''))
 if error:
     print(f'ERROR: {error}')
     exit(1)
@@ -675,9 +677,11 @@ HELPEOF
                         die "Invalid croc code format"
                     fi
                     info "Receiving configuration via croc..."
+                    GNIZA_AC_CODE="$code" GNIZA_AC_NAME="$name" \
                     PYTHONPATH="$GNIZA_DIR" "$GNIZA_PYTHON" -c "
+import os
 from lib.auto_configure import receive_and_configure
-remote, error = receive_and_configure('$code', '$name')
+remote, error = receive_and_configure(os.environ['GNIZA_AC_CODE'], os.environ['GNIZA_AC_NAME'])
 if error:
     print(f'ERROR: {error}')
     exit(1)

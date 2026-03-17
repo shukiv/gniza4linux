@@ -128,11 +128,8 @@ def main():
 
             @aio_web.middleware
             async def basic_auth_middleware(request, handler):
-                # Allow static assets and WebSocket upgrades without auth
-                if (
-                    any(request.path.startswith(p) for p in _PUBLIC_PATHS)
-                    or request.headers.get("Upgrade", "").lower() == "websocket"
-                ):
+                # Allow static assets without auth
+                if any(request.path.startswith(p) for p in _PUBLIC_PATHS):
                     return await handler(request)
                 auth_header = request.headers.get("Authorization", "")
                 if auth_header.startswith("Basic "):

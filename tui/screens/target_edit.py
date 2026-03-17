@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
 import re
+import shlex
 import subprocess
 from textual.app import ComposeResult
 from textual.screen import Screen
@@ -445,7 +446,7 @@ class TargetEditScreen(Screen):
                 folder_list = [f.strip() for f in target.folders.split(",") if f.strip()]
                 try:
                     result = subprocess.run(
-                        cmd + ["test", "-d", folder_list[0]],
+                        cmd + ["sh", "-c", f"test -d {shlex.quote(folder_list[0])}"],
                         capture_output=True, text=True, timeout=15, env=env,
                     )
                     if result.returncode != 0:

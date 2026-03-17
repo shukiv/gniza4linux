@@ -1,4 +1,5 @@
 import os
+import re
 import shlex
 import subprocess
 
@@ -80,7 +81,9 @@ def _sftp_list_dirs(host, path, port="22", user="root", key="", password="", sho
     if password:
         env = os.environ.copy()
         env["SSHPASS"] = password
-    sftp_path = path if path and path != "/" else "."
+    if "\n" in path or "\r" in path:
+        path = "/"
+    sftp_path = shlex.quote(path if path and path != "/" else ".")
     try:
         result = subprocess.run(
             sftp_cmd, input=f"ls -1 {sftp_path}\nbye\n",
@@ -164,8 +167,14 @@ def browse_ssh():
     target = request.args.get("target", "")
     show_hidden = request.args.get("show_hidden", "") == "1"
 
-    if not host:
-        return '<div class="alert alert-error text-sm">No host specified</div>'
+    if not host or not re.match(r'^[a-zA-Z0-9._:-]+$', host):
+        return '<div class="alert alert-error text-sm">Invalid host</div>'
+    if not port.isdigit() or not (1 <= int(port) <= 65535):
+        return '<div class="alert alert-error text-sm">Invalid port</div>'
+    if user and not re.match(r'^[a-zA-Z0-9._@-]+$', user):
+        return '<div class="alert alert-error text-sm">Invalid user</div>'
+    if key and (not os.path.isabs(key) or '..' in key):
+        return '<div class="alert alert-error text-sm">Invalid key path</div>'
 
     if not os.path.isabs(path):
         path = "/"
@@ -194,7 +203,15 @@ def browse_ssh_children():
     target = request.args.get("target", "")
     show_hidden = request.args.get("show_hidden", "") == "1"
 
-    if not host or not os.path.isabs(path):
+    if not host or not re.match(r'^[a-zA-Z0-9._:-]+$', host):
+        return ""
+    if not port.isdigit() or not (1 <= int(port) <= 65535):
+        return ""
+    if user and not re.match(r'^[a-zA-Z0-9._@-]+$', user):
+        return ""
+    if key and (not os.path.isabs(key) or '..' in key):
+        return ""
+    if not os.path.isabs(path):
         return ""
 
     dirs, err = _ssh_list_dirs(host, path, port, user, key, password, show_hidden=show_hidden)
@@ -250,8 +267,13 @@ def browse_rclone():
 
     if not remote_name or not _VALID_NAME_RE.match(remote_name):
         return '<div class="alert alert-error text-sm">Invalid remote name</div>'
-    if config_path and not os.path.isfile(config_path):
-        return '<div class="alert alert-error text-sm">Invalid config path</div>'
+    if config_path:
+        config_path = os.path.realpath(config_path)
+        allowed_dirs = [os.path.expanduser("~/.config/rclone"), "/etc/gniza", os.path.expanduser("~")]
+        if not any(config_path.startswith(d) for d in allowed_dirs):
+            return '<div class="alert alert-error text-sm">Config path not in allowed directory</div>'
+        if not os.path.isfile(config_path):
+            return '<div class="alert alert-error text-sm">Invalid config path</div>'
     if '..' in path.split('/'):
         return '<div class="alert alert-error text-sm">Invalid path</div>'
 
@@ -278,8 +300,13 @@ def browse_rclone_children():
 
     if not remote_name or not _VALID_NAME_RE.match(remote_name):
         return ""
-    if config_path and not os.path.isfile(config_path):
-        return ""
+    if config_path:
+        config_path = os.path.realpath(config_path)
+        allowed_dirs = [os.path.expanduser("~/.config/rclone"), "/etc/gniza", os.path.expanduser("~")]
+        if not any(config_path.startswith(d) for d in allowed_dirs):
+            return ""
+        if not os.path.isfile(config_path):
+            return ""
     if '..' in path.split('/'):
         return ""
 
@@ -298,6 +325,11 @@ def browse_rclone_children():
 @login_required
 def rclone_remotes():
     config_path = request.args.get("rclone_config_path", "") or request.args.get("source_rclone_config_path", "")
+    if config_path:
+        config_path = os.path.realpath(config_path)
+        allowed_dirs = [os.path.expanduser("~/.config/rclone"), "/etc/gniza", os.path.expanduser("~")]
+        if not any(config_path.startswith(d) for d in allowed_dirs):
+            return '<option value="">Config path not in allowed directory</option>'
     remotes = get_rclone_remotes(config_path)
     selected = request.args.get("selected", "")
     if not remotes:

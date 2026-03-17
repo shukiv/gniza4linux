@@ -279,8 +279,19 @@ class JobManager:
                 entry["cli_args"] = list(job._cli_args)
             entries.append(entry)
         try:
+            import fcntl, tempfile
             REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
-            REGISTRY_FILE.write_text(json.dumps(entries, indent=2))
+            lock_path = str(REGISTRY_FILE) + ".lock"
+            with open(lock_path, "w") as lock_f:
+                fcntl.flock(lock_f, fcntl.LOCK_EX)
+                tmp_fd, tmp_path = tempfile.mkstemp(dir=str(REGISTRY_FILE.parent), suffix=".tmp")
+                try:
+                    os.write(tmp_fd, json.dumps(entries, indent=2).encode())
+                    os.close(tmp_fd)
+                    os.rename(tmp_path, str(REGISTRY_FILE))
+                except Exception:
+                    os.close(tmp_fd)
+                    os.unlink(tmp_path)
         except OSError:
             pass
 

@@ -43,9 +43,9 @@ def create_app():
         print(f"{'='*60}\n")
 
     # Derive secret_key from password — never use the credential itself as signing key
-    app.secret_key = hashlib.sha256(
-        b"gniza-flask-session:" + stored_key.encode()
-    ).hexdigest()
+    app.secret_key = hashlib.pbkdf2_hmac(
+        'sha256', stored_key.encode(), b'gniza-flask-session', 100_000
+    ).hex()
     app.config["API_KEY"] = stored_key
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"

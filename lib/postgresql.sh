@@ -252,6 +252,10 @@ pgsql_dump_databases() {
     # Parse extra opts
     local extra_opts_str=""
     if [[ -n "${TARGET_POSTGRESQL_EXTRA_OPTS:-}" ]]; then
+        if [[ ! "$TARGET_POSTGRESQL_EXTRA_OPTS" =~ ^[a-zA-Z0-9\ ._=/-]+$ ]]; then
+            log_error "TARGET_POSTGRESQL_EXTRA_OPTS contains invalid characters"
+            return 1
+        fi
         extra_opts_str="${TARGET_POSTGRESQL_EXTRA_OPTS}"
     else
         extra_opts_str="--no-owner --no-privileges"

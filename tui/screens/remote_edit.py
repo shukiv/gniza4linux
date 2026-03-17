@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
 import re
+import shlex
 import subprocess
 from pathlib import Path
 from textual.app import ComposeResult
@@ -279,27 +280,27 @@ class RemoteEditScreen(Screen):
                 self.notify(f"SSH connection failed: {e}", severity="error")
                 return False
             try:
-                result = subprocess.run(cmd + ["mkdir", "-p", base], capture_output=True, text=True, timeout=15, env=env)
+                result = subprocess.run(cmd + ["sh", "-c", f"mkdir -p {shlex.quote(base)}"], capture_output=True, text=True, timeout=15, env=env)
                 if result.returncode != 0:
                     # Retry with sudo
-                    result = subprocess.run(cmd + ["sudo", "mkdir", "-p", base], capture_output=True, text=True, timeout=15, env=env)
+                    result = subprocess.run(cmd + ["sudo", "sh", "-c", f"mkdir -p {shlex.quote(base)}"], capture_output=True, text=True, timeout=15, env=env)
                     if result.returncode != 0:
                         self.notify(f"Failed to create base path: {result.stderr.strip()}", severity="error")
                         return False
-                    subprocess.run(cmd + ["sudo", "chown", f"{remote.user}:", base], capture_output=True, text=True, timeout=15, env=env)
+                    subprocess.run(cmd + ["sudo", "sh", "-c", f"chown {shlex.quote(remote.user + ':')} {shlex.quote(base)}"], capture_output=True, text=True, timeout=15, env=env)
             except (subprocess.TimeoutExpired, OSError) as e:
                 self.notify(f"Failed to create base path: {e}", severity="error")
                 return False
             try:
                 test_file = f"{base}/validation_success.txt"
                 result = subprocess.run(
-                    cmd + ["sh", "-c", f'echo "gniza validation" > {test_file}'],
+                    cmd + ["sh", "-c", f'echo "gniza validation" > {shlex.quote(test_file)}'],
                     capture_output=True, text=True, timeout=15, env=env,
                 )
                 if result.returncode != 0:
                     # Retry with sudo
                     result = subprocess.run(
-                        cmd + ["sudo", "sh", "-c", f'echo "gniza validation" > {test_file}'],
+                        cmd + ["sudo", "sh", "-c", f'echo "gniza validation" > {shlex.quote(test_file)}'],
                         capture_output=True, text=True, timeout=15, env=env,
                     )
                     if result.returncode != 0:

@@ -67,4 +67,22 @@ else
     echo "WARNING: .deb build failed, skipping repo publish"
 fi
 
+# Build and publish .rpm package
+RPM_REPO_HOST="deb.gniza.app"  # same server
+RPM_REPO_PATH="/var/www/rpm.gniza.app"
+
+if command -v rpmbuild &>/dev/null; then
+    if bash scripts/build-rpm.sh; then
+        RPM_FILE=$(find dist -name "gniza-${VERSION}*.rpm" | head -1)
+        if [[ -n "$RPM_FILE" && -f "$RPM_FILE" ]]; then
+            echo "Uploading .rpm to ${RPM_REPO_HOST}..."
+            scp "$RPM_FILE" "root@${RPM_REPO_HOST}:/tmp/"
+            ssh "root@${RPM_REPO_HOST}" "mkdir -p ${RPM_REPO_PATH}/packages && cp /tmp/$(basename "$RPM_FILE") ${RPM_REPO_PATH}/packages/ && cd ${RPM_REPO_PATH} && createrepo_c . 2>/dev/null || createrepo . && rm -f /tmp/$(basename "$RPM_FILE")"
+            echo "Published RPM to repo"
+        fi
+    else
+        echo "WARNING: .rpm build failed, skipping repo publish"
+    fi
+fi
+
 echo "Done"

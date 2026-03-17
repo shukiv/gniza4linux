@@ -184,7 +184,7 @@ validate_remote() {
                     ((errors++)) || true
                 fi
                 if ! command -v sshpass &>/dev/null; then
-                    log_error "Remote '$name': sshpass is required for password authentication (install: apt install sshpass)"
+                    log_error "Remote '$name': sshpass is required for password authentication (install sshpass: apt install sshpass / dnf install sshpass)"
                     ((errors++)) || true
                 fi
             else

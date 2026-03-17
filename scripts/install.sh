@@ -87,7 +87,13 @@ _to_install=()
 for cmd in rsync ssh curl sshpass; do
     if ! command -v "$cmd" &>/dev/null; then
         case "$cmd" in
-            ssh) _to_install+=(openssh-client) ;;
+            ssh)
+                if command -v apt-get &>/dev/null; then
+                    _to_install+=(openssh-client)
+                else
+                    _to_install+=(openssh-clients)
+                fi
+                ;;
             *)   _to_install+=("$cmd") ;;
         esac
     fi
@@ -188,12 +194,18 @@ if command -v python3 &>/dev/null; then
         _apt_update
         # Try generic python3-venv first, then versioned (e.g. python3.9-venv on Debian 11)
         _pyver=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || echo "")
+        # If venv creation fails, try installing platform-specific package
         if command -v apt-get &>/dev/null; then
             apt-get install -y -qq python3-venv 2>/dev/null || true
+            # Try versioned package on older Debian
             if [[ -n "$_pyver" ]] && ! python3 -m venv "$_test_venv" &>/dev/null; then
                 rm -rf "$_test_venv"
                 apt-get install -y -qq "python${_pyver}-venv" 2>/dev/null || true
             fi
+        elif command -v dnf &>/dev/null; then
+            dnf install -y -q python3-pip 2>/dev/null || true
+        elif command -v yum &>/dev/null; then
+            yum install -y -q python3-pip 2>/dev/null || true
         else
             _pkg_install python3-virtualenv 2>/dev/null || true
         fi
@@ -203,7 +215,7 @@ if command -v python3 &>/dev/null; then
     # Create venv and install deps (avoids PEP 668 / externally-managed conflicts)
     info "Setting up Python virtual environment..."
     if ! python3 -m venv "$_venv_dir"; then
-        die "Failed to create Python venv. Install python3-venv manually: apt-get install python3-venv"
+        die "Failed to create Python venv. Install python3-venv (Debian/Ubuntu) or python3-devel (RHEL/CentOS) manually."
     fi
 
     info "Installing Python dependencies in venv..."

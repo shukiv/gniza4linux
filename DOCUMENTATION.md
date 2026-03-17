@@ -78,6 +78,19 @@ sudo dpkg -i gniza_0.25_all.deb
 sudo apt-get -f install   # resolve dependencies
 ```
 
+**RHEL/AlmaLinux/Rocky/Fedora (.rpm package):**
+
+```
+sudo tee /etc/yum.repos.d/gniza.repo << 'EOF'
+[gniza]
+name=GNIZA Backup Manager
+baseurl=https://rpm.gniza.app
+enabled=1
+gpgcheck=0
+EOF
+sudo dnf install gniza    # or: sudo yum install gniza
+```
+
 **Quick install as root (system-wide):**
 
 ```
@@ -316,6 +329,30 @@ To uninstall:
 ```bash
 sudo apt remove gniza      # remove (keeps config/logs)
 sudo apt purge gniza        # full removal
+```
+
+</details>
+
+<details>
+<summary><b>DNF/YUM Repository (RHEL/AlmaLinux/Rocky/Fedora)</b></summary>
+
+```bash
+sudo tee /etc/yum.repos.d/gniza.repo << 'EOF'
+[gniza]
+name=GNIZA Backup Manager
+baseurl=https://rpm.gniza.app
+enabled=1
+gpgcheck=0
+EOF
+sudo dnf install gniza    # or: sudo yum install gniza
+```
+
+To update: `sudo dnf upgrade gniza`
+
+To uninstall:
+
+```bash
+sudo dnf remove gniza
 ```
 
 </details>

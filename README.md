@@ -52,6 +52,24 @@ Supports: Debian stable, bookworm, trixie, and Ubuntu noble, jammy. Updates via 
 </details>
 
 <details>
+<summary><b>DNF/YUM Repository (RHEL/AlmaLinux/Rocky/Fedora)</b></summary>
+
+```bash
+sudo tee /etc/yum.repos.d/gniza.repo << 'EOF'
+[gniza]
+name=GNIZA Backup Manager
+baseurl=https://rpm.gniza.app
+enabled=1
+gpgcheck=0
+EOF
+sudo dnf install gniza    # or: sudo yum install gniza
+```
+
+To update: `sudo dnf upgrade gniza`
+
+</details>
+
+<details>
 <summary><b>One-Line Installer (any Linux)</b></summary>
 
 ```bash
@@ -84,6 +102,9 @@ Root mode installs to `/usr/local/gniza`. User mode installs to `~/.local/share/
 # Debian/Ubuntu package
 sudo apt remove gniza      # remove (keeps config/logs)
 sudo apt purge gniza       # full removal
+
+# RHEL/AlmaLinux/Rocky/Fedora
+sudo dnf remove gniza
 
 # Script-based install
 gniza uninstall

@@ -139,7 +139,13 @@ fi
 # -- Create backup user ---------------------------------------
 if ! id "$BACKUP_USER" &>/dev/null; then
     info "Creating user: $BACKUP_USER"
-    adduser --disabled-password --gecos "GNIZA backup" "$BACKUP_USER" || die "Failed to create user $BACKUP_USER"
+    if command -v adduser &>/dev/null && [[ -f /etc/debian_version ]]; then
+        adduser --disabled-password --gecos "GNIZA backup" "$BACKUP_USER"
+    else
+        useradd -m -s /bin/bash -c "GNIZA backup" "$BACKUP_USER" 2>/dev/null || true
+        # Lock password (no login via password)
+        passwd -l "$BACKUP_USER" 2>/dev/null || true
+    fi
 else
     info "User $BACKUP_USER already exists."
 fi

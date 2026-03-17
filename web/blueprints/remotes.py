@@ -216,12 +216,15 @@ def save():
 
     ok, msg = _test_remote(remote)
     if ok is False:
-        flash(msg, "error")
+        flash(f"Test failed — not saved. {msg}", "error")
         is_new = not original_name
         return render_template("remotes/edit.html", remote=remote, is_new=is_new, ssh_keys=_get_ssh_keys(), rclone_remotes=get_rclone_remotes(remote.rclone_config_path))
 
     write_conf(CONFIG_DIR / "remotes.d" / f"{remote.name}.conf", remote.to_conf())
-    flash(f"Destination '{remote.name}' saved.", "success")
+    if ok is None and msg:
+        flash(f"Destination '{remote.name}' saved. Warning: {msg}", "warning")
+    else:
+        flash(f"Destination '{remote.name}' saved.", "success")
     return redirect(url_for("remotes.index"))
 
 

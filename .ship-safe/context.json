@@ -1,0 +1,2271 @@
+{
+  "version": "5.0.1",
+  "generatedAt": "2026-03-17T14:53:20.491Z",
+  "rootPath": "/home/shuki/projects/gniza4linux",
+  "recon": {
+    "frameworks": [],
+    "languages": [
+      "python"
+    ],
+    "apiRoutes": [],
+    "authPatterns": [
+      "web/templates/auth/login.html"
+    ],
+    "databases": [],
+    "cloudProviders": [],
+    "frontendExposure": [],
+    "packageManagers": [],
+    "cicd": [],
+    "hasDockerfile": false,
+    "hasTerraform": false,
+    "hasKubernetes": false,
+    "envFiles": [],
+    "configFiles": []
+  },
+  "fileIndex": {
+    ".gitignore": {
+      "hash": "844fe24ccab19c2e25335911c143facde62fa295bb71d35747716d088b02508e",
+      "size": 152,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    ".mcp.json": {
+      "hash": "1cb3e30662f90d86ecd4222a6cd2174fae3a81f1c6f21257c1296dea099c2dd1",
+      "size": 514,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "DOCUMENTATION.md": {
+      "hash": "8b08754609fbe7e74167906aee69463924706f333602917b5793993c34396768",
+      "size": 68907,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "LICENSE": {
+      "hash": "1126322e2cc8d165adc4c792eeb195717de2bcc7b39be1ce77959d78e87ef685",
+      "size": 1056,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "README.md": {
+      "hash": "fa2d08bf727c0af03eaab36d44269cd2292dabe2cade9c1bc429f8680f7ad36b",
+      "size": 23578,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "demo-autoconfig-server.tape": {
+      "hash": "31d2739a64347111af15a4215443bc7f9e078c65056cdcf42e95a3650c81e388",
+      "size": 844,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "demo-install.tape": {
+      "hash": "d5d729bca1d7d56c0a5ca16ed46bd942ac031d4d9100fb9332f22c8bc096111b",
+      "size": 810,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "demo.tape": {
+      "hash": "c7814f318ba63ea9a6392fa2f5339a73c07b37b78ae5eddb1d2d7d3023b38312",
+      "size": 1103,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "debian/control": {
+      "hash": "0fbf79855562f5b4b9c430b9e448004030551aaa82160c2464460c4af5e319d5",
+      "size": 633,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "debian/copyright": {
+      "hash": "d74c03b945ad4dfa266baa33c6076ffcd3b2c6a6646a91d1e7fb97353f67b79a",
+      "size": 1274,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "debian/postinst": {
+      "hash": "303edb3fecd4d7bf2d957fbb00a5b11521a17c642c4f03ff3e09eaa2e3946088",
+      "size": 3112,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "debian/postrm": {
+      "hash": "dae907c3c6e890967d38373a3fa938fdb9b6789b36166735166e421faa49b114",
+      "size": 1824,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "debian/prerm": {
+      "hash": "1bf88fa66e5fd82c2d7cea3e51b6ebbeaa5fcd9d6ea7133bbb186d51a62768eb",
+      "size": 186,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "daemon/__init__.py": {
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "daemon/__main__.py": {
+      "hash": "396322ae9958a1321a859f4b6e4e89a78ea6e23025c03b27ab7fe959753fa146",
+      "size": 1509,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "daemon/core.py": {
+      "hash": "94a0864bb60ee0a49309dd9b498c91984237f683fabe4629f9ab7dda639ae2ad",
+      "size": 15760,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "daemon/notify.py": {
+      "hash": "9433dfbb7922d5dabfab28a0df32c7d528ae643c37ed4d49d4ef83336a55cffd",
+      "size": 16868,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "bin/gniza": {
+      "hash": "5775cd88ea340ccaddf23619b59043a23f64ce0b0fe90821e6c5ea419aba23bb",
+      "size": 56565,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "etc/gniza-daemon.service": {
+      "hash": "7ec6554718aa524d76345a6e0f1447f740f31ca38f8b3c449fc13303dd35b862",
+      "size": 323,
+      "lastScanned": "2026-03-17T14:53:20.488Z"
+    },
+    "etc/gniza-web.service": {
+      "hash": "b5c3a18f82f935956ce10261f055e881aa6178572c0cd01de5689c8d7f939638",
+      "size": 313,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "etc/gniza.conf.example": {
+      "hash": "9518f2b5544360bbfdce66561475fb67bf3a9674fad1aa5c40ca911f20a45a18",
+      "size": 1813,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "etc/remote.conf.example": {
+      "hash": "6c054bccdeaf48b02784b81b24708cf9484b393cc36ff8cbfa117c06de683761",
+      "size": 611,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "etc/schedule.conf.example": {
+      "hash": "030caf082d51224dd746c3b459fd377588a206d2a3795262ebaaa959b2872e5f",
+      "size": 575,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "etc/target.conf.example": {
+      "hash": "bb7fd61f38ebe85c9902d1d9c9e3a95d677e251a8498eb945b73e408cb952ad1",
+      "size": 1583,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/auto_configure.py": {
+      "hash": "217a0806ce56f329826a80eff9445473fb778bbf87d93aef8ff3830886139b1e",
+      "size": 6019,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/backup.sh": {
+      "hash": "a01d3a8b195f9ea590b5c9a6265eab8f2bd79db731955edb902f6a2be448c56c",
+      "size": 18307,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/cli_runner.py": {
+      "hash": "8eb5c7d1d0e8d9f956d58d8df220299bfdff5cf826b8cb0df4d12e59a42b789a",
+      "size": 861,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/config.sh": {
+      "hash": "07f62bc471e1a0367761324dd8d37bc47c7dfb330ded0d72389d650a54e66541",
+      "size": 7122,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/constants.sh": {
+      "hash": "f2fd2b3e05f862425f50be5a632a2e6c3cfe8a01d29560ca620e7591ab2e6711",
+      "size": 1671,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/crontab.sh": {
+      "hash": "357f68ab4eea7caa911bd2055e423840371921339aae20a44e8cc348fb219210",
+      "size": 5789,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/health.sh": {
+      "hash": "b409c1cd082db3891c341cc714cebc6b1d9b2f5994276e3be926aa4e70122e0f",
+      "size": 7660,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/job_register.py": {
+      "hash": "c9e24418c4ff7084ad430d883e32b8328b259f51670138c2482c58d7cedf25c3",
+      "size": 3722,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/job_utils.py": {
+      "hash": "17248f22ff66f39e91dc8e377013e54dac4cae9cc27886085c93be0e1c7a9e54",
+      "size": 1956,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/locking.sh": {
+      "hash": "e08051a37edd8fdf2c1a7fd12c8877d1db21d0d883498bccfe59c447b54efa78",
+      "size": 1347,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/logging.sh": {
+      "hash": "e774fc287e8bef94aa95e071a0840dcea6a3d60f0d4f139389f217e18f411963",
+      "size": 3079,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/mysql.sh": {
+      "hash": "c6877dc3e6260a897efc2268a8c9db04419b43533bc96952f34a8d5d1ecd9e7e",
+      "size": 17688,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/notify.sh": {
+      "hash": "5a3a36e12a51058c3c703dd2eb504b923ba514dfea53b9d40696e348a4f7e290",
+      "size": 9802,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/postgresql.sh": {
+      "hash": "45c13e55339019734b5a8db02ea771f1c804f2b1023a4293b26fd71d381710fe",
+      "size": 16172,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/rclone.sh": {
+      "hash": "75e11b9b185fb0f3dbae5b675f0fe3a3b5d79248d1e32a460955000c10f71ecf",
+      "size": 17829,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/remotes.sh": {
+      "hash": "ece72b2216a9cc5bcafa57daec65d46226f4b36537534ef3af5eb0918ffb9a8b",
+      "size": 16007,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/restore.sh": {
+      "hash": "5fa8e904d225b4d3a6cd5d1245769de31e69f3c2e6e9d1e6808ab72297271ce2",
+      "size": 12667,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/retention.sh": {
+      "hash": "aeba5a0e1bf3ee361c0b3c7883ed4ee1525860164bb8ffaf413eed1faecd6b1e",
+      "size": 3173,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/schedule.sh": {
+      "hash": "66005c28667adac320ec2467e8cff34aba0f6b2d1e3585e44509a3683753a1a8",
+      "size": 11241,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/snaplog.sh": {
+      "hash": "c9254c3bbf94d0ea4bdd8835562add46e3e9fa16bb131acb8a2e9d461c14785e",
+      "size": 7704,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/snapshot.sh": {
+      "hash": "3a5d738f17b216bd74b1c70d57b9d87311a9798f14c2c088b865028a3d646303",
+      "size": 6995,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/source.sh": {
+      "hash": "9e292bb8c637cfa2ca625d360eb5dbb82a8c514f325e708fb652940bd2e6ecfa",
+      "size": 8496,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/ssh.sh": {
+      "hash": "9f78f9da1d4b87fcd5f49f1919b58b84d618835e79e0eb9cb9df3fd715724bbd",
+      "size": 3281,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/targets.sh": {
+      "hash": "69cd2ab5acbb4481af44c7d41895a3d84781ecbf1fe5709ed444cc4fcecb797e",
+      "size": 11101,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/transfer.sh": {
+      "hash": "effdc2c0957a1c44b8291ff75d35a85fe7683be96970ed533490e81cd6f1bfc7",
+      "size": 28659,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "lib/utils.sh": {
+      "hash": "9132a0127ef01031acba7471a7b007675b657ba3ffe62a4a838ee5f538db5319",
+      "size": 3370,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "rpm/gniza.spec": {
+      "hash": "61adc3e69eaef381a1178d0c9f9d1309b8aa34f877bfaf8320b17cf7b2cfd2b2",
+      "size": 3318,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "scripts/autoconfig-web-receiver.py": {
+      "hash": "9156b85403b6489d295ff541a25dc8e2286fc9a3f450b27878d1f71dbfc872b0",
+      "size": 1789,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "scripts/build-deb.sh": {
+      "hash": "e7420b13929c017a4d3a19537ad4d2ddfcecbe82fcb7be51ac70c67a19f43caf",
+      "size": 3019,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "scripts/build-rpm.sh": {
+      "hash": "9c8375ec159f5856e99037aa23b7e03771e45d5d35e4c25c0b29862568a0b728",
+      "size": 1262,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "scripts/deploy.sh": {
+      "hash": "cd262d838d687e90a911b73c725e094424f9dab37157884bb8fe608319e689de",
+      "size": 3249,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "scripts/install.sh": {
+      "hash": "7ae31a07fe527383295de83bf20873bcdb9f56e8f96746507982ee20ff405aa2",
+      "size": 15072,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "scripts/record-autoconfig-demo.py": {
+      "hash": "d2839f19bf4d00bbdc7fe7be002a5d605780c6056fd6323efd556186d6d448cf",
+      "size": 5022,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "scripts/record-server-autoconfig.sh": {
+      "hash": "04ed90840960357da98a47e8b8dc9ba65c37ca5bdd4dfe6ba094abef7133bfb8",
+      "size": 1119,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "scripts/record-web-demo.py": {
+      "hash": "5ceef6028c17ca3abcf0da22fa10fb2d494c32aceea907a0e5271d32223f1084",
+      "size": 3691,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "scripts/setup-remote.sh": {
+      "hash": "467b96575ba2e5a2bc4cdecb1ffd07b0e7f7414663c5f41d11571a9d633c1285",
+      "size": 12278,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "scripts/uninstall.sh": {
+      "hash": "4a7c98f0491e03ae43a7b51a02e038cb898d4bd0d331253adfecd9771e32cf70",
+      "size": 4281,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "scripts/update.sh": {
+      "hash": "bc3f3fe8ea0593dfcfc05aad1f65828a61a445adeff68e1d0d60f9aa489ec767",
+      "size": 4276,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/__init__.py": {
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/__main__.py": {
+      "hash": "a82de82e01331572bb2d656c2e9ee9807b2d0eba63eb05ca0ccbd9e9ff192145",
+      "size": 5541,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/app.py": {
+      "hash": "2ea0e7a8413d511f6d458fd587596f562c83a3b2449155b0cdad86f7b9896a0a",
+      "size": 4914,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/backend.py": {
+      "hash": "693cabe55f624aaa3875d91af4fe6c30a9309a07da7874747cb55bfb046472e2",
+      "size": 901,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/config.py": {
+      "hash": "271967e0e2a92462ef95cc6f6cb4a706b57d753d1a48bceb1401656ed33daa6f",
+      "size": 4276,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/docs.py": {
+      "hash": "77db0baba00faa2e7f8a154f13513e78285446c732c0e46557e702c4ef9acb26",
+      "size": 12810,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/gniza.tcss": {
+      "hash": "9cfeb8416f8cea7f3cf450373dfba4d9c090394751a04eb48b99c3b489d283f2",
+      "size": 7652,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/jobs.py": {
+      "hash": "91c4985a4d956d98c33012d3bed5a578395f43c56814d56537a876433b85cec5",
+      "size": 24586,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/models.py": {
+      "hash": "3a7479777a659c1111f20f9df2e10ed98b93b2f42bdd44a4277a4193f7d1018b",
+      "size": 17875,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/rclone_test.py": {
+      "hash": "e7a5944be49d38da812267b408e50bee6f86c9a3e916ac1a96e60510bed09c6f",
+      "size": 4108,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "web/__init__.py": {
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "web/__main__.py": {
+      "hash": "6d21f2bebd814c9a6b703dd9cbbaa746d555cafdb20e6b7f37fdd9b01f2cdce5",
+      "size": 1738,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "web/app.py": {
+      "hash": "089f756eb2b9ce2ca28362a21471a553a7263b6447fe21e9eedee032980e142a",
+      "size": 7209,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "web/backend.py": {
+      "hash": "f773ce529b33dcdb4730a0b7b092a63c07d7e9a5339b98527ecc65a08ca61013",
+      "size": 319,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "web/helpers.py": {
+      "hash": "862f08f0114ca3eddaa9c131dde221f69c72d9421a527809586e0901dc812485",
+      "size": 2722,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "web/jobs.py": {
+      "hash": "442c7e36593c75008ca897cdeacd46c8682658742d6b40719e7e88d56a54afb3",
+      "size": 17099,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "web/ssh_utils.py": {
+      "hash": "7fead1f76b1f8e5ba813564c43c8c7733f4eea0a165e1e559c4aaa52baab3356",
+      "size": 2570,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/screens/__init__.py": {
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/screens/backup.py": {
+      "hash": "8888fff26d0700bc7608847e2b25cb63044c01f596a9dc4dc497adbcbcefc2af",
+      "size": 4525,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/screens/email_log.py": {
+      "hash": "5d6cde429c1272a7bb8737f16d8f7bbcbf9fbf50a3af7435c1eaebcf019efb41",
+      "size": 2827,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/screens/logs.py": {
+      "hash": "0bc83b76e8349c60393a8d710c8cb365ef14eccaf96a706ad00d7d7a9a1df262",
+      "size": 8161,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/screens/main_menu.py": {
+      "hash": "56590f129114a49cdf831e6483903bec7eaea59f1c28a0091902387defdaa1f4",
+      "size": 4935,
+      "lastScanned": "2026-03-17T14:53:20.489Z"
+    },
+    "tui/screens/remote_edit.py": {
+      "hash": "2fd41f9bdbf7a7e22b29704df9463f405223ca627e7cd98dc627ca1a5f998f5e",
+      "size": 17936,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/screens/remotes.py": {
+      "hash": "95871982d90740662b2b4bed4a9f05192cdcfe52def2b9761511a2fb8709be84",
+      "size": 5614,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/screens/restore.py": {
+      "hash": "33fe7548f67363fe152096ebd0f72aff705ab739568f8eb773e6a8b5b75aa38b",
+      "size": 9412,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/screens/running_tasks.py": {
+      "hash": "0e5ca3aa2e1e2f05e70e79d7feabc3816ea8895f96a53f8db1ced48ea2ef08b4",
+      "size": 11021,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/screens/schedule.py": {
+      "hash": "00d7fc6e5046ed266aef0b2277b720b9398ea1df11d24e5f94ced0bc0ae5c5e9",
+      "size": 10910,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/screens/schedule_edit.py": {
+      "hash": "6abc49aad6e6e2489af54a796f2310d283e1c6a6db57eed58e64f0d5ee3ce810",
+      "size": 11416,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/screens/settings.py": {
+      "hash": "fb0b8bab70f138f78d1f129992b96cf4fc90294a2c62dc9d1503b80ea562dfd1",
+      "size": 15667,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/screens/snapshots.py": {
+      "hash": "d57a666b148b399310bf940d86c8533081710ee2b76485a8bc4e2220bf35a05f",
+      "size": 5667,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/screens/target_edit.py": {
+      "hash": "a4d8503d8b5509b5d613949073ebe4bd6464d01c1ea8d0c121132b3d7e656d18",
+      "size": 28693,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/screens/targets.py": {
+      "hash": "9b7cf3d1ebf9c7d729babe42296099079f3a1f3c0a2ed1890f50834bd1ac6336",
+      "size": 4361,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/screens/wizard.py": {
+      "hash": "a6f4cec77f7ecf251ae022ef2c2da69b63aee7123fd09196e7ce7d6b22365406",
+      "size": 8952,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/web_templates/app_index.html": {
+      "hash": "f1eb96ea332b826ead89a00192c21ff31d125edd66d85136a0e4fe0bc2a48a60",
+      "size": 7497,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/__init__.py": {
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/api.py": {
+      "hash": "eb00b93029406817fb10090675099dae17dae5bee1478d2b72996e895a2aa956",
+      "size": 12074,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/auth.py": {
+      "hash": "3a6385fbbc4af0e2ccf06856d7e58961269bedd58c8174c25be73a9a17eb7075",
+      "size": 3925,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/backup.py": {
+      "hash": "1798d152906395e105c0b26bcc2d76bc7b3a21a694ac8fccc3f8eebf8043119c",
+      "size": 1616,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/dashboard.py": {
+      "hash": "ece4e2deed206ad5e65fa15a6c91ce308e59727090936c8fe6c8a527541feef2",
+      "size": 5447,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/docs.py": {
+      "hash": "9ff6df6e5a1776f1ac50fc8cbcb669862c702548a9ce35032f9bcc3dd823a7f2",
+      "size": 1122,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/health.py": {
+      "hash": "3519ce7da9f18d5d441ed05cff922c5db8746aa54fb795faf0c1322d70b01f60",
+      "size": 1309,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/jobs.py": {
+      "hash": "325d27fef42425c8fb9b58ff6cdbc96e036a135728a98bd22ac1a0cb18ce33d1",
+      "size": 4244,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/logs.py": {
+      "hash": "1ac14d8b5b1e378406c0721fdca4c9b2fd64b5263d19dbc37871ed6289c4ad72",
+      "size": 3965,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/notification_log.py": {
+      "hash": "f34497799a5b186ed0984daaa36c9704d667291685eb1f83b54a08e4a6462b86",
+      "size": 2236,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/rclone_config.py": {
+      "hash": "c92951a725bcb905c3030702675a1fd25e47fd9a71542798120a590eaacf834f",
+      "size": 37205,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/remotes.py": {
+      "hash": "4992c9e7af06f67f90d9b571658b90e6542b1f2823d857833aa5ed019be1668e",
+      "size": 13152,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/restore.py": {
+      "hash": "ff719c7388fa7935ecd86fee6de38b12e669940b44680c3d12813f09ee9010e8",
+      "size": 3747,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/retention.py": {
+      "hash": "829c823c7ec7747143ade6d9f2e1d12158accb7cd01c06e2d7decaea25ba735e",
+      "size": 1904,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/schedules.py": {
+      "hash": "770ba0003c07aa19bfcfb69883a1a585c8dfb11fdf81374c936c53f49299a598",
+      "size": 11904,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/settings.py": {
+      "hash": "0a132994d61d3d54c97894357064676670281ffa740afe898682cc985bbb781e",
+      "size": 5950,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/snapshots.py": {
+      "hash": "4d0686ff01cacd369620e98de276ab4c3c39d2998a8f044271b48cdd2c720150",
+      "size": 18578,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/targets.py": {
+      "hash": "b6ba371a7f6f2eac9c0e37944041c6f98032a37d572cfc1345e9f4d89925916c",
+      "size": 16361,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/blueprints/wizard.py": {
+      "hash": "c82aa6b574b273158f9afd657a996c6407bebbc4c2acd39f69d0ef6c93b13680",
+      "size": 11014,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/widgets/__init__.py": {
+      "hash": "99bb6ddc17f3911a59b29976345507663ab1df89bc3a571b4713299d22f1e443",
+      "size": 463,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/widgets/confirm_dialog.py": {
+      "hash": "b27d4bf588f8af8a20f41fbb99bf88633bbb2ff4528b2cc7bfc8a0ffe533e4bd",
+      "size": 969,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/widgets/docs_panel.py": {
+      "hash": "8c9843efa2a28afd38ac6728c9ff405fb0e1b025d122c827f194a093cb295e64",
+      "size": 1903,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/widgets/file_picker.py": {
+      "hash": "b7fb5edfdd5bff4179f1972faf48c4fc8f8855c198965ad0c2c2a9c039f5aa52",
+      "size": 1691,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/widgets/folder_picker.py": {
+      "hash": "047728c20c21ee261bef2b81254b7f291a5ec8abf6681855087de801149743bb",
+      "size": 3744,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/widgets/header.py": {
+      "hash": "dbda5be83e6c513013324dc4a172162c1c62ea19edad07abb66b670a24d7e7ee",
+      "size": 1676,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/widgets/operation_log.py": {
+      "hash": "007cbfe8a2e3680a749c508316b54a95f7dfc635eb1300a994c79830723f7b02",
+      "size": 5010,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/widgets/remote_folder_picker.py": {
+      "hash": "f24c5ff74b739cda0e026c5df67a732b576486fa34c4287144aeabc4ddbe113c",
+      "size": 4919,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/widgets/snapshot_browser.py": {
+      "hash": "3b5010b8d27058729c4b888447f34fc0ea37f08d94378d539655b9ccb04cb849",
+      "size": 2090,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "tui/widgets/tag_list.py": {
+      "hash": "f13ea897f7c94aaa639b7dcfb3c20a4257e5bc983f4880c2e9a2ea59cc81f18c",
+      "size": 4312,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/base.html": {
+      "hash": "4756b5157e4eb886a82c86bdbff336c69d2fe9fcec29c08e5c3470732c9c53a2",
+      "size": 10334,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/components/flash.html": {
+      "hash": "6298304eceeff4d427d9222902ff17aa47c48f92d1d01cf1ed42826823f23450",
+      "size": 818,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/components/folder_browser.html": {
+      "hash": "9006f6ccd1d079867da814d2b665cdbb3ba2080b8bcd76f2c253e7a493c6fa4c",
+      "size": 6159,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/components/folder_browser_children.html": {
+      "hash": "1e803b84d595fe5afb5becbd71e2abc48e48f9280e659b264573724b563c896f",
+      "size": 1849,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/components/navbar.html": {
+      "hash": "ac6cd4cbb269de2d258ae9a3eb2b58f4bbf73b4a0033b5db6e1f19f46061c0a4",
+      "size": 10637,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/components/pagination.html": {
+      "hash": "c15266acd14bba083b04a9d6b30e7b23bc2d32a704defc2699ce8c0d38fa32b2",
+      "size": 661,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/backup/index.html": {
+      "hash": "26e475494e1b62246e0ce3e79afb189978e7278f51935a6a753191bf2d777bdf",
+      "size": 2810,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/auth/login.html": {
+      "hash": "deffad575a65f0aee91082e601f37515706cfdd53d181fe9bca35719ec1e48ec",
+      "size": 3371,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/dashboard/index.html": {
+      "hash": "637072e2fd1e8f76ce842bc6226eacac71f5c811f400b2af3a7b4b6282636b41",
+      "size": 11296,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/dashboard/system_stats_partial.html": {
+      "hash": "0323e86193093d5b8d7dd8c4f2d472194a3aeda69b340e52719ff94355733c25",
+      "size": 4621,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/docs/index.html": {
+      "hash": "150e983a8036d6008d6b208b0ba11a46cd019e3e9f7245983ba9c7391a9fa5fb",
+      "size": 4913,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/health/check_partial.html": {
+      "hash": "36f6cd44d2c79aa505b8f6bfa754d7479823e4e35734f97681af12319c73a7ab",
+      "size": 3343,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/health/index.html": {
+      "hash": "4d0f08350c43beadc2f6d31e949318f4dccc733999472ea308d29ad6f1a4a03e",
+      "size": 2305,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/jobs/index.html": {
+      "hash": "3cb936a8d7a8a9825579991b55524d28071b62ebab1bfccb9c671306df60355f",
+      "size": 2801,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/jobs/log_partial.html": {
+      "hash": "b64857e17edaae5f0d7927d7c1b74a7848734184199d96bcab16eb994b0f7d45",
+      "size": 288,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/jobs/progress_partial.html": {
+      "hash": "4713b3a06a87c8388fe2f6ec030dc5461a512361e1580c3380b53ae43f7d4f97",
+      "size": 684,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/jobs/running_badge.html": {
+      "hash": "b2c434f7af98fcb25adf70c1c53b7688e552e3380f291cc707dd19a17d870c4c",
+      "size": 502,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/jobs/sidebar_badge.html": {
+      "hash": "07d7201d7621268ac675d418545d703ced6cc1c8746c02dee7d7f2ac2491e498",
+      "size": 237,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/jobs/table_partial.html": {
+      "hash": "a6abf340cec37ea98a2c3ea0daa7d45302b609d82a270917ca3e797072d7f1b4",
+      "size": 4747,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/jobs/viewer_partial.html": {
+      "hash": "c9c080a710436dd408752072ad102590f155b16ce44d51cfd65e06c625de2dac",
+      "size": 774,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/logs/index.html": {
+      "hash": "0cdc8581e7cfcc00b244121b629b71afba25d275efabe097e0b3fc5183138440",
+      "size": 8152,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/logs/view.html": {
+      "hash": "b275de946b6a2132a13752795039266957925e921f9adba8201fb04819bb2e1b",
+      "size": 1400,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/notification_log/index.html": {
+      "hash": "9386e2007ae3a88495695d95fb44368d468f8f3c6ac92925f7383cc29191dbb9",
+      "size": 3766,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/rclone_config/edit.html": {
+      "hash": "20f7b87d05efca256cbf46d82422047231cf18cdb32081d35f54f4bc7500b062",
+      "size": 15978,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/rclone_config/fields_partial.html": {
+      "hash": "9332d0c4d912648f2fdf114d028d0dc2ba707e0a5472482f21284ca84fd481bc",
+      "size": 3867,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/rclone_config/list.html": {
+      "hash": "374b78ddf339b72e10dcdca46c6d010bacce5f161b56f8098dad37a61c796137",
+      "size": 5468,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/rclone_config/oauth_done.html": {
+      "hash": "6210168b79087316adcad93d2669553c8545fe55d460928c9717adec8a4a3779",
+      "size": 1081,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/rclone_config/waiting.html": {
+      "hash": "5cfb2694a9d226c2c1458fbc905d63097bf390e9797c73c70b08d67c6ceec454",
+      "size": 6180,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/rclone_config/waiting_remote.html": {
+      "hash": "c87b56c4951a3a4f82ce3477f4b4e6d21317713982646c36b9708050550ea2ce",
+      "size": 8943,
+      "lastScanned": "2026-03-17T14:53:20.490Z"
+    },
+    "web/templates/rclone_config/wizard_step.html": {
+      "hash": "1519ce5f94de295cb5f41a46feabe5f74b42666e2727adc0abcc0b5d898f7caf",
+      "size": 4227,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/restore/destinations_partial.html": {
+      "hash": "6d080c22229b6d59c43335195eb42fa34a5626bbfe5d9c09dd86415e935a0ed0",
+      "size": 145,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/restore/index.html": {
+      "hash": "b5e18fa6bb0b1ea1c594beb5bef443d0c2af2e38f7e69b1175111e97ca1e4a9f",
+      "size": 6218,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/restore/snapshots_partial.html": {
+      "hash": "1d674ca70f1fc7de54b232dbaedb380e43dbefe3bddce27b2b95370ed0d44a72",
+      "size": 233,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/schedules/edit.html": {
+      "hash": "081d9305cc3366d550aa5d27bfa0f3355b1024ba4bce2cf8872fd54def621a39",
+      "size": 10753,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/schedules/list.html": {
+      "hash": "516dbf945e3c48ed5b5dabcaf2ba0ddf4a54e77df872a2e5a774592b42132910",
+      "size": 9514,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/remotes/auto_configure.html": {
+      "hash": "fe593a6735910a17133a3e4c5da5392b56b0b96eae251c02ecabdaa745ebd9fe",
+      "size": 4889,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/remotes/edit.html": {
+      "hash": "497bf194ec386b2594adb34bb72fb0ed38e0af0fbe00b6201592221f574d85e3",
+      "size": 23992,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/remotes/list.html": {
+      "hash": "618eabf9b163072b0be71258b786ac35b63692180121f4c34e4020527a1ed021",
+      "size": 4869,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/remotes/test_result.html": {
+      "hash": "1a2b9a85dcd8ab442acdbaa5e827fdd9dc6c350b6c671fe100d041f03e5001f7",
+      "size": 573,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/settings/index.html": {
+      "hash": "f16e828afbf3d41559cec6586316149b6ae5ec3cc95ca1535bcfdca7466390bd",
+      "size": 30116,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/retention/index.html": {
+      "hash": "15a8efb91c6c58db911c95b28eb0b0f16c5817b6202b0566684f2fa56f469069",
+      "size": 2936,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/snapshots/browse_children.html": {
+      "hash": "687dba6bd8f4dcf2cc24b305ea28245865bda3311162e2e6e33e56e2f75578de",
+      "size": 2890,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/snapshots/browse_partial.html": {
+      "hash": "32d73a8016e8733e0d93a467546a2b37a59391ecf5cc5dee3e5a1f877fabbf3b",
+      "size": 4280,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/snapshots/index.html": {
+      "hash": "da0320c88d1c522a78f8196b35a3b30ba7788c8ce7e82de3ecb24a8a6ed60c11",
+      "size": 3518,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/snapshots/list_partial.html": {
+      "hash": "33d6b3dbd3992b50dc7ce85028a9b4ba6da93ed953b74f0ba62c00ee027dbc3c",
+      "size": 1793,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/targets/auto_configure.html": {
+      "hash": "3777b9b44a2db18cb7af667b66bf5a02e57fe9f483e351109863fdd035780b56",
+      "size": 4821,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/targets/edit.html": {
+      "hash": "0561cb81ab4f99394aa02c4f938f430032055891b176a50c8d08efa1b8ae7eb6",
+      "size": 36467,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/targets/list.html": {
+      "hash": "fa084d9266da6bd39f05877b1d3fc7e8251fe1f80e637db91d77c28c1606eda1",
+      "size": 5605,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    },
+    "web/templates/wizard/index.html": {
+      "hash": "3902c645574dd4204421898d2afc77a3693ceeea88391c056a0d148bceb5cc34",
+      "size": 66364,
+      "lastScanned": "2026-03-17T14:53:20.491Z"
+    }
+  },
+  "lastFindings": {
+    "DOCUMENTATION.md": [
+      {
+        "line": 488,
+        "column": 15,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"your-password\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 620,
+        "column": 8,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"your-password\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 1339,
+        "column": 6,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"app-password\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      }
+    ],
+    "lib/config.sh": [
+      {
+        "line": 51,
+        "column": 10,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"${SMTP_PASSWORD:-}\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      }
+    ],
+    "lib/postgresql.sh": [
+      {
+        "line": 45,
+        "column": 15,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"$TARGET_POSTGRESQL_PASSWORD\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 106,
+        "column": 18,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"${TARGET_POSTGRESQL_PASSWORD}\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      }
+    ],
+    "lib/remotes.sh": [
+      {
+        "line": 41,
+        "column": 19,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"${REMOTE_PASSWORD:-}\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 64,
+        "column": 12,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"$_SAVED_REMOTE_PASSWORD\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 128,
+        "column": 12,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"${REMOTE_PASSWORD:-}\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      }
+    ],
+    "lib/targets.sh": [
+      {
+        "line": 61,
+        "column": 18,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"${TARGET_MYSQL_PASSWORD:-}\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 70,
+        "column": 23,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"${TARGET_POSTGRESQL_PASSWORD:-}\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 82,
+        "column": 19,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD=\"${TARGET_SOURCE_PASSWORD:-}\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      }
+    ],
+    "scripts/record-autoconfig-demo.py": [
+      {
+        "line": 12,
+        "column": 1,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD = \"s6PjDa-qfcN-vu-Szm_Exe_1UEv9-etwxuDJOVTiTJM\"",
+        "confidence": "high",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 17,
+        "column": 1,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 87,
+        "column": 32,
+        "severity": "medium",
+        "category": "auth",
+        "rule": "NO_RATE_LIMIT_LOGIN",
+        "title": "No Rate Limiting on Authentication",
+        "description": "Auth endpoints without rate limiting are vulnerable to brute-force attacks.",
+        "matched": "/login\"",
+        "confidence": "low",
+        "cwe": "CWE-307",
+        "owasp": "A07:2021",
+        "fix": "Add rate limiting: express-rate-limit, @upstash/ratelimit, or Cloudflare rules"
+      },
+      {
+        "line": 11,
+        "column": 21,
+        "severity": "medium",
+        "category": "ssrf",
+        "rule": "SSRF_INTERNAL_IP",
+        "title": "SSRF: Internal IP Pattern",
+        "description": "Internal IP address in code. Verify it is not reachable via user-controlled URLs.",
+        "matched": "10.0.3.20",
+        "confidence": "low",
+        "cwe": "CWE-918",
+        "owasp": "A10:2021",
+        "fix": "Block private IP ranges in URL validation for user-supplied URLs"
+      },
+      {
+        "line": 13,
+        "column": 16,
+        "severity": "medium",
+        "category": "ssrf",
+        "rule": "SSRF_INTERNAL_IP",
+        "title": "SSRF: Internal IP Pattern",
+        "description": "Internal IP address in code. Verify it is not reachable via user-controlled URLs.",
+        "matched": "10.0.3.21",
+        "confidence": "low",
+        "cwe": "CWE-918",
+        "owasp": "A10:2021",
+        "fix": "Block private IP ranges in URL validation for user-supplied URLs"
+      },
+      {
+        "line": 18,
+        "column": 20,
+        "severity": "medium",
+        "category": "ssrf",
+        "rule": "SSRF_INTERNAL_IP",
+        "title": "SSRF: Internal IP Pattern",
+        "description": "Internal IP address in code. Verify it is not reachable via user-controlled URLs.",
+        "matched": "10.0.3.20",
+        "confidence": "low",
+        "cwe": "CWE-918",
+        "owasp": "A10:2021",
+        "fix": "Block private IP ranges in URL validation for user-supplied URLs"
+      }
+    ],
+    "scripts/record-web-demo.py": [
+      {
+        "line": 7,
+        "column": 1,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "PASSWORD = \"wiL5XYr5UwgOMhpIrc69QsuZIDeT0-Sqz_WgyPDPjQU\"",
+        "confidence": "high",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 23,
+        "column": 31,
+        "severity": "medium",
+        "category": "auth",
+        "rule": "NO_RATE_LIMIT_LOGIN",
+        "title": "No Rate Limiting on Authentication",
+        "description": "Auth endpoints without rate limiting are vulnerable to brute-force attacks.",
+        "matched": "/login\"",
+        "confidence": "low",
+        "cwe": "CWE-307",
+        "owasp": "A07:2021",
+        "fix": "Add rate limiting: express-rate-limit, @upstash/ratelimit, or Cloudflare rules"
+      },
+      {
+        "line": 6,
+        "column": 20,
+        "severity": "medium",
+        "category": "ssrf",
+        "rule": "SSRF_INTERNAL_IP",
+        "title": "SSRF: Internal IP Pattern",
+        "description": "Internal IP address in code. Verify it is not reachable via user-controlled URLs.",
+        "matched": "10.0.3.20",
+        "confidence": "low",
+        "cwe": "CWE-918",
+        "owasp": "A10:2021",
+        "fix": "Block private IP ranges in URL validation for user-supplied URLs"
+      }
+    ],
+    "tui/screens/target_edit.py": [
+      {
+        "line": 65,
+        "column": 30,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "\"Password:\", classes=\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 130,
+        "column": 37,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "Password:\", classes=\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 159,
+        "column": 42,
+        "severity": "medium",
+        "category": "secret",
+        "rule": "Password Assignment",
+        "title": "Password Assignment",
+        "description": "Hardcoded passwords are a critical vulnerability.",
+        "matched": "Password:\", classes=\"",
+        "confidence": "medium",
+        "fix": "Move to environment variable or secrets manager"
+      },
+      {
+        "line": 434,
+        "column": 17,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 447,
+        "column": 21,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      }
+    ],
+    "web/blueprints/snapshots.py": [
+      {
+        "line": 415,
+        "column": 75,
+        "severity": "high",
+        "category": "api",
+        "rule": "API_UPLOAD_NO_TYPE_CHECK",
+        "title": "API: File Upload Without Type Validation",
+        "description": "File upload using original filename without type validation.",
+        "matched": "filename)",
+        "confidence": "low",
+        "cwe": "CWE-434",
+        "owasp": "A04:2021",
+        "fix": "Validate file extension and MIME type. Generate random filenames for storage."
+      },
+      {
+        "line": 26,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 91,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 151,
+        "column": 21,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 227,
+        "column": 13,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 238,
+        "column": 14,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      }
+    ],
+    "daemon/core.py": [
+      {
+        "line": 369,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      }
+    ],
+    "lib/auto_configure.py": [
+      {
+        "line": 39,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      }
+    ],
+    "scripts/autoconfig-web-receiver.py": [
+      {
+        "line": 13,
+        "column": 1,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 43,
+        "column": 28,
+        "severity": "medium",
+        "category": "auth",
+        "rule": "NO_RATE_LIMIT_LOGIN",
+        "title": "No Rate Limiting on Authentication",
+        "description": "Auth endpoints without rate limiting are vulnerable to brute-force attacks.",
+        "matched": "/login\"",
+        "confidence": "low",
+        "cwe": "CWE-307",
+        "owasp": "A07:2021",
+        "fix": "Add rate limiting: express-rate-limit, @upstash/ratelimit, or Cloudflare rules"
+      },
+      {
+        "line": 8,
+        "column": 21,
+        "severity": "medium",
+        "category": "ssrf",
+        "rule": "SSRF_INTERNAL_IP",
+        "title": "SSRF: Internal IP Pattern",
+        "description": "Internal IP address in code. Verify it is not reachable via user-controlled URLs.",
+        "matched": "10.0.3.20",
+        "confidence": "low",
+        "cwe": "CWE-918",
+        "owasp": "A10:2021",
+        "fix": "Block private IP ranges in URL validation for user-supplied URLs"
+      },
+      {
+        "line": 14,
+        "column": 19,
+        "severity": "medium",
+        "category": "ssrf",
+        "rule": "SSRF_INTERNAL_IP",
+        "title": "SSRF: Internal IP Pattern",
+        "description": "Internal IP address in code. Verify it is not reachable via user-controlled URLs.",
+        "matched": "10.0.3.20",
+        "confidence": "low",
+        "cwe": "CWE-918",
+        "owasp": "A10:2021",
+        "fix": "Block private IP ranges in URL validation for user-supplied URLs"
+      }
+    ],
+    "tui/__main__.py": [
+      {
+        "line": 31,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 44,
+        "column": 17,
+        "severity": "medium",
+        "category": "ssrf",
+        "rule": "SSRF_INTERNAL_IP",
+        "title": "SSRF: Internal IP Pattern",
+        "description": "Internal IP address in code. Verify it is not reachable via user-controlled URLs.",
+        "matched": "127.0.0.1",
+        "confidence": "low",
+        "cwe": "CWE-918",
+        "owasp": "A10:2021",
+        "fix": "Block private IP ranges in URL validation for user-supplied URLs"
+      }
+    ],
+    "tui/rclone_test.py": [
+      {
+        "line": 30,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 89,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      }
+    ],
+    "web/backend.py": [
+      {
+        "line": 8,
+        "column": 5,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      }
+    ],
+    "web/helpers.py": [
+      {
+        "line": 64,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      }
+    ],
+    "web/jobs.py": [
+      {
+        "line": 130,
+        "column": 13,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      }
+    ],
+    "tui/screens/remote_edit.py": [
+      {
+        "line": 271,
+        "column": 17,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 282,
+        "column": 17,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 285,
+        "column": 21,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 295,
+        "column": 17,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 301,
+        "column": 21,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      }
+    ],
+    "tui/widgets/remote_folder_picker.py": [
+      {
+        "line": 66,
+        "column": 13,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      }
+    ],
+    "web/blueprints/api.py": [
+      {
+        "line": 85,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 123,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 127,
+        "column": 13,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 130,
+        "column": 17,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 220,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      }
+    ],
+    "web/blueprints/rclone_config.py": [
+      {
+        "line": 58,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 73,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 900,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "medium",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 925,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 947,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result2 = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 971,
+        "column": 9,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 25,
+        "column": 58,
+        "severity": "medium",
+        "category": "auth",
+        "rule": "NO_RATE_LIMIT_LOGIN",
+        "title": "No Rate Limiting on Authentication",
+        "description": "Auth endpoints without rate limiting are vulnerable to brute-force attacks.",
+        "matched": "/auth\"",
+        "confidence": "low",
+        "cwe": "CWE-307",
+        "owasp": "A07:2021",
+        "fix": "Add rate limiting: express-rate-limit, @upstash/ratelimit, or Cloudflare rules"
+      },
+      {
+        "line": 30,
+        "column": 58,
+        "severity": "medium",
+        "category": "auth",
+        "rule": "NO_RATE_LIMIT_LOGIN",
+        "title": "No Rate Limiting on Authentication",
+        "description": "Auth endpoints without rate limiting are vulnerable to brute-force attacks.",
+        "matched": "/auth\"",
+        "confidence": "low",
+        "cwe": "CWE-307",
+        "owasp": "A07:2021",
+        "fix": "Add rate limiting: express-rate-limit, @upstash/ratelimit, or Cloudflare rules"
+      },
+      {
+        "line": 410,
+        "column": 59,
+        "severity": "medium",
+        "category": "auth",
+        "rule": "NO_RATE_LIMIT_LOGIN",
+        "title": "No Rate Limiting on Authentication",
+        "description": "Auth endpoints without rate limiting are vulnerable to brute-force attacks.",
+        "matched": "/auth\"",
+        "confidence": "low",
+        "cwe": "CWE-307",
+        "owasp": "A07:2021",
+        "fix": "Add rate limiting: express-rate-limit, @upstash/ratelimit, or Cloudflare rules"
+      },
+      {
+        "line": 45,
+        "column": 36,
+        "severity": "medium",
+        "category": "ssrf",
+        "rule": "SSRF_INTERNAL_IP",
+        "title": "SSRF: Internal IP Pattern",
+        "description": "Internal IP address in code. Verify it is not reachable via user-controlled URLs.",
+        "matched": "127.0.0.1",
+        "confidence": "low",
+        "cwe": "CWE-918",
+        "owasp": "A10:2021",
+        "fix": "Block private IP ranges in URL validation for user-supplied URLs"
+      },
+      {
+        "line": 46,
+        "column": 25,
+        "severity": "medium",
+        "category": "ssrf",
+        "rule": "SSRF_INTERNAL_IP",
+        "title": "SSRF: Internal IP Pattern",
+        "description": "Internal IP address in code. Verify it is not reachable via user-controlled URLs.",
+        "matched": "127.0.0.1",
+        "confidence": "low",
+        "cwe": "CWE-918",
+        "owasp": "A10:2021",
+        "fix": "Block private IP ranges in URL validation for user-supplied URLs"
+      },
+      {
+        "line": 409,
+        "column": 23,
+        "severity": "medium",
+        "category": "ssrf",
+        "rule": "SSRF_INTERNAL_IP",
+        "title": "SSRF: Internal IP Pattern",
+        "description": "Internal IP address in code. Verify it is not reachable via user-controlled URLs.",
+        "matched": "127.0.0.1",
+        "confidence": "low",
+        "cwe": "CWE-918",
+        "owasp": "A10:2021",
+        "fix": "Block private IP ranges in URL validation for user-supplied URLs"
+      },
+      {
+        "line": 410,
+        "column": 44,
+        "severity": "medium",
+        "category": "ssrf",
+        "rule": "SSRF_INTERNAL_IP",
+        "title": "SSRF: Internal IP Pattern",
+        "description": "Internal IP address in code. Verify it is not reachable via user-controlled URLs.",
+        "matched": "127.0.0.1",
+        "confidence": "low",
+        "cwe": "CWE-918",
+        "owasp": "A10:2021",
+        "fix": "Block private IP ranges in URL validation for user-supplied URLs"
+      },
+      {
+        "line": 63,
+        "column": 20,
+        "severity": "medium",
+        "category": "llm",
+        "rule": "AGENT_NO_OUTPUT_SCHEMA",
+        "title": "Agent: No Schema Validation on LLM Output",
+        "description": "LLM JSON output parsed without schema validation. Malformed or malicious output can cause unexpected behavior.",
+        "matched": "json.loads(result",
+        "confidence": "high",
+        "cwe": "CWE-20",
+        "owasp": "A03:2021",
+        "fix": "Validate LLM structured output against a schema (Zod, Joi, Pydantic) before processing."
+      },
+      {
+        "line": 78,
+        "column": 20,
+        "severity": "medium",
+        "category": "llm",
+        "rule": "AGENT_NO_OUTPUT_SCHEMA",
+        "title": "Agent: No Schema Validation on LLM Output",
+        "description": "LLM JSON output parsed without schema validation. Malformed or malicious output can cause unexpected behavior.",
+        "matched": "json.loads(result",
+        "confidence": "high",
+        "cwe": "CWE-20",
+        "owasp": "A03:2021",
+        "fix": "Validate LLM structured output against a schema (Zod, Joi, Pydantic) before processing."
+      },
+      {
+        "line": 931,
+        "column": 24,
+        "severity": "medium",
+        "category": "llm",
+        "rule": "AGENT_NO_OUTPUT_SCHEMA",
+        "title": "Agent: No Schema Validation on LLM Output",
+        "description": "LLM JSON output parsed without schema validation. Malformed or malicious output can cause unexpected behavior.",
+        "matched": "json.loads(result",
+        "confidence": "high",
+        "cwe": "CWE-20",
+        "owasp": "A03:2021",
+        "fix": "Validate LLM structured output against a schema (Zod, Joi, Pydantic) before processing."
+      }
+    ],
+    "web/blueprints/remotes.py": [
+      {
+        "line": 41,
+        "column": 13,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 45,
+        "column": 22,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 61,
+        "column": 13,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 65,
+        "column": 21,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 70,
+        "column": 25,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 76,
+        "column": 21,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 86,
+        "column": 13,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 93,
+        "column": 17,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 99,
+        "column": 21,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 67,
+        "column": 50,
+        "severity": "medium",
+        "category": "config",
+        "rule": "PII_GEOLOCATION_STORAGE",
+        "title": "Privacy: Precise Geolocation Stored",
+        "description": "Precise geolocation data stored in database. May require explicit consent under GDPR/CCPA.",
+        "matched": "lative path for write",
+        "confidence": "low",
+        "cwe": "CWE-359",
+        "owasp": "A01:2021",
+        "fix": "Reduce precision of stored geolocation (city-level, not street-level). Require explicit consent for precise location."
+      }
+    ],
+    "web/blueprints/targets.py": [
+      {
+        "line": 46,
+        "column": 13,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 51,
+        "column": 22,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 64,
+        "column": 17,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 143,
+        "column": 13,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 166,
+        "column": 13,
+        "severity": "high",
+        "category": "llm",
+        "rule": "AGENT_OUTPUT_TO_ACTION",
+        "title": "Agent: LLM Output Directly Triggers Actions",
+        "description": "LLM output directly triggers side-effect actions without validation. Hallucinated or injected outputs can cause unintended actions.",
+        "matched": "result = subprocess.run",
+        "confidence": "low",
+        "cwe": "CWE-862",
+        "owasp": "A01:2021",
+        "fix": "Validate LLM output against expected schemas before executing side effects. Add human confirmation for irreversible actions."
+      },
+      {
+        "line": 168,
+        "column": 24,
+        "severity": "medium",
+        "category": "llm",
+        "rule": "AGENT_NO_OUTPUT_SCHEMA",
+        "title": "Agent: No Schema Validation on LLM Output",
+        "description": "LLM JSON output parsed without schema validation. Malformed or malicious output can cause unexpected behavior.",
+        "matched": "json.loads(result",
+        "confidence": "high",
+        "cwe": "CWE-20",
+        "owasp": "A03:2021",
+        "fix": "Validate LLM structured output against a schema (Zod, Joi, Pydantic) before processing."
+      }
+    ],
+    "tui/screens/settings.py": [
+      {
+        "line": 227,
+        "column": 25,
+        "severity": "medium",
+        "category": "auth",
+        "rule": "TIMING_ATTACK_COMPARISON",
+        "title": "Timing Attack: String Comparison",
+        "description": "Direct string comparison of secrets is vulnerable to timing attacks.",
+        "matched": "api_key != ",
+        "confidence": "medium",
+        "cwe": "CWE-208",
+        "owasp": "A02:2021",
+        "fix": "Use crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b))"
+      }
+    ],
+    "web/blueprints/auth.py": [
+      {
+        "line": 74,
+        "column": 12,
+        "severity": "medium",
+        "category": "auth",
+        "rule": "NO_RATE_LIMIT_LOGIN",
+        "title": "No Rate Limiting on Authentication",
+        "description": "Auth endpoints without rate limiting are vulnerable to brute-force attacks.",
+        "matched": "/login\"",
+        "confidence": "low",
+        "cwe": "CWE-307",
+        "owasp": "A07:2021",
+        "fix": "Add rate limiting: express-rate-limit, @upstash/ratelimit, or Cloudflare rules"
+      }
+    ],
+    "web/blueprints/settings.py": [
+      {
+        "line": 81,
+        "column": 21,
+        "severity": "medium",
+        "category": "auth",
+        "rule": "TIMING_ATTACK_COMPARISON",
+        "title": "Timing Attack: String Comparison",
+        "description": "Direct string comparison of secrets is vulnerable to timing attacks.",
+        "matched": "api_key != ",
+        "confidence": "medium",
+        "cwe": "CWE-208",
+        "owasp": "A02:2021",
+        "fix": "Use crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b))"
+      }
+    ],
+    "web/blueprints/wizard.py": [
+      {
+        "line": 5,
+        "column": 52,
+        "severity": "medium",
+        "category": "llm",
+        "rule": "RAG_METADATA_IN_RESPONSE",
+        "title": "RAG: Internal Metadata Exposed in Response",
+        "description": "Internal document metadata (file paths, sources, authors) returned in API responses. Leaks information about the knowledge base structure.",
+        "matched": "url_for, flash, jsonify",
+        "confidence": "low",
+        "cwe": "CWE-200",
+        "owasp": "A01:2021",
+        "fix": "Strip internal metadata before returning responses. Only expose necessary fields to the client."
+      }
+    ],
+    "web/blueprints/restore.py": [
+      {
+        "line": 37,
+        "column": 23,
+        "severity": "medium",
+        "category": "config",
+        "rule": "PII_GEOLOCATION_STORAGE",
+        "title": "Privacy: Precise Geolocation Stored",
+        "description": "Precise geolocation data stored in database. May require explicit consent under GDPR/CCPA.",
+        "matched": "late(\"restore",
+        "confidence": "low",
+        "cwe": "CWE-359",
+        "owasp": "A01:2021",
+        "fix": "Reduce precision of stored geolocation (city-level, not street-level). Require explicit consent for precise location."
+      },
+      {
+        "line": 46,
+        "column": 23,
+        "severity": "medium",
+        "category": "config",
+        "rule": "PII_GEOLOCATION_STORAGE",
+        "title": "Privacy: Precise Geolocation Stored",
+        "description": "Precise geolocation data stored in database. May require explicit consent under GDPR/CCPA.",
+        "matched": "late(\"restore",
+        "confidence": "low",
+        "cwe": "CWE-359",
+        "owasp": "A01:2021",
+        "fix": "Reduce precision of stored geolocation (city-level, not street-level). Require explicit consent for precise location."
+      },
+      {
+        "line": 53,
+        "column": 27,
+        "severity": "medium",
+        "category": "config",
+        "rule": "PII_GEOLOCATION_STORAGE",
+        "title": "Privacy: Precise Geolocation Stored",
+        "description": "Precise geolocation data stored in database. May require explicit consent under GDPR/CCPA.",
+        "matched": "late(\"restore",
+        "confidence": "low",
+        "cwe": "CWE-359",
+        "owasp": "A01:2021",
+        "fix": "Reduce precision of stored geolocation (city-level, not street-level). Require explicit consent for precise location."
+      },
+      {
+        "line": 64,
+        "column": 23,
+        "severity": "medium",
+        "category": "config",
+        "rule": "PII_GEOLOCATION_STORAGE",
+        "title": "Privacy: Precise Geolocation Stored",
+        "description": "Precise geolocation data stored in database. May require explicit consent under GDPR/CCPA.",
+        "matched": "late(\"restore",
+        "confidence": "low",
+        "cwe": "CWE-359",
+        "owasp": "A01:2021",
+        "fix": "Reduce precision of stored geolocation (city-level, not street-level). Require explicit consent for precise location."
+      }
+    ]
+  },
+  "stats": {
+    "totalFiles": 174,
+    "totalFindings": 96,
+    "lastScore": 48.3,
+    "lastGrade": "D"
+  }
+}

@@ -291,15 +291,30 @@ All three interfaces provide the same capabilities. When adding a new feature, i
 
 ## Installation
 
-### Debian/Ubuntu (.deb package)
+### APT Repository (Debian/Ubuntu) — Recommended
+
+Add the official GNIZA repository for automatic updates via `apt`:
 
 ```bash
-# Download the latest .deb
-wget https://git.linux-hosting.co.il/shukivaknin/gniza4linux/releases/download/latest/gniza_0.25_all.deb
+# Download and install the signing key
+curl -fsSL https://deb.gniza.app/gniza.gpg | sudo gpg --dearmor -o /usr/share/keyrings/gniza-archive-keyring.gpg
 
-# Install
-sudo dpkg -i gniza_0.25_all.deb
-sudo apt-get -f install   # resolve dependencies
+# Add the repository
+echo "deb [signed-by=/usr/share/keyrings/gniza-archive-keyring.gpg] https://deb.gniza.app stable main" | sudo tee /etc/apt/sources.list.d/gniza.list
+
+# Update and install
+sudo apt update && sudo apt install gniza
+```
+
+Supported distributions: Debian stable, bookworm, trixie, and Ubuntu noble, jammy.
+
+To update: `sudo apt update && sudo apt upgrade gniza`
+
+To uninstall:
+
+```bash
+sudo apt remove gniza      # remove (keeps config/logs)
+sudo apt purge gniza        # full removal
 ```
 
 ### Quick Install (any Linux)

@@ -304,37 +304,25 @@ All three interfaces provide the same capabilities. When adding a new feature, i
 
 ## Installation
 
-<details open>
-<summary><b>APT Repository (Debian/Ubuntu) — Recommended</b></summary>
-
-Add the official GNIZA repository for automatic updates via `apt`:
+### One-Line Installer (any Linux)
 
 ```bash
-# Download and install the signing key
+curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
+```
+
+The installer handles dependencies, config directories, Python venv, web dashboard, and systemd services. User mode (no root): remove `sudo`.
+
+### APT Repository (Debian/Ubuntu)
+
+```bash
 curl -fsSL https://deb.gniza.app/gniza.gpg | sudo gpg --dearmor -o /usr/share/keyrings/gniza-archive-keyring.gpg
-
-# Add the repository
 echo "deb [signed-by=/usr/share/keyrings/gniza-archive-keyring.gpg] https://deb.gniza.app stable main" | sudo tee /etc/apt/sources.list.d/gniza.list
-
-# Update and install
 sudo apt update && sudo apt install gniza
 ```
 
-Supported distributions: Debian stable, bookworm, trixie, and Ubuntu noble, jammy.
+Supports: Debian stable, bookworm, trixie, and Ubuntu noble, jammy. Updates via `sudo apt upgrade gniza`.
 
-To update: `sudo apt update && sudo apt upgrade gniza`
-
-To uninstall:
-
-```bash
-sudo apt remove gniza      # remove (keeps config/logs)
-sudo apt purge gniza        # full removal
-```
-
-</details>
-
-<details>
-<summary><b>DNF/YUM Repository (RHEL/AlmaLinux/Rocky/Fedora)</b></summary>
+### DNF/YUM Repository (RHEL/AlmaLinux/Rocky/Fedora)
 
 ```bash
 sudo tee /etc/yum.repos.d/gniza.repo << 'EOF'
@@ -349,31 +337,7 @@ sudo dnf install gniza    # or: sudo yum install gniza
 
 To update: `sudo dnf upgrade gniza`
 
-To uninstall:
-
-```bash
-sudo dnf remove gniza
-```
-
-</details>
-
-<details>
-<summary><b>One-Line Installer (any Linux)</b></summary>
-
-```bash
-# Root mode (system-wide)
-curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
-
-# User mode (per-user)
-curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | bash
-```
-
-The installer handles dependencies, config directories, Python venv, web dashboard, and systemd services.
-
-</details>
-
-<details>
-<summary><b>From Source</b></summary>
+### From Source
 
 ```bash
 git clone https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git
@@ -381,8 +345,6 @@ cd gniza4linux
 sudo bash scripts/install.sh    # root mode
 bash scripts/install.sh          # user mode
 ```
-
-</details>
 
 ### Install Paths
 

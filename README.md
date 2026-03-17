@@ -38,8 +38,15 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 
 ## Installation
 
-<details open>
-<summary><b>APT Repository (Debian/Ubuntu) — Recommended</b></summary>
+### One-Line Installer (any Linux)
+
+```bash
+curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
+```
+
+The installer handles dependencies, config directories, Python venv, web dashboard, and systemd services. User mode (no root): remove `sudo`.
+
+### APT Repository (Debian/Ubuntu)
 
 ```bash
 curl -fsSL https://deb.gniza.app/gniza.gpg | sudo gpg --dearmor -o /usr/share/keyrings/gniza-archive-keyring.gpg
@@ -49,10 +56,7 @@ sudo apt update && sudo apt install gniza
 
 Supports: Debian stable, bookworm, trixie, and Ubuntu noble, jammy. Updates via `sudo apt upgrade gniza`.
 
-</details>
-
-<details>
-<summary><b>DNF/YUM Repository (RHEL/AlmaLinux/Rocky/Fedora)</b></summary>
+### DNF/YUM Repository (RHEL/AlmaLinux/Rocky/Fedora)
 
 ```bash
 sudo tee /etc/yum.repos.d/gniza.repo << 'EOF'
@@ -67,25 +71,7 @@ sudo dnf install gniza    # or: sudo yum install gniza
 
 To update: `sudo dnf upgrade gniza`
 
-</details>
-
-<details>
-<summary><b>One-Line Installer (any Linux)</b></summary>
-
-```bash
-# Root mode (system-wide)
-curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | sudo bash
-
-# User mode (no root)
-curl -sSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/install.sh | bash
-```
-
-The installer handles dependencies, config directories, Python venv, web dashboard, and systemd services. Root mode installs to `/usr/local/gniza`, user mode to `~/.local/share/gniza`.
-
-</details>
-
-<details>
-<summary><b>From Source</b></summary>
+### From Source
 
 ```bash
 git clone https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git
@@ -93,8 +79,6 @@ cd gniza4linux && sudo bash scripts/install.sh
 ```
 
 Root mode installs to `/usr/local/gniza`. User mode installs to `~/.local/share/gniza`.
-
-</details>
 
 ### Uninstall
 

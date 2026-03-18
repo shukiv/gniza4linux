@@ -10,6 +10,9 @@ Environment=GNIZA_DIR=/usr/local/gniza
 Environment=PYTHONPATH=/usr/local/gniza
 Restart=always
 RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gniza-daemon
 NoNewPrivileges=yes
 ProtectSystem=full
 PrivateTmp=yes

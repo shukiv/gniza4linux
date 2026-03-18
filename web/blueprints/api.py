@@ -269,7 +269,11 @@ def browse_rclone():
         return '<div class="alert alert-error text-sm">Invalid remote name</div>'
     if config_path:
         config_path = os.path.realpath(config_path)
-        allowed_dirs = [os.path.expanduser("~/.config/rclone"), "/etc/gniza", os.path.expanduser("~")]
+        allowed_dirs = [
+            os.path.expanduser("~/.config/rclone"),
+            os.path.expanduser("~/.config/gniza"),
+            "/etc/gniza",
+        ]
         if not any(config_path.startswith(d) for d in allowed_dirs):
             return '<div class="alert alert-error text-sm">Config path not in allowed directory</div>'
         if not os.path.isfile(config_path):
@@ -302,7 +306,11 @@ def browse_rclone_children():
         return ""
     if config_path:
         config_path = os.path.realpath(config_path)
-        allowed_dirs = [os.path.expanduser("~/.config/rclone"), "/etc/gniza", os.path.expanduser("~")]
+        allowed_dirs = [
+            os.path.expanduser("~/.config/rclone"),
+            os.path.expanduser("~/.config/gniza"),
+            "/etc/gniza",
+        ]
         if not any(config_path.startswith(d) for d in allowed_dirs):
             return ""
         if not os.path.isfile(config_path):
@@ -327,7 +335,11 @@ def rclone_remotes():
     config_path = request.args.get("rclone_config_path", "") or request.args.get("source_rclone_config_path", "")
     if config_path:
         config_path = os.path.realpath(config_path)
-        allowed_dirs = [os.path.expanduser("~/.config/rclone"), "/etc/gniza", os.path.expanduser("~")]
+        allowed_dirs = [
+            os.path.expanduser("~/.config/rclone"),
+            os.path.expanduser("~/.config/gniza"),
+            "/etc/gniza",
+        ]
         if not any(config_path.startswith(d) for d in allowed_dirs):
             return '<option value="">Config path not in allowed directory</option>'
     remotes = get_rclone_remotes(config_path)

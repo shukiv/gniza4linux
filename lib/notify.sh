@@ -120,16 +120,8 @@ _send_via_legacy() {
 }
 
 _json_escape() {
-    # Properly escape a string for JSON using python3 or jq
-    local text="$1"
-    if command -v python3 &>/dev/null; then
-        python3 -c "import json,sys; print(json.dumps(sys.stdin.read()), end='')" <<< "$text"
-    elif command -v jq &>/dev/null; then
-        printf '%s' "$text" | jq -Rs '.'
-    else
-        # Fallback: escape critical chars (quotes, backslashes, newlines)
-        printf '"%s"' "$(printf '%s' "$text" | sed 's/\\/\\\\/g; s/"/\\"/g' | awk '{printf "%s\\n", $0}' | sed '$ s/\\n$//')"
-    fi
+    # Properly escape a string for JSON (python3 is a hard dependency)
+    python3 -c "import json,sys; print(json.dumps(sys.stdin.read()))" <<< "$1"
 }
 
 _send_via_telegram() {

@@ -13,7 +13,7 @@ from lib.config import (
     get_log_retain_days, get_max_concurrent_jobs, parse_conf,
     CONFIG_DIR, LOG_DIR, WORK_DIR,
 )
-from daemon.notify import send_job_notification, send_stale_alert
+from lib.notify_py import send_job_notification, send_stale_alert
 
 logger = logging.getLogger("gniza-daemon")
 

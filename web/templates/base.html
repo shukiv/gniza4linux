@@ -100,7 +100,7 @@ function gnizaCopy(text) {
             <div class="flex-none flex items-center gap-1">
                 <span id="running-tasks-badge"
                       hx-get="{{ url_for('jobs.running_badge') }}"
-                      hx-trigger="load, every 3s"
+                      hx-trigger="load, every 5s"
                       hx-swap="outerHTML">
                 </span>
                 <div class="dropdown dropdown-end">

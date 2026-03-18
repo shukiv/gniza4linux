@@ -11,7 +11,7 @@ from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import AppSettings
 from web.app import login_required
 from web.backend import run_cli_sync
-from daemon.notify import send_test_notification
+from lib.notify_py import send_test_notification
 
 bp = Blueprint("settings", __name__, url_prefix="/settings")
 

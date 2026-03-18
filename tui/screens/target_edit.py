@@ -1,5 +1,6 @@
 from __future__ import annotations
 import re
+from textual import work
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Input, Select, RadioSet, RadioButton
@@ -400,17 +401,21 @@ class TargetEditScreen(Screen):
         )
 
         self.notify("Testing connection...")
+        self._test_and_save(name, target)
+
+    @work(thread=True)
+    def _test_and_save(self, name: str, target) -> None:
         ok, msg = test_source(target)
         if ok is False:
-            self.notify(msg, severity="error")
+            self.app.call_from_thread(self.notify, msg, severity="error")
             return
         if ok is None and msg:
-            self.notify(msg, severity="warning")
+            self.app.call_from_thread(self.notify, msg, severity="warning")
 
         conf = CONFIG_DIR / "targets.d" / f"{name}.conf"
         write_conf(conf, target.to_conf())
-        self.notify(f"Target '{name}' saved.")
-        self.dismiss(name)
+        self.app.call_from_thread(self.notify, f"Target '{name}' saved.")
+        self.app.call_from_thread(self.dismiss, name)
 
     def action_go_back(self) -> None:
         self.dismiss(None)

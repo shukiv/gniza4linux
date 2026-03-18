@@ -122,7 +122,7 @@ def test_remote(remote):
         return True, None
 
     if remote.type == "s3":
-        from tui.rclone_test import test_rclone_s3
+        from lib.rclone_test import test_rclone_s3
         return test_rclone_s3(
             bucket=remote.s3_bucket,
             region=remote.s3_region,
@@ -133,14 +133,14 @@ def test_remote(remote):
         )
 
     if remote.type == "gdrive":
-        from tui.rclone_test import test_rclone_gdrive
+        from lib.rclone_test import test_rclone_gdrive
         return test_rclone_gdrive(
             sa_file=remote.gdrive_sa_file,
             root_folder_id=remote.gdrive_root_folder_id,
         )
 
     if remote.type == "rclone":
-        from tui.rclone_test import test_rclone_generic
+        from lib.rclone_test import test_rclone_generic
         return test_rclone_generic(
             config_path=remote.rclone_config_path,
             remote_name=remote.rclone_remote_name,
@@ -215,7 +215,7 @@ def test_source(target):
         return True, None
 
     if target.source_type == "s3":
-        from tui.rclone_test import test_rclone_s3
+        from lib.rclone_test import test_rclone_s3
         return test_rclone_s3(
             bucket=target.source_s3_bucket,
             region=target.source_s3_region,
@@ -226,14 +226,14 @@ def test_source(target):
         )
 
     if target.source_type == "gdrive":
-        from tui.rclone_test import test_rclone_gdrive
+        from lib.rclone_test import test_rclone_gdrive
         return test_rclone_gdrive(
             sa_file=target.source_gdrive_sa_file,
             root_folder_id=target.source_gdrive_root_folder_id,
         )
 
     if target.source_type == "rclone":
-        from tui.rclone_test import test_rclone_generic
+        from lib.rclone_test import test_rclone_generic
         return test_rclone_generic(
             config_path=target.source_rclone_config_path,
             remote_name=target.source_rclone_remote_name,

@@ -100,11 +100,23 @@ def update_conf_key(filepath: Path, key: str, value: str) -> None:
     filepath.chmod(0o600)
 
 
+_conf_dir_cache: dict[str, tuple[float, list[str]]] = {}
+
+
 def list_conf_dir(subdir: str) -> list[str]:
     d = CONFIG_DIR / subdir
     if not d.is_dir():
         return []
-    return sorted(p.stem for p in d.glob("*.conf") if p.is_file())
+    try:
+        mtime = d.stat().st_mtime
+    except OSError:
+        return []
+    cached = _conf_dir_cache.get(subdir)
+    if cached and cached[0] == mtime:
+        return cached[1]
+    result = sorted(p.stem for p in d.glob("*.conf") if p.is_file())
+    _conf_dir_cache[subdir] = (mtime, result)
+    return result
 
 
 def has_targets() -> bool:

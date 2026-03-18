@@ -4,9 +4,15 @@ set -e
 
 cd "$(dirname "$0")/.."
 
+# Run tests before deploy
+if command -v python3 &>/dev/null && python3 -m pytest --version &>/dev/null 2>&1; then
+    echo "Running tests..."
+    python3 -m pytest tests/ -q || { echo "Tests failed! Aborting deploy."; exit 1; }
+fi
+
 # Commit and push
 if [[ -n "$(git status --porcelain)" ]]; then
-    git add -A
+    git add bin/ lib/ tui/ web/ daemon/ etc/ scripts/ rpm/ debian/ tests/ .gitea/ pyproject.toml README.md DOCUMENTATION.md .gitignore
     msg="${1:-Deploy update}"
     git commit -m "$msg"
 fi
@@ -44,6 +50,16 @@ fi
 if systemctl --user is-active gniza-daemon.service &>/dev/null; then
     systemctl --user restart gniza-daemon.service
     echo "Daemon restarted"
+fi
+
+# Post-deploy smoke test
+sleep 2
+if systemctl --user is-active gniza-web.service &>/dev/null; then
+    if curl -sf -o /dev/null http://127.0.0.1:2323/login 2>/dev/null; then
+        echo "Web service health check: OK"
+    else
+        echo "WARNING: Web service is running but not responding on port 2323"
+    fi
 fi
 
 # Build and publish .deb package

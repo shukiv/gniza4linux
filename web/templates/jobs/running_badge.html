@@ -1,6 +1,6 @@
 <span id="running-tasks-badge"
       hx-get="{{ url_for('jobs.running_badge') }}"
-      hx-trigger="every 3s"
+      hx-trigger="every 5s"
       hx-swap="outerHTML">
 {% if count > 0 or queued > 0 %}
 <a href="{{ url_for('jobs.index') }}" class="btn btn-ghost btn-sm gap-1">

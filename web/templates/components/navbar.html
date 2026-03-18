@@ -68,7 +68,7 @@
             <span x-show="!$store.sidebar.collapsed" x-cloak
                   id="sidebar-running-badge"
                   hx-get="{{ url_for('jobs.sidebar_badge') }}"
-                  hx-trigger="load, every 3s"
+                  hx-trigger="load, every 5s"
                   hx-swap="outerHTML">
             </span>
         </a>

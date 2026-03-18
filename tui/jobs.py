@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio
 import json
+import logging
 import os
 import signal
 import subprocess
@@ -14,6 +15,8 @@ from textual.message import Message
 from lib.job_utils import detect_return_code, is_skipped_job
 from tui.backend import start_cli_background
 from tui.config import get_max_concurrent_jobs, WORK_DIR, LOG_DIR
+
+logger = logging.getLogger(__name__)
 
 MAX_OUTPUT_LINES = 10_000
 
@@ -144,7 +147,7 @@ class JobManager:
                     proc.wait(timeout=1)
                     rc = proc.returncode
                 except Exception:
-                    pass
+                    logger.debug("proc.wait() failed for job %s", job.id, exc_info=True)
             if rc is None:
                 # Fall back to log-based detection
                 rc = detect_return_code(str(log_path))
@@ -161,6 +164,7 @@ class JobManager:
             self._save_registry()
             raise
         except Exception:
+            logger.debug("Unexpected error in run_job for %s", job.id, exc_info=True)
             job.status = "failed"
             job.return_code = job.return_code if job.return_code is not None else 1
         finally:
@@ -173,7 +177,7 @@ class JobManager:
             try:
                 app.post_message(JobFinished(job.id, rc))
             except Exception:
-                pass
+                logger.debug("Failed to post JobFinished for %s", job.id, exc_info=True)
             self._dispatch_queue(app)
         return job.return_code if job.return_code is not None else 1
 
@@ -290,10 +294,11 @@ class JobManager:
                     os.close(tmp_fd)
                     os.rename(tmp_path, str(REGISTRY_FILE))
                 except Exception:
+                    logger.debug("Failed to write registry temp file", exc_info=True)
                     os.close(tmp_fd)
                     os.unlink(tmp_path)
         except OSError:
-            pass
+            logger.debug("Failed to save job registry to %s", REGISTRY_FILE, exc_info=True)
 
     def _load_registry(self) -> None:
         if not REGISTRY_FILE.is_file():
@@ -479,13 +484,13 @@ class JobManager:
                 try:
                     app.post_message(JobFinished(job.id, rc or 0))
                 except Exception:
-                    pass
+                    logger.debug("Failed to post JobFinished for reconnected job %s", job.id, exc_info=True)
                 self._dispatch_queue(app)
         except (asyncio.CancelledError, KeyboardInterrupt):
             # TUI shutting down — keep job as running for next reconnect
             raise
         except Exception:
-            pass
+            logger.debug("Error tailing reconnected job %s", job.id, exc_info=True)
         finally:
             job._tail_task = None
 

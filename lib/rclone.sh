@@ -470,6 +470,9 @@ rclone_disk_info_short() {
         gdrive)
             local about_json
             about_json=$(_rclone_cmd about "remote:" --json 2>/dev/null) || { echo "N/A"; return 0; }
+            # NOTE: fmt() is duplicated across the 3 branches below because each
+            # is a self-contained Python one-liner piped from stdin; extracting to a
+            # shared helper would add complexity for minimal gain.
             python3 -c "
 import json, sys
 def fmt(b):

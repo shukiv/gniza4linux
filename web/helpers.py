@@ -6,7 +6,7 @@ import subprocess
 from tui.config import parse_conf, CONFIG_DIR, list_conf_dir
 from tui.models import Target, Remote
 
-_VALID_NAME_RE = re.compile(r'^[A-Za-z0-9_-]+$')
+from lib.validation import VALID_NAME_RE as _VALID_NAME_RE
 
 
 def paginate(items, page, per_page=20):

@@ -10,8 +10,9 @@ from pathlib import Path
 from lib.config import CONFIG_DIR, write_conf
 from lib.models import Remote, Target
 
+from lib.validation import VALID_NAME_RE as _NAME_RE
+
 _CROC_CODE_RE = re.compile(r'^[a-zA-Z0-9-]+$')
-_NAME_RE = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
 _USERNAME_RE = re.compile(r'^[a-z_][a-z0-9_-]*$')
 _HOST_RE = re.compile(r'^[a-zA-Z0-9._-]+$')
 

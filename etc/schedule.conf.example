@@ -19,5 +19,8 @@ REMOTES=""
 # Comma-separated target names (empty = all targets)
 TARGETS=""
 
+# Whether this schedule is active
+SCHEDULE_ACTIVE="yes"
+
 # Override global retention count (empty = use global default)
 RETENTION_COUNT=""

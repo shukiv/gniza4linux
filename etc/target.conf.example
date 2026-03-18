@@ -10,7 +10,7 @@ TARGET_PRE_HOOK=""
 TARGET_POST_HOOK=""
 TARGET_ENABLED="yes"
 # Source Server (pull files from a source server before backing up)
-#TARGET_SOURCE_TYPE="local"              # local | ssh | s3 | gdrive
+#TARGET_SOURCE_TYPE="local"              # local | ssh | s3 | gdrive | rclone
 # SSH source
 #TARGET_SOURCE_HOST=""
 #TARGET_SOURCE_PORT="22"

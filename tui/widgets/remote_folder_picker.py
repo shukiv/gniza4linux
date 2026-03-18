@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Optional
 import os
 import shlex
 import subprocess
@@ -11,7 +10,7 @@ from textual.widgets import Tree, Static, Button, Input
 from textual.containers import Horizontal, Vertical
 
 
-class RemoteFolderPicker(ModalScreen[Optional[str]]):
+class RemoteFolderPicker(ModalScreen[str | None]):
     """Browse directories on a remote SSH host."""
 
     BINDINGS = [("escape", "cancel", "Cancel")]

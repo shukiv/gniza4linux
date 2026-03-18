@@ -139,7 +139,7 @@ class WebJobManager:
                 descendants.append(child_pid)
                 descendants.extend(WebJobManager._get_descendants(child_pid))
         except Exception:
-            pass
+            logger.debug("Failed to get descendants of PID %s", pid, exc_info=True)
         return descendants
 
     @staticmethod
@@ -327,6 +327,7 @@ class WebJobManager:
                     return []
                 return json.loads(REGISTRY_FILE.read_text())
             except Exception:
+                logger.debug("Failed to read job registry from %s", REGISTRY_FILE, exc_info=True)
                 return []
             finally:
                 fcntl.flock(lock_fh, fcntl.LOCK_UN)
@@ -453,7 +454,7 @@ class WebJobManager:
                 finally:
                     fcntl.flock(lock_fh, fcntl.LOCK_UN)
         except OSError:
-            pass
+            logger.debug("Failed to save job registry to %s", REGISTRY_FILE, exc_info=True)
 
 
 

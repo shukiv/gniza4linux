@@ -966,7 +966,7 @@ HELPEOF
             if (( rc != 0 )); then _status="failed"; fi
             PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" -c "
 import sys
-from daemon.notify import send_job_notification
+from lib.notify_py import send_job_notification
 send_job_notification({
     'id': 'cron-$sched_name',
     'label': 'Scheduled: $sched_name',
@@ -1006,7 +1006,7 @@ send_job_notification({
 
         test-email)
             PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" -c "
-from daemon.notify import send_test_notification
+from lib.notify_py import send_test_notification
 ok, msg = send_test_notification('email')
 print(msg)
 exit(0 if ok else 1)
@@ -1026,7 +1026,7 @@ exit(0 if ok else 1)
             esac
             GNIZA_TEST_CHANNEL="$channel" PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" -c "
 import os
-from daemon.notify import send_test_notification
+from lib.notify_py import send_test_notification
 ok, msg = send_test_notification(os.environ['GNIZA_TEST_CHANNEL'])
 print(msg)
 exit(0 if ok else 1)

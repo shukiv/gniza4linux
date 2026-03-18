@@ -110,6 +110,37 @@ _rsync_with_retry() {
     return 1
 }
 
+# Build rsync include/exclude filter options into the given array nameref.
+# Reads TARGET_INCLUDE / TARGET_EXCLUDE from the environment.
+# Usage: _build_filter_opts <array_nameref>
+_build_filter_opts() {
+    local -n _filter_ref="$1"
+    if [[ -n "${TARGET_INCLUDE:-}" ]]; then
+        _filter_ref+=(--include="*/")
+        local -a inc_patterns
+        IFS=',' read -ra inc_patterns <<< "$TARGET_INCLUDE"
+        for pat in "${inc_patterns[@]}"; do
+            pat="${pat#"${pat%%[![:space:]]*}"}"
+            pat="${pat%"${pat##*[![:space:]]}"}"
+            [[ -z "$pat" ]] && continue
+            _filter_ref+=(--include="$pat")
+            if [[ "$pat" == */ ]]; then
+                _filter_ref+=(--include="${pat}**")
+            fi
+        done
+        _filter_ref+=(--exclude="*")
+        _filter_ref+=(--prune-empty-dirs)
+    elif [[ -n "${TARGET_EXCLUDE:-}" ]]; then
+        local -a exc_patterns
+        IFS=',' read -ra exc_patterns <<< "$TARGET_EXCLUDE"
+        for pat in "${exc_patterns[@]}"; do
+            pat="${pat#"${pat%%[![:space:]]*}"}"
+            pat="${pat%"${pat##*[![:space:]]}"}"
+            [[ -n "$pat" ]] && _filter_ref+=(--exclude="$pat")
+        done
+    fi
+}
+
 rsync_to_remote() {
     local source_dir="$1"
     local remote_dest="$2"
@@ -412,32 +443,8 @@ transfer_folder_pipelined() {
     # Strip leading / to create relative subpath in snapshot
     local rel_path="${dest_name:-${source_remote_path#/}}"
 
-    # Build include/exclude filter args for rsync
     local -a filter_opts=()
-    if [[ -n "${TARGET_INCLUDE:-}" ]]; then
-        filter_opts+=(--include="*/")
-        local -a inc_patterns
-        IFS=',' read -ra inc_patterns <<< "$TARGET_INCLUDE"
-        for pat in "${inc_patterns[@]}"; do
-            pat="${pat#"${pat%%[![:space:]]*}"}"
-            pat="${pat%"${pat##*[![:space:]]}"}"
-            [[ -z "$pat" ]] && continue
-            filter_opts+=(--include="$pat")
-            if [[ "$pat" == */ ]]; then
-                filter_opts+=(--include="${pat}**")
-            fi
-        done
-        filter_opts+=(--exclude="*")
-        filter_opts+=(--prune-empty-dirs)
-    elif [[ -n "${TARGET_EXCLUDE:-}" ]]; then
-        local -a exc_patterns
-        IFS=',' read -ra exc_patterns <<< "$TARGET_EXCLUDE"
-        for pat in "${exc_patterns[@]}"; do
-            pat="${pat#"${pat%%[![:space:]]*}"}"
-            pat="${pat%"${pat##*[![:space:]]}"}"
-            [[ -n "$pat" ]] && filter_opts+=(--exclude="$pat")
-        done
-    fi
+    _build_filter_opts filter_opts
 
     local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
     local dest="$snap_dir/${timestamp}.partial/${rel_path}/"
@@ -465,30 +472,8 @@ transfer_folder_ssh_to_local() {
 
     local rel_path="${dest_name:-${source_remote_path#/}}"
 
-    # Build include/exclude filter args
     local -a filter_opts=()
-    if [[ -n "${TARGET_INCLUDE:-}" ]]; then
-        filter_opts+=(--include="*/")
-        local -a inc_patterns
-        IFS=',' read -ra inc_patterns <<< "$TARGET_INCLUDE"
-        for pat in "${inc_patterns[@]}"; do
-            pat="${pat#"${pat%%[![:space:]]*}"}"
-            pat="${pat%"${pat##*[![:space:]]}"}"
-            [[ -z "$pat" ]] && continue
-            filter_opts+=(--include="$pat")
-            [[ "$pat" == */ ]] && filter_opts+=(--include="${pat}**")
-        done
-        filter_opts+=(--exclude="*")
-        filter_opts+=(--prune-empty-dirs)
-    elif [[ -n "${TARGET_EXCLUDE:-}" ]]; then
-        local -a exc_patterns
-        IFS=',' read -ra exc_patterns <<< "$TARGET_EXCLUDE"
-        for pat in "${exc_patterns[@]}"; do
-            pat="${pat#"${pat%%[![:space:]]*}"}"
-            pat="${pat%"${pat##*[![:space:]]}"}"
-            [[ -n "$pat" ]] && filter_opts+=(--exclude="$pat")
-        done
-    fi
+    _build_filter_opts filter_opts
 
     local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
     local dest="$snap_dir/${timestamp}.partial/${rel_path}/"
@@ -633,35 +618,8 @@ transfer_folder() {
     # Strip leading / to create relative subpath in snapshot
     local rel_path="${dest_name:-${folder_path#/}}"
 
-    # Build include/exclude filter args for rsync
     local -a filter_opts=()
-    if [[ -n "${TARGET_INCLUDE:-}" ]]; then
-        # Include mode: allow directory traversal, include matched patterns, exclude rest
-        filter_opts+=(--include="*/")
-        local -a inc_patterns
-        IFS=',' read -ra inc_patterns <<< "$TARGET_INCLUDE"
-        for pat in "${inc_patterns[@]}"; do
-            pat="${pat#"${pat%%[![:space:]]*}"}"
-            pat="${pat%"${pat##*[![:space:]]}"}"
-            [[ -z "$pat" ]] && continue
-            filter_opts+=(--include="$pat")
-            # For directory patterns, also include their contents
-            if [[ "$pat" == */ ]]; then
-                filter_opts+=(--include="${pat}**")
-            fi
-        done
-        filter_opts+=(--exclude="*")
-        # Prune empty dirs left by directory traversal
-        filter_opts+=(--prune-empty-dirs)
-    elif [[ -n "${TARGET_EXCLUDE:-}" ]]; then
-        local -a exc_patterns
-        IFS=',' read -ra exc_patterns <<< "$TARGET_EXCLUDE"
-        for pat in "${exc_patterns[@]}"; do
-            pat="${pat#"${pat%%[![:space:]]*}"}"
-            pat="${pat%"${pat##*[![:space:]]}"}"
-            [[ -n "$pat" ]] && filter_opts+=(--exclude="$pat")
-        done
-    fi
+    _build_filter_opts filter_opts
 
     if _is_rclone_mode; then
         log_info "Transferring $folder_path for $target_name (rclone incremental)..."

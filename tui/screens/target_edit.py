@@ -1,16 +1,13 @@
 from __future__ import annotations
-import os
 import re
-import shlex
-import subprocess
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, Input, Select, RadioSet, RadioButton
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
+from lib.connection_test import test_source
 from tui.config import parse_conf, write_conf, CONFIG_DIR
-from web.ssh_utils import ssh_cmd
 from tui.models import Target
 from tui.widgets import FolderPicker, RemoteFolderPicker, DocsPanel, TagList
 
@@ -402,100 +399,18 @@ class TargetEditScreen(Screen):
             crontab_users=self.query_one("#te-crontab-users", Input).value.strip(),
         )
 
-        if not self._test_source(target):
+        self.notify("Testing connection...")
+        ok, msg = test_source(target)
+        if ok is False:
+            self.notify(msg, severity="error")
             return
+        if ok is None and msg:
+            self.notify(msg, severity="warning")
 
         conf = CONFIG_DIR / "targets.d" / f"{name}.conf"
         write_conf(conf, target.to_conf())
         self.notify(f"Target '{name}' saved.")
         self.dismiss(name)
-
-    def _test_source(self, target: Target) -> bool:
-        if target.source_type == "local":
-            if target.folders:
-                folder_list = [f.strip() for f in target.folders.split(",") if f.strip()]
-                missing = [f for f in folder_list if not os.path.isdir(f)]
-                if missing:
-                    self.notify(f"Warning: folders not found: {', '.join(missing)}", severity="warning")
-            return True
-
-        if target.source_type == "ssh":
-            self.notify("Testing SSH connection...")
-            host = target.source_host
-            port = target.source_port or "22"
-            user = target.source_user or "root"
-            key = target.source_key if target.source_auth_method == "key" else ""
-            password = target.source_password if target.source_auth_method == "password" else ""
-            cmd = ssh_cmd(host, port, user, key, password)
-            env = None
-            if password:
-                env = os.environ.copy()
-                env["SSHPASS"] = password
-            try:
-                result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
-                if result.returncode != 0:
-                    self.notify(f"SSH connection failed: {result.stderr.strip() or 'unknown error'}", severity="error")
-                    return False
-            except subprocess.TimeoutExpired:
-                self.notify("SSH connection timed out", severity="error")
-                return False
-            except OSError as e:
-                self.notify(f"SSH connection failed: {e}", severity="error")
-                return False
-            if target.folders:
-                folder_list = [f.strip() for f in target.folders.split(",") if f.strip()]
-                try:
-                    result = subprocess.run(
-                        cmd + ["sh", "-c", f"test -d {shlex.quote(folder_list[0])}"],
-                        capture_output=True, text=True, timeout=15, env=env,
-                    )
-                    if result.returncode != 0:
-                        self.notify(f"Warning: folder '{folder_list[0]}' not accessible on remote", severity="warning")
-                except (subprocess.TimeoutExpired, OSError):
-                    pass
-            return True
-
-        if target.source_type == "s3":
-            self.notify("Testing S3 connection...")
-            from tui.rclone_test import test_rclone_s3
-            ok, err = test_rclone_s3(
-                bucket=target.source_s3_bucket,
-                region=target.source_s3_region,
-                endpoint=target.source_s3_endpoint,
-                access_key_id=target.source_s3_access_key_id,
-                secret_access_key=target.source_s3_secret_access_key,
-                provider=target.source_s3_provider,
-            )
-            if not ok:
-                self.notify(f"S3 test failed: {err}", severity="error")
-                return False
-            return True
-
-        if target.source_type == "gdrive":
-            self.notify("Testing Google Drive connection...")
-            from tui.rclone_test import test_rclone_gdrive
-            ok, err = test_rclone_gdrive(
-                sa_file=target.source_gdrive_sa_file,
-                root_folder_id=target.source_gdrive_root_folder_id,
-            )
-            if not ok:
-                self.notify(f"Google Drive test failed: {err}", severity="error")
-                return False
-            return True
-
-        if target.source_type == "rclone":
-            self.notify("Testing rclone connection...")
-            from tui.rclone_test import test_rclone_generic
-            ok, err = test_rclone_generic(
-                config_path=target.source_rclone_config_path,
-                remote_name=target.source_rclone_remote_name,
-            )
-            if not ok:
-                self.notify(f"Rclone test failed: {err}", severity="error")
-                return False
-            return True
-
-        return True
 
     def action_go_back(self) -> None:
         self.dismiss(None)

@@ -64,6 +64,254 @@ backup_target() {
     return "$rc"
 }
 
+# --- Sub-functions for _backup_target_impl ---
+
+# Run pre-backup hook if configured.
+# Usage: _run_pre_hooks <target_name>
+_run_pre_hooks() {
+    local target_name="$1"
+    if [[ -n "${TARGET_PRE_HOOK:-}" ]]; then
+        log_info "Running pre-hook for $target_name..."
+        if ! bash -c "$TARGET_PRE_HOOK"; then
+            log_error "Pre-hook failed for $target_name"
+            return 1
+        fi
+    fi
+}
+
+# Run post-backup hook if configured.
+# Usage: _run_post_hooks <target_name>
+_run_post_hooks() {
+    local target_name="$1"
+    if [[ -n "${TARGET_POST_HOOK:-}" ]]; then
+        log_info "Running post-hook for $target_name..."
+        bash -c "$TARGET_POST_HOOK" || log_warn "Post-hook failed for $target_name"
+    fi
+}
+
+# Dump MySQL, PostgreSQL, and crontab databases.
+# Sets _BT_MYSQL_DUMP_DIR, _BT_PGSQL_DUMP_DIR, _BT_CRONTAB_DUMP_DIR.
+# Usage: _dump_databases <target_name>
+_dump_databases() {
+    local target_name="$1"
+    _BT_MYSQL_DUMP_DIR=""
+    _BT_PGSQL_DUMP_DIR=""
+    _BT_CRONTAB_DUMP_DIR=""
+
+    # MySQL
+    if [[ "${TARGET_MYSQL_ENABLED:-no}" == "yes" && "${TARGET_SOURCE_TYPE:-local}" != "s3" && "${TARGET_SOURCE_TYPE:-local}" != "gdrive" && "${TARGET_SOURCE_TYPE:-local}" != "rclone" ]]; then
+        log_info "Dumping MySQL databases for $target_name..."
+        if mysql_dump_databases; then
+            mysql_dump_grants || log_warn "Grants dump failed, continuing with database dumps"
+            _BT_MYSQL_DUMP_DIR="${MYSQL_DUMP_DIR:-}"
+        else
+            log_warn "MySQL dump failed for $target_name — continuing with file backup"
+            mysql_cleanup_dump
+        fi
+    fi
+
+    # PostgreSQL
+    if [[ "${TARGET_POSTGRESQL_ENABLED:-no}" == "yes" && "${TARGET_SOURCE_TYPE:-local}" != "s3" && "${TARGET_SOURCE_TYPE:-local}" != "gdrive" && "${TARGET_SOURCE_TYPE:-local}" != "rclone" ]]; then
+        log_info "Dumping PostgreSQL databases for $target_name..."
+        if pgsql_dump_databases; then
+            pgsql_dump_roles || log_warn "Roles dump failed, continuing with database dumps"
+            _BT_PGSQL_DUMP_DIR="${PGSQL_DUMP_DIR:-}"
+        else
+            log_warn "PostgreSQL dump failed for $target_name — continuing with file backup"
+            pgsql_cleanup_dump
+        fi
+    fi
+
+    # Crontab
+    if [[ "${TARGET_CRONTAB_ENABLED:-no}" == "yes" ]]; then
+        log_info "Dumping crontabs for $target_name..."
+        if crontab_dump_all; then
+            _BT_CRONTAB_DUMP_DIR="${CRONTAB_DUMP_DIR:-}"
+        else
+            log_warn "Crontab dump failed for $target_name — continuing with file backup"
+            crontab_cleanup_dump
+        fi
+    fi
+}
+
+# Transfer all target folders to the destination.
+# Sets _BT_TRANSFER_FAILED=true on any failure.
+# Usage: _transfer_all_folders <target_name> <timestamp> <prev_snapshot> <threshold>
+_transfer_all_folders() {
+    local target_name="$1"
+    local ts="$2"
+    local prev="$3"
+    local threshold="$4"
+
+    local folder
+    local folder_index=0
+    local staging_dir=""
+    while IFS= read -r folder; do
+        [[ -z "$folder" ]] && continue
+        if (( folder_index > 0 )) && [[ "$threshold" -gt 0 ]]; then
+            check_remote_disk_space "$threshold" || {
+                log_error "Disk space threshold exceeded — aborting after $folder_index folder(s)"
+                _BT_TRANSFER_FAILED=true
+                break
+            }
+        fi
+        ((folder_index++)) || true
+        if [[ "${TARGET_SOURCE_TYPE:-local}" != "local" ]]; then
+            if [[ "${TARGET_SOURCE_TYPE}" == "ssh" && "${REMOTE_TYPE:-ssh}" == "ssh" && "${REMOTE_RESTRICTED_SHELL:-false}" != "true" ]]; then
+                # Pipelined: direct SSH source -> SSH destination (no local staging)
+                # Disabled for restricted shells (e.g. Hetzner Storage Box) that can't run commands
+                log_info "Pipelined transfer from ${TARGET_SOURCE_HOST}: $folder"
+                if ! transfer_folder_pipelined "$target_name" "$folder" "$ts" "$prev"; then
+                    log_error "Pipelined transfer failed for folder: $folder"
+                    _BT_TRANSFER_FAILED=true
+                fi
+            elif [[ "${TARGET_SOURCE_TYPE}" == "ssh" && "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+                # Direct: SSH source -> local .partial (no staging needed)
+                log_info "Direct transfer from ${TARGET_SOURCE_HOST}: $folder"
+                if ! transfer_folder_ssh_to_local "$target_name" "$folder" "$ts" "$prev"; then
+                    log_error "Direct transfer failed for folder: $folder"
+                    _BT_TRANSFER_FAILED=true
+                fi
+            else
+                # Two-hop: pull to local staging, then transfer (s3/gdrive sources, or restricted shell destinations)
+                staging_dir=$(mktemp -d "${WORK_DIR:-/tmp}/gniza-source-XXXXXX")
+                log_info "Pulling from ${TARGET_SOURCE_TYPE} source: $folder"
+                if ! pull_from_source "$folder" "$staging_dir/${folder#/}"; then
+                    log_error "Source pull failed for: $folder"
+                    rm -rf "$staging_dir"
+                    _BT_TRANSFER_FAILED=true
+                    continue
+                fi
+                local rel_dest="${folder#/}"
+                [[ -z "$rel_dest" ]] && rel_dest="."
+                if ! transfer_folder "$target_name" "$staging_dir/${folder#/}" "$ts" "$prev" "$rel_dest"; then
+                    log_error "Transfer failed for folder: $folder"
+                    _BT_TRANSFER_FAILED=true
+                fi
+                rm -rf "$staging_dir"
+            fi
+        else
+            if ! transfer_folder "$target_name" "$folder" "$ts" "$prev"; then
+                log_error "Transfer failed for folder: $folder"
+                _BT_TRANSFER_FAILED=true
+            fi
+        fi
+    done < <(get_target_folders)
+}
+
+# Transfer MySQL/PostgreSQL/crontab dump artifacts to the destination.
+# Sets _BT_TRANSFER_FAILED=true on any failure.
+# Usage: _transfer_dump_artifacts <target_name> <timestamp> <prev_snapshot> <threshold>
+_transfer_dump_artifacts() {
+    local target_name="$1"
+    local ts="$2"
+    local prev="$3"
+    local threshold="$4"
+
+    # MySQL dumps
+    if [[ -n "$_BT_MYSQL_DUMP_DIR" && -d "$_BT_MYSQL_DUMP_DIR/_mysql" ]]; then
+        if [[ "$_BT_TRANSFER_FAILED" != "true" ]] && [[ "$threshold" -gt 0 ]]; then
+            check_remote_disk_space "$threshold" || {
+                log_error "Disk space threshold exceeded — aborting before MySQL dump transfer"
+                _BT_TRANSFER_FAILED=true
+            }
+        fi
+        if [[ "$_BT_TRANSFER_FAILED" != "true" ]]; then
+            log_info "Transferring MySQL dumps for $target_name..."
+            if ! transfer_folder "$target_name" "$_BT_MYSQL_DUMP_DIR/_mysql" "$ts" "$prev" "_mysql"; then
+                log_error "Transfer failed for MySQL dumps"
+                _BT_TRANSFER_FAILED=true
+            fi
+        fi
+    fi
+
+    # PostgreSQL dumps
+    if [[ -n "$_BT_PGSQL_DUMP_DIR" && -d "$_BT_PGSQL_DUMP_DIR/_postgresql" ]]; then
+        if [[ "$_BT_TRANSFER_FAILED" != "true" ]] && [[ "$threshold" -gt 0 ]]; then
+            check_remote_disk_space "$threshold" || {
+                log_error "Disk space threshold exceeded — aborting before PostgreSQL dump transfer"
+                _BT_TRANSFER_FAILED=true
+            }
+        fi
+        if [[ "$_BT_TRANSFER_FAILED" != "true" ]]; then
+            log_info "Transferring PostgreSQL dumps for $target_name..."
+            if ! transfer_folder "$target_name" "$_BT_PGSQL_DUMP_DIR/_postgresql" "$ts" "$prev" "_postgresql"; then
+                log_error "Transfer failed for PostgreSQL dumps"
+                _BT_TRANSFER_FAILED=true
+            fi
+        fi
+    fi
+
+    # Crontab dumps
+    if [[ -n "$_BT_CRONTAB_DUMP_DIR" && -d "$_BT_CRONTAB_DUMP_DIR/_crontab" ]]; then
+        if [[ "$_BT_TRANSFER_FAILED" != "true" ]] && [[ "$threshold" -gt 0 ]]; then
+            check_remote_disk_space "$threshold" || {
+                log_error "Disk space threshold exceeded — aborting before crontab dump transfer"
+                _BT_TRANSFER_FAILED=true
+            }
+        fi
+        if [[ "$_BT_TRANSFER_FAILED" != "true" ]]; then
+            log_info "Transferring crontab dumps for $target_name..."
+            if ! transfer_folder "$target_name" "$_BT_CRONTAB_DUMP_DIR/_crontab" "$ts" "$prev" "_crontab"; then
+                log_error "Transfer failed for crontab dumps"
+                _BT_TRANSFER_FAILED=true
+            fi
+        fi
+    fi
+
+    # Cleanup temp dirs
+    mysql_cleanup_dump
+    pgsql_cleanup_dump
+    crontab_cleanup_dump
+}
+
+# Build and write meta.json to the snapshot directory.
+# Usage: _generate_meta_json <target_name> <timestamp> <start_time>
+_generate_meta_json() {
+    local target_name="$1"
+    local ts="$2"
+    local start_time="$3"
+
+    local end_time; end_time=$(date +%s)
+    local duration=$(( end_time - start_time ))
+    local hostname; hostname=$(hostname -f)
+    local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
+    local total_size=0
+
+    local meta_json
+    local esc_target; esc_target=$(printf '%s' "$target_name" | sed 's/["\]/\\&/g')
+    local esc_hostname; esc_hostname=$(printf '%s' "$hostname" | sed 's/["\]/\\&/g')
+    local esc_folders; esc_folders=$(printf '%s' "$TARGET_FOLDERS" | sed 's/["\]/\\&/g')
+    local mysql_val; mysql_val=$([ "${TARGET_MYSQL_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
+    local pgsql_val; pgsql_val=$([ "${TARGET_POSTGRESQL_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
+    local crontab_val; crontab_val=$([ "${TARGET_CRONTAB_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
+    meta_json=$(printf '{
+  "target": "%s",
+  "hostname": "%s",
+  "timestamp": "%s",
+  "duration": %d,
+  "folders": "%s",
+  "mysql_dumps": %s,
+  "postgresql_dumps": %s,
+  "crontab_dumps": %s,
+  "total_size": %d,
+  "mode": "%s",
+  "pinned": false
+}' "$esc_target" "$esc_hostname" "$ts" "$duration" "$esc_folders" "$mysql_val" "$pgsql_val" "$crontab_val" "$total_size" "${BACKUP_MODE:-$DEFAULT_BACKUP_MODE}")
+
+    if _is_rclone_mode; then
+        local meta_subpath="targets/${target_name}/snapshots/${ts}/meta.json"
+        rclone_rcat "$meta_subpath" "$meta_json" || log_warn "Failed to write meta.json"
+    elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+        echo "$meta_json" > "$snap_dir/${ts}.partial/meta.json" || log_warn "Failed to write meta.json"
+    else
+        local sq_partial; sq_partial="$(shquote "$snap_dir/${ts}.partial")"
+        echo "$meta_json" | remote_exec "cat > '${sq_partial}/meta.json'" || log_warn "Failed to write meta.json"
+    fi
+}
+
+# --- Main backup implementation ---
+
 # Internal implementation after remote context is loaded.
 _backup_target_impl() {
     local target_name="$1"
@@ -122,53 +370,13 @@ _backup_target_impl() {
     clean_partial_snapshots "$target_name"
 
     # 8. Run pre-hook
-    if [[ -n "${TARGET_PRE_HOOK:-}" ]]; then
-        log_info "Running pre-hook for $target_name..."
-        if ! bash -c "$TARGET_PRE_HOOK"; then
-            log_error "Pre-hook failed for $target_name"
-            snaplog_cleanup
-            return 1
-        fi
+    if ! _run_pre_hooks "$target_name"; then
+        snaplog_cleanup
+        return 1
     fi
 
-    # 8.5. Dump MySQL databases (if enabled)
-    local mysql_dump_dir=""
-    if [[ "${TARGET_MYSQL_ENABLED:-no}" == "yes" && "${TARGET_SOURCE_TYPE:-local}" != "s3" && "${TARGET_SOURCE_TYPE:-local}" != "gdrive" && "${TARGET_SOURCE_TYPE:-local}" != "rclone" ]]; then
-        log_info "Dumping MySQL databases for $target_name..."
-        if mysql_dump_databases; then
-            mysql_dump_grants || log_warn "Grants dump failed, continuing with database dumps"
-            mysql_dump_dir="${MYSQL_DUMP_DIR:-}"
-        else
-            log_warn "MySQL dump failed for $target_name — continuing with file backup"
-            mysql_cleanup_dump
-        fi
-    fi
-
-
-    # 8.6. Dump PostgreSQL databases (if enabled)
-    local pgsql_dump_dir=""
-    if [[ "${TARGET_POSTGRESQL_ENABLED:-no}" == "yes" && "${TARGET_SOURCE_TYPE:-local}" != "s3" && "${TARGET_SOURCE_TYPE:-local}" != "gdrive" && "${TARGET_SOURCE_TYPE:-local}" != "rclone" ]]; then
-        log_info "Dumping PostgreSQL databases for $target_name..."
-        if pgsql_dump_databases; then
-            pgsql_dump_roles || log_warn "Roles dump failed, continuing with database dumps"
-            pgsql_dump_dir="${PGSQL_DUMP_DIR:-}"
-        else
-            log_warn "PostgreSQL dump failed for $target_name — continuing with file backup"
-            pgsql_cleanup_dump
-        fi
-    fi
-
-    # 8.7. Dump crontabs (if enabled)
-    local crontab_dump_dir=""
-    if [[ "${TARGET_CRONTAB_ENABLED:-no}" == "yes" ]]; then
-        log_info "Dumping crontabs for $target_name..."
-        if crontab_dump_all; then
-            crontab_dump_dir="${CRONTAB_DUMP_DIR:-}"
-        else
-            log_warn "Crontab dump failed for $target_name — continuing with file backup"
-            crontab_cleanup_dump
-        fi
-    fi
+    # 8.5–8.7. Dump databases and crontabs
+    _dump_databases "$target_name"
 
     # 8.9. Ensure .partial snapshot directory exists on destination
     local snap_dir_pre; snap_dir_pre=$(get_snapshot_dir "$target_name")
@@ -189,121 +397,12 @@ _backup_target_impl() {
         fi
     fi
 
-    # 9. Transfer each folder
-    local folder
-    local transfer_failed=false
-    local folder_index=0
-    local staging_dir=""
-    while IFS= read -r folder; do
-        [[ -z "$folder" ]] && continue
-        if (( folder_index > 0 )) && [[ "$threshold" -gt 0 ]]; then
-            check_remote_disk_space "$threshold" || {
-                log_error "Disk space threshold exceeded — aborting after $folder_index folder(s)"
-                transfer_failed=true
-                break
-            }
-        fi
-        ((folder_index++)) || true
-        if [[ "${TARGET_SOURCE_TYPE:-local}" != "local" ]]; then
-            if [[ "${TARGET_SOURCE_TYPE}" == "ssh" && "${REMOTE_TYPE:-ssh}" == "ssh" && "${REMOTE_RESTRICTED_SHELL:-false}" != "true" ]]; then
-                # Pipelined: direct SSH source -> SSH destination (no local staging)
-                # Disabled for restricted shells (e.g. Hetzner Storage Box) that can't run commands
-                log_info "Pipelined transfer from ${TARGET_SOURCE_HOST}: $folder"
-                if ! transfer_folder_pipelined "$target_name" "$folder" "$ts" "$prev"; then
-                    log_error "Pipelined transfer failed for folder: $folder"
-                    transfer_failed=true
-                fi
-            elif [[ "${TARGET_SOURCE_TYPE}" == "ssh" && "${REMOTE_TYPE:-ssh}" == "local" ]]; then
-                # Direct: SSH source -> local .partial (no staging needed)
-                log_info "Direct transfer from ${TARGET_SOURCE_HOST}: $folder"
-                if ! transfer_folder_ssh_to_local "$target_name" "$folder" "$ts" "$prev"; then
-                    log_error "Direct transfer failed for folder: $folder"
-                    transfer_failed=true
-                fi
-            else
-                # Two-hop: pull to local staging, then transfer (s3/gdrive sources, or restricted shell destinations)
-                staging_dir=$(mktemp -d "${WORK_DIR:-/tmp}/gniza-source-XXXXXX")
-                log_info "Pulling from ${TARGET_SOURCE_TYPE} source: $folder"
-                if ! pull_from_source "$folder" "$staging_dir/${folder#/}"; then
-                    log_error "Source pull failed for: $folder"
-                    rm -rf "$staging_dir"
-                    transfer_failed=true
-                    continue
-                fi
-                local rel_dest="${folder#/}"
-                [[ -z "$rel_dest" ]] && rel_dest="."
-                if ! transfer_folder "$target_name" "$staging_dir/${folder#/}" "$ts" "$prev" "$rel_dest"; then
-                    log_error "Transfer failed for folder: $folder"
-                    transfer_failed=true
-                fi
-                rm -rf "$staging_dir"
-            fi
-        else
-            if ! transfer_folder "$target_name" "$folder" "$ts" "$prev"; then
-                log_error "Transfer failed for folder: $folder"
-                transfer_failed=true
-            fi
-        fi
-    done < <(get_target_folders)
+    # 9. Transfer folders and dump artifacts
+    _BT_TRANSFER_FAILED=false
+    _transfer_all_folders "$target_name" "$ts" "$prev" "$threshold"
+    _transfer_dump_artifacts "$target_name" "$ts" "$prev" "$threshold"
 
-    # 9.5. Transfer MySQL dumps
-    if [[ -n "$mysql_dump_dir" && -d "$mysql_dump_dir/_mysql" ]]; then
-        if [[ "$transfer_failed" != "true" ]] && [[ "$threshold" -gt 0 ]]; then
-            check_remote_disk_space "$threshold" || {
-                log_error "Disk space threshold exceeded — aborting before MySQL dump transfer"
-                transfer_failed=true
-            }
-        fi
-        if [[ "$transfer_failed" != "true" ]]; then
-            log_info "Transferring MySQL dumps for $target_name..."
-            if ! transfer_folder "$target_name" "$mysql_dump_dir/_mysql" "$ts" "$prev" "_mysql"; then
-                log_error "Transfer failed for MySQL dumps"
-                transfer_failed=true
-            fi
-        fi
-    fi
-
-
-    # 9.6. Transfer PostgreSQL dumps
-    if [[ -n "$pgsql_dump_dir" && -d "$pgsql_dump_dir/_postgresql" ]]; then
-        if [[ "$transfer_failed" != "true" ]] && [[ "$threshold" -gt 0 ]]; then
-            check_remote_disk_space "$threshold" || {
-                log_error "Disk space threshold exceeded — aborting before PostgreSQL dump transfer"
-                transfer_failed=true
-            }
-        fi
-        if [[ "$transfer_failed" != "true" ]]; then
-            log_info "Transferring PostgreSQL dumps for $target_name..."
-            if ! transfer_folder "$target_name" "$pgsql_dump_dir/_postgresql" "$ts" "$prev" "_postgresql"; then
-                log_error "Transfer failed for PostgreSQL dumps"
-                transfer_failed=true
-            fi
-        fi
-    fi
-
-    # 9.7. Transfer crontab dumps
-    if [[ -n "$crontab_dump_dir" && -d "$crontab_dump_dir/_crontab" ]]; then
-        if [[ "$transfer_failed" != "true" ]] && [[ "$threshold" -gt 0 ]]; then
-            check_remote_disk_space "$threshold" || {
-                log_error "Disk space threshold exceeded — aborting before crontab dump transfer"
-                transfer_failed=true
-            }
-        fi
-        if [[ "$transfer_failed" != "true" ]]; then
-            log_info "Transferring crontab dumps for $target_name..."
-            if ! transfer_folder "$target_name" "$crontab_dump_dir/_crontab" "$ts" "$prev" "_crontab"; then
-                log_error "Transfer failed for crontab dumps"
-                transfer_failed=true
-            fi
-        fi
-    fi
-
-    # Cleanup MySQL temp dir
-    mysql_cleanup_dump
-    pgsql_cleanup_dump
-    crontab_cleanup_dump
-
-    if [[ "$transfer_failed" == "true" ]]; then
+    if [[ "$_BT_TRANSFER_FAILED" == "true" ]]; then
         log_error "One or more folder transfers failed for $target_name"
         snaplog_generate "$target_name" "$remote_name" "$ts" "$start_time" "Failed"
         snaplog_upload "$target_name" "$ts"
@@ -315,42 +414,7 @@ _backup_target_impl() {
     snaplog_generate "$target_name" "$remote_name" "$ts" "$start_time" "Success"
 
     # 10. Generate meta.json
-    local end_time; end_time=$(date +%s)
-    local duration=$(( end_time - start_time ))
-    local hostname; hostname=$(hostname -f)
-    local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-    local total_size=0
-
-    local meta_json
-    local esc_target; esc_target=$(printf '%s' "$target_name" | sed 's/["\]/\\&/g')
-    local esc_hostname; esc_hostname=$(printf '%s' "$hostname" | sed 's/["\]/\\&/g')
-    local esc_folders; esc_folders=$(printf '%s' "$TARGET_FOLDERS" | sed 's/["\]/\\&/g')
-    local mysql_val; mysql_val=$([ "${TARGET_MYSQL_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
-    local pgsql_val; pgsql_val=$([ "${TARGET_POSTGRESQL_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
-    local crontab_val; crontab_val=$([ "${TARGET_CRONTAB_ENABLED:-no}" = "yes" ] && echo "true" || echo "false")
-    meta_json=$(printf '{
-  "target": "%s",
-  "hostname": "%s",
-  "timestamp": "%s",
-  "duration": %d,
-  "folders": "%s",
-  "mysql_dumps": %s,
-  "postgresql_dumps": %s,
-  "crontab_dumps": %s,
-  "total_size": %d,
-  "mode": "%s",
-  "pinned": false
-}' "$esc_target" "$esc_hostname" "$ts" "$duration" "$esc_folders" "$mysql_val" "$pgsql_val" "$crontab_val" "$total_size" "${BACKUP_MODE:-$DEFAULT_BACKUP_MODE}")
-
-    if _is_rclone_mode; then
-        local meta_subpath="targets/${target_name}/snapshots/${ts}/meta.json"
-        rclone_rcat "$meta_subpath" "$meta_json" || log_warn "Failed to write meta.json"
-    elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
-        echo "$meta_json" > "$snap_dir/${ts}.partial/meta.json" || log_warn "Failed to write meta.json"
-    else
-        local sq_partial; sq_partial="$(shquote "$snap_dir/${ts}.partial")"
-        echo "$meta_json" | remote_exec "cat > '${sq_partial}/meta.json'" || log_warn "Failed to write meta.json"
-    fi
+    _generate_meta_json "$target_name" "$ts" "$start_time"
 
     # 11. Upload snapshot logs
     snaplog_upload "$target_name" "$ts"
@@ -363,6 +427,8 @@ _backup_target_impl() {
     fi
 
     # Calculate total_size after finalization for accurate reporting
+    local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
+    local total_size=0
     if _is_rclone_mode; then
         local size_json; size_json=$(rclone_size "targets/${target_name}/snapshots/${ts}" 2>/dev/null) || true
         if [[ -n "$size_json" ]]; then
@@ -375,13 +441,12 @@ _backup_target_impl() {
         total_size=$(remote_exec "du -sb '$sq_snap' 2>/dev/null | cut -f1" 2>/dev/null) || total_size=0
     fi
 
+    local end_time; end_time=$(date +%s)
+    local duration=$(( end_time - start_time ))
     log_info "Backup completed for $target_name: $ts ($(human_size "${total_size:-0}") in $(human_duration "$duration"))"
 
     # 13. Run post-hook
-    if [[ -n "${TARGET_POST_HOOK:-}" ]]; then
-        log_info "Running post-hook for $target_name..."
-        bash -c "$TARGET_POST_HOOK" || log_warn "Post-hook failed for $target_name"
-    fi
+    _run_post_hooks "$target_name"
 
     # 14. Enforce retention
     enforce_retention "$target_name" "${SCHEDULE_RETENTION_COUNT:-}"

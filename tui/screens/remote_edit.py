@@ -1,8 +1,5 @@
 from __future__ import annotations
-import os
 import re
-import shlex
-import subprocess
 from pathlib import Path
 from textual.app import ComposeResult
 from textual.screen import Screen
@@ -10,9 +7,9 @@ from textual.widgets import Header, Footer, Static, Button, Input, Select, Radio
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
+from lib.connection_test import test_remote
 from tui.config import parse_conf, write_conf, CONFIG_DIR
 from tui.models import Remote
-from web.ssh_utils import ssh_cmd
 from tui.widgets import FilePicker, DocsPanel, RemoteFolderPicker
 from tui.widgets.folder_picker import FolderPicker
 
@@ -240,118 +237,18 @@ class RemoteEditScreen(Screen):
             self.notify("Host is required for SSH destinations", severity="error")
             return
 
-        if not self._test_remote(remote):
+        self.notify("Testing connection...")
+        ok, msg = test_remote(remote)
+        if ok is False:
+            self.notify(msg, severity="error")
             return
+        if ok is None and msg:
+            self.notify(msg, severity="warning")
 
         conf = CONFIG_DIR / "remotes.d" / f"{name}.conf"
         write_conf(conf, remote.to_conf())
         self.notify(f"Destination '{name}' saved.")
         self.dismiss(name)
-
-    def _test_remote(self, remote: Remote) -> bool:
-        if remote.type == "local":
-            base = remote.base or "/backups"
-            try:
-                os.makedirs(base, exist_ok=True)
-            except OSError as e:
-                self.notify(f"Cannot create base path '{base}': {e}", severity="error")
-                return False
-            return True
-
-        if remote.type == "ssh":
-            self.notify("Testing SSH connection...")
-            key = remote.key if remote.auth_method == "key" else ""
-            password = remote.password if remote.auth_method == "password" else ""
-            cmd = ssh_cmd(remote.host, remote.port, remote.user, key, password)
-            env = None
-            if password:
-                env = os.environ.copy()
-                env["SSHPASS"] = password
-            base = remote.base or "/backups"
-            try:
-                result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
-                if result.returncode != 0:
-                    self.notify(f"SSH connection failed: {result.stderr.strip() or 'unknown error'}", severity="error")
-                    return False
-            except subprocess.TimeoutExpired:
-                self.notify("SSH connection timed out", severity="error")
-                return False
-            except OSError as e:
-                self.notify(f"SSH connection failed: {e}", severity="error")
-                return False
-            try:
-                result = subprocess.run(cmd + ["sh", "-c", f"mkdir -p {shlex.quote(base)}"], capture_output=True, text=True, timeout=15, env=env)
-                if result.returncode != 0:
-                    # Retry with sudo
-                    result = subprocess.run(cmd + ["sudo", "sh", "-c", f"mkdir -p {shlex.quote(base)}"], capture_output=True, text=True, timeout=15, env=env)
-                    if result.returncode != 0:
-                        self.notify(f"Failed to create base path: {result.stderr.strip()}", severity="error")
-                        return False
-                    subprocess.run(cmd + ["sudo", "sh", "-c", f"chown {shlex.quote(remote.user + ':')} {shlex.quote(base)}"], capture_output=True, text=True, timeout=15, env=env)
-            except (subprocess.TimeoutExpired, OSError) as e:
-                self.notify(f"Failed to create base path: {e}", severity="error")
-                return False
-            try:
-                test_file = f"{base}/validation_success.txt"
-                result = subprocess.run(
-                    cmd + ["sh", "-c", f'echo "gniza validation" > {shlex.quote(test_file)}'],
-                    capture_output=True, text=True, timeout=15, env=env,
-                )
-                if result.returncode != 0:
-                    # Retry with sudo
-                    result = subprocess.run(
-                        cmd + ["sudo", "sh", "-c", f'echo "gniza validation" > {shlex.quote(test_file)}'],
-                        capture_output=True, text=True, timeout=15, env=env,
-                    )
-                    if result.returncode != 0:
-                        self.notify(f"Failed to write test file: {result.stderr.strip()}", severity="error")
-                        return False
-            except (subprocess.TimeoutExpired, OSError) as e:
-                self.notify(f"Failed to write test file: {e}", severity="error")
-                return False
-            return True
-
-        if remote.type == "s3":
-            self.notify("Testing S3 connection...")
-            from tui.rclone_test import test_rclone_s3
-            ok, err = test_rclone_s3(
-                bucket=remote.s3_bucket,
-                region=remote.s3_region,
-                endpoint=remote.s3_endpoint,
-                access_key_id=remote.s3_access_key_id,
-                secret_access_key=remote.s3_secret_access_key,
-                provider=remote.s3_provider,
-            )
-            if not ok:
-                self.notify(f"S3 test failed: {err}", severity="error")
-                return False
-            return True
-
-        if remote.type == "gdrive":
-            self.notify("Testing Google Drive connection...")
-            from tui.rclone_test import test_rclone_gdrive
-            ok, err = test_rclone_gdrive(
-                sa_file=remote.gdrive_sa_file,
-                root_folder_id=remote.gdrive_root_folder_id,
-            )
-            if not ok:
-                self.notify(f"Google Drive test failed: {err}", severity="error")
-                return False
-            return True
-
-        if remote.type == "rclone":
-            self.notify("Testing rclone connection...")
-            from tui.rclone_test import test_rclone_generic
-            ok, err = test_rclone_generic(
-                config_path=remote.rclone_config_path,
-                remote_name=remote.rclone_remote_name,
-            )
-            if not ok:
-                self.notify(f"Rclone test failed: {err}", severity="error")
-                return False
-            return True
-
-        return True
 
     def action_go_back(self) -> None:
         self.dismiss(None)

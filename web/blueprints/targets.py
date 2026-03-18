@@ -9,11 +9,12 @@ from flask import (
 from markupsafe import escape
 
 from lib.auto_configure import receive_and_configure_source
+from lib.connection_test import test_source as _test_source
 from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Target
 from web.app import login_required
 from web.helpers import load_targets, get_rclone_remotes, _VALID_NAME_RE, paginate, format_bytes_short
-from web.ssh_utils import ssh_cmd, sftp_cmd as build_sftp_cmd, get_ssh_keys as _get_ssh_keys
+from web.ssh_utils import ssh_cmd, get_ssh_keys as _get_ssh_keys
 
 bp = Blueprint("targets", __name__, url_prefix="/sources")
 
@@ -21,83 +22,6 @@ bp = Blueprint("targets", __name__, url_prefix="/sources")
 def _lines_to_csv(text: str) -> str:
     """Convert newline-separated textarea input to comma-separated config value."""
     return ",".join(line.strip().strip('"') for line in text.splitlines() if line.strip())
-
-
-def _test_source(target):
-    if target.source_type == "local":
-        if target.folders:
-            folder_list = [f.strip() for f in target.folders.split(",") if f.strip()]
-            missing = [f for f in folder_list if not os.path.isdir(f)]
-            if missing:
-                return None, f"Warning: folders not found: {', '.join(missing)}"
-        return True, None
-
-    if target.source_type == "ssh":
-        host = target.source_host
-        port = target.source_port or "22"
-        user = target.source_user or "root"
-        key = target.source_key if target.source_auth_method == "key" else ""
-        password = target.source_password if target.source_auth_method == "password" else ""
-        cmd = ssh_cmd(host, port, user, key, password)
-        env = None
-        if password:
-            env = os.environ.copy()
-            env["SSHPASS"] = password
-        try:
-            result = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
-            if result.returncode != 0:
-                # Restricted shells (e.g. Hetzner Storage Box) reject commands but accept sftp.
-                # Fall back to sftp connection test.
-                sftp_cmd = build_sftp_cmd(host, port, user, key, password)
-                sftp_result = subprocess.run(
-                    sftp_cmd, input="bye\n", capture_output=True, text=True, timeout=15, env=env,
-                )
-                if sftp_result.returncode != 0:
-                    return False, f"SSH connection failed: {result.stderr.strip() or 'unknown error'}"
-                return None, "Connected via SFTP (restricted shell detected — normal commands not available)"
-        except subprocess.TimeoutExpired:
-            return False, "SSH connection timed out"
-        except OSError as e:
-            return False, f"SSH connection failed: {e}"
-        if target.folders:
-            folder_list = [f.strip() for f in target.folders.split(",") if f.strip()]
-            try:
-                result = subprocess.run(
-                    cmd + ["test", "-d", folder_list[0]],
-                    capture_output=True, text=True, timeout=15, env=env,
-                )
-                if result.returncode != 0:
-                    return None, f"Warning: folder '{folder_list[0]}' not accessible on remote"
-            except (subprocess.TimeoutExpired, OSError):
-                pass
-        return True, None
-
-    if target.source_type == "s3":
-        from tui.rclone_test import test_rclone_s3
-        return test_rclone_s3(
-            bucket=target.source_s3_bucket,
-            region=target.source_s3_region,
-            endpoint=target.source_s3_endpoint,
-            access_key_id=target.source_s3_access_key_id,
-            secret_access_key=target.source_s3_secret_access_key,
-            provider=target.source_s3_provider,
-        )
-
-    if target.source_type == "gdrive":
-        from tui.rclone_test import test_rclone_gdrive
-        return test_rclone_gdrive(
-            sa_file=target.source_gdrive_sa_file,
-            root_folder_id=target.source_gdrive_root_folder_id,
-        )
-
-    if target.source_type == "rclone":
-        from tui.rclone_test import test_rclone_generic
-        return test_rclone_generic(
-            config_path=target.source_rclone_config_path,
-            remote_name=target.source_rclone_remote_name,
-        )
-
-    return True, None
 
 
 @bp.route("/")

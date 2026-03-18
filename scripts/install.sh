@@ -84,7 +84,7 @@ _apt_update() {
 
 # Required system packages
 _to_install=()
-for cmd in rsync ssh curl sshpass; do
+for cmd in rsync ssh curl sshpass unzip; do
     if ! command -v "$cmd" &>/dev/null; then
         case "$cmd" in
             ssh)

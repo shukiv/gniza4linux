@@ -1,7 +1,7 @@
+import json
 import logging
 import secrets
 import time
-from collections import defaultdict
 
 from flask import (
     Blueprint, render_template, request, redirect, url_for,
@@ -14,23 +14,50 @@ from web.app import csrf
 bp = Blueprint("auth", __name__)
 audit = logging.getLogger("gniza.audit")
 
-# Brute-force protection: track failed attempts per IP
-_failed_attempts = defaultdict(list)  # ip -> [timestamp, ...]
+# Brute-force protection: file-backed to survive restarts
+_LOCKOUT_FILE = None  # set lazily in _get_lockout_file()
+
+
+def _get_lockout_file():
+    global _LOCKOUT_FILE
+    if _LOCKOUT_FILE is None:
+        from lib.config import WORK_DIR
+        _LOCKOUT_FILE = WORK_DIR / "login-attempts.json"
+    return _LOCKOUT_FILE
+
+
+def _load_attempts():
+    f = _get_lockout_file()
+    try:
+        if f.is_file():
+            data = json.loads(f.read_text())
+            now = time.time()
+            return {ip: [t for t in times if now - t < 3600]
+                    for ip, times in data.items() if any(now - t < 3600 for t in times)}
+    except (json.JSONDecodeError, OSError):
+        pass
+    return {}
+
+
+def _save_attempts(data):
+    try:
+        _get_lockout_file().write_text(json.dumps(data))
+    except OSError:
+        pass
+
+
 _last_cleanup = 0.0
 
 
 def _periodic_cleanup():
     """Remove stale entries from all IPs every 10 minutes."""
     global _last_cleanup
-    now = time.monotonic()
+    now = time.time()
     if now - _last_cleanup < 600:
         return
     _last_cleanup = now
-    _, lockout_seconds = _get_limits()
-    cutoff = now - lockout_seconds
-    stale = [ip for ip, times in _failed_attempts.items() if all(t <= cutoff for t in times)]
-    for ip in stale:
-        _failed_attempts.pop(ip, None)
+    data = _load_attempts()
+    _save_attempts(data)
 
 
 def _get_limits():
@@ -44,32 +71,29 @@ def _get_limits():
     return max_attempts, lockout_seconds
 
 
-def _clean_old_attempts(ip, lockout_seconds):
-    """Remove attempts older than the lockout window."""
-    cutoff = time.monotonic() - lockout_seconds
-    _failed_attempts[ip] = [t for t in _failed_attempts[ip] if t > cutoff]
-    if not _failed_attempts[ip]:
-        _failed_attempts.pop(ip, None)
-
-
 def _is_locked(ip):
     """Check if IP is locked out. Returns (locked, seconds_remaining)."""
     max_attempts, lockout_seconds = _get_limits()
-    _clean_old_attempts(ip, lockout_seconds)
-    attempts = _failed_attempts.get(ip, [])
-    if len(attempts) >= max_attempts:
-        oldest = attempts[0]
-        remaining = int(lockout_seconds - (time.monotonic() - oldest))
+    attempts = _load_attempts()
+    cutoff = time.time() - lockout_seconds
+    timestamps = [t for t in attempts.get(ip, []) if t > cutoff]
+    if len(timestamps) >= max_attempts:
+        oldest = timestamps[0]
+        remaining = int(lockout_seconds - (time.time() - oldest))
         return True, max(1, remaining)
     return False, 0
 
 
 def _record_failure(ip):
-    _failed_attempts[ip].append(time.monotonic())
+    attempts = _load_attempts()
+    attempts.setdefault(ip, []).append(time.time())
+    _save_attempts(attempts)
 
 
 def _clear_failures(ip):
-    _failed_attempts.pop(ip, None)
+    attempts = _load_attempts()
+    attempts.pop(ip, None)
+    _save_attempts(attempts)
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -103,8 +127,11 @@ def login():
             flash(f"Too many failed attempts. Try again in {remaining} seconds.", "error")
             return render_template("auth/login.html", lockout_remaining=remaining)
 
-        max_attempts, _ = _get_limits()
-        attempts_left = max_attempts - len(_failed_attempts.get(ip, []))
+        max_attempts, lockout_seconds = _get_limits()
+        current = _load_attempts()
+        cutoff = time.time() - lockout_seconds
+        recent = [t for t in current.get(ip, []) if t > cutoff]
+        attempts_left = max_attempts - len(recent)
         flash(f"Invalid password. {attempts_left} attempt{'s' if attempts_left != 1 else ''} remaining.", "error")
 
     return render_template("auth/login.html", lockout_remaining=remaining if locked else 0)

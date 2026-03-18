@@ -163,9 +163,9 @@ def browse_ssh():
     user = request.values.get("user", "root")
     key = request.values.get("key", "")
     password = request.values.get("password", "")
-    path = request.args.get("path", "/")
-    target = request.args.get("target", "")
-    show_hidden = request.args.get("show_hidden", "") == "1"
+    path = request.values.get("path", "/")
+    target = request.values.get("target", "")
+    show_hidden = request.values.get("show_hidden", "") == "1"
 
     if not host or not re.match(r'^[a-zA-Z0-9._:-]+$', host):
         return '<div class="alert alert-error text-sm">Invalid host</div>'
@@ -199,9 +199,9 @@ def browse_ssh_children():
     user = request.values.get("user", "root")
     key = request.values.get("key", "")
     password = request.values.get("password", "")
-    path = request.args.get("path", "/")
-    target = request.args.get("target", "")
-    show_hidden = request.args.get("show_hidden", "") == "1"
+    path = request.values.get("path", "/")
+    target = request.values.get("target", "")
+    show_hidden = request.values.get("show_hidden", "") == "1"
 
     if not host or not re.match(r'^[a-zA-Z0-9._:-]+$', host):
         return ""

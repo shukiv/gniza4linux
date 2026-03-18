@@ -10,13 +10,8 @@ _MYSQL_SYSTEM_DBS="information_schema performance_schema sys"
 # Build SSH prefix for remote MySQL operations.
 # Sets _MYSQL_SSH array. Returns 1 if local (no SSH needed).
 _mysql_is_remote() {
-    [[ "${TARGET_SOURCE_TYPE:-local}" == "ssh" ]] || return 1
-    _MYSQL_SSH=(ssh -o StrictHostKeyChecking=accept-new -o "ConnectTimeout=${SSH_TIMEOUT:-30}" -p "${TARGET_SOURCE_PORT:-22}")
-    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" ]]; then
-        _MYSQL_SSH+=(-o BatchMode=yes)
-        [[ -n "${TARGET_SOURCE_KEY:-}" ]] && _MYSQL_SSH+=(-i "$TARGET_SOURCE_KEY")
-    fi
-    _MYSQL_SSH+=("${TARGET_SOURCE_USER:-gniza}@${TARGET_SOURCE_HOST}")
+    _db_is_remote || return 1
+    _db_build_ssh_args _MYSQL_SSH
     return 0
 }
 
@@ -26,30 +21,9 @@ _mysql_is_remote() {
 _mysql_run_cmd() {
     local cmd_str="$1"
     local use_sudo="${2:-auto}"
-    if _mysql_is_remote; then
-        # Prepend MYSQL_PWD on remote side if set
-        if [[ -n "${TARGET_MYSQL_PASSWORD:-}" ]]; then
-            cmd_str="MYSQL_PWD=$(printf '%q' "$TARGET_MYSQL_PASSWORD") $cmd_str"
-        elif [[ "$use_sudo" == "yes" || ( "$use_sudo" == "auto" && -z "${TARGET_MYSQL_USER:-}" ) ]]; then
-            # Use sudo for socket auth on remote
-            cmd_str="sudo $cmd_str"
-        fi
-        if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
-            SSHPASS="$TARGET_SOURCE_PASSWORD" sshpass -e "${_MYSQL_SSH[@]}" "$cmd_str"
-        else
-            "${_MYSQL_SSH[@]}" "$cmd_str"
-        fi
-    else
-        # Local: set MYSQL_PWD if needed, then eval
-        # SAFETY: All interpolated values in $cmd_str are escaped via printf '%q'
-        # in the calling functions (_mysql_build_conn_str, mysql_dump_databases,
-        # mysql_dump_grants). Do not pass unescaped user input.
-        if [[ -n "${TARGET_MYSQL_PASSWORD:-}" ]]; then
-            MYSQL_PWD="$TARGET_MYSQL_PASSWORD" eval "$cmd_str"
-        else
-            eval "$cmd_str"
-        fi
-    fi
+    _mysql_is_remote 2>/dev/null || true
+    [[ -n "${TARGET_MYSQL_USER:-}" ]] && _DB_RUN_CMD_HAS_USER=true || _DB_RUN_CMD_HAS_USER=false
+    _db_run_cmd _MYSQL_SSH "MYSQL_PWD" "${TARGET_MYSQL_PASSWORD:-}" "$cmd_str" "$use_sudo"
 }
 
 # Run a command via SSH without the sudo/MYSQL_PWD wrapper.
@@ -57,11 +31,7 @@ _mysql_run_cmd() {
 _mysql_ssh_raw() {
     local cmd_str="$1"
     _mysql_is_remote || return 1
-    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
-        SSHPASS="$TARGET_SOURCE_PASSWORD" sshpass -e "${_MYSQL_SSH[@]}" "$cmd_str"
-    else
-        "${_MYSQL_SSH[@]}" "$cmd_str"
-    fi
+    _db_ssh_raw _MYSQL_SSH "$cmd_str"
 }
 
 # Detect the mysqldump binary (MySQL or MariaDB), locally or remotely.
@@ -267,7 +237,7 @@ mysql_dump_databases() {
 
     for db in "${databases[@]}"; do
         # Validate database name to prevent path traversal
-        if [[ ! "$db" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+        if ! validate_db_name "$db"; then
             log_error "Invalid database name, skipping: $db"
             failed=true
             continue

@@ -9,7 +9,8 @@
     {% if rclone %}
     <details hx-get="{{ url_for('api.browse_rclone_children', path=child_path, target=target, remote_name=rclone_remote_name, config_path=rclone_config_path, show_hidden=sh) }}"
     {% elif ssh %}
-    <details hx-get="{{ url_for('api.browse_ssh_children', path=child_path, target=target, host=ssh_host, port=ssh_port, user=ssh_user, key=ssh_key, password=ssh_password, show_hidden=sh) }}"
+    <details hx-post="{{ url_for('api.browse_ssh_children') }}"
+             hx-vals='{"path": "{{ child_path }}", "target": "{{ target }}", "host": "{{ ssh_host }}", "port": "{{ ssh_port }}", "user": "{{ ssh_user }}", "key": "{{ ssh_key }}", "password": "{{ ssh_password }}", "show_hidden": "{{ sh }}"}'
     {% else %}
     <details hx-get="{{ url_for('api.browse_children', path=child_path, target=target, show_hidden=sh) }}"
     {% endif %}

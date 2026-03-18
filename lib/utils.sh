@@ -77,6 +77,10 @@ validate_target_name() {
     fi
 }
 
+validate_db_name() {
+    [[ "$1" =~ ^[a-zA-Z0-9._-]+$ ]]
+}
+
 validate_path() {
     local path="$1"
     if [[ "$path" != /* ]]; then

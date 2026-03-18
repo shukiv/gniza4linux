@@ -161,7 +161,10 @@ rsync_to_remote() {
     fi
 
     # Overall progress for TUI progress bar
-    rsync_opts+=(--info=progress2 --no-inc-recursive)
+    rsync_opts+=(--info=progress2)
+    if [[ "${RSYNC_INC_RECURSIVE:-no}" != "yes" ]]; then
+        rsync_opts+=(--no-inc-recursive)
+    fi
 
     rsync_opts+=(-e "$rsync_ssh")
 
@@ -223,7 +226,10 @@ rsync_local() {
     fi
 
     # Overall progress for TUI progress bar
-    rsync_opts+=(--info=progress2 --no-inc-recursive)
+    rsync_opts+=(--info=progress2)
+    if [[ "${RSYNC_INC_RECURSIVE:-no}" != "yes" ]]; then
+        rsync_opts+=(--no-inc-recursive)
+    fi
 
     # Ensure source ends with /
     [[ "$source_dir" != */ ]] && source_dir="$source_dir/"
@@ -290,7 +296,10 @@ rsync_ssh_to_ssh() {
         ropts+=(--verbose --stats)
     fi
 
-    ropts+=(--info=progress2 --no-inc-recursive)
+    ropts+=(--info=progress2)
+    if [[ "${RSYNC_INC_RECURSIVE:-no}" != "yes" ]]; then
+        ropts+=(--no-inc-recursive)
+    fi
 
     # Build the SSH command the remote rsync will use to reach the source
     local src_ssh_e="ssh"
@@ -529,7 +538,10 @@ transfer_folder_ssh_to_local() {
     if [[ -n "${_TRANSFER_LOG:-}" ]]; then
         rsync_opts+=(--log-file="$_TRANSFER_LOG" --stats)
     fi
-    rsync_opts+=(--info=progress2 --no-inc-recursive)
+    rsync_opts+=(--info=progress2)
+    if [[ "${RSYNC_INC_RECURSIVE:-no}" != "yes" ]]; then
+        rsync_opts+=(--no-inc-recursive)
+    fi
 
     [[ "$source_remote_path" != */ ]] && source_remote_path="$source_remote_path/"
     local source_spec="${TARGET_SOURCE_USER:-gniza}@${TARGET_SOURCE_HOST}:${source_remote_path}"

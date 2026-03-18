@@ -10,13 +10,8 @@ _PGSQL_SYSTEM_DBS="template0 template1 postgres"
 # Build SSH prefix for remote PostgreSQL operations.
 # Sets _PGSQL_SSH array. Returns 1 if local (no SSH needed).
 _pgsql_is_remote() {
-    [[ "${TARGET_SOURCE_TYPE:-local}" == "ssh" ]] || return 1
-    _PGSQL_SSH=(ssh -o StrictHostKeyChecking=accept-new -o "ConnectTimeout=${SSH_TIMEOUT:-30}" -p "${TARGET_SOURCE_PORT:-22}")
-    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "key" ]]; then
-        _PGSQL_SSH+=(-o BatchMode=yes)
-        [[ -n "${TARGET_SOURCE_KEY:-}" ]] && _PGSQL_SSH+=(-i "$TARGET_SOURCE_KEY")
-    fi
-    _PGSQL_SSH+=("${TARGET_SOURCE_USER:-gniza}@${TARGET_SOURCE_HOST}")
+    _db_is_remote || return 1
+    _db_build_ssh_args _PGSQL_SSH
     return 0
 }
 
@@ -26,41 +21,16 @@ _pgsql_is_remote() {
 _pgsql_run_cmd() {
     local cmd_str="$1"
     local use_sudo="${2:-auto}"
-    if _pgsql_is_remote; then
-        # Prepend PGPASSWORD on remote side if set
-        if [[ -n "${TARGET_POSTGRESQL_PASSWORD:-}" ]]; then
-            cmd_str="PGPASSWORD=$(printf '%q' "$TARGET_POSTGRESQL_PASSWORD") $cmd_str"
-        elif [[ "$use_sudo" == "yes" || ( "$use_sudo" == "auto" && -z "${TARGET_POSTGRESQL_USER:-}" ) ]]; then
-            # Use sudo for peer auth on remote
-            cmd_str="sudo $cmd_str"
-        fi
-        if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
-            SSHPASS="$TARGET_SOURCE_PASSWORD" sshpass -e "${_PGSQL_SSH[@]}" "$cmd_str"
-        else
-            "${_PGSQL_SSH[@]}" "$cmd_str"
-        fi
-    else
-        # Local: set PGPASSWORD if needed, then eval
-        # SAFETY: All interpolated values in $cmd_str are escaped via printf '%q'
-        # in the calling functions (_pgsql_build_conn_str, pgsql_dump_databases,
-        # pgsql_dump_roles). Do not pass unescaped user input.
-        if [[ -n "${TARGET_POSTGRESQL_PASSWORD:-}" ]]; then
-            PGPASSWORD="$TARGET_POSTGRESQL_PASSWORD" eval "$cmd_str"
-        else
-            eval "$cmd_str"
-        fi
-    fi
+    _pgsql_is_remote 2>/dev/null || true
+    [[ -n "${TARGET_POSTGRESQL_USER:-}" ]] && _DB_RUN_CMD_HAS_USER=true || _DB_RUN_CMD_HAS_USER=false
+    _db_run_cmd _PGSQL_SSH "PGPASSWORD" "${TARGET_POSTGRESQL_PASSWORD:-}" "$cmd_str" "$use_sudo"
 }
 
 # Run a command via SSH without the sudo/PGPASSWORD wrapper.
 _pgsql_ssh_raw() {
     local cmd_str="$1"
     _pgsql_is_remote || return 1
-    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
-        SSHPASS="$TARGET_SOURCE_PASSWORD" sshpass -e "${_PGSQL_SSH[@]}" "$cmd_str"
-    else
-        "${_PGSQL_SSH[@]}" "$cmd_str"
-    fi
+    _db_ssh_raw _PGSQL_SSH "$cmd_str"
 }
 
 # Detect the pg_dump binary, locally or remotely.
@@ -267,7 +237,7 @@ pgsql_dump_databases() {
 
     for db in "${databases[@]}"; do
         # Validate database name to prevent path traversal
-        if [[ ! "$db" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+        if ! validate_db_name "$db"; then
             log_error "Invalid database name, skipping: $db"
             failed=true
             continue
@@ -421,7 +391,7 @@ pgsql_restore_databases() {
         [[ "$skip" == "true" ]] && continue
 
         # Validate database name
-        if [[ ! "$db_name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+        if ! validate_db_name "$db_name"; then
             log_error "Invalid database name in restore, skipping: $db_name"
             ((errors++)) || true
             continue

@@ -71,6 +71,8 @@ def create_app():
     app.config["API_KEY"] = stored_key
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    # Set Secure flag when accessed over HTTPS (auto-detected from config or proxy)
+    app.config["SESSION_COOKIE_SECURE"] = conf.get("WEB_SECURE_COOKIE", "") == "yes"
     app.config["PERMANENT_SESSION_LIFETIME"] = 86400  # 24 hours
 
     # CSRF protection

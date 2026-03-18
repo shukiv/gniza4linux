@@ -10,6 +10,11 @@ Environment=GNIZA_DIR=/usr/local/gniza
 Environment=PYTHONPATH=/usr/local/gniza
 Restart=on-failure
 RestartSec=5
+NoNewPrivileges=yes
+ProtectSystem=full
+PrivateTmp=yes
+ProtectHome=read-only
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target

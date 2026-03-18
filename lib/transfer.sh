@@ -15,6 +15,101 @@ _check_disk_space_or_abort() {
     return 0
 }
 
+# Helper: redirect stdin from /dev/null (prevents SSH from consuming stdin
+# when running inside a while-read loop of folders).
+_run_devnull() { "$@" </dev/null; }
+
+# _rsync_with_retry <max_retries> <label> <cmd_array_name> [check_disk_space] [log_header]
+#
+# Shared retry wrapper for rsync commands.  Handles:
+#   - Retry loop with exponential backoff
+#   - Exit 23 (partial transfer): one extra retry, then accept as success
+#   - Exit 24 (vanished source files): accept as success
+#   - Optional disk-space check between retries
+#   - Piping through _snaplog_tee when _TRANSFER_LOG is set
+#
+# Arguments:
+#   max_retries       — number of attempts
+#   label             — human-readable prefix for log messages (e.g. "rsync (local)")
+#   cmd_array_name    — name of a bash array variable holding the full command
+#   check_disk_space  — "true" to call _check_disk_space_or_abort on failure (default "false")
+#   log_header        — optional header written to _TRANSFER_LOG before each attempt
+#
+# The command array is passed by nameref (requires bash 4.3+).
+# Returns 0 on success (including 23/24 warnings), 1 on failure.
+_rsync_with_retry() {
+    local max_retries="$1"
+    local label="$2"
+    local -n _cmd_ref="$3"
+    local check_disk_space="${4:-false}"
+    local log_header="${5:-}"
+    local attempt=0
+    local rc=0
+
+    while (( attempt < max_retries )); do
+        ((attempt++)) || true
+        log_debug "$label attempt $attempt/$max_retries"
+
+        if [[ -n "$log_header" && -n "${_TRANSFER_LOG:-}" ]]; then
+            echo "=== $log_header ===" >> "$_TRANSFER_LOG"
+        fi
+
+        rc=0
+        if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+            "${_cmd_ref[@]}" 2>&1 | _snaplog_tee; rc=${PIPESTATUS[0]}
+        else
+            "${_cmd_ref[@]}" || rc=$?
+        fi
+
+        if (( rc == 0 )); then
+            log_debug "$label succeeded on attempt $attempt"
+            return 0
+        fi
+
+        # Exit 23 = partial transfer: retry once more to pick up failed files
+        if (( rc == 23 )); then
+            log_warn "$label partial transfer (exit 23): retrying to pick up failed files..."
+            sleep 2
+            if [[ -n "$log_header" && -n "${_TRANSFER_LOG:-}" ]]; then
+                echo "=== ${log_header} (retry) ===" >> "$_TRANSFER_LOG"
+            fi
+            local rc2=0
+            if [[ -n "${_TRANSFER_LOG:-}" ]]; then
+                "${_cmd_ref[@]}" 2>&1 | _snaplog_tee; rc2=${PIPESTATUS[0]}
+            else
+                "${_cmd_ref[@]}" || rc2=$?
+            fi
+            if (( rc2 == 0 )); then
+                log_info "$label retry succeeded — all files transferred"
+                return 0
+            fi
+            log_warn "$label retry completed (exit $rc2): some files could not be transferred"
+            return 0
+        fi
+
+        # Exit 24 = vanished source files
+        if (( rc == 24 )); then
+            log_warn "$label completed with warnings (exit $rc): vanished source files"
+            return 0
+        fi
+
+        log_warn "$label failed (exit $rc), attempt $attempt/$max_retries"
+
+        if [[ "$check_disk_space" == "true" ]]; then
+            _check_disk_space_or_abort || return 1
+        fi
+
+        if (( attempt < max_retries )); then
+            local backoff=$(( attempt * 10 ))
+            log_info "Retrying in ${backoff}s..."
+            sleep "$backoff"
+        fi
+    done
+
+    log_error "$label failed after $max_retries attempts"
+    return 1
+}
+
 rsync_to_remote() {
     local source_dir="$1"
     local remote_dest="$2"
@@ -22,7 +117,6 @@ rsync_to_remote() {
     shift 3 || true
     # Remaining args are extra rsync options (e.g. --exclude, --include)
     local -a extra_filter_opts=("$@")
-    local attempt=0
     local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
     local rsync_ssh; rsync_ssh=$(build_rsync_ssh_cmd)
 
@@ -74,64 +168,19 @@ rsync_to_remote() {
     # Ensure source ends with /
     [[ "$source_dir" != */ ]] && source_dir="$source_dir/"
 
-    while (( attempt < max_retries )); do
-        ((attempt++)) || true
-        log_debug "rsync attempt $attempt/$max_retries: $source_dir -> $remote_dest"
+    log_info "CMD: rsync ${rsync_opts[*]} $source_dir ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}"
 
-        log_info "CMD: rsync ${rsync_opts[*]} $source_dir ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}"
-        local rsync_cmd=(rsync "${rsync_opts[@]}" "$source_dir" "${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}")
-        if _is_password_mode; then
-            export SSHPASS="$REMOTE_PASSWORD"
-            rsync_cmd=(sshpass -e "${rsync_cmd[@]}")
-        fi
-        local rc=0
-        if [[ -n "${_TRANSFER_LOG:-}" ]]; then
-            echo "=== rsync: $source_dir -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
-            "${rsync_cmd[@]}" 2>&1 | _snaplog_tee; rc=${PIPESTATUS[0]}
-        else
-            "${rsync_cmd[@]}" || rc=$?
-        fi
-        if (( rc == 0 )); then
-            log_debug "rsync succeeded on attempt $attempt"
-            return 0
-        fi
+    local -a rsync_cmd=(rsync "${rsync_opts[@]}" "$source_dir" "${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}")
+    if _is_password_mode; then
+        export SSHPASS="$REMOTE_PASSWORD"
+        rsync_cmd=(sshpass -e "${rsync_cmd[@]}")
+    fi
 
-        # Exit 23 = partial transfer (some files failed)
-        # Exit 24 = vanished source files (deleted during transfer)
-        if (( rc == 23 )); then
-            log_warn "rsync partial transfer (exit 23): retrying to pick up failed files..."
-            sleep 2
-            local rc2=0
-            if [[ -n "${_TRANSFER_LOG:-}" ]]; then
-                echo "=== rsync (retry): $source_dir -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
-                "${rsync_cmd[@]}" 2>&1 | _snaplog_tee; rc2=${PIPESTATUS[0]}
-            else
-                "${rsync_cmd[@]}" || rc2=$?
-            fi
-            if (( rc2 == 0 )); then
-                log_info "rsync retry succeeded — all files transferred"
-                return 0
-            fi
-            log_warn "rsync retry completed (exit $rc2): some files could not be transferred"
-            return 0
-        fi
-        if (( rc == 24 )); then
-            log_warn "rsync completed with warnings (exit $rc): vanished source files"
-            return 0
-        fi
-
-        log_warn "rsync failed (exit $rc), attempt $attempt/$max_retries"
-        _check_disk_space_or_abort || return 1
-
-        if (( attempt < max_retries )); then
-            local backoff=$(( attempt * 10 ))
-            log_info "Retrying in ${backoff}s..."
-            sleep "$backoff"
-        fi
-    done
-
-    log_error "rsync failed after $max_retries attempts"
-    return 1
+    local _rc=0
+    _rsync_with_retry "$max_retries" "rsync" rsync_cmd "true" \
+        "rsync: $source_dir -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}" || _rc=$?
+    unset SSHPASS
+    return "$_rc"
 }
 
 # rsync locally (no SSH), with --link-dest support.
@@ -143,7 +192,6 @@ rsync_local() {
     shift 3 || true
     # Remaining args are extra rsync options (e.g. --exclude, --include)
     local -a extra_filter_opts=("$@")
-    local attempt=0
     local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
 
     local rsync_opts=(-aHAX --numeric-ids --delete --sparse)
@@ -180,57 +228,12 @@ rsync_local() {
     # Ensure source ends with /
     [[ "$source_dir" != */ ]] && source_dir="$source_dir/"
 
-    while (( attempt < max_retries )); do
-        ((attempt++)) || true
-        log_debug "rsync (local) attempt $attempt/$max_retries: $source_dir -> $local_dest"
-        log_info "CMD: rsync ${rsync_opts[*]} $source_dir $local_dest"
+    log_info "CMD: rsync ${rsync_opts[*]} $source_dir $local_dest"
 
-        local rc=0
-        if [[ -n "${_TRANSFER_LOG:-}" ]]; then
-            echo "=== rsync (local): $source_dir -> $local_dest ===" >> "$_TRANSFER_LOG"
-            rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" 2>&1 | _snaplog_tee; rc=${PIPESTATUS[0]}
-        else
-            rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" || rc=$?
-        fi
-        if (( rc == 0 )); then
-            log_debug "rsync (local) succeeded on attempt $attempt"
-            return 0
-        fi
+    local -a rsync_cmd=(rsync "${rsync_opts[@]}" "$source_dir" "$local_dest")
 
-        if (( rc == 23 )); then
-            log_warn "rsync (local) partial transfer (exit 23): retrying to pick up failed files..."
-            sleep 2
-            local rc2=0
-            if [[ -n "${_TRANSFER_LOG:-}" ]]; then
-                echo "=== rsync (local retry): $source_dir -> $local_dest ===" >> "$_TRANSFER_LOG"
-                rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" 2>&1 | _snaplog_tee; rc2=${PIPESTATUS[0]}
-            else
-                rsync "${rsync_opts[@]}" "$source_dir" "$local_dest" || rc2=$?
-            fi
-            if (( rc2 == 0 )); then
-                log_info "rsync (local) retry succeeded — all files transferred"
-                return 0
-            fi
-            log_warn "rsync (local) retry completed (exit $rc2): some files could not be transferred"
-            return 0
-        fi
-        if (( rc == 24 )); then
-            log_warn "rsync (local) completed with warnings (exit $rc): vanished source files"
-            return 0
-        fi
-
-        log_warn "rsync (local) failed (exit $rc), attempt $attempt/$max_retries"
-        _check_disk_space_or_abort || return 1
-
-        if (( attempt < max_retries )); then
-            local backoff=$(( attempt * 10 ))
-            log_info "Retrying in ${backoff}s..."
-            sleep "$backoff"
-        fi
-    done
-
-    log_error "rsync (local) failed after $max_retries attempts"
-    return 1
+    _rsync_with_retry "$max_retries" "rsync (local)" rsync_cmd "true" \
+        "rsync (local): $source_dir -> $local_dest"
 }
 
 # Pipelined SSH→SSH rsync: SSH into the destination and run rsync there,
@@ -243,7 +246,6 @@ rsync_ssh_to_ssh() {
     local link_dest="${3:-}"
     shift 3 || true
     local -a extra_filter_opts=("$@")
-    local attempt=0
     local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
 
     # --- Build the rsync command string to run ON the destination ---
@@ -372,77 +374,21 @@ rsync_ssh_to_ssh() {
         unset SSHPASS
     }
 
-    while (( attempt < max_retries )); do
-        ((attempt++)) || true
-        log_debug "rsync (ssh→ssh) attempt $attempt/$max_retries: $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}"
-        log_info "CMD (ssh→ssh): rsync ${ropts[*]} -e '...' $source_spec $remote_dest (via ${REMOTE_USER}@${REMOTE_HOST})"
+    log_info "CMD (ssh→ssh): rsync ${ropts[*]} -e '...' $source_spec $remote_dest (via ${REMOTE_USER}@${REMOTE_HOST})"
 
-        if _is_password_mode; then
-            export SSHPASS="$REMOTE_PASSWORD"
-        fi
+    if _is_password_mode; then
+        export SSHPASS="$REMOTE_PASSWORD"
+    fi
 
-        local rc=0
-        # </dev/null prevents SSH from consuming stdin (which may be a
-        # process substitution feeding a while-read loop of folders).
-        if [[ -n "${_TRANSFER_LOG:-}" ]]; then
-            echo "=== rsync (ssh→ssh): $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
-            "${dst_ssh[@]}" </dev/null > >(_snaplog_tee) 2>&1 || rc=$?
-        else
-            "${dst_ssh[@]}" </dev/null || rc=$?
-        fi
-        unset SSHPASS
+    # _run_devnull prevents SSH from consuming stdin (which may be a
+    # process substitution feeding a while-read loop of folders).
+    local -a rsync_cmd=(_run_devnull "${dst_ssh[@]}")
 
-        if (( rc == 0 )); then
-            log_debug "rsync (ssh→ssh) succeeded on attempt $attempt"
-            _ssh_to_ssh_cleanup
-            return 0
-        fi
-
-        if (( rc == 23 )); then
-            log_warn "rsync (ssh→ssh) partial transfer (exit 23): retrying to pick up failed files..."
-            sleep 2
-            if _is_password_mode; then export SSHPASS="$REMOTE_PASSWORD"; fi
-            local rc2=0
-            if [[ -n "${_TRANSFER_LOG:-}" ]]; then
-                echo "=== rsync (ssh→ssh retry): $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest} ===" >> "$_TRANSFER_LOG"
-                "${dst_ssh[@]}" </dev/null > >(_snaplog_tee) 2>&1 || rc2=$?
-            else
-                "${dst_ssh[@]}" </dev/null || rc2=$?
-            fi
-            unset SSHPASS
-            if (( rc2 == 0 )); then
-                log_info "rsync (ssh→ssh) retry succeeded — all files transferred"
-                _ssh_to_ssh_cleanup
-                return 0
-            fi
-            log_warn "rsync (ssh→ssh) retry completed (exit $rc2): some files could not be transferred"
-            _ssh_to_ssh_cleanup
-            return 0
-        fi
-        if (( rc == 24 )); then
-            log_warn "rsync (ssh→ssh) completed with warnings (exit $rc): vanished source files"
-            _ssh_to_ssh_cleanup
-            return 0
-        fi
-
-        # SSH connection failure (255) — retry with backoff
-        if (( rc == 255 )); then
-            log_warn "rsync (ssh→ssh) SSH connection failed (exit 255), attempt $attempt/$max_retries"
-        else
-            log_warn "rsync (ssh→ssh) failed (exit $rc), attempt $attempt/$max_retries"
-        fi
-        _check_disk_space_or_abort || { _ssh_to_ssh_cleanup; return 1; }
-
-        if (( attempt < max_retries )); then
-            local backoff=$(( attempt * 10 ))
-            log_info "Retrying in ${backoff}s..."
-            sleep "$backoff"
-        fi
-    done
-
+    local _rc=0
+    _rsync_with_retry "$max_retries" "rsync (ssh→ssh)" rsync_cmd "true" \
+        "rsync (ssh→ssh): $source_spec -> ${REMOTE_USER}@${REMOTE_HOST}:${remote_dest}" || _rc=$?
     _ssh_to_ssh_cleanup
-    log_error "rsync (ssh→ssh) failed after $max_retries attempts"
-    return 1
+    return "$_rc"
 }
 
 # Pipelined folder transfer: SSH source → SSH destination (no local staging).

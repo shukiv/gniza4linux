@@ -226,13 +226,20 @@ class SettingsScreen(Screen):
 
         import hmac
         if not hmac.compare_digest(settings.web_api_key, old_api_key):
-            if os.geteuid() == 0:
-                subprocess.run(["systemctl", "restart", "gniza-web"], check=False)
-            else:
-                subprocess.run(["systemctl", "--user", "restart", "gniza-web"], check=False)
-            self.notify("Settings saved. Web service restarted (password changed).")
+            self.notify("Settings saved. Restarting web service (password changed)...")
+            self._restart_web_service()
         else:
             self.notify("Settings saved.")
+
+    @work(thread=True)
+    def _restart_web_service(self) -> None:
+        """Restart gniza-web in a background thread (don't block TUI)."""
+        import time
+        time.sleep(1)  # brief delay so the config write completes
+        if os.geteuid() == 0:
+            subprocess.run(["systemctl", "restart", "gniza-web"], check=False, timeout=10)
+        else:
+            subprocess.run(["systemctl", "--user", "restart", "gniza-web"], check=False, timeout=10)
 
     @work
     async def _send_test_email(self) -> None:

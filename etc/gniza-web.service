@@ -16,7 +16,7 @@ SyslogIdentifier=gniza-web
 NoNewPrivileges=yes
 ProtectSystem=full
 PrivateTmp=yes
-ProtectHome=read-only
+ProtectHome=no
 LimitNOFILE=65536
 
 [Install]

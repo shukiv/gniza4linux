@@ -426,23 +426,45 @@ _backup_target_impl() {
         return 1
     fi
 
-    # Calculate total_size after finalization for accurate reporting
+    # Calculate total_size from rsync stats (fast — no du needed)
     local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
     local total_size=0
-    if _is_rclone_mode; then
-        local size_json; size_json=$(rclone_size "targets/${target_name}/snapshots/${ts}" 2>/dev/null) || true
-        if [[ -n "$size_json" ]]; then
-            total_size=$(echo "$size_json" | grep -oP '"bytes":\s*\K[0-9]+' || echo 0)
+    if [[ -n "${_TRANSFER_LOG:-}" && -f "$_TRANSFER_LOG" ]]; then
+        # Parse "Total file size: 29,684,304,779 bytes" from rsync --stats output
+        local raw_size; raw_size=$(grep -oP 'Total file size:\s*\K[0-9,]+' "$_TRANSFER_LOG" | tail -1 | tr -d ',') || true
+        [[ -n "$raw_size" ]] && total_size="$raw_size"
+    fi
+    # Fallback to du if rsync stats not available
+    if [[ "$total_size" -eq 0 ]]; then
+        if _is_rclone_mode; then
+            local size_json; size_json=$(rclone_size "targets/${target_name}/snapshots/${ts}" 2>/dev/null) || true
+            [[ -n "$size_json" ]] && total_size=$(echo "$size_json" | grep -oP '"bytes":\s*\K[0-9]+' || echo 0)
+        elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+            total_size=$(du -sb "$snap_dir/$ts" 2>/dev/null | cut -f1) || total_size=0
+        else
+            local sq_snap; sq_snap="$(shquote "$snap_dir/$ts")"
+            total_size=$(remote_exec "du -sb '$sq_snap' 2>/dev/null | cut -f1" 2>/dev/null) || total_size=0
         fi
-    elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
-        total_size=$(du -sb "$snap_dir/$ts" 2>/dev/null | cut -f1) || total_size=0
-    else
-        local sq_snap; sq_snap="$(shquote "$snap_dir/$ts")"
-        total_size=$(remote_exec "du -sb '$sq_snap' 2>/dev/null | cut -f1" 2>/dev/null) || total_size=0
     fi
 
     local end_time; end_time=$(date +%s)
     local duration=$(( end_time - start_time ))
+
+    # Update meta.json with actual total_size (was 0 when initially written)
+    if [[ "${total_size:-0}" -gt 0 ]]; then
+        if _is_rclone_mode; then
+            : # rclone meta update not worth the overhead
+        elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
+            local meta_file="$snap_dir/$ts/meta.json"
+            if [[ -f "$meta_file" ]]; then
+                sed -i "s/\"total_size\": 0/\"total_size\": $total_size/" "$meta_file" 2>/dev/null || true
+            fi
+        else
+            local sq_meta; sq_meta="$(shquote "$snap_dir/$ts/meta.json")"
+            remote_exec "sed -i 's/\"total_size\": 0/\"total_size\": $total_size/' '$sq_meta'" 2>/dev/null || true
+        fi
+    fi
+
     log_info "Backup completed for $target_name: $ts ($(human_size "${total_size:-0}") in $(human_duration "$duration"))"
 
     # 13. Run post-hook

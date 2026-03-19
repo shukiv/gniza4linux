@@ -144,9 +144,9 @@ Logs & Info:
   version               Show version
 
 Web Dashboard:
-  web start [--port=PORT] [--host=HOST]
+  web start [--port=PORT] [--host=HOST] [--ssl] [--cert=FILE] [--key=FILE]
       Start the web dashboard (default: port 2323, host 0.0.0.0).
-      Serves the full TUI in a browser with HTTP Basic Auth.
+      --ssl enables HTTPS with auto-generated self-signed certificate.
 
   web install-service   Install as a systemd service (auto-starts on boot)
   web remove-service    Stop and remove the systemd service
@@ -1058,7 +1058,7 @@ Usage: gniza web <action> [OPTIONS]
 Manage the web dashboard.
 
 Actions:
-  start [--port=PORT] [--host=HOST]
+  start [--port=PORT] [--host=HOST] [--ssl] [--cert=FILE] [--key=FILE]
                         Start the web dashboard (default: port 2323, host 0.0.0.0)
   restart               Restart the web dashboard service
   stop                  Stop the web dashboard service
@@ -1069,9 +1069,21 @@ Actions:
   reset-password        Generate a new random login password
   help                  Show this help
 
+SSL Options:
+  --ssl                 Enable HTTPS with auto-generated self-signed certificate
+  --cert=FILE           Path to SSL certificate file (implies --ssl)
+  --key=FILE            Path to SSL private key file (implies --ssl)
+
+  Or set in gniza.conf:
+    WEB_SSL="yes"                         Auto-generate self-signed cert
+    WEB_SSL_CERT="/path/to/cert.pem"      Custom certificate
+    WEB_SSL_KEY="/path/to/key.pem"        Custom private key
+
 Examples:
   gniza web                              Start the web dashboard
   gniza web start --port=8080            Start on a custom port
+  gniza web start --ssl                  Start with HTTPS (self-signed)
+  gniza web start --cert=cert.pem --key=key.pem  Start with custom SSL cert
   gniza web restart                      Restart the service
   gniza web stop                         Stop the service
   gniza web install-service              Install as systemd service

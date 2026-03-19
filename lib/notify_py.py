@@ -257,6 +257,14 @@ def _parse_backup_summary(log_file):
     if m:
         summary["duration"] = m.group(1).strip()
 
+    m = re.search(r"Sources:\s+(.+)", text)
+    if m:
+        summary["sources"] = m.group(1).strip()
+
+    m = re.search(r"Destinations:\s+(.+)", text)
+    if m:
+        summary["destinations"] = m.group(1).strip()
+
     failed_section = re.search(r"Failed sources:\n((?:.+\n)*)", text)
     if failed_section:
         summary["failed_targets"] = failed_section.group(1).strip()
@@ -265,6 +273,10 @@ def _parse_backup_summary(log_file):
         m = re.search(r"Backup completed for (\S+)", text)
         name = m.group(1) if m else "unknown"
         summary = {"total": 1, "succeeded": 1, "failed": 0, "single_target": name}
+        # Try to find destination from log
+        m2 = re.search(r"Transferring .+ to remote '(\S+)'", text)
+        if m2:
+            summary["destinations"] = m2.group(1)
 
     return summary if summary else None
 
@@ -327,6 +339,10 @@ def send_job_notification(entry):
         lines.append(f"Duration: {summary['duration']}")
     lines.append("")
     if summary:
+        if summary.get("sources"):
+            lines.append(f"Sources: {summary['sources']}")
+        if summary.get("destinations"):
+            lines.append(f"Destinations: {summary['destinations']}")
         lines.append(f"Targets: {summary.get('total', '?')} total, "
                       f"{summary.get('succeeded', '?')} succeeded, "
                       f"{summary.get('failed', 0)} failed")

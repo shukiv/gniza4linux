@@ -537,6 +537,7 @@ backup_all_targets() {
     echo "============================================"
     echo "Timestamp:   $(timestamp)"
     echo "Duration:    $(human_duration $duration)"
+    echo "Sources:     $(echo "$targets" | tr '\n' ' ')"
     echo "Destinations: $(echo "$remotes" | tr '\n' ' ')"
     echo "Total:       $total"
     echo "Succeeded:   ${C_GREEN}${succeeded}${C_RESET}"

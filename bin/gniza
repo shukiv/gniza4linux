@@ -1188,6 +1188,11 @@ SVCEOF
             fi
             ;;
         restart)
+            # Kill any process holding the web port before restart
+            _web_port=$(grep '^WEB_PORT=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_PORT="//' | sed 's/"$//' || echo "2323")
+            _web_port="${_web_port:-2323}"
+            fuser -k "${_web_port}/tcp" 2>/dev/null || true
+            sleep 1
             if [[ $EUID -eq 0 ]]; then
                 systemctl restart gniza-web && echo "Web service restarted." || die "Failed to restart web service."
             else
@@ -1195,6 +1200,10 @@ SVCEOF
             fi
             ;;
         stop)
+            # Kill any process holding the web port (handles orphans from manual starts)
+            _web_port=$(grep '^WEB_PORT=' "$CONFIG_DIR/gniza.conf" 2>/dev/null | sed 's/^WEB_PORT="//' | sed 's/"$//' || echo "2323")
+            _web_port="${_web_port:-2323}"
+            fuser -k "${_web_port}/tcp" 2>/dev/null || true
             if [[ $EUID -eq 0 ]]; then
                 systemctl stop gniza-web && echo "Web service stopped." || die "Failed to stop web service."
             else

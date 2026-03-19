@@ -8,6 +8,10 @@ ExecStart=/usr/local/gniza/bin/gniza web start
 WorkingDirectory=/usr/local/gniza
 Environment=GNIZA_DIR=/usr/local/gniza
 Environment=PYTHONPATH=/usr/local/gniza
+ExecStop=/bin/kill -TERM $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=10
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal

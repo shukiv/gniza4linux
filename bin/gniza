@@ -1082,12 +1082,17 @@ HELPEOF
             exit 0
             ;;
         start)
-            _web_port="" _web_host=""
+            _web_port="" _web_host="" _web_cert="" _web_key=""
             _web_port=$(_parse_flag "--port" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _web_host=$(_parse_flag "--host" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            _web_cert=$(_parse_flag "--cert" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
+            _web_key=$(_parse_flag "--key" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _web_args=()
             [[ -n "$_web_port" ]] && _web_args+=(--port="$_web_port")
             [[ -n "$_web_host" ]] && _web_args+=(--host="$_web_host")
+            _has_flag "--ssl" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && _web_args+=(--ssl)
+            [[ -n "$_web_cert" ]] && _web_args+=(--cert="$_web_cert")
+            [[ -n "$_web_key" ]] && _web_args+=(--key="$_web_key")
             PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" exec "$GNIZA_PYTHON" -m web "${_web_args[@]}"
             ;;
         install-service)

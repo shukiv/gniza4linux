@@ -13,6 +13,7 @@ dependencies = [
     "waitress",
     "psutil",
     "markupsafe",
+    "markdown",
 ]
 
 [project.optional-dependencies]

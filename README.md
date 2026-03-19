@@ -278,8 +278,8 @@ Other:
   logs [--last] [--tail=N]
   health [--destination=NAME] [--json]     Check backup health
   update [--check] [--force]               Update gniza to latest version
-  web start | install-service | remove-service | status | reset-password [--port=PORT]
-  daemon start | install-service | remove-service | status
+  web start | stop | restart | install-service | remove-service | status | reset-password | logs [--port=PORT]
+  daemon start | stop | restart | install-service | remove-service | status | logs
   uninstall
 ```
 

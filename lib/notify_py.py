@@ -111,7 +111,7 @@ def _send_email(settings, subject, body):
     sender = settings["smtp_from"]
     recipients = [r.strip() for r in settings["notify_email"].split(",") if r.strip()]
 
-    msg = MIMEText(body, "plain", "utf-8")
+    msg = MIMEText(body, "html", "utf-8")
     msg["From"] = sender
     msg["To"] = ", ".join(recipients)
     msg["Subject"] = subject
@@ -190,13 +190,13 @@ def _send_healthcheck(settings, is_success):
     return ok
 
 
-def _dispatch_notification(settings, subject, body, is_success=True):
+def _dispatch_notification(settings, subject, body, is_success=True, html_body=None):
     """Send to ALL configured channels. Returns dict of {channel: success}."""
     results = {}
 
-    # Email
+    # Email (use HTML body if available)
     if settings["notify_email"] and settings["smtp_host"]:
-        ok = _send_email(settings, subject, body)
+        ok = _send_email(settings, subject, html_body or body)
         results["email"] = ok
         _log_notification("email", "OK" if ok else "FAIL", settings["notify_email"], subject)
 
@@ -331,10 +331,11 @@ def send_job_notification(entry):
         status_word = status.upper()
         subject = f"[gniza] [{hostname}] {kind.replace('-', ' ').title()} {status_word}"
 
-    # Build body
+    # Build plain text body (for Telegram, webhook, ntfy)
+    ts_str = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S UTC')
     lines = [f"Backup Report: {status_word}", "=" * 30]
     lines.append(f"Hostname: {hostname}")
-    lines.append(f"Timestamp: {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S UTC')}")
+    lines.append(f"Timestamp: {ts_str}")
     if summary and summary.get("duration"):
         lines.append(f"Duration: {summary['duration']}")
     lines.append("")
@@ -359,7 +360,24 @@ def send_job_notification(entry):
 
     body = "\n".join(lines)
 
-    results = _dispatch_notification(settings, subject, body, is_success)
+    # Build HTML body (for email only)
+    from lib.email_template import build_html_email
+    html_body = build_html_email(
+        status_word=status_word,
+        hostname=hostname,
+        timestamp=ts_str,
+        duration=summary.get("duration", "") if summary else "",
+        sources=summary.get("sources", "") if summary else "",
+        destinations=summary.get("destinations", "") if summary else "",
+        total=summary.get("total", "") if summary else "",
+        succeeded=summary.get("succeeded", "") if summary else "",
+        failed=summary.get("failed", "") if summary else "",
+        failed_targets=summary.get("failed_targets", "") if summary else "",
+        log_file=log_file,
+        job_label=entry.get("label", ""),
+    )
+
+    results = _dispatch_notification(settings, subject, body, is_success, html_body=html_body)
     job_id = entry.get("id")
     for channel, ok in results.items():
         if ok:

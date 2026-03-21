@@ -29,15 +29,33 @@ _send_via_smtp() {
         return 1
     fi
 
+    # Try to build HTML email via Python template
+    local html_body=""
+    if command -v python3 &>/dev/null; then
+        html_body=$(python3 -c "
+from lib.email_template import build_html_email
+print(build_html_email(status_word='Backup Report', hostname='$(hostname -f)', timestamp='$(date -u +"%d/%m/%Y %H:%M:%S UTC")'))
+" 2>/dev/null) || html_body=""
+    fi
+
     # Build the RFC 2822 message
     local message=""
     message+="From: $from"$'\r\n'
     message+="To: $NOTIFY_EMAIL"$'\r\n'
     message+="Subject: $subject"$'\r\n'
-    message+="Content-Type: text/plain; charset=UTF-8"$'\r\n'
+    message+="MIME-Version: 1.0"$'\r\n'
+    if [[ -n "$html_body" ]]; then
+        message+="Content-Type: text/html; charset=UTF-8"$'\r\n'
+    else
+        message+="Content-Type: text/plain; charset=UTF-8"$'\r\n'
+    fi
     message+="Date: $(date -R)"$'\r\n'
     message+=$'\r\n'
-    message+="$body"
+    if [[ -n "$html_body" ]]; then
+        message+="$html_body"
+    else
+        message+="$body"
+    fi
 
     # Build curl command
     local -a curl_args=(

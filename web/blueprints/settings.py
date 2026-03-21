@@ -102,10 +102,25 @@ def save():
 def check_update():
     try:
         rc, stdout, stderr = run_cli_sync("update", "--check", timeout=60)
-        if rc == 0:
-            flash(stdout.strip() or "Already up to date.", "success")
+        output = (stdout + stderr).strip()
+        if "Already up to date" in output:
+            flash("You are running the latest version.", "success")
+        elif "commit(s) behind" in output:
+            import re
+            m = re.search(r'v([\d.]+)\s*\(', output)
+            latest = re.search(r'Latest:\s*v([\d.]+)', output)
+            behind = re.search(r'(\d+)\s*commit', output)
+            msg = "A new update is available!"
+            if latest:
+                msg += f" Latest: v{latest.group(1)}"
+            if behind:
+                msg += f" ({behind.group(1)} commits behind)"
+            msg += " Click 'Update Now' to apply."
+            flash(msg, "warning")
+        elif rc == 0:
+            flash("You are running the latest version.", "success")
         else:
-            flash(stderr.strip() or stdout.strip() or "Update check failed.", "error")
+            flash(f"Update check failed: {output[:200]}", "error")
     except Exception as e:
         flash(f"Error: {e}", "error")
     return redirect(url_for("settings.index", tab="update"))

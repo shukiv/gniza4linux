@@ -23,17 +23,17 @@
     <div class="card-body p-0">
         {% if schedules %}
         <div class="overflow-x-auto">
-            <table class="table table-sm whitespace-nowrap">
+            <table class="table table-sm whitespace-nowrap" x-sort-table>
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Time</th>
-                        <th>Sources</th>
-                        <th>Destinations</th>
-                        <th>Last Run</th>
-                        <th>Next Run</th>
-                        <th>Status</th>
+                        <th data-sort="string">Name</th>
+                        <th data-sort="badge">Type</th>
+                        <th data-sort="string">Time</th>
+                        <th data-sort="string">Sources</th>
+                        <th data-sort="string">Destinations</th>
+                        <th data-sort="date">Last Run</th>
+                        <th data-sort="date">Next Run</th>
+                        <th data-sort="badge">Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>

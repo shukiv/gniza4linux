@@ -49,13 +49,13 @@
         </div>
         {% if targets %}
         <div class="overflow-x-auto">
-            <table class="table">
+            <table class="table" x-sort-table>
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Folders</th>
-                        <th>Status</th>
+                        <th data-sort="string">Name</th>
+                        <th data-sort="string">Type</th>
+                        <th data-sort="string">Folders</th>
+                        <th data-sort="badge">Status</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -92,13 +92,13 @@
         </div>
         {% if remotes %}
         <div class="overflow-x-auto">
-            <table class="table">
+            <table class="table" x-sort-table>
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Host</th>
-                        <th>Base Path</th>
+                        <th data-sort="string">Name</th>
+                        <th data-sort="badge">Type</th>
+                        <th data-sort="string">Host</th>
+                        <th data-sort="string">Base Path</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -129,13 +129,13 @@
         </div>
         {% if schedules %}
         <div class="overflow-x-auto">
-            <table class="table">
+            <table class="table" x-sort-table>
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Schedule</th>
-                        <th>Sources</th>
-                        <th>Status</th>
+                        <th data-sort="string">Name</th>
+                        <th data-sort="string">Schedule</th>
+                        <th data-sort="string">Sources</th>
+                        <th data-sort="badge">Status</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -173,13 +173,13 @@
         </div>
         {% if recent_jobs %}
         <div class="overflow-x-auto">
-            <table class="table">
+            <table class="table" x-sort-table>
                 <thead>
                     <tr>
-                        <th>Label</th>
-                        <th>Started</th>
-                        <th>Duration</th>
-                        <th>Status</th>
+                        <th data-sort="string">Label</th>
+                        <th data-sort="date">Started</th>
+                        <th data-sort="duration">Duration</th>
+                        <th data-sort="badge">Status</th>
                     </tr>
                 </thead>
                 <tbody>

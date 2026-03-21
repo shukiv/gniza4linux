@@ -64,8 +64,12 @@
         });
       });
     </script>
+    <script src="{{ url_for('static', filename='js/table-sort.js') }}"></script>
     <script defer src="{{ url_for('static', filename='vendor/js/alpine.min.js') }}"></script>
-    <style>.btn.htmx-request { pointer-events: none; opacity: .7; }
+    <style>th[data-sort] { cursor: pointer; user-select: none; }
+    th[data-sort]:hover { color: oklch(var(--p)); }
+    .sort-indicator { font-size: 0.65em; vertical-align: middle; }
+    .btn.htmx-request { pointer-events: none; opacity: .7; }
     .btn.htmx-request::after { content: ''; display: inline-block; width: .75rem; height: .75rem; margin-left: .4rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .5s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }</style>
 </head>

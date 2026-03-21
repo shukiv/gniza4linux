@@ -30,16 +30,16 @@
     <div class="card-body p-0">
         {% if jobs %}
         <div class="overflow-x-auto">
-            <table class="table">
+            <table class="table" x-sort-table>
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Label</th>
-                        <th>Status</th>
-                        <th>Started</th>
-                        <th>Ended</th>
-                        <th>Duration</th>
-                        <th>Size</th>
+                        <th data-sort="number">ID</th>
+                        <th data-sort="string">Label</th>
+                        <th data-sort="badge">Status</th>
+                        <th data-sort="date">Started</th>
+                        <th data-sort="date">Ended</th>
+                        <th data-sort="duration">Duration</th>
+                        <th data-sort="size">Size</th>
                         <th>Actions</th>
                     </tr>
                 </thead>

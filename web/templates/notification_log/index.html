@@ -9,14 +9,14 @@
     <div class="card-body p-0">
         {% if entries %}
         <div class="overflow-x-auto">
-            <table class="table">
+            <table class="table" x-sort-table>
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Channel</th>
-                        <th>Status</th>
-                        <th>Destination</th>
-                        <th>Subject</th>
+                        <th data-sort="date">Date</th>
+                        <th data-sort="badge">Channel</th>
+                        <th data-sort="badge">Status</th>
+                        <th data-sort="string">Destination</th>
+                        <th data-sort="string">Subject</th>
                     </tr>
                 </thead>
                 <tbody>

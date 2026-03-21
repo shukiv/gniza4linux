@@ -19,11 +19,11 @@
     <div class="card-body p-0">
         {% if remotes %}
         <div class="overflow-x-auto">
-            <table class="table">
+            <table class="table" x-sort-table>
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Type</th>
+                        <th data-sort="string">Name</th>
+                        <th data-sort="badge">Type</th>
                         <th>Actions</th>
                     </tr>
                 </thead>

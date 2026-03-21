@@ -4,12 +4,12 @@
 </div>
 {% elif snapshots %}
 <div class="overflow-x-auto">
-    <table class="table table-sm">
+    <table class="table table-sm" x-sort-table>
         <thead>
             <tr>
-                <th>#</th>
-                <th>Date</th>
-                <th>Snapshot</th>
+                <th data-sort="number">#</th>
+                <th data-sort="date">Date</th>
+                <th data-sort="string">Snapshot</th>
                 <th></th>
             </tr>
         </thead>

@@ -128,7 +128,7 @@ def build_html_email(
 
   <!-- Header -->
   <tr><td style="background:#1a1a2e;padding:32px 0;text-align:center">
-    {f'<img src="data:image/png;base64,{_get_logo_b64()}" width="80" height="80" alt="GNIZA" style="display:block;margin:0 auto 12px auto">' if _get_logo_b64() else ''}
+    {f'<div style="display:inline-block;background:#ffffff;border-radius:16px;padding:10px;margin-bottom:12px"><img src="data:image/png;base64,{_get_logo_b64()}" width="64" height="64" alt="GNIZA" style="display:block"></div>' if _get_logo_b64() else ''}
     <span style="font-size:22px;font-weight:bold;color:#ffffff">GNIZA Backup</span>
   </td></tr>
 

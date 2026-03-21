@@ -127,9 +127,16 @@ def build_html_email(
 <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
 
   <!-- Header -->
-  <tr><td style="background:#1a1a2e;padding:32px 0;text-align:center">
-    <div style="display:inline-block;background:#ffffff;border-radius:16px;padding:10px;margin-bottom:12px"><img src="https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/data/gniza-logo.png" width="64" height="64" alt="GNIZA" style="display:block"></div>
-    <span style="font-size:22px;font-weight:bold;color:#ffffff">GNIZA Backup</span>
+  <tr><td style="background:#1a1a2e;padding:28px 0;text-align:center">
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto"><tr>
+      <td style="vertical-align:middle;padding-right:12px">
+        <img src="https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/data/gniza-logo.png" width="48" height="48" alt="" style="display:block">
+      </td>
+      <td style="vertical-align:middle;text-align:left">
+        <span style="font-size:28px;font-weight:bold;color:#ffffff;letter-spacing:3px">GNIZA</span><br>
+        <span style="font-size:11px;color:#8888aa">Linux Backup Manager</span>
+      </td>
+    </tr></table>
   </td></tr>
 
   <!-- Status Badge -->

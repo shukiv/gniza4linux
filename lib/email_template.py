@@ -133,8 +133,8 @@ def build_html_email(
         <img src="https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/data/gniza-logo.png" width="48" height="48" alt="" style="display:block">
       </td>
       <td style="vertical-align:middle;text-align:left">
-        <span style="font-size:28px;font-weight:bold;color:#ffffff;letter-spacing:3px">GNIZA</span><br>
-        <span style="font-size:11px;color:#8888aa">Linux Backup Manager</span>
+        <span style="font-size:28px;font-weight:bold;color:#ffffff;letter-spacing:3px;line-height:1">GNIZA</span><br>
+        <span style="font-size:11px;color:#8888aa;line-height:1">Linux Backup Manager</span>
       </td>
     </tr></table>
   </td></tr>

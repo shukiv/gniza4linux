@@ -73,8 +73,8 @@ If you have ever set up backups with raw rsync, tar, or tools like Dirvish, you 
 **Debian/Ubuntu (.deb package):**
 
 ```
-wget https://git.linux-hosting.co.il/shukivaknin/gniza4linux/releases/download/latest/gniza_0.25_all.deb
-sudo dpkg -i gniza_0.25_all.deb
+wget https://git.linux-hosting.co.il/shukivaknin/gniza4linux/releases/download/latest/gniza_0.26_all.deb
+sudo dpkg -i gniza_0.26_all.deb
 sudo apt-get -f install   # resolve dependencies
 ```
 
@@ -1210,6 +1210,10 @@ TARGET_MYSQL_HOST="localhost"
 TARGET_MYSQL_PORT="3306"
 ```
 
+### Auto-Credentials (Debian/Ubuntu)
+
+When no `TARGET_MYSQL_USER` and no `TARGET_MYSQL_PASSWORD` are configured, gniza automatically falls back to `--defaults-file=/etc/mysql/debian.cnf`. This file is installed by default on Debian and Ubuntu systems and contains the `debian-sys-maint` credentials. The fallback works for both local sources and SSH remote sources (the file is read on the target machine). No user action is needed -- just leave the MySQL user and password fields empty.
+
 ### Dump Modes
 
 **All databases** (default):
@@ -1469,7 +1473,9 @@ sudo systemctl restart gniza-web.service     # root mode
 
 ### Web Screens
 
-All three interfaces (TUI, Web, CLI) maintain full feature parity:
+All three interfaces (TUI, Web, CLI) maintain full feature parity.
+
+All DaisyUI tables in the web dashboard are **sortable** -- click any column header to sort. Arrow indicators show the current sort direction. Sort types (string, number, date, duration, size, badge) are automatically determined by the `data-sort` attribute on `<th>` elements. No configuration is needed.
 
 | Screen | Description |
 |--------|-------------|
@@ -1535,7 +1541,7 @@ The web dashboard is responsive and works on mobile browsers:
 | **Tailwind CSS** | Utility CSS framework (CDN) |
 | **DaisyUI** | Tailwind component library with theme support (CDN) |
 | **HTMX** | Dynamic HTML interactions, SSE log streaming (CDN) |
-| **Alpine.js** | Lightweight JS for conditional form fields and state (CDN) |
+| **Alpine.js** | Lightweight JS for conditional form fields, state, and sortable tables (CDN) |
 
 ---
 

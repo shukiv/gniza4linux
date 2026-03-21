@@ -24,7 +24,7 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 - **Retry logic** — Automatic SSH reconnection with exponential backoff
 - **Include/exclude filters** — Rsync glob patterns per source
 - **Terminal UI** — Full-featured TUI powered by [Textual](https://textual.textualize.io/)
-- **Web dashboard** — Browser-based dashboard with system stats (CPU, Memory, multi-partition Disks, IO Wait, Network), plus full backup management. Source list shows disk usage per source (local, SSH, and rclone)
+- **Web dashboard** — Browser-based dashboard with system stats (CPU, Memory, multi-partition Disks, IO Wait, Network), plus full backup management. All tables are sortable by clicking column headers. Source list shows disk usage per source (local, SSH, and rclone)
 - **CLI** — Scriptable commands for automation and cron
 - **Root and user mode** — System-wide (`/etc/gniza`) or per-user (`~/.config/gniza`)
 
@@ -521,7 +521,7 @@ gniza can dump MySQL/MariaDB databases alongside file backups.
 - **Compression**: All dumps are gzip-compressed
 - **Restore**: MySQL dumps are automatically restored unless `--skip-mysql` is passed
 
-Auto-detects `mysqldump` or `mariadb-dump`.
+Auto-detects `mysqldump` or `mariadb-dump`. On Debian/Ubuntu, when no MySQL user or password is configured, gniza automatically uses `/etc/mysql/debian.cnf` as a credential fallback (works for both local and SSH sources).
 
 ## PostgreSQL Backup
 

@@ -72,6 +72,18 @@ mysql_build_conn_args() {
     MYSQL_CONN_ARGS=()
     if [[ -n "${TARGET_MYSQL_USER:-}" ]]; then
         MYSQL_CONN_ARGS+=(-u "$TARGET_MYSQL_USER")
+    elif [[ -z "${TARGET_MYSQL_USER:-}" && -z "${TARGET_MYSQL_PASSWORD:-}" ]]; then
+        # No credentials configured — try Debian/Ubuntu defaults file
+        local debian_cnf="/etc/mysql/debian.cnf"
+        if _db_is_remote; then
+            # Check if debian.cnf exists on remote
+            local sq_cnf; sq_cnf="$(shquote "$debian_cnf")"
+            if _db_ssh_raw _MYSQL_SSH "test -f '$sq_cnf'" 2>/dev/null; then
+                MYSQL_CONN_ARGS+=(--defaults-file="$debian_cnf")
+            fi
+        elif [[ -f "$debian_cnf" ]]; then
+            MYSQL_CONN_ARGS+=(--defaults-file="$debian_cnf")
+        fi
     fi
     if [[ -n "${TARGET_MYSQL_HOST:-}" && "${TARGET_MYSQL_HOST}" != "localhost" ]]; then
         MYSQL_CONN_ARGS+=(-h "$TARGET_MYSQL_HOST")
@@ -90,6 +102,9 @@ _mysql_build_conn_str() {
     local conn_str=""
     if [[ -n "${TARGET_MYSQL_USER:-}" ]]; then
         conn_str+="-u $(printf '%q' "$TARGET_MYSQL_USER")"
+    elif [[ -z "${TARGET_MYSQL_USER:-}" && -z "${TARGET_MYSQL_PASSWORD:-}" ]]; then
+        # No credentials — use Debian/Ubuntu defaults file if available
+        conn_str+="--defaults-file=/etc/mysql/debian.cnf"
     fi
     if [[ -n "${TARGET_MYSQL_HOST:-}" && "${TARGET_MYSQL_HOST}" != "localhost" ]]; then
         conn_str+=" -h $(printf '%q' "$TARGET_MYSQL_HOST")"

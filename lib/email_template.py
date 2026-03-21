@@ -1,4 +1,23 @@
 """HTML email template for GNIZA backup notifications."""
+import base64
+from pathlib import Path
+
+_LOGO_B64 = None
+
+
+def _get_logo_b64():
+    """Load and cache the logo PNG as base64."""
+    global _LOGO_B64
+    if _LOGO_B64 is None:
+        logo_path = Path(__file__).resolve().parent.parent / "gniza-logo.png"
+        if not logo_path.is_file():
+            # Fallback: check installed location
+            logo_path = Path(__file__).resolve().parent / "gniza-logo.png"
+        if logo_path.is_file():
+            _LOGO_B64 = base64.b64encode(logo_path.read_bytes()).decode()
+        else:
+            _LOGO_B64 = ""
+    return _LOGO_B64
 
 
 def build_html_email(
@@ -106,8 +125,9 @@ def build_html_email(
 
   <!-- Header -->
   <tr><td style="background:#1a1a2e;padding:28px 0;text-align:center">
-    <span style="font-size:26px;font-weight:bold;color:#e67e22;letter-spacing:6px">G N I Z A</span><br>
-    <span style="font-size:12px;color:#8888aa;letter-spacing:2px">LINUX BACKUP MANAGER</span>
+    {f'<img src="data:image/png;base64,{_get_logo_b64()}" width="64" height="64" alt="GNIZA" style="display:block;margin:0 auto 8px auto"><br>' if _get_logo_b64() else ''}
+    <span style="font-size:24px;font-weight:bold;color:#e67e22">GNIZA</span><br>
+    <span style="font-size:12px;color:#8888aa;letter-spacing:1px">BACKUP</span>
   </td></tr>
 
   <!-- Status Badge -->

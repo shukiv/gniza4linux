@@ -127,10 +127,9 @@ def build_html_email(
 <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
 
   <!-- Header -->
-  <tr><td style="background:#1a1a2e;padding:28px 0;text-align:center">
-    {f'<img src="data:image/png;base64,{_get_logo_b64()}" width="64" height="64" alt="GNIZA" style="display:block;margin:0 auto 8px auto"><br>' if _get_logo_b64() else ''}
-    <span style="font-size:24px;font-weight:bold;color:#e67e22">GNIZA</span><br>
-    <span style="font-size:12px;color:#8888aa;letter-spacing:1px">BACKUP</span>
+  <tr><td style="background:#1a1a2e;padding:32px 0;text-align:center">
+    {f'<img src="data:image/png;base64,{_get_logo_b64()}" width="80" height="80" alt="GNIZA" style="display:block;margin:0 auto 12px auto">' if _get_logo_b64() else ''}
+    <span style="font-size:22px;font-weight:bold;color:#ffffff">GNIZA Backup</span>
   </td></tr>
 
   <!-- Status Badge -->

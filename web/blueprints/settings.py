@@ -4,7 +4,7 @@ import threading
 from pathlib import Path
 
 from flask import (
-    Blueprint, render_template, request, redirect, url_for, flash,
+    Blueprint, render_template, render_template_string, request, redirect, url_for, flash,
 )
 
 from tui.config import CONFIG_DIR, parse_conf, write_conf
@@ -14,6 +14,22 @@ from web.backend import run_cli_sync
 from lib.notify_py import send_test_notification
 
 bp = Blueprint("settings", __name__, url_prefix="/settings")
+
+RESTART_WAIT_PAGE = """<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>GNIZA — Restarting</title>
+<style>body{font-family:system-ui;background:#1d232a;color:#a6adbb;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.box{text-align:center}.spinner{width:40px;height:40px;border:4px solid #333;border-top-color:#6419e6;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}</style></head>
+<body><div class="box"><div class="spinner"></div><p>{{ message }}</p><p id="status" style="font-size:.85rem;opacity:.6">Waiting for service to come back...</p></div>
+<script>
+var url = "{{ redirect_url }}";
+function check() {
+    fetch(url, {method: 'HEAD', cache: 'no-store'})
+        .then(function(r) { if (r.ok) window.location.href = url; else setTimeout(check, 1000); })
+        .catch(function() { setTimeout(check, 1000); });
+}
+setTimeout(check, 3000);
+</script></body></html>"""
 
 
 @bp.route("/")
@@ -131,10 +147,9 @@ def check_update():
 @bp.route("/restart-services", methods=["POST"])
 @login_required
 def restart_services():
-    flash("Restarting services...", "success")
     def _delayed_restart():
         import time
-        time.sleep(1)
+        time.sleep(2)
         if os.geteuid() == 0:
             subprocess.run(["systemctl", "restart", "gniza-web"], check=False)
             subprocess.run(["systemctl", "restart", "gniza-daemon"], check=False)
@@ -142,7 +157,9 @@ def restart_services():
             subprocess.run(["systemctl", "--user", "restart", "gniza-web"], check=False)
             subprocess.run(["systemctl", "--user", "restart", "gniza-daemon"], check=False)
     threading.Thread(target=_delayed_restart, daemon=True).start()
-    return redirect(url_for("settings.index", tab="update", restarted="1"))
+    return render_template_string(RESTART_WAIT_PAGE,
+                                  message="Restarting services...",
+                                  redirect_url=url_for("settings.index", tab="update", restarted="1"))
 
 
 @bp.route("/apply-update", methods=["POST"])
@@ -151,11 +168,10 @@ def apply_update():
     try:
         rc, stdout, stderr = run_cli_sync("update", "--no-restart", timeout=120)
         if rc == 0:
-            flash(stdout.strip() or "Update applied. Restarting services...", "success")
             # Defer service restart so the HTTP response is sent first
             def _delayed_restart():
                 import time
-                time.sleep(1)
+                time.sleep(2)
                 if os.geteuid() == 0:
                     subprocess.run(["systemctl", "restart", "gniza-web"], check=False)
                     subprocess.run(["systemctl", "restart", "gniza-daemon"], check=False)
@@ -163,6 +179,9 @@ def apply_update():
                     subprocess.run(["systemctl", "--user", "restart", "gniza-web"], check=False)
                     subprocess.run(["systemctl", "--user", "restart", "gniza-daemon"], check=False)
             threading.Thread(target=_delayed_restart, daemon=True).start()
+            return render_template_string(RESTART_WAIT_PAGE,
+                                          message="Update applied. Restarting services...",
+                                          redirect_url=url_for("settings.index", tab="update", restarted="1"))
         else:
             flash(stderr.strip() or stdout.strip() or "Update failed.", "error")
     except Exception as e:

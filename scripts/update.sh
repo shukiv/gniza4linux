@@ -29,7 +29,7 @@ for arg in "$@"; do
     esac
 done
 
-# Determine install mode (same pattern as uninstall.sh)
+# Determine install dir
 if [[ $EUID -eq 0 ]]; then
     MODE="root"
     INSTALL_DIR="/usr/local/gniza"
@@ -38,89 +38,120 @@ else
     INSTALL_DIR="$HOME/.local/share/gniza"
 fi
 
+command -v git &>/dev/null || die "git is required for updates"
+
 # Read current version
 CURRENT_VERSION=""
 if [[ -f "$INSTALL_DIR/lib/constants.sh" ]]; then
-    CURRENT_VERSION=$(grep '^readonly GNIZA4LINUX_VERSION=' "$INSTALL_DIR/lib/constants.sh" | sed 's/.*="\(.*\)"/\1/')
+    CURRENT_VERSION=$(grep -oP 'GNIZA4LINUX_VERSION="\K[^"]+' "$INSTALL_DIR/lib/constants.sh" 2>/dev/null || echo "")
 fi
 CURRENT_VERSION="${CURRENT_VERSION:-unknown}"
 
-# Git is required
-command -v git &>/dev/null || die "git is required for updates"
+# Check if install dir is a git repo
+if [[ -d "$INSTALL_DIR/.git" ]]; then
+    # Git-based install — use fetch + compare
+    info "Checking for updates..."
+    cd "$INSTALL_DIR"
 
-# Clone latest to temp dir
-# Source repo URL from constants if available, else use default
-REPO_URL=""
-if [[ -f "$INSTALL_DIR/lib/constants.sh" ]]; then
-    REPO_URL=$(grep '^readonly GNIZA4LINUX_REPO=' "$INSTALL_DIR/lib/constants.sh" | sed 's/.*="\(.*\)"/\1/')
-fi
-REPO_URL="${REPO_URL:-https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git}"
-UPDATE_TMPDIR=$(mktemp -d)
-trap 'rm -rf "$UPDATE_TMPDIR"' EXIT
-info "Checking for updates..."
-git clone --depth 1 --quiet "$REPO_URL" "$UPDATE_TMPDIR/gniza4linux" || die "Failed to fetch latest version"
+    git fetch origin --quiet 2>/dev/null || die "Failed to fetch from remote"
 
-# Read remote version
-REMOTE_VERSION=$(grep '^readonly GNIZA4LINUX_VERSION=' "$UPDATE_TMPDIR/gniza4linux/lib/constants.sh" | sed 's/.*="\(.*\)"/\1/')
-REMOTE_VERSION="${REMOTE_VERSION:-unknown}"
+    LOCAL_HEAD=$(git rev-parse HEAD)
+    REMOTE_HEAD=$(git rev-parse origin/main 2>/dev/null || git rev-parse origin/master 2>/dev/null)
 
-info "Installed: v${CURRENT_VERSION}"
-info "Latest:    v${REMOTE_VERSION}"
+    if [[ "$LOCAL_HEAD" == "$REMOTE_HEAD" ]] && [[ "$FORCE" == "false" ]]; then
+        info "Already up to date (v${CURRENT_VERSION})."
+        exit 0
+    fi
 
-# Compare versions using sort -V
-if [[ "$FORCE" == "false" ]]; then
-    if [[ "$CURRENT_VERSION" == "$REMOTE_VERSION" ]]; then
+    # Count commits behind
+    BEHIND=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo "?")
+    REMOTE_VERSION=$(git show origin/main:lib/constants.sh 2>/dev/null | grep -oP 'GNIZA4LINUX_VERSION="\K[^"]+' || echo "unknown")
+
+    info "Installed: v${CURRENT_VERSION} (${LOCAL_HEAD:0:7})"
+    info "Latest:    v${REMOTE_VERSION} (${REMOTE_HEAD:0:7}), ${BEHIND} commit(s) behind"
+
+    if [[ "$CHECK_ONLY" == "true" ]]; then
+        echo ""
+        echo "Changes:"
+        git log --oneline HEAD..origin/main 2>/dev/null | head -20
+        echo ""
+        echo "Run ${C_BOLD}gniza update${C_RESET} to apply."
+        exit 0
+    fi
+
+    # Apply update
+    info "Updating v${CURRENT_VERSION} → v${REMOTE_VERSION}..."
+    git reset --hard origin/main --quiet
+    chmod +x "$INSTALL_DIR/bin/gniza"
+
+    # Update Python venv if present
+    if [[ -d "$INSTALL_DIR/venv" && -f "$INSTALL_DIR/pyproject.toml" ]]; then
+        info "Updating Python dependencies..."
+        "$INSTALL_DIR/venv/bin/pip" install --quiet "textual>=0.40" textual-serve flask flask-wtf waitress psutil markdown markupsafe 2>/dev/null || warn "Failed to update Python deps"
+    fi
+else
+    # Non-git install (old cp-based or deb) — clone to temp and copy
+    REPO_URL="${GNIZA4LINUX_REPO:-https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git}"
+    UPDATE_TMPDIR=$(mktemp -d)
+    trap 'rm -rf "$UPDATE_TMPDIR"' EXIT
+
+    info "Checking for updates..."
+    git clone --depth 1 --quiet "$REPO_URL" "$UPDATE_TMPDIR/gniza4linux" || die "Failed to fetch latest version"
+
+    REMOTE_VERSION=$(grep -oP 'GNIZA4LINUX_VERSION="\K[^"]+' "$UPDATE_TMPDIR/gniza4linux/lib/constants.sh" 2>/dev/null || echo "unknown")
+
+    info "Installed: v${CURRENT_VERSION}"
+    info "Latest:    v${REMOTE_VERSION}"
+
+    if [[ "$FORCE" == "false" && "$CURRENT_VERSION" == "$REMOTE_VERSION" ]]; then
         info "Already up to date."
         exit 0
     fi
-    # Check if current >= remote (no update needed)
-    _newer=$(printf '%s\n%s' "$CURRENT_VERSION" "$REMOTE_VERSION" | sort -V | tail -1)
-    if [[ "$_newer" == "$CURRENT_VERSION" && "$CURRENT_VERSION" != "$REMOTE_VERSION" ]]; then
-        info "Installed version is newer than remote. Use --force to reinstall."
+
+    if [[ "$CHECK_ONLY" == "true" ]]; then
+        echo "Update available: v${CURRENT_VERSION} → v${REMOTE_VERSION}"
         exit 0
     fi
+
+    info "Updating v${CURRENT_VERSION} → v${REMOTE_VERSION}..."
+    for dir in bin lib etc tui web daemon scripts tests; do
+        if [[ -d "$UPDATE_TMPDIR/gniza4linux/$dir" ]]; then
+            cp -r "$UPDATE_TMPDIR/gniza4linux/$dir" "$INSTALL_DIR/"
+        fi
+    done
+    chmod +x "$INSTALL_DIR/bin/gniza"
 fi
 
-if [[ "$CHECK_ONLY" == "true" ]]; then
-    echo "Update available: v${CURRENT_VERSION} → v${REMOTE_VERSION}"
-    exit 0
-fi
-
-# Apply update
-SOURCE_DIR="$UPDATE_TMPDIR/gniza4linux"
-info "Updating gniza v${CURRENT_VERSION} → v${REMOTE_VERSION}..."
-
-# Copy project files (same dirs as install.sh)
-for dir in bin lib etc tui web daemon scripts tests; do
-    if [[ -d "$SOURCE_DIR/$dir" ]]; then
-        cp -r "$SOURCE_DIR/$dir" "$INSTALL_DIR/"
-    fi
-done
-
-# Ensure entrypoint is executable
-chmod +x "$INSTALL_DIR/bin/gniza"
-
-# Restart running services (skip if --no-restart, e.g. when called from web/TUI)
+# Restart services
 if [[ "$NO_RESTART" == "false" ]]; then
     info "Restarting services..."
     if [[ "$MODE" == "root" ]]; then
-        if systemctl is-active gniza-web &>/dev/null; then
+        # Kill any orphan process on the web port
+        _web_port=$(grep -oP 'WEB_PORT="\K[^"]+' /etc/gniza/gniza.conf 2>/dev/null || echo "2323")
+        fuser -k "${_web_port:-2323}/tcp" 2>/dev/null || true
+        sleep 1
+        if systemctl is-active gniza-web &>/dev/null || systemctl is-enabled gniza-web &>/dev/null; then
             systemctl restart gniza-web && info "Web service restarted." || warn "Failed to restart web service."
         fi
-        if systemctl is-active gniza-daemon &>/dev/null; then
-            systemctl restart gniza-daemon && info "Daemon service restarted." || warn "Failed to restart daemon."
+        if systemctl is-active gniza-daemon &>/dev/null || systemctl is-enabled gniza-daemon &>/dev/null; then
+            systemctl restart gniza-daemon && info "Daemon restarted." || warn "Failed to restart daemon."
         fi
     else
-        if systemctl --user is-active gniza-web &>/dev/null; then
+        _web_port=$(grep -oP 'WEB_PORT="\K[^"]+' "${XDG_CONFIG_HOME:-$HOME/.config}/gniza/gniza.conf" 2>/dev/null || echo "2323")
+        fuser -k "${_web_port:-2323}/tcp" 2>/dev/null || true
+        sleep 1
+        if systemctl --user is-active gniza-web &>/dev/null || systemctl --user is-enabled gniza-web &>/dev/null; then
             systemctl --user restart gniza-web && info "Web service restarted." || warn "Failed to restart web service."
         fi
-        if systemctl --user is-active gniza-daemon &>/dev/null; then
-            systemctl --user restart gniza-daemon && info "Daemon service restarted." || warn "Failed to restart daemon."
+        if systemctl --user is-active gniza-daemon &>/dev/null || systemctl --user is-enabled gniza-daemon &>/dev/null; then
+            systemctl --user restart gniza-daemon && info "Daemon restarted." || warn "Failed to restart daemon."
         fi
     fi
 else
-    info "Skipping service restart (--no-restart). Restart services manually to apply changes."
+    info "Skipping service restart (--no-restart)."
 fi
 
+# Show result
+FINAL_VERSION=$(grep -oP 'GNIZA4LINUX_VERSION="\K[^"]+' "$INSTALL_DIR/lib/constants.sh" 2>/dev/null || echo "$REMOTE_VERSION")
 echo ""
-echo "${C_GREEN}${C_BOLD}Update complete!${C_RESET} v${CURRENT_VERSION} → v${REMOTE_VERSION}"
+echo "${C_GREEN}${C_BOLD}Update complete!${C_RESET} v${CURRENT_VERSION} → v${FINAL_VERSION}"

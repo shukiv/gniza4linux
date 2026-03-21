@@ -126,7 +126,8 @@ clean_partial_snapshots() {
         partials=$(ls -1d "$snap_dir"/*.partial 2>/dev/null) || true
         if [[ -n "$partials" ]]; then
             log_info "Cleaning partial snapshots for $target_name..."
-            rm -rf "$snap_dir"/*.partial || {
+            rm -rf "$snap_dir"/*.partial 2>/dev/null || \
+            sudo rm -rf "$snap_dir"/*.partial 2>/dev/null || {
                 log_warn "Failed to clean partial snapshots for $target_name"
             }
         fi
@@ -137,7 +138,7 @@ clean_partial_snapshots() {
     local partials; partials=$(remote_exec "ls -1d '${sq_snap}'/*.partial 2>/dev/null" 2>/dev/null) || true
     if [[ -n "$partials" ]]; then
         log_info "Cleaning partial snapshots for $target_name..."
-        remote_exec "rm -rf '${sq_snap}'/*.partial" || {
+        remote_exec "rm -rf '${sq_snap}'/*.partial 2>/dev/null || sudo rm -rf '${sq_snap}'/*.partial 2>/dev/null" || {
             log_warn "Failed to clean partial snapshots for $target_name"
         }
     fi

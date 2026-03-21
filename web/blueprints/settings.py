@@ -126,6 +126,23 @@ def check_update():
     return redirect(url_for("settings.index", tab="update"))
 
 
+@bp.route("/restart-services", methods=["POST"])
+@login_required
+def restart_services():
+    flash("Restarting services...", "success")
+    def _delayed_restart():
+        import time
+        time.sleep(1)
+        if os.geteuid() == 0:
+            subprocess.run(["systemctl", "restart", "gniza-web"], check=False)
+            subprocess.run(["systemctl", "restart", "gniza-daemon"], check=False)
+        else:
+            subprocess.run(["systemctl", "--user", "restart", "gniza-web"], check=False)
+            subprocess.run(["systemctl", "--user", "restart", "gniza-daemon"], check=False)
+    threading.Thread(target=_delayed_restart, daemon=True).start()
+    return redirect(url_for("settings.index", tab="update"))
+
+
 @bp.route("/apply-update", methods=["POST"])
 @login_required
 def apply_update():

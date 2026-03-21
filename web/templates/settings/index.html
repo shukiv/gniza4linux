@@ -327,6 +327,7 @@
             <div class="flex gap-2">
                 <button type="button" class="btn btn-info btn-sm" id="btn-check-update">Check for Updates</button>
                 <button type="button" class="btn btn-warning btn-sm" id="btn-update-now">Update Now</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-restart-services">Restart Services</button>
             </div>
         </div>
 
@@ -346,6 +347,7 @@
 <form id="form-test-healthcheck" method="POST" action="{{ url_for('settings.test_notification', channel='healthcheck') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
 <form id="form-check-update" method="POST" action="{{ url_for('settings.check_update') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
 <form id="form-update-now" method="POST" action="{{ url_for('settings.apply_update') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+<form id="form-restart-services" method="POST" action="{{ url_for('settings.restart_services') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
 <script>
 document.getElementById('btn-check-update').addEventListener('click', function() {
     document.getElementById('form-check-update').submit();
@@ -353,6 +355,11 @@ document.getElementById('btn-check-update').addEventListener('click', function()
 document.getElementById('btn-update-now').addEventListener('click', function() {
     if (confirm('This will update gniza and restart services. Continue?')) {
         document.getElementById('form-update-now').submit();
+    }
+});
+document.getElementById('btn-restart-services').addEventListener('click', function() {
+    if (confirm('Restart the web dashboard and backup daemon?')) {
+        document.getElementById('form-restart-services').submit();
     }
 });
 </script>

@@ -30,6 +30,8 @@ def index():
                 version = line.split('"')[1]
                 break
     tab = request.args.get("tab", "general")
+    if request.args.get("restarted"):
+        flash("Services restarted successfully.", "success")
     return render_template("settings/index.html", settings=settings, version=version, active_tab=tab)
 
 
@@ -140,7 +142,7 @@ def restart_services():
             subprocess.run(["systemctl", "--user", "restart", "gniza-web"], check=False)
             subprocess.run(["systemctl", "--user", "restart", "gniza-daemon"], check=False)
     threading.Thread(target=_delayed_restart, daemon=True).start()
-    return redirect(url_for("settings.index", tab="update"))
+    return redirect(url_for("settings.index", tab="update", restarted="1"))
 
 
 @bp.route("/apply-update", methods=["POST"])

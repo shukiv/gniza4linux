@@ -62,7 +62,8 @@ enforce_retention() {
                 }
             elif [[ "${REMOTE_TYPE:-ssh}" == "local" ]]; then
                 local snap_dir; snap_dir=$(get_snapshot_dir "$target_name")
-                rm -rf "$snap_dir/$snap" || {
+                rm -rf "$snap_dir/$snap" 2>/dev/null || \
+                sudo rm -rf "$snap_dir/$snap" 2>/dev/null || {
                     log_warn "Failed to prune snapshot: $snap_dir/$snap"
                 }
             else

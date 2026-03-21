@@ -115,7 +115,7 @@
                         <!-- 2. Install packages -->
                         <div>
                             <h3 class="font-semibold text-sm mb-2">2. Install Required Packages</h3>
-                            <p class="text-base-content/60 text-sm mb-2">On the <strong>source server</strong>:</p>
+                            <p class="text-base-content/60 text-sm mb-2">On the <strong>source server</strong>, install the packages needed for SSH access and file transfer:</p>
                             <div class="relative">
                                 <pre class="bg-base-100 rounded p-3 text-sm font-mono overflow-x-auto select-all">apt-get install ssh sudo rsync</pre>
                                 <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
@@ -141,7 +141,7 @@
                         <!-- 4. Sudoers -->
                         <div>
                             <h3 class="font-semibold text-sm mb-2">4. Configure Sudoers</h3>
-                            <p class="text-base-content/60 text-sm mb-2">Allow the backup user to run rsync with elevated privileges (needed for reading all files):</p>
+                            <p class="text-base-content/60 text-sm mb-2">Allow the backup user to run rsync with elevated privileges. This is required when "Use sudo for rsync" is enabled, so rsync can read all files regardless of ownership (e.g. system files in /etc, /var, or other users' home directories):</p>
                             <div class="relative mb-2">
                                 <pre class="bg-base-100 rounded p-3 text-sm font-mono overflow-x-auto select-all">echo "gniza ALL = NOPASSWD: /usr/bin/rsync" >> /etc/sudoers</pre>
                                 <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
@@ -219,12 +219,20 @@ chmod 600 /home/gniza/.ssh/authorized_keys</pre>
                             <input type="checkbox" name="source_sudo" class="toggle toggle-primary toggle-sm"
                                    {{ 'checked' if target.source_sudo == 'yes' else '' }}>
                             <span>Use sudo for rsync
-                                <span class="tooltip tooltip-right" data-tip="Runs rsync as root on the source via sudo. Disable for restricted shells (e.g. Hetzner Storage Box) that do not support sudo.">
+                                <span class="tooltip tooltip-right before:max-w-xs before:whitespace-normal" data-tip="Runs rsync as root on the source via sudo, allowing it to read all files regardless of ownership. Required for backing up system files (/etc, /var) or other users' data. The backup user must have passwordless sudo for rsync configured (see 'Prepare Source Server' above). Disable for restricted shells (e.g. Hetzner Storage Box) that do not support sudo.">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 inline text-base-content/40 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 </span>
                             </span>
                         </label>
                     </fieldset>
+                </div>
+                <div class="alert alert-info text-xs mt-3" x-show="sourceType === 'ssh'" x-cloak>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div>
+                        <strong>Permissions:</strong> Make sure the SSH user has read access to all folders you want to back up.
+                        With sudo enabled, the backup user needs passwordless sudo for <code>rsync</code> on the source server
+                        (see "Prepare Source Server" above). Without sudo, only files readable by the SSH user will be backed up.
+                    </div>
                 </div>
             </div>
 

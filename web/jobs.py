@@ -250,18 +250,45 @@ class WebJobManager:
         if not job or not job.log_file:
             return [], 0
         try:
-            with open(job.log_file) as f:
-                all_lines = f.read().replace('\r', '\n').splitlines()
+            last_lines, total = self._tail_file(job.log_file, tail)
             # For running jobs, append recent transfer log lines (file-by-file details)
             if job.status == "running":
                 transfer_lines = self._get_transfer_log_lines(job_id, tail=tail)
                 if transfer_lines:
-                    all_lines.extend(transfer_lines)
-            total = len(all_lines)
-            last_lines = [l for l in all_lines[-tail:]]
+                    last_lines = last_lines[:-len(transfer_lines)] + transfer_lines if len(last_lines) >= tail else last_lines + transfer_lines
+                    last_lines = last_lines[-tail:]
+                    total += len(transfer_lines)
             return last_lines, total
         except (OSError, FileNotFoundError):
             return [], 0
+
+    @staticmethod
+    def _tail_file(filepath, n=100):
+        """Read last n lines from a file efficiently without loading the whole file."""
+        with open(filepath, 'rb') as f:
+            # Get file size
+            f.seek(0, 2)
+            fsize = f.tell()
+            if fsize == 0:
+                return [], 0
+            # Read chunks from the end to find enough lines
+            block_size = 8192
+            lines_found = []
+            remaining = fsize
+            while remaining > 0 and len(lines_found) <= n:
+                read_size = min(block_size, remaining)
+                remaining -= read_size
+                f.seek(remaining)
+                block = f.read(read_size)
+                lines_found = block.splitlines() + lines_found
+            # Estimate total lines from file size and avg line length
+            result = lines_found[-n:]
+            if len(lines_found) > n:
+                avg_len = sum(len(l) for l in result) / len(result) if result else 80
+                total_est = int(fsize / (avg_len + 1))
+            else:
+                total_est = len(lines_found)
+            return [l.decode('utf-8', errors='replace').replace('\r', '') for l in result], total_est
 
     def _get_transfer_log_lines(self, job_id, tail=50):
         """Read recent lines from the rsync transfer log for a running job."""

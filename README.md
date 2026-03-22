@@ -9,7 +9,7 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 - **Stand-alone or backup server** — Back up the local machine, or pull from remote servers without installing anything on them
 - **Remote sources** — Pull files from SSH servers, S3 buckets, Google Drive, or Google Photos before backing up
 - **Multiple destination types** — Push to SSH, local drives (USB/NFS), S3 (AWS, Backblaze B2, Wasabi), Google Drive, or Google Photos
-- **Auto remote configuration** — Run a setup script on the remote server (as source or destination), choose what to back up or where to store, and import the config via [croc](https://github.com/schollz/croc) — no manual SSH key or config entry needed
+- **Auto remote configuration** — Two methods: **Direct SSH Setup** (provide SSH credentials, GNIZA configures the remote server automatically) or **Via Remote Script** (run a setup script on the remote, transfer config via [croc](https://github.com/schollz/croc)) — no manual SSH key or config entry needed
 - **Incremental snapshots** — rsync `--link-dest` hardlink deduplication across snapshots
 - **MySQL/MariaDB backup** — Dump all or selected databases with grants, routines, and triggers
 - **PostgreSQL backup** — Dump all or selected databases with roles via pg_dump + gzip
@@ -97,7 +97,7 @@ gniza uninstall
 ### Dependencies
 
 - **Required**: bash 4+, rsync
-- **Optional**: ssh, curl (SMTP/Telegram/Webhook/ntfy/Healthchecks notifications), sshpass (password auth), rclone (S3/Google Drive/Google Photos), croc (auto remote configuration)
+- **Optional**: ssh, curl (SMTP/Telegram/Webhook/ntfy/Healthchecks notifications), sshpass (password auth and Direct SSH auto-configure), rclone (S3/Google Drive/Google Photos), croc (auto remote configuration via remote script)
 - **TUI/Web**: python3, textual, textual-serve (installed automatically)
 
 ## Quick Start

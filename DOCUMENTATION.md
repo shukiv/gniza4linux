@@ -126,11 +126,11 @@ ssh-copy-id user@remote-server
 ssh user@remote-server
 ```
 
-> **Tip:** GNIZA also supports password-based SSH via sshpass. Set `SOURCE_AUTH_METHOD=password` in the source config. SSH keys are recommended.
+> **Tip:** GNIZA also supports password-based SSH via sshpass. Set `SOURCE_AUTH_METHOD=password` in the source config. SSH keys are recommended. Alternatively, use [Auto Remote Configuration](#auto-remote-configuration) (Direct SSH Setup) to have GNIZA generate and deploy SSH keys automatically.
 
 ### Step 3: Configure a Source (What to Back Up)
 
-A **source** defines what data GNIZA should back up. Configure via web (Sources > Add), TUI, or config file. For SSH sources, you can also use [Auto Remote Configuration](#auto-remote-configuration) to skip manual setup.
+A **source** defines what data GNIZA should back up. Configure via web (Sources > Add), TUI, or config file. For SSH sources, you can also use [Auto Remote Configuration](#auto-remote-configuration) to skip manual setup — either via **Direct SSH Setup** (provide SSH credentials and GNIZA configures the remote automatically) or **Via Remote Script** (run a setup script on the remote and transfer config via croc).
 
 **Local source** — back up folders on the same machine:
 
@@ -156,7 +156,7 @@ TARGET_ENABLED="yes"
 
 ### Step 4: Configure a Destination (Where to Store Backups)
 
-A **destination** defines where GNIZA stores snapshots. Configure via web (Destinations > Add), TUI, or config file. For SSH destinations, you can also use [Auto Remote Configuration](#auto-remote-configuration) to skip manual setup.
+A **destination** defines where GNIZA stores snapshots. Configure via web (Destinations > Add), TUI, or config file. For SSH destinations, you can also use [Auto Remote Configuration](#auto-remote-configuration) to skip manual setup — either via **Direct SSH Setup** or **Via Remote Script**.
 
 **SSH destination:**
 
@@ -350,10 +350,10 @@ bash scripts/install.sh          # user mode
 | bash 4+ | Yes | Core scripting |
 | rsync | Yes | File transfer and deduplication |
 | ssh | No | SSH sources and destinations |
-| sshpass | No | Password-based SSH authentication |
+| sshpass | No | Password-based SSH authentication and Direct SSH auto-configure |
 | curl | No | Notifications (SMTP, Telegram, Webhook, ntfy, Healthchecks) |
 | rclone | No | S3, Google Drive, and Google Photos support |
-| croc | No | Auto remote configuration (installed automatically by setup-remote.sh) |
+| croc | No | Auto remote configuration via remote script (installed automatically by setup-remote.sh) |
 | python3 | No | TUI and web dashboard |
 | textual | No | Terminal UI framework |
 | flask | No | Web dashboard framework |
@@ -585,7 +585,7 @@ gniza --cli destinations add --name=backup-server
 
 This creates a config template. Edit it manually or use the TUI to configure.
 
-**Auto-configure**: For SSH destinations, you can use the auto-configure flow to skip manual setup entirely. See [Auto Remote Configuration](#auto-remote-configuration).
+**Auto-configure**: For SSH destinations, you can use the auto-configure flow to skip manual setup entirely — either via **Direct SSH Setup** or **Via Remote Script**. See [Auto Remote Configuration](#auto-remote-configuration).
 
 ### Destination Types
 
@@ -770,14 +770,50 @@ Google Photos uses the `photoslibrary` scope for accessing photo and video conte
 
 ## Auto Remote Configuration
 
-GNIZA can automatically configure a remote server as a backup **source** or **destination** using [croc](https://github.com/schollz/croc) for secure, one-time config transfer. This eliminates manual SSH key setup and config entry.
+GNIZA can automatically configure a remote server as a backup **source** or **destination** without manual SSH key setup or config entry. There are two methods:
 
-### How It Works
+| Method | How it works | Requirements | Available in |
+|--------|-------------|--------------|--------------|
+| **Direct SSH Setup** | Provide SSH credentials (host/user/password) and GNIZA configures the remote server automatically | Root or sudo access on remote, `sshpass` on GNIZA server | Web only |
+| **Via Remote Script** | Run a setup script on the remote server, then transfer the config via [croc](https://github.com/schollz/croc) | Root access on remote, `croc` on both servers | Web + CLI |
 
-1. **On the remote server**: Run `setup-remote.sh` — it asks whether this server is a source (back up files FROM it) or a destination (store backups ON it), then prepares the server and displays a croc code
-2. **On the GNIZA server**: Enter the croc code in the web dashboard or CLI to receive the config and create the source or destination automatically
+### Method 1: Direct SSH Setup (Recommended)
 
-### Step 1: Run the Setup Script on the Remote Server
+The simplest way to set up a remote server. GNIZA SSHes into the remote server using the credentials you provide, configures everything automatically, and creates the source or destination config.
+
+#### How It Works
+
+1. In the web dashboard, navigate to **Sources > Auto-Configure** or **Destinations > Auto-Configure**
+2. Select the **Direct SSH Setup** tab
+3. Enter the remote server details: hostname, SSH port, SSH user (root or sudo-capable), and password
+4. For sources: optionally specify which folders to back up
+5. Click **Configure** — GNIZA connects to the remote server and performs the setup
+
+#### What GNIZA Does on the Remote Server
+
+- Installs required packages (`rsync`, `sudo`) if not present
+- Creates a dedicated backup user (default: `gniza`)
+- Generates an Ed25519 SSH key pair
+- Configures sudoers for passwordless rsync/mkdir/chown
+- **Source mode**: auto-detects MySQL/PostgreSQL and enables database backup if found
+- **Destination mode**: creates the base backup directory
+
+#### After Setup
+
+- The SSH password is used **only for the initial setup** and is not stored
+- All subsequent connections use the generated SSH key pair
+- The source or destination config is created automatically with all connection details pre-filled
+
+#### Requirements
+
+- **Remote server**: root access, or a user with sudo privileges
+- **GNIZA server**: `sshpass` must be installed (for the initial password-based SSH connection)
+
+### Method 2: Via Remote Script (croc)
+
+This is the original auto-configure method. You run a setup script on the remote server, which prepares the server and displays a croc code. You then enter the code in the GNIZA dashboard or CLI to import the configuration.
+
+#### Step 1: Run the Setup Script on the Remote Server
 
 **As a source** (back up files from this server):
 
@@ -821,11 +857,11 @@ Options:
 --port=PORT       SSH port override (default: auto-detect from sshd_config)
 ```
 
-### Step 2: Import the Configuration
+#### Step 2: Import the Configuration
 
 **Web dashboard**:
-- For sources: navigate to **Sources > Auto-Configure** (`/sources/auto-configure`)
-- For destinations: navigate to **Destinations > Auto-Configure** (`/destinations/auto-configure`)
+- For sources: navigate to **Sources > Auto-Configure** (`/sources/auto-configure`), select the **Via Remote Script** tab
+- For destinations: navigate to **Destinations > Auto-Configure** (`/destinations/auto-configure`), select the **Via Remote Script** tab
 
 Enter a name and the croc code shown by the remote script. For sources, you can also specify or override the folders to back up.
 
@@ -842,24 +878,25 @@ gniza sources auto-configure --name=webserver --code=alpha-bravo-charlie --folde
 
 GNIZA receives the JSON payload via croc, saves the private SSH key to `~/.ssh/gniza_<name>`, and creates the config file with all connection details pre-filled.
 
-### What Gets Configured
+#### Requirements
+
+- **Remote server**: root access (to create users and configure sudoers)
+- **Both servers**: `croc` must be installed (the setup script installs it on the remote; the GNIZA installer installs it on the GNIZA server)
+
+### What Gets Configured (Both Methods)
 
 **Source auto-configure** creates an SSH source with:
 - Host, port, and username from the remote server
 - Private SSH key saved locally and referenced in the config
-- Folders to back up (from the setup script prompt or web form)
+- Folders to back up (from the setup script prompt, web form, or auto-detected defaults)
 - Sudo enabled for rsync operations
+- MySQL/PostgreSQL backup enabled if detected on the remote server (Direct SSH Setup only)
 
 **Destination auto-configure** creates an SSH destination with:
 - Host, port, and username from the remote server
 - Private SSH key saved locally and referenced in the config
 - Base backup directory path
 - Sudo enabled for rsync operations
-
-### Requirements
-
-- **Remote server**: root access (to create users and configure sudoers)
-- **Both servers**: `croc` must be installed (the setup script installs it on the remote; the GNIZA installer installs it on the GNIZA server)
 
 ---
 

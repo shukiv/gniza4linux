@@ -19,6 +19,8 @@ BACKUP_USER="gniza"
 BASE_DIR=""
 SSH_PORT=""
 FOLDERS=""
+NON_INTERACTIVE=false
+JSON_STDOUT=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -52,13 +54,25 @@ Options:
 EOF
             exit 0
             ;;
+        --non-interactive) NON_INTERACTIVE=true ;;
+        --json-stdout)     JSON_STDOUT=true ;;
         *) warn "Unknown option: $1" ;;
     esac
     shift
 done
 
+# When JSON_STDOUT=true, redirect info/warn/error to stderr so stdout is clean for JSON
+if $JSON_STDOUT; then
+    info()  { echo -e "${C_GREEN}[INFO]${C_RESET} $*" >&2; }
+    warn()  { echo -e "${C_YELLOW}[WARN]${C_RESET} $*" >&2; }
+    error() { echo -e "${C_RED}[ERROR]${C_RESET} $*" >&2; }
+fi
+
 # -- Ask for mode if not specified ----------------------------
 if [[ -z "$MODE" ]]; then
+    if $NON_INTERACTIVE; then
+        die "Mode must be specified with --source or --destination in non-interactive mode."
+    fi
     echo ""
     echo "${C_BOLD}How will this server be used with GNIZA?${C_RESET}"
     echo ""
@@ -127,12 +141,14 @@ if ! command -v rsync &>/dev/null; then
     _pkg_install rsync || die "Failed to install rsync. Install it manually and retry."
 fi
 
-if ! command -v croc &>/dev/null; then
-    info "Installing croc..."
-    if curl -fsSL https://getcroc.schollz.com | bash 2>/dev/null; then
-        info "croc installed."
-    else
-        die "Failed to install croc. Install it manually: https://github.com/schollz/croc"
+if ! $JSON_STDOUT; then
+    if ! command -v croc &>/dev/null; then
+        info "Installing croc..."
+        if curl -fsSL https://getcroc.schollz.com | bash 2>/dev/null; then
+            info "croc installed."
+        else
+            die "Failed to install croc. Install it manually: https://github.com/schollz/croc"
+        fi
     fi
 fi
 
@@ -185,12 +201,14 @@ SUDOERS_FILE="/etc/sudoers.d/gniza-$BACKUP_USER"
 if [[ "$MODE" == "destination" ]]; then
     _default_base="$USER_HOME/backups"
     [[ -z "$BASE_DIR" ]] && BASE_DIR="$_default_base"
-    echo ""
-    echo "${C_BOLD}Where should backups be stored on this server?${C_RESET}"
-    echo "  Enter a path, or press Enter for the default."
-    echo ""
-    read -rp "  Base directory [$BASE_DIR]: " _base_input </dev/tty || true
-    BASE_DIR="${_base_input:-$BASE_DIR}"
+    if ! $NON_INTERACTIVE; then
+        echo ""
+        echo "${C_BOLD}Where should backups be stored on this server?${C_RESET}"
+        echo "  Enter a path, or press Enter for the default."
+        echo ""
+        read -rp "  Base directory [$BASE_DIR]: " _base_input </dev/tty || true
+        BASE_DIR="${_base_input:-$BASE_DIR}"
+    fi
     mkdir -p "$BASE_DIR"
     chown "$BACKUP_USER:$BACKUP_USER" "$BASE_DIR"
     info "Base directory: $BASE_DIR"
@@ -199,11 +217,13 @@ fi
 # -- Ask which folders to back up (source only) ----------------
 if [[ "$MODE" == "source" ]]; then
     if [[ -z "$FOLDERS" ]]; then
-        echo ""
-        echo "${C_BOLD}Which folders should be backed up from this server?${C_RESET}"
-        echo "  Enter comma-separated paths, or press Enter for the default."
-        echo ""
-        read -rp "  Folders [/etc,/home,/var]: " FOLDERS </dev/tty || true
+        if ! $NON_INTERACTIVE; then
+            echo ""
+            echo "${C_BOLD}Which folders should be backed up from this server?${C_RESET}"
+            echo "  Enter comma-separated paths, or press Enter for the default."
+            echo ""
+            read -rp "  Folders [/etc,/home,/var]: " FOLDERS </dev/tty || true
+        fi
         FOLDERS="${FOLDERS:-/etc,/home,/var}"
     fi
     info "Folders:    $FOLDERS"
@@ -211,24 +231,34 @@ if [[ "$MODE" == "source" ]]; then
     # -- Ask about MySQL backup --
     MYSQL_ENABLED="no"
     if command -v mysql &>/dev/null || command -v mysqldump &>/dev/null || command -v mariadb-dump &>/dev/null; then
-        echo ""
-        read -rp "  MySQL/MariaDB detected. Back up databases? (y/n) [y]: " _mysql_choice </dev/tty || true
-        _mysql_choice="${_mysql_choice:-y}"
-        if [[ "$_mysql_choice" == "y" || "$_mysql_choice" == "Y" ]]; then
+        if $NON_INTERACTIVE; then
             MYSQL_ENABLED="yes"
-            info "MySQL:      enabled"
+            info "MySQL:      enabled (auto-detected)"
+        else
+            echo ""
+            read -rp "  MySQL/MariaDB detected. Back up databases? (y/n) [y]: " _mysql_choice </dev/tty || true
+            _mysql_choice="${_mysql_choice:-y}"
+            if [[ "$_mysql_choice" == "y" || "$_mysql_choice" == "Y" ]]; then
+                MYSQL_ENABLED="yes"
+                info "MySQL:      enabled"
+            fi
         fi
     fi
 
     # -- Ask about PostgreSQL backup --
     POSTGRESQL_ENABLED="no"
     if command -v psql &>/dev/null || command -v pg_dump &>/dev/null; then
-        echo ""
-        read -rp "  PostgreSQL detected. Back up databases? (y/n) [y]: " _pg_choice </dev/tty || true
-        _pg_choice="${_pg_choice:-y}"
-        if [[ "$_pg_choice" == "y" || "$_pg_choice" == "Y" ]]; then
+        if $NON_INTERACTIVE; then
             POSTGRESQL_ENABLED="yes"
-            info "PostgreSQL: enabled"
+            info "PostgreSQL: enabled (auto-detected)"
+        else
+            echo ""
+            read -rp "  PostgreSQL detected. Back up databases? (y/n) [y]: " _pg_choice </dev/tty || true
+            _pg_choice="${_pg_choice:-y}"
+            if [[ "$_pg_choice" == "y" || "$_pg_choice" == "Y" ]]; then
+                POSTGRESQL_ENABLED="yes"
+                info "PostgreSQL: enabled"
+            fi
         fi
     fi
 fi
@@ -302,6 +332,13 @@ jq -n \
     --arg postgresql_enabled "${POSTGRESQL_ENABLED:-no}" \
     '{version:$version, type:$type, mode:$mode, hostname:$hostname, host:$host, host_public:$host_public, port:$port, user:$user, private_key:$private_key, base:$base, sudo:$sudo, folders:$folders, mysql_enabled:$mysql_enabled, postgresql_enabled:$postgresql_enabled}' \
     > "$JSON_TMP"
+
+# -- Output JSON directly if --json-stdout --------------------
+if $JSON_STDOUT; then
+    cat "$JSON_TMP"
+    rm -f "$JSON_TMP"
+    exit 0
+fi
 
 # -- Send via croc --------------------------------------------
 if [[ "$MODE" == "source" ]]; then

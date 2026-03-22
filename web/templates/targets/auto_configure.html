@@ -8,59 +8,279 @@
     <a href="{{ url_for('targets.index') }}" class="btn btn-ghost btn-sm">&larr; Back to Sources</a>
 </div>
 
-<div x-data="{
-    copyText(text, btn) {
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(text);
-        } else {
-            var ta = document.createElement('textarea');
-            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-            document.body.appendChild(ta); ta.select(); document.execCommand('copy');
-            document.body.removeChild(ta);
-        }
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy', 1500);
-    }
-}">
+<div class="tabs tabs-lift">
 
-    <!-- Step 1: Run on Remote Server -->
-    <div class="card bg-base-200 shadow mb-6">
-        <div class="card-body">
-            <h2 class="card-title text-base mb-2">Step 1: Run on Remote Server</h2>
-            <p class="text-base-content/60 text-sm mb-4">SSH into the server you want to back up and run this command as root:</p>
-            <div class="relative">
-                <pre class="bg-base-100 rounded p-3 text-sm font-mono overflow-x-auto whitespace-pre-wrap break-all select-all">curl -fsSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/setup-remote.sh | sudo bash -s -- --source</pre>
-                <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
-                        @click="copyText('curl -fsSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/setup-remote.sh | sudo bash -s -- --source', $el)">Copy</button>
+    <!-- Tab 1: Via Remote Script -->
+    <label class="tab">
+        <input type="radio" name="auto_config_tabs" checked="checked" />
+        Via Remote Script
+    </label>
+    <div class="tab-content bg-base-100 border-base-300 p-6">
+        <div x-data="{
+            copyText(text, btn) {
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(text);
+                } else {
+                    var ta = document.createElement('textarea');
+                    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+                    document.body.removeChild(ta);
+                }
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 1500);
+            }
+        }">
+
+            <!-- Step 1: Run on Remote Server -->
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-base mb-2">Step 1: Run on Remote Server</h2>
+                    <p class="text-base-content/60 text-sm mb-4">SSH into the server you want to back up and run this command as root:</p>
+                    <div class="relative">
+                        <pre class="bg-base-100 rounded p-3 text-sm font-mono overflow-x-auto whitespace-pre-wrap break-all select-all">curl -fsSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/setup-remote.sh | sudo bash -s -- --source</pre>
+                        <button type="button" class="btn btn-xs btn-neutral absolute top-1 right-1"
+                                @click="copyText('curl -fsSL https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/setup-remote.sh | sudo bash -s -- --source', $el)">Copy</button>
+                    </div>
+                    <p class="text-base-content/40 text-xs mt-2">Alternative: <code class="text-primary">wget -qO- https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/setup-remote.sh | sudo bash -s -- --source</code></p>
+                    <p class="text-base-content/60 text-sm mt-3">The script will install dependencies, create a backup user, generate SSH keys, and display a croc code. Enter that code below.</p>
+                </div>
             </div>
-            <p class="text-base-content/40 text-xs mt-2">Alternative: <code class="text-primary">wget -qO- https://git.linux-hosting.co.il/shukivaknin/gniza4linux/raw/branch/main/scripts/setup-remote.sh | sudo bash -s -- --source</code></p>
-            <p class="text-base-content/60 text-sm mt-3">The script will install dependencies, create a backup user, generate SSH keys, and display a croc code. Enter that code below.</p>
+
+            <!-- Step 2: Receive Configuration -->
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-base mb-2">Step 2: Receive Configuration</h2>
+                    <p class="text-base-content/60 text-sm mb-4">Enter the croc code displayed by the remote setup script and a name for this source.</p>
+                    <form method="POST" action="{{ url_for('targets.auto_configure_receive') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Source Name</label>
+                                <input type="text" name="name" class="input" required
+                                       pattern="[A-Za-z0-9_\-]+" placeholder="my-server"
+                                       title="Letters, numbers, hyphens, and underscores only">
+                            </fieldset>
+                            <fieldset class="fieldset">
+                                <label class="fieldset-label">Croc Code</label>
+                                <input type="text" name="code" class="input" required
+                                       pattern="[a-zA-Z0-9\-]+" placeholder="alpha-bravo-charlie"
+                                       title="Letters, numbers, and hyphens only">
+                            </fieldset>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Receive &amp; Configure</button>
+                    </form>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- Step 2: Receive Configuration -->
-    <div class="card bg-base-200 shadow mb-6">
-        <div class="card-body">
-            <h2 class="card-title text-base mb-2">Step 2: Receive Configuration</h2>
-            <p class="text-base-content/60 text-sm mb-4">Enter the croc code displayed by the remote setup script and a name for this source.</p>
-            <form method="POST" action="{{ url_for('targets.auto_configure_receive') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Source Name</label>
-                        <input type="text" name="name" class="input" required
-                               pattern="[A-Za-z0-9_\-]+" placeholder="my-server"
-                               title="Letters, numbers, hyphens, and underscores only">
-                    </fieldset>
-                    <fieldset class="fieldset">
-                        <label class="fieldset-label">Croc Code</label>
-                        <input type="text" name="code" class="input" required
-                               pattern="[a-zA-Z0-9\-]+" placeholder="alpha-bravo-charlie"
-                               title="Letters, numbers, and hyphens only">
-                    </fieldset>
+    <!-- Tab 2: Direct SSH Setup -->
+    <label class="tab">
+        <input type="radio" name="auto_config_tabs" />
+        Direct SSH Setup
+    </label>
+    <div class="tab-content bg-base-100 border-base-300 p-6">
+        <div x-data="{
+            authMethod: 'password',
+            state: 'form',
+            logs: [],
+            errorMsg: '',
+            taskId: '',
+            sshKeys: [],
+            sourceName: '',
+            pollTimer: null,
+            async loadKeys() {
+                try {
+                    const r = await fetch('{{ url_for('targets.ssh_keys') }}');
+                    const d = await r.json();
+                    this.sshKeys = d.keys || [];
+                } catch(e) {}
+            },
+            async submit() {
+                this.errorMsg = '';
+                this.logs = [];
+                const form = this.$refs.sshForm;
+                const fd = new FormData(form);
+                this.sourceName = fd.get('name');
+                try {
+                    const r = await fetch('{{ url_for('targets.ssh_auto_configure') }}', {
+                        method: 'POST',
+                        body: fd,
+                    });
+                    const d = await r.json();
+                    if (!r.ok) {
+                        this.errorMsg = d.error || 'Request failed.';
+                        return;
+                    }
+                    this.taskId = d.task_id;
+                    this.state = 'running';
+                    this.poll();
+                } catch(e) {
+                    this.errorMsg = 'Network error: ' + e.message;
+                }
+            },
+            async poll() {
+                if (this.state !== 'running') return;
+                try {
+                    const url = '{{ url_for('targets.ssh_auto_configure_poll', task_id='__TID__') }}'.replace('__TID__', this.taskId) + '?name=' + encodeURIComponent(this.sourceName);
+                    const r = await fetch(url);
+                    const d = await r.json();
+                    this.logs = d.logs || [];
+                    if (d.status === 'done') {
+                        this.state = 'done';
+                        if (d.warning) {
+                            this.logs.push('Warning: ' + d.warning);
+                        }
+                        if (d.redirect) {
+                            setTimeout(() => { window.location.href = d.redirect; }, 1500);
+                        }
+                        return;
+                    }
+                    if (d.status === 'error') {
+                        this.state = 'error';
+                        this.errorMsg = d.error || 'Unknown error.';
+                        return;
+                    }
+                } catch(e) {
+                    // Retry on network error
+                }
+                this.pollTimer = setTimeout(() => this.poll(), 2000);
+            },
+            retry() {
+                this.state = 'form';
+                this.errorMsg = '';
+                this.logs = [];
+                this.taskId = '';
+            },
+            init() {
+                this.loadKeys();
+            }
+        }">
+
+            <div class="card bg-base-200 shadow mb-6">
+                <div class="card-body">
+                    <h2 class="card-title text-base mb-2">Direct SSH Setup</h2>
+                    <p class="text-base-content/60 text-sm mb-4">Provide SSH credentials and GNIZA will automatically connect to the remote server, install dependencies, create a backup user, and configure it as a source.</p>
+
+                    <!-- Form State -->
+                    <template x-if="state === 'form'">
+                        <form x-ref="sshForm" @submit.prevent="submit()">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <fieldset class="fieldset">
+                                    <label class="fieldset-label">Source Name</label>
+                                    <input type="text" name="name" class="input" required
+                                           pattern="[A-Za-z][A-Za-z0-9_\-]*" placeholder="my-server"
+                                           title="Start with a letter. Letters, numbers, hyphens, underscores only.">
+                                </fieldset>
+                                <fieldset class="fieldset">
+                                    <label class="fieldset-label">SSH Host</label>
+                                    <input type="text" name="ssh_host" class="input" required placeholder="192.168.1.1">
+                                </fieldset>
+                                <fieldset class="fieldset">
+                                    <label class="fieldset-label">SSH Port</label>
+                                    <input type="text" name="ssh_port" class="input" value="22">
+                                </fieldset>
+                                <fieldset class="fieldset">
+                                    <label class="fieldset-label">SSH User</label>
+                                    <input type="text" name="ssh_user" class="input" value="root">
+                                </fieldset>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="fieldset-label mb-1">Auth Method</label>
+                                <div class="flex gap-4">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="auth_method" value="password" class="radio radio-sm" x-model="authMethod"> Password
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="auth_method" value="key" class="radio radio-sm" x-model="authMethod"> SSH Key
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <fieldset class="fieldset" x-show="authMethod === 'password'">
+                                    <label class="fieldset-label">Password</label>
+                                    <input type="password" name="ssh_password" class="input" :required="authMethod === 'password'">
+                                </fieldset>
+                                <fieldset class="fieldset" x-show="authMethod === 'key'">
+                                    <label class="fieldset-label">SSH Key</label>
+                                    <select name="ssh_key" class="select" :required="authMethod === 'key'">
+                                        <option value="">Select a key...</option>
+                                        <template x-for="k in sshKeys" :key="k.private_path">
+                                            <option :value="k.private_path" x-text="k.name"></option>
+                                        </template>
+                                    </select>
+                                </fieldset>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <fieldset class="fieldset">
+                                    <label class="fieldset-label">Backup User</label>
+                                    <input type="text" name="backup_user" class="input" value="gniza">
+                                    <label class="fieldset-label text-xs text-base-content/50">User that will be created on the remote server for backups</label>
+                                </fieldset>
+                                <fieldset class="fieldset">
+                                    <label class="fieldset-label">Folders to Back Up</label>
+                                    <textarea name="folders" class="textarea textarea-bordered h-24" placeholder="/etc&#10;/home&#10;/var">/etc
+/home
+/var</textarea>
+                                </fieldset>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Configure Source</button>
+                        </form>
+                    </template>
+
+                    <!-- Running State -->
+                    <template x-if="state === 'running'">
+                        <div>
+                            <div class="flex items-center gap-3 mb-4">
+                                <span class="loading loading-spinner loading-md text-primary"></span>
+                                <span class="font-semibold">Setting up remote server...</span>
+                            </div>
+                            <p class="text-base-content/60 text-sm mb-3">This may take a minute. Installing dependencies and configuring the remote server.</p>
+                            <div class="bg-base-100 rounded p-3 text-sm font-mono max-h-48 overflow-y-auto">
+                                <template x-for="(log, i) in logs" :key="i">
+                                    <div class="py-0.5" x-text="log"></div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Done State -->
+                    <template x-if="state === 'done'">
+                        <div>
+                            <div class="alert alert-success mb-4">
+                                <span>Source configured successfully! Redirecting...</span>
+                            </div>
+                            <div class="bg-base-100 rounded p-3 text-sm font-mono max-h-48 overflow-y-auto">
+                                <template x-for="(log, i) in logs" :key="i">
+                                    <div class="py-0.5" x-text="log"></div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Error State -->
+                    <template x-if="state === 'error'">
+                        <div>
+                            <div class="alert alert-error mb-4">
+                                <span x-text="errorMsg"></span>
+                            </div>
+                            <div x-show="logs.length > 0" class="bg-base-100 rounded p-3 text-sm font-mono max-h-48 overflow-y-auto mb-4">
+                                <template x-for="(log, i) in logs" :key="i">
+                                    <div class="py-0.5" x-text="log"></div>
+                                </template>
+                            </div>
+                            <button type="button" class="btn btn-primary" @click="retry()">Try Again</button>
+                        </div>
+                    </template>
+
                 </div>
-                <button type="submit" class="btn btn-primary">Receive &amp; Configure</button>
-            </form>
+            </div>
+
         </div>
     </div>
 
@@ -69,17 +289,23 @@
 
 {% block help_text %}
 <h3 class="font-bold text-base mb-2">Auto-Configure Source</h3>
-<p class="mb-3 text-base-content/70">Automatically configure a remote SSH backup source using croc for secure key exchange.</p>
-<h4 class="font-semibold text-sm mb-1">How it works</h4>
+<p class="mb-3 text-base-content/70">Automatically configure a remote SSH backup source.</p>
+<h4 class="font-semibold text-sm mb-1">Via Remote Script</h4>
 <ol class="list-decimal list-inside text-base-content/70 mb-3 space-y-0.5">
     <li>Run the setup script on the remote server (installs rsync, creates backup user, generates SSH keys).</li>
     <li>The script displays a one-time croc code.</li>
     <li>Enter the code here along with which folders to back up.</li>
     <li>GNIZA saves the source config and tests the SSH connection.</li>
 </ol>
+<h4 class="font-semibold text-sm mb-1">Direct SSH Setup</h4>
+<ol class="list-decimal list-inside text-base-content/70 mb-3 space-y-0.5">
+    <li>Provide SSH credentials for the remote server (root or user with passwordless sudo).</li>
+    <li>GNIZA connects via SSH, uploads the setup script, and runs it automatically.</li>
+    <li>The source is configured and the connection is tested.</li>
+</ol>
 <h4 class="font-semibold text-sm mb-1">Requirements</h4>
 <ul class="list-disc list-inside text-base-content/70 space-y-0.5">
-    <li><code>croc</code> must be installed on both this server and the remote.</li>
-    <li>Both servers must have internet access (croc uses a relay for NAT traversal).</li>
+    <li><strong>Via Remote Script:</strong> <code>croc</code> must be installed on both servers. Both need internet access.</li>
+    <li><strong>Direct SSH:</strong> SSH access to the remote server (root or passwordless sudo). <code>sshpass</code> required for password auth.</li>
 </ul>
 {% endblock %}

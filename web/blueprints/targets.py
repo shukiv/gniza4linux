@@ -1,15 +1,17 @@
 import os
+import secrets
 import shlex
 import shutil
 import subprocess
 
 from flask import (
-    Blueprint, render_template, request, redirect, url_for, flash,
+    Blueprint, render_template, request, redirect, url_for, flash, jsonify,
 )
 from markupsafe import escape
 
 from lib.auto_configure import receive_and_configure_source
 from lib.connection_test import test_source as _test_source
+from lib.ssh_auto_configure import start_ssh_setup, get_task, pop_task
 from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Target
 from web.app import login_required
@@ -285,6 +287,114 @@ def auto_configure_receive():
     write_conf(CONFIG_DIR / "targets.d" / f"{target.name}.conf", target.to_conf())
     flash(f"Source '{target.name}' auto-configured successfully!", "success")
     return redirect(url_for("targets.index"))
+
+
+@bp.route("/ssh-keys")
+@login_required
+def ssh_keys():
+    """Return existing SSH keys as JSON for the auto-configure form."""
+    return jsonify(keys=_get_ssh_keys())
+
+
+@bp.route("/ssh-auto-configure", methods=["POST"])
+@login_required
+def ssh_auto_configure():
+    """Start SSH-based auto-configure in a background thread."""
+    form = request.form
+    name = form.get("name", "").strip()
+    ssh_host = form.get("ssh_host", "").strip()
+    ssh_port = form.get("ssh_port", "22").strip()
+    ssh_user = form.get("ssh_user", "root").strip()
+    auth_method = form.get("auth_method", "password").strip()
+    ssh_password = form.get("ssh_password", "") if auth_method == "password" else ""
+    ssh_key = form.get("ssh_key", "") if auth_method == "key" else ""
+    backup_user = form.get("backup_user", "gniza").strip()
+    folders = form.get("folders", "").strip()
+
+    # Convert folders from newline-separated to comma-separated
+    folders_csv = ",".join(line.strip() for line in folders.splitlines() if line.strip())
+
+    # Validation
+    from lib.ssh_auto_configure import validate_inputs
+    err = validate_inputs(name, ssh_host, ssh_port, ssh_user, backup_user, "", folders_csv)
+    if err:
+        return jsonify(error=err), 400
+    conf_path = CONFIG_DIR / "targets.d" / f"{name}.conf"
+    if conf_path.exists():
+        return jsonify(error=f"Source '{name}' already exists."), 400
+    if auth_method == "password" and not ssh_password:
+        return jsonify(error="SSH password is required."), 400
+    if auth_method == "key" and not ssh_key:
+        return jsonify(error="SSH key is required."), 400
+    port_int = int(ssh_port)
+
+    task_id = secrets.token_urlsafe(16)
+    start_ssh_setup(
+        task_id=task_id, name=name, mode="source",
+        ssh_host=ssh_host, ssh_port=str(port_int), ssh_user=ssh_user,
+        ssh_password=ssh_password, ssh_key=ssh_key,
+        backup_user=backup_user, base_dir="", folders=folders_csv,
+    )
+    return jsonify(task_id=task_id)
+
+
+@bp.route("/ssh-auto-configure/poll/<task_id>")
+@login_required
+def ssh_auto_configure_poll(task_id):
+    """Poll SSH auto-configure task status."""
+    task = get_task(task_id)
+    if not task:
+        return jsonify(status="error", error="Task not found."), 404
+
+    resp = {"status": task["status"], "logs": task["logs"]}
+
+    if task["status"] == "error":
+        resp["error"] = task["error"]
+        pop_task(task_id)
+        return jsonify(resp)
+
+    if task["status"] == "done":
+        data = task["result"]
+        key_path = task.get("key_path", "")
+        pop_task(task_id)
+
+        # Build Target from result data (same pattern as auto_configure_receive)
+        name = request.args.get("name", "").strip()
+        if not name or not _VALID_NAME_RE.match(name):
+            return jsonify(status="error", error="Invalid source name."), 400
+
+        folders = data.get("folders", "")
+        mysql_enabled = data.get("mysql_enabled", "no")
+        postgresql_enabled = data.get("postgresql_enabled", "no")
+
+        target = Target(
+            name=name,
+            folders=folders,
+            source_type="ssh",
+            source_host=data.get("host", ""),
+            source_port=data.get("port", "22"),
+            source_user=data.get("user", "gniza"),
+            source_auth_method="key",
+            source_key=key_path,
+            source_sudo=data.get("sudo", "yes"),
+            mysql_enabled=mysql_enabled if mysql_enabled in ("yes", "no") else "no",
+            postgresql_enabled=postgresql_enabled if postgresql_enabled in ("yes", "no") else "no",
+        )
+
+        # Test connection
+        try:
+            ok, msg = _test_source(target)
+        except Exception:
+            ok, msg = None, ""
+
+        write_conf(CONFIG_DIR / "targets.d" / f"{target.name}.conf", target.to_conf())
+
+        if ok is False:
+            resp["warning"] = f"Source saved but connection test failed: {msg}"
+        resp["redirect"] = url_for("targets.index")
+        return jsonify(resp)
+
+    return jsonify(resp)
 
 
 @bp.route("/<name>/delete", methods=["POST"])

@@ -4,7 +4,7 @@
 {% block page_title %}Restore{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl" x-data="{ target: '', remote: '', restoreLocation: 'inplace' }">
+<div class="max-w-2xl" x-data="{ target: '', remote: '', snapshot: '', restoreLocation: 'inplace' }">
     <div class="alert alert-warning mb-6">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
         <span>Restore is a destructive operation. Files at the restore destination will be overwritten with the snapshot contents.</span>
@@ -29,23 +29,24 @@
                     </select>
                 </fieldset>
 
-                <fieldset class="fieldset mb-4">
+                <fieldset class="fieldset mb-4" x-show="target" x-cloak x-transition>
                     <label class="fieldset-label">Destination</label>
                     <select name="remote" id="dest-select" class="select" required
                             x-model="remote"
                             @change="if (target && remote) { htmx.ajax('GET', '/restore/snapshots/' + target + '/' + remote, {target: '#snap-select', swap: 'innerHTML'}) }">
-                        <option value="" disabled selected>Select a source first...</option>
+                        <option value="" disabled selected>Select a destination...</option>
                     </select>
                 </fieldset>
 
-                <fieldset class="fieldset mb-4">
+                <fieldset class="fieldset mb-4" x-show="remote" x-cloak x-transition>
                     <label class="fieldset-label">Snapshot</label>
-                    <select name="snapshot" id="snap-select" class="select" required>
-                        <option value="" disabled selected>Select a destination first...</option>
+                    <select name="snapshot" id="snap-select" class="select" required
+                            x-model="snapshot">
+                        <option value="" disabled selected>Select a snapshot...</option>
                     </select>
                 </fieldset>
 
-                <fieldset class="fieldset mb-4">
+                <fieldset class="fieldset mb-4" x-show="snapshot" x-cloak x-transition>
                     <label class="fieldset-label">Restore Location</label>
                     <div class="flex flex-col gap-2">
                         <label class="label cursor-pointer gap-2 justify-start">
@@ -62,21 +63,23 @@
                     </div>
                 </fieldset>
 
-                <fieldset class="fieldset mb-6">
-                    <label class="label cursor-pointer gap-2 justify-start">
-                        <input type="checkbox" name="skip_mysql" class="checkbox checkbox-primary">
-                        <span>Skip MySQL restore</span>
-                    </label>
-                </fieldset>
-                <fieldset class="fieldset mb-6">
-                    <label class="label cursor-pointer gap-2 justify-start">
-                        <input type="checkbox" name="skip_postgresql" class="checkbox checkbox-primary">
-                        <span>Skip PostgreSQL restore</span>
-                    </label>
-                </fieldset>
+                <div x-show="snapshot" x-cloak x-transition>
+                    <fieldset class="fieldset mb-6">
+                        <label class="label cursor-pointer gap-2 justify-start">
+                            <input type="checkbox" name="skip_mysql" class="checkbox checkbox-primary">
+                            <span>Skip MySQL restore</span>
+                        </label>
+                    </fieldset>
+                    <fieldset class="fieldset mb-6">
+                        <label class="label cursor-pointer gap-2 justify-start">
+                            <input type="checkbox" name="skip_postgresql" class="checkbox checkbox-primary">
+                            <span>Skip PostgreSQL restore</span>
+                        </label>
+                    </fieldset>
 
-                <div class="card-actions justify-end">
-                    <button type="submit" class="btn btn-primary" onclick="return confirm('Start restore? This will overwrite existing files.')">Restore</button>
+                    <div class="card-actions justify-end">
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('Start restore? This will overwrite existing files.')">Restore</button>
+                    </div>
                 </div>
             </form>
         </div>

@@ -101,6 +101,39 @@
                 </fieldset>
             </div>
 
+            <!-- Digest Reports -->
+            <div class="card bg-base-200 shadow mb-4">
+                <div class="card-body">
+                    <h3 class="card-title text-sm mb-4">&#x1F4CA; Digest Reports</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <fieldset class="fieldset">
+                            <label class="label cursor-pointer gap-2 justify-start p-0">
+                                <input type="checkbox" name="digest_enabled" class="toggle toggle-primary toggle-sm"
+                                       {{ 'checked' if settings.digest_enabled == 'yes' else '' }}>
+                                <span>Enable Digest</span>
+                            </label>
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Frequency</label>
+                            <select name="digest_frequency" class="select select-sm">
+                                <option value="daily" {{ 'selected' if settings.digest_frequency == 'daily' else '' }}>Daily</option>
+                                <option value="weekly" {{ 'selected' if settings.digest_frequency == 'weekly' else '' }}>Weekly</option>
+                                <option value="monthly" {{ 'selected' if settings.digest_frequency == 'monthly' else '' }}>Monthly</option>
+                            </select>
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Send At</label>
+                            <input type="time" name="digest_time" value="{{ settings.digest_time }}" class="input input-sm">
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label class="fieldset-label">Day (weekly: 1=Mon..7=Sun, monthly: 1-28)</label>
+                            <input type="number" name="digest_day" value="{{ settings.digest_day }}" class="input input-sm" min="1" max="28">
+                        </fieldset>
+                    </div>
+                    <p class="text-base-content/50 text-xs mt-2">Sends a summary of all backup jobs for the period via all configured notification channels.</p>
+                </div>
+            </div>
+
             <!-- Email Card -->
             <div class="collapse collapse-arrow bg-base-200 mb-2">
                 <input type="checkbox" :checked="openCard === 'email'" @click="openCard = openCard === 'email' ? '' : 'email'" />
@@ -383,6 +416,7 @@ document.getElementById('btn-restart-services').addEventListener('click', functi
 <ul class="list-disc list-inside text-base-content/70 mb-3 space-y-0.5">
     <li><strong>Notify On</strong> — When to send notifications: always, failure only, or never.</li>
     <li><strong>Stale Alert Hours</strong> — Alert if any source hasn't had a successful backup in this many hours (0=disabled).</li>
+    <li><strong>Digest Reports</strong> — Periodic summary of all backup jobs (daily/weekly/monthly) sent via all configured channels.</li>
     <li><strong>Email</strong> — SMTP email notifications.</li>
     <li><strong>Telegram</strong> — Send via Telegram bot. Create a bot via @BotFather.</li>
     <li><strong>Webhook</strong> — Slack, Discord, or generic webhook URL.</li>

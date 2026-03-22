@@ -13,7 +13,8 @@ from lib.config import (
     get_log_retain_days, get_max_concurrent_jobs, parse_conf,
     CONFIG_DIR, LOG_DIR, WORK_DIR,
 )
-from lib.notify_py import send_job_notification, send_stale_alert
+from lib.notify_py import send_job_notification, send_stale_alert, get_digest_jobs, send_digest_notification
+from lib.models import AppSettings
 
 logger = logging.getLogger("gniza-daemon")
 
@@ -462,6 +463,75 @@ def check_stale_backups():
             logger.exception("Failed to send stale backup alert")
 
 
+def _should_send_digest(settings):
+    """Check if it's time to send a digest based on frequency and time settings."""
+    if settings.digest_enabled != "yes":
+        return False
+
+    now = datetime.now()
+    try:
+        digest_hour, digest_minute = map(int, settings.digest_time.split(":"))
+    except (ValueError, TypeError):
+        return False
+
+    # Check if we're in the right time window (within 15 minutes of digest_time)
+    if now.hour != digest_hour or now.minute < digest_minute or now.minute > min(digest_minute + 14, 59):
+        return False
+
+    # Check last digest timestamp
+    last_file = WORK_DIR / "gniza-last-digest.txt"
+    try:
+        if last_file.exists():
+            last_ts = last_file.read_text().strip()
+            last_dt = datetime.fromisoformat(last_ts)
+            # Don't send if already sent today
+            if last_dt.date() == now.date():
+                return False
+    except (ValueError, OSError):
+        pass
+
+    # Check day-of-week for weekly or day-of-month for monthly
+    if settings.digest_frequency == "weekly":
+        try:
+            if now.isoweekday() != int(settings.digest_day or "1"):
+                return False
+        except (ValueError, TypeError):
+            return False
+    elif settings.digest_frequency == "monthly":
+        try:
+            if now.day != int(settings.digest_day or "1"):
+                return False
+        except (ValueError, TypeError):
+            return False
+
+    return True
+
+
+def check_digest():
+    """Check if it's time to send a digest notification and send it."""
+    try:
+        conf = parse_conf(CONFIG_DIR / "gniza.conf")
+        settings = AppSettings.from_conf(conf)
+    except OSError:
+        return
+
+    if not _should_send_digest(settings):
+        return
+
+    frequency = settings.digest_frequency
+    jobs = get_digest_jobs(frequency)
+
+    try:
+        send_digest_notification(jobs, frequency)
+        # Record that we sent the digest
+        last_file = WORK_DIR / "gniza-last-digest.txt"
+        last_file.parent.mkdir(parents=True, exist_ok=True)
+        last_file.write_text(datetime.now().isoformat())
+        logger.info(f"Sent {frequency} digest notification ({len(jobs)} jobs)")
+    except Exception:
+        logger.exception("Failed to send digest notification")
+
+
 def run(interval=10):
     """Main daemon loop."""
     signal.signal(signal.SIGTERM, _handle_signal)
@@ -483,6 +553,7 @@ def run(interval=10):
                 cleanup_stale_workdir()
                 enforce_retention()
                 check_stale_backups()
+                check_digest()
         except Exception:
             logger.exception("Health check error")
         time.sleep(interval)

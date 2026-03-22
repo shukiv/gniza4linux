@@ -328,6 +328,10 @@ class AppSettings:
     ntfy_priority: str = "default"
     healthchecks_url: str = ""
     stale_alert_hours: str = "0"
+    digest_enabled: str = "no"
+    digest_frequency: str = "daily"
+    digest_time: str = "08:00"
+    digest_day: str = "1"
     ssh_timeout: str = "30"
     ssh_retries: str = "3"
     rsync_extra_opts: str = ""
@@ -367,6 +371,10 @@ class AppSettings:
             ntfy_priority=data.get("NTFY_PRIORITY", "default"),
             healthchecks_url=data.get("HEALTHCHECKS_URL", ""),
             stale_alert_hours=data.get("STALE_ALERT_HOURS", "0"),
+            digest_enabled=data.get("DIGEST_ENABLED", "no"),
+            digest_frequency=data.get("DIGEST_FREQUENCY", "daily"),
+            digest_time=data.get("DIGEST_TIME", "08:00"),
+            digest_day=data.get("DIGEST_DAY", "1"),
             ssh_timeout=data.get("SSH_TIMEOUT", "30"),
             ssh_retries=data.get("SSH_RETRIES", "3"),
             rsync_extra_opts=data.get("RSYNC_EXTRA_OPTS", ""),
@@ -406,6 +414,10 @@ class AppSettings:
             "NTFY_PRIORITY": self.ntfy_priority,
             "HEALTHCHECKS_URL": self.healthchecks_url,
             "STALE_ALERT_HOURS": self.stale_alert_hours,
+            "DIGEST_ENABLED": self.digest_enabled,
+            "DIGEST_FREQUENCY": self.digest_frequency,
+            "DIGEST_TIME": self.digest_time,
+            "DIGEST_DAY": self.digest_day,
             "SSH_TIMEOUT": self.ssh_timeout,
             "SSH_RETRIES": self.ssh_retries,
             "RSYNC_EXTRA_OPTS": self.rsync_extra_opts,

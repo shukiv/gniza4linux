@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from pathlib import Path
 
-from lib.config import CONFIG_DIR, LOG_DIR, parse_conf
+from lib.config import CONFIG_DIR, LOG_DIR, WORK_DIR, parse_conf
 
 logger = logging.getLogger("gniza-daemon")
 
@@ -481,3 +481,142 @@ def send_stale_alert(stale_sources):
 
     body = "\n".join(lines)
     _dispatch_notification(settings, subject, body, is_success=False)
+
+
+def get_digest_jobs(frequency):
+    """Return completed jobs from the registry for the given digest period.
+
+    frequency: "daily" (last 24h), "weekly" (last 7 days), "monthly" (last 30 days).
+    Returns a list of job dicts.
+    """
+    from datetime import timedelta
+
+    registry_file = Path(WORK_DIR) / "gniza-jobs.json"
+    if not registry_file.is_file():
+        return []
+    try:
+        entries = json.loads(registry_file.read_text())
+    except (json.JSONDecodeError, OSError):
+        return []
+
+    period_hours = {"daily": 24, "weekly": 168, "monthly": 720}
+    hours = period_hours.get(frequency, 24)
+    cutoff = datetime.now() - timedelta(hours=hours)
+
+    jobs = []
+    for entry in entries:
+        if entry.get("status") in ("running", "queued"):
+            continue
+        finished = entry.get("finished_at")
+        if not finished:
+            continue
+        try:
+            finished_dt = datetime.fromisoformat(finished)
+        except (ValueError, TypeError):
+            continue
+        if finished_dt >= cutoff:
+            jobs.append(entry)
+    return jobs
+
+
+def send_digest_notification(jobs, frequency):
+    """Send a digest notification summarizing completed jobs for the period."""
+    from datetime import timedelta
+
+    settings = _load_notification_settings()
+
+    # Check if any channel is configured
+    has_channel = (
+        (settings["notify_email"] and settings["smtp_host"])
+        or (settings["telegram_bot_token"] and settings["telegram_chat_id"])
+        or settings["webhook_url"]
+        or settings["ntfy_url"]
+    )
+    if not has_channel:
+        return
+
+    hostname = socket.getfqdn()
+
+    # Aggregate stats
+    total = len(jobs)
+    success_count = sum(1 for j in jobs if j.get("status") == "success")
+    failed_count = sum(1 for j in jobs if j.get("status") == "failed")
+    skipped_count = sum(1 for j in jobs if j.get("status") == "skipped")
+
+    # Collect failed source names with counts
+    failed_names = {}
+    for j in jobs:
+        if j.get("status") == "failed":
+            label = j.get("label", "unknown")
+            failed_names[label] = failed_names.get(label, 0) + 1
+    failed_sources = [{"name": n, "count": c} for n, c in sorted(failed_names.items())]
+
+    # Period boundaries
+    period_hours = {"daily": 24, "weekly": 168, "monthly": 720}
+    hours = period_hours.get(frequency, 24)
+    now = datetime.now()
+    period_start = now - timedelta(hours=hours)
+    period_start_str = period_start.strftime("%b %d %H:%M")
+    period_end_str = now.strftime("%b %d %H:%M")
+
+    freq_label = frequency.capitalize()
+    subject = f"[gniza] [{hostname}] {freq_label} Digest: {total} backups, {failed_count} failed"
+
+    # Build plain text body (for Telegram, webhook, ntfy)
+    lines = [
+        f"{freq_label} Backup Digest",
+        "=" * 30,
+        f"Hostname: {hostname}",
+        f"Period: {period_start_str} - {period_end_str}",
+        "",
+        f"Total: {total}  |  OK: {success_count}  |  Failed: {failed_count}  |  Skipped: {skipped_count}",
+    ]
+    if failed_sources:
+        lines.append("")
+        lines.append("Failed sources:")
+        for src in failed_sources:
+            suffix = "failure" if src["count"] == 1 else "failures"
+            lines.append(f"  - {src['name']} ({src['count']} {suffix})")
+
+    body = "\n".join(lines)
+
+    # Build HTML body (for email)
+    from lib.email_template import build_digest_email
+    job_details = []
+    for j in jobs:
+        started = j.get("started_at", "")
+        finished = j.get("finished_at", "")
+        try:
+            started = datetime.fromisoformat(started).strftime("%H:%M:%S")
+        except (ValueError, TypeError):
+            pass
+        try:
+            finished = datetime.fromisoformat(finished).strftime("%H:%M:%S")
+        except (ValueError, TypeError):
+            pass
+        job_details.append({
+            "label": j.get("label", "unknown"),
+            "status": j.get("status", "unknown"),
+            "started_at": started,
+            "finished_at": finished,
+        })
+
+    html_body = build_digest_email(
+        frequency=frequency,
+        hostname=hostname,
+        period_start=period_start_str,
+        period_end=period_end_str,
+        total=total,
+        succeeded=success_count,
+        failed=failed_count,
+        skipped=skipped_count,
+        failed_sources=failed_sources,
+        job_details=job_details,
+    )
+
+    results = _dispatch_notification(settings, subject, body, is_success=(failed_count == 0), html_body=html_body)
+    for channel, ok in results.items():
+        if ok:
+            logger.info(f"Digest notification sent via {channel}")
+        else:
+            logger.warning(f"Failed to send digest notification via {channel}")

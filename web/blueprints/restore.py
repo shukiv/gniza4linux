@@ -2,7 +2,7 @@ import os
 import re
 
 from flask import (
-    Blueprint, render_template, request, redirect, url_for, flash,
+    Blueprint, render_template, request, redirect, url_for, flash, jsonify,
 )
 
 from tui.config import list_conf_dir
@@ -100,3 +100,43 @@ def run():
     web_job_manager.create_and_start("restore", label, *args)
     flash(f"Restore job started: {label}", "success")
     return redirect(url_for("jobs.index"))
+
+
+_VALID_SUBPATH_RE = re.compile(r'^[A-Za-z0-9_./ -]+$')
+
+
+@bp.route("/folder", methods=["POST"])
+@login_required
+def restore_folder():
+    """Restore a specific file or folder from a snapshot."""
+    target_name = request.form.get("target", "").strip()
+    remote_name = request.form.get("remote", "").strip()
+    snapshot = request.form.get("snapshot", "").strip()
+    folder_path = request.form.get("folder_path", "").strip()
+    dest = request.form.get("dest", "").strip()
+
+    if not target_name or not remote_name or not snapshot or not folder_path:
+        return jsonify(error="Missing required fields."), 400
+
+    if not _VALID_NAME_RE.match(target_name) or not _VALID_NAME_RE.match(remote_name) or not _VALID_SNAPSHOT_RE.match(snapshot):
+        return jsonify(error="Invalid input."), 400
+
+    if ".." in folder_path or not _VALID_SUBPATH_RE.match(folder_path):
+        return jsonify(error="Invalid path."), 400
+
+    if dest:
+        ok, err = _validate_dest(dest)
+        if not ok:
+            return jsonify(error=err), 400
+
+    # Build the absolute path as the CLI expects it (leading /)
+    abs_folder = "/" + folder_path.strip("/")
+
+    args = ["restore", f"--source={target_name}", f"--destination={remote_name}",
+            f"--snapshot={snapshot}", f"--folder={abs_folder}", "--skip-mysql", "--skip-postgresql"]
+    if dest:
+        args.append(f"--dest={dest}")
+
+    label = f"Restore {folder_path} <- {remote_name} ({snapshot})"
+    web_job_manager.create_and_start("restore", label, *args)
+    return jsonify(ok=True, message=f"Restore job started: {label}")

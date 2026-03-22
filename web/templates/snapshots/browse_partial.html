@@ -37,6 +37,10 @@
                        onclick="event.stopPropagation()">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                     </a>
+                    <button type="button" class="btn btn-ghost btn-xs text-success" title="Restore"
+                            onclick="event.stopPropagation(); document.getElementById('restore-modal').__x.$data.open('{{ child_path }}', '{{ target }}', '{{ remote }}', '{{ snapshot }}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"/></svg>
+                    </button>
                 </summary>
                 <ul>
                     <li><span class="text-base-content/40 text-xs"><span class="loading loading-dots loading-xs"></span></span></li>
@@ -54,6 +58,10 @@
                    class="btn btn-ghost btn-xs" title="Download">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                 </a>
+                <button type="button" class="btn btn-ghost btn-xs text-success" title="Restore"
+                        onclick="document.getElementById('restore-modal').__x.$data.open('{{ file_path }}', '{{ target }}', '{{ remote }}', '{{ snapshot }}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"/></svg>
+                </button>
             </span>
         </li>
         {% endfor %}

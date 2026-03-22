@@ -60,6 +60,70 @@
     </div>
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
+
+<!-- Restore file/folder modal -->
+<dialog id="restore-modal" class="modal" x-data="{
+    path: '', target: '', remote: '', snapshot: '', dest: '', location: 'inplace',
+    loading: false, result: '', error: '',
+    open(p, t, r, s) {
+        this.path = p; this.target = t; this.remote = r; this.snapshot = s;
+        this.dest = ''; this.location = 'inplace'; this.result = ''; this.error = '';
+        $el.showModal();
+    },
+    async submit() {
+        this.loading = true; this.error = ''; this.result = '';
+        const fd = new FormData();
+        fd.append('target', this.target); fd.append('remote', this.remote);
+        fd.append('snapshot', this.snapshot); fd.append('folder_path', this.path);
+        if (this.location === 'custom' && this.dest) fd.append('dest', this.dest);
+        try {
+            const r = await fetch('/restore/folder', { method: 'POST', body: fd });
+            const d = await r.json();
+            if (d.ok) { this.result = d.message; } else { this.error = d.error || 'Restore failed'; }
+        } catch(e) { this.error = 'Request failed'; }
+        this.loading = false;
+    }
+}">
+    <div class="modal-box max-w-md">
+        <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button></form>
+        <h3 class="font-bold text-lg mb-2">Restore</h3>
+        <p class="text-base-content/60 text-sm mb-4">Restore <code class="text-primary break-all" x-text="'/' + path"></code> from snapshot <code class="text-primary" x-text="snapshot"></code></p>
+
+        <template x-if="!result">
+            <div>
+                <fieldset class="fieldset mb-3">
+                    <label class="fieldset-label">Restore Location</label>
+                    <label class="label cursor-pointer gap-2 justify-start">
+                        <input type="radio" value="inplace" class="radio radio-primary radio-sm" x-model="location">
+                        <span class="text-sm">In-place (original location)</span>
+                    </label>
+                    <label class="label cursor-pointer gap-2 justify-start">
+                        <input type="radio" value="custom" class="radio radio-primary radio-sm" x-model="location">
+                        <span class="text-sm">Custom directory</span>
+                    </label>
+                    <div x-show="location === 'custom'" x-cloak class="mt-1">
+                        <input type="text" x-model="dest" class="input input-sm w-full font-mono" placeholder="/path/to/restore/directory">
+                    </div>
+                </fieldset>
+                <div x-show="error" x-cloak class="alert alert-error text-sm mb-3" x-text="error"></div>
+                <div class="modal-action">
+                    <form method="dialog"><button class="btn btn-ghost btn-sm">Cancel</button></form>
+                    <button class="btn btn-primary btn-sm" @click="submit()" :disabled="loading"
+                            x-text="loading ? 'Restoring...' : 'Restore'"></button>
+                </div>
+            </div>
+        </template>
+        <template x-if="result">
+            <div>
+                <div class="alert alert-success text-sm mb-3" x-text="result"></div>
+                <div class="modal-action">
+                    <form method="dialog"><button class="btn btn-primary btn-sm">Close</button></form>
+                </div>
+            </div>
+        </template>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
 {% endblock %}
 
 {% block help_text %}

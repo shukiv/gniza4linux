@@ -1,26 +1,4 @@
 """HTML email template for GNIZA backup notifications."""
-import base64
-from pathlib import Path
-
-_LOGO_B64 = None
-
-
-def _get_logo_b64():
-    """Load and cache the logo PNG as base64."""
-    global _LOGO_B64
-    if _LOGO_B64 is None:
-        # Look in data/ directory (shipped with the package)
-        root = Path(__file__).resolve().parent.parent
-        for candidate in [
-            root / "data" / "gniza-logo.png",
-            root / "gniza-logo.png",
-        ]:
-            if candidate.is_file():
-                _LOGO_B64 = base64.b64encode(candidate.read_bytes()).decode()
-                break
-        else:
-            _LOGO_B64 = ""
-    return _LOGO_B64
 
 
 def build_html_email(

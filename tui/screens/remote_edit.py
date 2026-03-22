@@ -15,9 +15,6 @@ from tui.widgets.folder_picker import FolderPicker
 
 _NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')
 
-REMOTE_TYPES = [("SSH", "ssh"), ("Local", "local"), ("S3", "s3"), ("Google Drive", "gdrive"), ("Rclone", "rclone")]
-
-
 _TYPE_MAP = {"SSH": "ssh", "Local": "local", "S3": "s3", "Google Drive": "gdrive", "Rclone": "rclone"}
 
 

@@ -19,13 +19,6 @@ list_targets() {
     done
 }
 
-# Return 0 if at least one target config exists.
-has_targets() {
-    local targets
-    targets=$(list_targets)
-    [[ -n "$targets" ]]
-}
-
 # ── Loading ───────────────────────────────────────────────────
 
 # Source a target config and set TARGET_* globals.

@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from lib.config import CONFIG_DIR, write_conf
+from lib.config import CONFIG_DIR
 from lib.models import Remote, Target
 
 from lib.validation import VALID_NAME_RE as _NAME_RE

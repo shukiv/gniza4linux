@@ -14,11 +14,6 @@ _log_notification() {
     echo "${timestamp} | ${channel} | ${status} | ${dest} | ${subject}" >> "$log_file" 2>/dev/null
 }
 
-_log_email() {
-    # Backward compatibility wrapper
-    _log_notification "email" "$@"
-}
-
 _send_via_smtp() {
     local subject="$1"
     local body="$2"

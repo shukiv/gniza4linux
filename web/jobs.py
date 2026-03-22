@@ -24,9 +24,6 @@ from web.backend import start_cli_background
 
 logger = logging.getLogger(__name__)
 
-MAX_OUTPUT_LINES = 10_000
-
-
 REGISTRY_FILE = WORK_DIR / "gniza-jobs.json"
 
 

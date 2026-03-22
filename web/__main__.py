@@ -3,7 +3,6 @@ import os
 import ssl
 import sys
 from logging.handlers import RotatingFileHandler
-from pathlib import Path
 
 from tui.config import CONFIG_DIR, LOG_DIR, parse_conf
 from web.app import create_app

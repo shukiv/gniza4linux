@@ -156,36 +156,6 @@ _rclone_cmd() {
 
 # ── Transfer Functions ────────────────────────────────────────
 
-rclone_to_remote() {
-    local source_dir="$1"
-    local remote_subpath="$2"
-    local attempt=0
-    local max_retries="${SSH_RETRIES:-$DEFAULT_SSH_RETRIES}"
-    local remote_dest; remote_dest=$(_rclone_remote_path "$remote_subpath")
-
-    [[ "$source_dir" != */ ]] && source_dir="$source_dir/"
-
-    while (( attempt < max_retries )); do
-        ((attempt++)) || true
-        log_debug "rclone copy attempt $attempt/$max_retries: $source_dir -> $remote_dest"
-
-        if _rclone_cmd copy "$source_dir" "$remote_dest"; then
-            log_debug "rclone copy succeeded on attempt $attempt"
-            return 0
-        fi
-
-        log_warn "rclone copy failed, attempt $attempt/$max_retries"
-        if (( attempt < max_retries )); then
-            local backoff=$(( attempt * 10 ))
-            log_info "Retrying in ${backoff}s..."
-            sleep "$backoff"
-        fi
-    done
-
-    log_error "rclone copy failed after $max_retries attempts"
-    return 1
-}
-
 # Incremental sync: mirrors source to a "current" directory on the remote,
 # moving changed/deleted files to a timestamped backup-dir (the snapshot).
 # This way only diffs are stored per snapshot, saving storage on S3/GDrive.

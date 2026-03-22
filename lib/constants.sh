@@ -10,7 +10,6 @@ readonly GNIZA4LINUX_REPO="https://git.linux-hosting.co.il/shukivaknin/gniza4lin
 
 # Exit codes
 readonly EXIT_FATAL=1
-readonly EXIT_LOCKED=2
 readonly EXIT_PARTIAL=5
 
 # Colors (disabled if not a terminal)

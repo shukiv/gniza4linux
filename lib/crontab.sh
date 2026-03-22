@@ -39,18 +39,6 @@ _crontab_run_cmd() {
     fi
 }
 
-# Run a command via SSH without the sudo wrapper.
-# Used for operations where sudo is unnecessary.
-_crontab_ssh_raw() {
-    local cmd_str="$1"
-    _crontab_is_remote || return 1
-    if [[ "${TARGET_SOURCE_AUTH_METHOD:-key}" == "password" && -n "${TARGET_SOURCE_PASSWORD:-}" ]]; then
-        SSHPASS="$TARGET_SOURCE_PASSWORD" sshpass -e "${_CRONTAB_SSH[@]}" "$cmd_str"
-    else
-        "${_CRONTAB_SSH[@]}" "$cmd_str"
-    fi
-}
-
 # Dump all crontabs to a temp directory.
 # Sets CRONTAB_DUMP_DIR global to the temp directory path containing _crontab/ subdir.
 # Returns 0 on success, 1 on failure.

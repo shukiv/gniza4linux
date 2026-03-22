@@ -1,5 +1,4 @@
 """Tests for lib.config — Python config parser."""
-from pathlib import Path
 from lib.config import parse_conf, write_conf
 
 

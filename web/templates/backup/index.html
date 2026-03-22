@@ -4,7 +4,7 @@
 {% block page_title %}Backup{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl">
+<div class="max-w-2xl" x-data="{ source: '', remote: '' }">
     <div class="card bg-base-200 shadow">
         <div class="card-body">
             <h2 class="card-title">Run Backup</h2>
@@ -14,25 +14,27 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <fieldset class="fieldset mb-4">
                     <label class="fieldset-label">Source</label>
-                    <select name="target" class="select">
-                        <option value="">All Sources</option>
+                    <select name="target" class="select" x-model="source">
+                        <option value="" disabled selected>Select a source...</option>
+                        <option value="all">All Sources</option>
                         {% for t in targets %}
                         <option value="{{ t }}">{{ t }}</option>
                         {% endfor %}
                     </select>
                 </fieldset>
 
-                <fieldset class="fieldset mb-6">
+                <fieldset class="fieldset mb-6" x-show="source" x-cloak x-transition>
                     <label class="fieldset-label">Destination</label>
-                    <select name="remote" class="select">
-                        <option value="">Default (all)</option>
+                    <select name="remote" class="select" x-model="remote">
+                        <option value="" disabled selected>Select a destination...</option>
+                        <option value="all">Default (all)</option>
                         {% for r in remotes %}
                         <option value="{{ r }}">{{ r }}</option>
                         {% endfor %}
                     </select>
                 </fieldset>
 
-                <div class="card-actions justify-end gap-2">
+                <div class="card-actions justify-end gap-2" x-show="source && remote" x-cloak x-transition>
                     <button type="submit" class="btn btn-primary" onclick="return confirm('Run backup?')">Run Backup</button>
                 </div>
             </form>

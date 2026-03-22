@@ -23,6 +23,10 @@ def index():
 def run():
     target_name = request.form.get("target", "").strip()
     remote_name = request.form.get("remote", "").strip()
+    if target_name == "all":
+        target_name = ""
+    if remote_name == "all":
+        remote_name = ""
 
     if target_name and not _VALID_NAME_RE.match(target_name):
         flash("Invalid source name.", "error")

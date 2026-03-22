@@ -3,7 +3,7 @@ name = "gniza"
 dynamic = ["version"]
 description = "Linux Backup Manager"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "GPL-3.0-or-later"}
 requires-python = ">=3.9"
 dependencies = [
     "textual>=0.40",

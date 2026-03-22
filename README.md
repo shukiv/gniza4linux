@@ -604,4 +604,4 @@ TARGET_POST_HOOK="systemctl start myapp"
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+GPL-3.0 License - see [LICENSE](LICENSE) for details.

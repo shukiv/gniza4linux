@@ -5,7 +5,7 @@
 [[ -n "${_GNIZA4LINUX_CONSTANTS_LOADED:-}" ]] && return 0
 _GNIZA4LINUX_CONSTANTS_LOADED=1
 
-readonly GNIZA4LINUX_VERSION="0.26"
+readonly GNIZA4LINUX_VERSION="0.27"
 readonly GNIZA4LINUX_REPO="https://git.linux-hosting.co.il/shukivaknin/gniza4linux.git"
 
 # Exit codes

@@ -10,7 +10,7 @@ from textual.containers import Vertical, Horizontal
 
 from textual import work
 
-from tui.config import list_conf_dir
+from lib.config import list_conf_dir
 from tui.backend import run_cli
 from tui.widgets import SnapshotBrowser, DocsPanel
 

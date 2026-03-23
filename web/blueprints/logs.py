@@ -8,7 +8,7 @@ from flask import (
 from web.app import login_required
 from web.helpers import paginate
 from web.jobs import web_job_manager
-from tui.config import LOG_DIR
+from lib.config import LOG_DIR
 
 bp = Blueprint("logs", __name__, url_prefix="/logs")
 

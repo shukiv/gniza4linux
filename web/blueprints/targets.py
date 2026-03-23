@@ -12,8 +12,8 @@ from markupsafe import escape
 from lib.auto_configure import receive_and_configure_source
 from lib.connection_test import test_source as _test_source
 from lib.ssh_auto_configure import start_ssh_setup, get_task, pop_task
-from tui.config import CONFIG_DIR, parse_conf, write_conf
-from tui.models import Target
+from lib.config import CONFIG_DIR, parse_conf, write_conf
+from lib.models import Target
 from web.app import login_required
 from web.helpers import load_targets, get_rclone_remotes, _VALID_NAME_RE, paginate, format_bytes_short
 from lib.ssh import SSHOpts, get_ssh_keys as _get_ssh_keys

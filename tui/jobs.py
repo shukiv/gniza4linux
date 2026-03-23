@@ -14,7 +14,7 @@ from textual.message import Message
 
 from lib.job_utils import detect_return_code, is_skipped_job
 from tui.backend import start_cli_background
-from tui.config import get_max_concurrent_jobs, WORK_DIR, LOG_DIR
+from lib.config import get_max_concurrent_jobs, WORK_DIR, LOG_DIR
 
 logger = logging.getLogger(__name__)
 

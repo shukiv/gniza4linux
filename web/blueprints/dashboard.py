@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 import psutil
 from flask import Blueprint, render_template, flash, request, redirect, url_for
 
-from tui.config import CONFIG_DIR, parse_conf, list_conf_dir
-from tui.models import Schedule
+from lib.config import CONFIG_DIR, parse_conf, list_conf_dir
+from lib.models import Schedule
 from web.app import login_required
 from web.helpers import load_targets, load_remotes, paginate, format_bytes
 from web.jobs import web_job_manager

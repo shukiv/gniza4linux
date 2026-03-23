@@ -16,7 +16,7 @@ import logging
 import subprocess
 
 from lib.job_utils import detect_return_code, is_skipped_job
-from tui.config import (
+from lib.config import (
     get_max_concurrent_jobs, CONFIG_DIR, parse_conf,
     list_conf_dir, WORK_DIR, LOG_DIR,
 )

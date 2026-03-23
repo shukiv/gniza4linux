@@ -11,7 +11,7 @@ from flask import (
 )
 from flask_wtf.csrf import CSRFProtect
 
-from tui.config import CONFIG_DIR, parse_conf
+from lib.config import CONFIG_DIR, parse_conf
 
 
 def _get_version():

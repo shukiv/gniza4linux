@@ -24,9 +24,7 @@ def app(tmp_path):
     work_dir = tmp_path / "work"
     work_dir.mkdir()
 
-    # Patch config dirs in both lib.config and tui.config before creating the app
     import lib.config
-    import tui.config as tui_config
 
     orig_config = lib.config.CONFIG_DIR
     orig_log = lib.config.LOG_DIR
@@ -35,9 +33,6 @@ def app(tmp_path):
     lib.config.CONFIG_DIR = conf_dir
     lib.config.LOG_DIR = log_dir
     lib.config.WORK_DIR = work_dir
-    tui_config.CONFIG_DIR = conf_dir
-    tui_config.LOG_DIR = log_dir
-    tui_config.WORK_DIR = work_dir
 
     from web.app import create_app
     app = create_app()
@@ -48,9 +43,6 @@ def app(tmp_path):
     lib.config.CONFIG_DIR = orig_config
     lib.config.LOG_DIR = orig_log
     lib.config.WORK_DIR = orig_work
-    tui_config.CONFIG_DIR = orig_config
-    tui_config.LOG_DIR = orig_log
-    tui_config.WORK_DIR = orig_work
 
 
 @pytest.fixture

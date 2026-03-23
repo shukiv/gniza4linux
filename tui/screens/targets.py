@@ -6,7 +6,7 @@ from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
 
-from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR
+from lib.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR
 from tui.widgets import ConfirmDialog, DocsPanel
 
 

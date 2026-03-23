@@ -21,7 +21,7 @@ class _SafeRichLog(RichLog):
         return super().render_line(y)
 
 from tui.jobs import job_manager
-from tui.config import WORK_DIR
+from lib.config import WORK_DIR
 from tui.widgets import ConfirmDialog, DocsPanel
 
 _PROGRESS_RE = re.compile(r"(\d+)%")

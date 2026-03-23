@@ -7,8 +7,8 @@ from flask import (
     Blueprint, render_template, render_template_string, request, redirect, url_for, flash,
 )
 
-from tui.config import CONFIG_DIR, parse_conf, write_conf
-from tui.models import AppSettings
+from lib.config import CONFIG_DIR, parse_conf, write_conf
+from lib.models import AppSettings
 from web.app import login_required
 from web.backend import run_cli_sync
 from lib.notify_py import send_test_notification

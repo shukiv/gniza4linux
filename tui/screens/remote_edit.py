@@ -8,8 +8,8 @@ from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
 from lib.connection_test import test_remote
-from tui.config import parse_conf, write_conf, CONFIG_DIR
-from tui.models import Remote
+from lib.config import parse_conf, write_conf, CONFIG_DIR
+from lib.models import Remote
 from tui.widgets import FilePicker, DocsPanel, RemoteFolderPicker
 from tui.widgets.folder_picker import FolderPicker
 

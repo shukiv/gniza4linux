@@ -4,7 +4,7 @@ from textual.widgets import Header, Footer, Static, Button, Select
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
-from tui.config import list_conf_dir
+from lib.config import list_conf_dir
 from tui.jobs import job_manager
 from tui.widgets import ConfirmDialog, DocsPanel
 

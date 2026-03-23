@@ -9,12 +9,12 @@ from flask import (
 from lib.auto_configure import receive_and_configure
 from lib.connection_test import test_remote as _test_remote
 from lib.ssh_auto_configure import start_ssh_setup, get_task, pop_task
-from tui.config import CONFIG_DIR, parse_conf, write_conf
-from tui.models import Remote
+from lib.config import CONFIG_DIR, parse_conf, write_conf
+from lib.models import Remote
 from web.app import login_required
 from web.backend import run_cli_sync
 from web.helpers import load_remotes, get_rclone_remotes, _VALID_NAME_RE, paginate
-from web.ssh_utils import get_ssh_keys as _get_ssh_keys
+from lib.ssh_utils import get_ssh_keys as _get_ssh_keys
 
 bp = Blueprint("remotes", __name__, url_prefix="/destinations")
 _VALID_S3_PROVIDERS = {"AWS", "Backblaze", "Wasabi", "Other"}

@@ -4,7 +4,7 @@ import shlex
 import subprocess
 
 from textual.app import ComposeResult
-from web.ssh_utils import ssh_cmd
+from lib.ssh_utils import ssh_cmd
 from textual.screen import ModalScreen
 from textual.widgets import Tree, Static, Button, Input
 from textual.containers import Horizontal, Vertical

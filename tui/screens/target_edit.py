@@ -8,8 +8,8 @@ from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
 from lib.connection_test import test_source
-from tui.config import parse_conf, write_conf, CONFIG_DIR
-from tui.models import Target
+from lib.config import parse_conf, write_conf, CONFIG_DIR
+from lib.models import Target
 from tui.widgets import FolderPicker, RemoteFolderPicker, DocsPanel, TagList
 
 _NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')

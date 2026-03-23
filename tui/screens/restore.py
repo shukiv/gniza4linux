@@ -9,7 +9,7 @@ from textual import work, on
 
 import os
 
-from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
+from lib.config import list_conf_dir, parse_conf, CONFIG_DIR
 from tui.backend import run_cli
 from tui.jobs import job_manager
 from tui.widgets import ConfirmDialog, FolderPicker, DocsPanel

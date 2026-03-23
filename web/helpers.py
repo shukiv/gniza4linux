@@ -3,8 +3,8 @@
 import re
 import subprocess
 
-from tui.config import parse_conf, CONFIG_DIR, list_conf_dir
-from tui.models import Target, Remote
+from lib.config import parse_conf, CONFIG_DIR, list_conf_dir
+from lib.models import Target, Remote
 
 from lib.validation import VALID_NAME_RE as _VALID_NAME_RE
 

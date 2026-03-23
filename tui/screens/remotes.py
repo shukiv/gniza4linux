@@ -7,7 +7,7 @@ from textual.containers import Vertical, Horizontal
 
 from textual import work
 
-from tui.config import list_conf_dir, parse_conf, CONFIG_DIR
+from lib.config import list_conf_dir, parse_conf, CONFIG_DIR
 from tui.backend import run_cli
 from tui.widgets import ConfirmDialog, OperationLog, DocsPanel
 

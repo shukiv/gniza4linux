@@ -2,7 +2,7 @@ from pathlib import Path
 
 from flask import Blueprint, render_template, request
 
-from tui.config import LOG_DIR
+from lib.config import LOG_DIR
 from web.app import login_required
 from web.helpers import paginate
 

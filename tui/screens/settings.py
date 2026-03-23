@@ -10,8 +10,8 @@ from textual.containers import Vertical, Horizontal
 
 from textual import work
 
-from tui.config import parse_conf, write_conf, CONFIG_DIR
-from tui.models import AppSettings
+from lib.config import parse_conf, write_conf, CONFIG_DIR
+from lib.models import AppSettings
 from tui.backend import run_cli
 from tui.widgets import DocsPanel, OperationLog
 

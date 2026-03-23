@@ -5,7 +5,7 @@ except ModuleNotFoundError:
     NoMatches = Exception
 from textual.events import Resize
 
-from tui.config import has_remotes, has_targets, list_conf_dir
+from lib.config import has_remotes, has_targets, list_conf_dir
 from tui.screens.main_menu import MainMenuScreen
 from tui.screens.backup import BackupScreen
 from tui.screens.restore import RestoreScreen

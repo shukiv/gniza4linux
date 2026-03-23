@@ -8,7 +8,7 @@ from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal, Center
 from textual import work
 
-from tui.config import has_remotes, has_targets, list_conf_dir
+from lib.config import has_remotes, has_targets, list_conf_dir
 from tui.jobs import job_manager
 
 

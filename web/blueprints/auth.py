@@ -8,7 +8,7 @@ from flask import (
     session, flash, current_app,
 )
 
-from tui.config import CONFIG_DIR, parse_conf
+from lib.config import CONFIG_DIR, parse_conf
 from web.app import csrf
 
 bp = Blueprint("auth", __name__)

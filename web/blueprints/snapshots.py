@@ -8,7 +8,7 @@ from flask import (
     Blueprint, Response, abort, render_template, request, send_file,
 )
 
-from tui.config import CONFIG_DIR, list_conf_dir, parse_conf
+from lib.config import CONFIG_DIR, list_conf_dir, parse_conf
 from web.app import login_required
 from web.backend import run_cli_sync
 from lib.ssh import SSHOpts

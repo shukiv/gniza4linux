@@ -5,8 +5,8 @@ from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
 )
 
-from tui.config import CONFIG_DIR, parse_conf, write_conf, list_conf_dir
-from tui.models import Schedule
+from lib.config import CONFIG_DIR, parse_conf, write_conf, list_conf_dir
+from lib.models import Schedule
 from web.app import login_required
 from web.backend import run_cli_sync
 from web.helpers import _VALID_NAME_RE, paginate, parse_schedule_day

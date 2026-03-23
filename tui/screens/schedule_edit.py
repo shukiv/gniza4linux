@@ -5,8 +5,8 @@ from textual.widgets import Header, Footer, Static, Button, Input, Select, Selec
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
-from tui.config import list_conf_dir, parse_conf, write_conf, CONFIG_DIR
-from tui.models import Schedule
+from lib.config import list_conf_dir, parse_conf, write_conf, CONFIG_DIR
+from lib.models import Schedule
 from tui.widgets import DocsPanel
 
 _NAME_RE = re.compile(r'^[a-zA-Z][a-zA-Z0-9_-]{0,31}$')

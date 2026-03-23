@@ -19,19 +19,8 @@ def tmp_config(tmp_path):
     gniza_conf = conf_dir / "gniza.conf"
     gniza_conf.write_text('WEB_API_KEY="testkey123"\nRETENTION_COUNT="30"\n')
 
-    # Patch CONFIG_DIR in both lib.config and tui.config (tui re-exports lib)
     import lib.config
     original = lib.config.CONFIG_DIR
     lib.config.CONFIG_DIR = conf_dir
-    try:
-        import tui.config as tui_config
-        tui_config.CONFIG_DIR = conf_dir
-    except ImportError:
-        pass
     yield conf_dir
     lib.config.CONFIG_DIR = original
-    try:
-        import tui.config as tui_config
-        tui_config.CONFIG_DIR = original
-    except ImportError:
-        pass

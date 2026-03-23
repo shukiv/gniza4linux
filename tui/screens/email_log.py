@@ -6,7 +6,7 @@ from textual.widgets import Header, Footer, Static, Button, DataTable
 from tui.widgets.header import GnizaHeader as Header  # noqa: F811
 from textual.containers import Vertical, Horizontal
 
-from tui.config import LOG_DIR
+from lib.config import LOG_DIR
 from tui.widgets import DocsPanel
 
 

@@ -9,8 +9,8 @@ from textual.containers import Vertical, Horizontal
 
 from textual import work
 
-from tui.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR
-from tui.models import Schedule
+from lib.config import list_conf_dir, parse_conf, update_conf_key, CONFIG_DIR
+from lib.models import Schedule
 from tui.backend import run_cli
 from tui.jobs import job_manager
 from tui.widgets import ConfirmDialog, OperationLog, DocsPanel

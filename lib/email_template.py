@@ -36,6 +36,17 @@ def build_html_email(
         badge_bg = "#27ae60"
         badge_icon = "✓"
 
+    # Escape all user-controllable values
+    _e = _html.escape
+    hostname = _e(str(hostname))
+    timestamp = _e(str(timestamp))
+    duration = _e(str(duration))
+    sources = _e(str(sources))
+    destinations = _e(str(destinations))
+    job_label = _e(str(job_label))
+    log_file = _e(str(log_file))
+    failed_targets = _e(str(failed_targets)) if failed_targets else ""
+
     # Build info rows
     info_rows = ""
     if hostname:

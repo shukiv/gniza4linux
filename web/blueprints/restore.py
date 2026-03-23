@@ -5,13 +5,14 @@ from flask import (
     Blueprint, render_template, request, redirect, url_for, flash, jsonify,
 )
 
-from tui.config import list_conf_dir
+from lib.backup_orchestrator import BackupOrchestrator
 from web.app import login_required
 from web.backend import run_cli_sync
 from web.helpers import _VALID_NAME_RE
 from web.jobs import web_job_manager
 
 bp = Blueprint("restore", __name__, url_prefix="/restore")
+_orchestrator = BackupOrchestrator()
 _VALID_SNAPSHOT_RE = re.compile(r'^[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)*$')
 
 _FORBIDDEN_DEST_PREFIXES = ("/bin", "/sbin", "/usr/bin", "/usr/sbin", "/usr/lib", "/boot", "/dev", "/proc", "/sys", "/etc", "/lib", "/lib64")
@@ -33,7 +34,7 @@ def _validate_dest(dest):
 @bp.route("/")
 @login_required
 def index():
-    targets = list_conf_dir("targets.d")
+    targets = _orchestrator.list_targets()
     return render_template("restore/index.html", targets=targets)
 
 
@@ -42,7 +43,7 @@ def index():
 def destinations(target_name):
     if not _VALID_NAME_RE.match(target_name):
         return ""
-    remotes = list_conf_dir("remotes.d")
+    remotes = _orchestrator.list_remotes()
     return render_template("restore/destinations_partial.html", remotes=remotes)
 
 
@@ -88,16 +89,16 @@ def run():
             flash(err, "error")
             return redirect(url_for("restore.index"))
 
-    args = ["restore", f"--source={target_name}", f"--destination={remote_name}", f"--snapshot={snapshot}"]
-    if dest:
-        args.append(f"--dest={dest}")
-    if skip_mysql:
-        args.append("--skip-mysql")
-    if skip_postgresql:
-        args.append("--skip-postgresql")
+    cmd = _orchestrator.build_restore_command(
+        target_name, remote_name, snapshot,
+        dest=dest or None,
+        skip_mysql=bool(skip_mysql),
+        skip_postgresql=bool(skip_postgresql),
+    )
+    cli_args = _orchestrator.cli_args(cmd)
 
     label = f"Restore {target_name} <- {remote_name} ({snapshot})"
-    web_job_manager.create_and_start("restore", label, *args)
+    web_job_manager.create_and_start("restore", label, *cli_args)
     flash(f"Restore job started: {label}", "success")
     return redirect(url_for("jobs.index"))
 
@@ -132,11 +133,15 @@ def restore_folder():
     # Build the absolute path as the CLI expects it (leading /)
     abs_folder = "/" + folder_path.strip("/")
 
-    args = ["restore", f"--source={target_name}", f"--destination={remote_name}",
-            f"--snapshot={snapshot}", f"--folder={abs_folder}", "--skip-mysql", "--skip-postgresql"]
-    if dest:
-        args.append(f"--dest={dest}")
+    cmd = _orchestrator.build_restore_command(
+        target_name, remote_name, snapshot,
+        folder=abs_folder,
+        dest=dest or None,
+        skip_mysql=True,
+        skip_postgresql=True,
+    )
+    cli_args = _orchestrator.cli_args(cmd)
 
     label = f"Restore {folder_path} <- {remote_name} ({snapshot})"
-    web_job_manager.create_and_start("restore", label, *args)
+    web_job_manager.create_and_start("restore", label, *cli_args)
     return jsonify(ok=True, message=f"Restore job started: {label}")

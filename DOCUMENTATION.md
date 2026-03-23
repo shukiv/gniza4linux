@@ -73,8 +73,8 @@ If you have ever set up backups with raw rsync, tar, or tools like Dirvish, you 
 **Debian/Ubuntu (.deb package):**
 
 ```
-wget https://git.linux-hosting.co.il/shukivaknin/gniza4linux/releases/download/latest/gniza_0.26_all.deb
-sudo dpkg -i gniza_0.26_all.deb
+wget https://git.linux-hosting.co.il/shukivaknin/gniza4linux/releases/download/latest/gniza_0.27_all.deb
+sudo dpkg -i gniza_0.27_all.deb
 sudo apt-get -f install   # resolve dependencies
 ```
 
@@ -254,6 +254,7 @@ rsync -avP /path/to/backup/home/2026-03-10_020000/var/www/ /var/www/
 
 - **Logs** — view all job logs with status (success/failure/running)
 - **Notifications** — configure email, Telegram, webhook, ntfy, and Healthchecks.io in Settings
+- **Digest notifications** — enable daily/weekly/monthly summaries of all backup jobs in Settings
 - **Running Tasks** — real-time progress of active jobs
 - **Health checks** — system state monitoring in Settings
 
@@ -1038,6 +1039,10 @@ gniza --cli restore --source=mysite --destination=backup-server --skip-mysql --s
 
 Navigate to Restore, select a source, destination, and snapshot, choose in-place or custom directory, and optionally toggle MySQL and/or PostgreSQL restore on/off.
 
+### Restoring from the Web Snapshot Browser
+
+In the web dashboard, navigate to Snapshots, browse a snapshot's file tree, and click the green restore icon next to any file or folder. A modal dialog asks for the restore location — in-place (original path) or a custom directory. The restore uses the existing CLI `--folder` flag under the hood.
+
 ---
 
 ## Snapshots
@@ -1420,6 +1425,25 @@ STALE_ALERT_HOURS="48"          # Alert when a source hasn't backed up in 48 hou
 
 When configured, gniza sends a notification if any source has not been backed up within the specified number of hours.
 
+### Digest Notifications
+
+GNIZA can send periodic digest summaries of all backup jobs. Digests aggregate results across all sources and schedules into a single report.
+
+```ini
+DIGEST_ENABLED="no"            # yes | no
+DIGEST_FREQUENCY="daily"       # daily | weekly | monthly
+DIGEST_TIME="08:00"            # HH:MM — when to send the digest
+DIGEST_DAY=""                  # Day of week (0=Sun..6=Sat) for weekly, or day of month (1-28) for monthly
+```
+
+- **Daily**: Sent every day at the configured time
+- **Weekly**: Sent on the configured day of the week
+- **Monthly**: Sent on the configured day of the month
+
+The digest email uses an HTML template with stat boxes (total/succeeded/failed counts), a failed sources section, and per-job details. Digests are sent via all configured notification channels.
+
+Configure digest settings in the TUI Settings screen, Web Settings page, or directly in `gniza.conf`.
+
 ### Notification Modes
 
 | Mode | When notifications are sent |
@@ -1517,18 +1541,18 @@ All DaisyUI tables in the web dashboard are **sortable** -- click any column hea
 | Screen | Description |
 |--------|-------------|
 | **Dashboard** | System stats with inline bar labels (e.g., "CPU 4%", "Memory 87%", "IO Wait 0.2%"), disk bars showing percentage only, and a "Network Current (Total)" section. Plus sources, destinations, schedules tables, and last backup log with status |
-| **Sources** | Create, edit, delete sources with toggle enable/disable (shows "Enabled"/"Disabled" text next to the toggle). Supports all source types (local, SSH, S3, Google Drive, Google Photos), MySQL backup, hooks, include/exclude filters. Sources list shows disk usage column loaded async via HTMX (local, SSH, rclone). Cloud editors include an rclone explanation text |
-| **Destinations** | Create, edit, delete destinations. Test connection (result shown as toast notification), view disk usage inline. Auto-configure SSH destinations via croc (`/destinations/auto-configure`). Supports SSH, Local, Cloud (radio button order). Cloud Storage Configuration appears inside the Destination Type card with a divider separator, Remote Name dropdown first. Cloud editors include an rclone explanation text |
+| **Sources** | Create, edit, delete sources with toggle enable/disable (shows "Enabled"/"Disabled" text next to the toggle). Supports all source types (local, SSH, S3, Google Drive, Google Photos), MySQL backup, hooks, include/exclude filters. Sources list shows disk usage column loaded async via HTMX (local, SSH, rclone). Rclone Remotes button links to the rclone management page. Cloud editors include an rclone explanation text |
+| **Destinations** | Create, edit, delete destinations. Test connection (result shown as toast notification), view disk usage inline. Auto-configure SSH destinations via croc (`/destinations/auto-configure`). Supports SSH, Local, Cloud (radio button order). Cloud Storage Configuration appears inside the Destination Type card with a divider separator, Remote Name dropdown first. Rclone Remotes button links to the rclone management page. Cloud editors include an rclone explanation text |
 | **Schedules** | Create, edit, delete schedules with toggle active/inactive. Supports hourly, daily (multi-day), weekly, monthly, and custom cron |
-| **Backup** | Select source and destination, or back up all. Starts a background job and redirects to Running Tasks |
-| **Restore** | Select source, destination, and snapshot. Options for custom restore path, specific folder, and skip MySQL |
+| **Backup** | Select source and destination with progressive reveal (destination appears after source selection), or back up all. Starts a background job and redirects to Running Tasks |
+| **Restore** | Select source, destination, and snapshot with progressive reveal (fields appear as selections are made). Options for custom restore path, specific folder, and skip MySQL |
 | **Running Tasks** | Live job list with status updates every 2 seconds. View log output, kill running jobs, clear finished jobs. Shows "Skipped" (yellow/warning) when all targets in a backup are disabled |
-| **Snapshots** | Browse snapshots by source and destination. View file tree with HTMX-loaded directory expansion |
+| **Snapshots** | Browse snapshots by source and destination. View file tree with HTMX-loaded directory expansion. Restore individual files or folders directly from the browser via a restore icon and modal dialog |
 | **Retention** | Run retention cleanup per source or all. Edit default retention count |
 | **Logs** | Paginated log viewer with status detection (success/error/skipped). View full log content |
 | **Rclone Remotes** | Manage rclone remote configurations: list, create, edit, delete, reconnect (re-authenticate OAuth), and test remotes. Supports Google Drive OAuth, Google Photos OAuth, and S3 providers. Requires custom Google Client ID/Secret |
 | **Notification Log** | View all sent notifications from `notification.log` and historical `email.log` entries |
-| **Settings** | Edit all global settings organized in sections: General, Notifications, SSH, Web. Send test notifications |
+| **Settings** | Edit all global settings organized in sections: General, Notifications, SSH, Web. Send test notifications. Digest notification settings (enable, frequency, time, day). Update tab includes a "Restart Services" button to restart the web dashboard and daemon with auto-reload |
 
 ### Authentication
 
@@ -1888,6 +1912,10 @@ Log files are named using local time (e.g., `gniza-20260307-040001.log`) to matc
 | `NTFY_PRIORITY` | (empty) | ntfy priority 1-5 (optional) |
 | `HEALTHCHECKS_URL` | (empty) | Healthchecks.io ping URL |
 | `STALE_ALERT_HOURS` | (empty) | Alert when source not backed up in X hours |
+| `DIGEST_ENABLED` | `no` | Enable digest summary notifications (`yes` or `no`) |
+| `DIGEST_FREQUENCY` | `daily` | Digest frequency: `daily`, `weekly`, or `monthly` |
+| `DIGEST_TIME` | `08:00` | Time to send digest (HH:MM) |
+| `DIGEST_DAY` | (empty) | Day of week (0-6) for weekly, or day of month (1-28) for monthly |
 
 ### Web Dashboard
 

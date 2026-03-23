@@ -19,6 +19,7 @@ Manage everything through a terminal UI, web dashboard, or CLI.
 - **Pre/post hooks** — Run shell commands before and after each backup
 - **Cron scheduling** — Hourly, daily, weekly, monthly, or custom cron expressions
 - **Multi-channel notifications** — Email (SMTP/system mail), Telegram, Webhook (Slack/Discord/generic), ntfy, and Healthchecks.io on failure or every run
+- **Digest notifications** — Daily/weekly/monthly summary of all backup jobs with stat boxes, failed sources, and per-job details sent via all configured channels
 - **Stale backup alerts** — Get notified when a source hasn't been backed up within a configurable window
 - **Bandwidth limiting** — Global or per-destination KB/s cap
 - **Retry logic** — Automatic SSH reconnection with exponential backoff
@@ -338,6 +339,12 @@ HEALTHCHECKS_URL=""
 # Stale backup alerts
 STALE_ALERT_HOURS=""            # Alert when a source hasn't backed up in X hours
 
+# Digest notifications
+DIGEST_ENABLED="no"             # yes | no
+DIGEST_FREQUENCY="daily"        # daily | weekly | monthly
+DIGEST_TIME="08:00"             # HH:MM
+DIGEST_DAY=""                   # Day of week (0-6) or day of month (1-28)
+
 # Web dashboard
 WEB_USER="admin"
 WEB_API_KEY=""                  # Generated during install
@@ -573,6 +580,8 @@ Multi-channel notifications on backup success or failure.
 **Healthchecks.io**: Set `HEALTHCHECKS_URL` to ping a [Healthchecks.io](https://healthchecks.io/) check on backup success/failure.
 
 **Stale backup alerts**: Set `STALE_ALERT_HOURS` to get notified when a source hasn't been backed up within the specified number of hours.
+
+**Digest notifications**: Enable periodic summaries (daily/weekly/monthly) of all backup jobs. The digest HTML email includes stat boxes (total/succeeded/failed), failed sources, and per-job details. Configure with `DIGEST_ENABLED`, `DIGEST_FREQUENCY`, `DIGEST_TIME`, and `DIGEST_DAY` in `gniza.conf`.
 
 **Report includes**: Status, source count (total/succeeded/failed), duration, failed source list, log file path, hostname, and timestamp.
 

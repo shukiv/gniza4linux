@@ -1,7 +1,6 @@
 """SSH-based remote auto-configure -- upload and run setup-remote.sh via SSH."""
 
 import json
-import os
 import re
 import secrets
 import shlex
@@ -10,7 +9,7 @@ import threading
 import time
 from pathlib import Path
 
-from lib.ssh_utils import ssh_cmd
+from lib.ssh import SSHOpts
 from lib.validation import VALID_NAME_RE
 
 _tasks = {}  # task_id -> {status, logs, result, error, started_at}
@@ -81,26 +80,16 @@ def _log(task_id, msg):
         task["logs"].append(msg)
 
 
-def _ssh_env(password):
-    """Build environment with SSHPASS if password auth."""
-    if password:
-        env = os.environ.copy()
-        env["SSHPASS"] = password
-        return env
-    return None
-
-
 def _run_ssh_setup(task_id, name, mode, ssh_host, ssh_port, ssh_user,
                    ssh_password, ssh_key, backup_user, base_dir, folders):
     """Background worker."""
     task = _tasks[task_id]
     try:
-        cmd = ssh_cmd(ssh_host, ssh_port, ssh_user, ssh_key, ssh_password)
-        env = _ssh_env(ssh_password)
+        ssh = SSHOpts.adhoc(ssh_host, ssh_port, ssh_user, key=ssh_key, password=ssh_password)
 
         # 1. Test SSH
         _log(task_id, "Testing SSH connection...")
-        r = subprocess.run(cmd + ["echo", "ok"], capture_output=True, text=True, timeout=15, env=env)
+        r = ssh.run("echo ok", timeout=15)
         if r.returncode != 0:
             task.update(status="error", error=f"SSH connection failed: {r.stderr.strip()}")
             return
@@ -108,10 +97,10 @@ def _run_ssh_setup(task_id, name, mode, ssh_host, ssh_port, ssh_user,
 
         # 2. Check root/sudo
         _log(task_id, "Checking root access...")
-        r = subprocess.run(cmd + ["id", "-u"], capture_output=True, text=True, timeout=10, env=env)
+        r = ssh.run("id -u", timeout=10)
         is_root = r.stdout.strip() == "0"
         if not is_root:
-            r = subprocess.run(cmd + ["sudo", "-n", "id", "-u"], capture_output=True, text=True, timeout=10, env=env)
+            r = ssh.run("sudo -n id -u", timeout=10)
             if r.stdout.strip() != "0":
                 task.update(status="error", error="User must be root or have passwordless sudo.")
                 return
@@ -123,10 +112,8 @@ def _run_ssh_setup(task_id, name, mode, ssh_host, ssh_port, ssh_user,
         script_content = script_path.read_text()
         remote_script = "/tmp/gniza-setup-remote.sh"
 
-        r = subprocess.run(
-            cmd + [f"cat > {remote_script} && chmod +x {remote_script}"],
-            input=script_content, capture_output=True, text=True, timeout=30, env=env,
-        )
+        r = ssh.run(f"cat > {remote_script} && chmod +x {remote_script}",
+                     timeout=30, input=script_content)
         if r.returncode != 0:
             task.update(status="error", error=f"Failed to upload script: {r.stderr.strip()}")
             return
@@ -144,10 +131,7 @@ def _run_ssh_setup(task_id, name, mode, ssh_host, ssh_port, ssh_user,
         prefix = "sudo " if not is_root else ""
         remote_cmd = f"{prefix}{shlex.quote(remote_script)} {' '.join(run_args)}"
 
-        r = subprocess.run(
-            cmd + [remote_cmd],
-            capture_output=True, text=True, timeout=180, env=env,
-        )
+        r = ssh.run(remote_cmd, timeout=180)
 
         # Parse stderr for progress lines
         for line in (r.stderr or "").splitlines():
@@ -158,7 +142,7 @@ def _run_ssh_setup(task_id, name, mode, ssh_host, ssh_port, ssh_user,
                 _log(task_id, clean)
 
         # Cleanup remote script
-        subprocess.run(cmd + [f"rm -f {remote_script}"], capture_output=True, timeout=10, env=env)
+        ssh.run(f"rm -f {remote_script}", timeout=10)
 
         if r.returncode != 0:
             stderr_clean = re.sub(r'\x1b\[[0-9;]*m', '', r.stderr.strip()) if r.stderr else ""

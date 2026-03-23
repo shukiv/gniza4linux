@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # gniza4linux/lib/ssh.sh — SSH connectivity, remote exec, ssh_opts builder
+# Canonical spec: lib/ssh.py (SSHOpts dataclass). Keep options in sync.
 
 [[ -n "${_GNIZA_SSH_LOADED:-}" ]] && return 0
 _GNIZA_SSH_LOADED=1
@@ -14,10 +15,10 @@ build_ssh_opts() {
     local opts=()
     opts+=(-n)
     if _is_password_mode; then
-        opts+=(-o "StrictHostKeyChecking=yes")
+        opts+=(-o "StrictHostKeyChecking=accept-new")
     else
         opts+=(-i "$REMOTE_KEY")
-        opts+=(-o "StrictHostKeyChecking=yes")
+        opts+=(-o "StrictHostKeyChecking=accept-new")
         opts+=(-o "BatchMode=yes")
     fi
     opts+=(-o "ControlMaster=auto")
@@ -96,8 +97,8 @@ normalize_remote_base() {
 
 build_rsync_ssh_cmd() {
     if _is_password_mode; then
-        echo "ssh -p $REMOTE_PORT -o StrictHostKeyChecking=yes -o ConnectTimeout=$SSH_TIMEOUT"
+        echo "ssh -p $REMOTE_PORT -o StrictHostKeyChecking=accept-new -o ConnectTimeout=$SSH_TIMEOUT"
     else
-        echo "ssh -i \"$REMOTE_KEY\" -p $REMOTE_PORT -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=$SSH_TIMEOUT"
+        echo "ssh -i \"$REMOTE_KEY\" -p $REMOTE_PORT -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=$SSH_TIMEOUT"
     fi
 }

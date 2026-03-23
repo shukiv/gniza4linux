@@ -16,7 +16,7 @@ from tui.config import CONFIG_DIR, parse_conf, write_conf
 from tui.models import Target
 from web.app import login_required
 from web.helpers import load_targets, get_rclone_remotes, _VALID_NAME_RE, paginate, format_bytes_short
-from web.ssh_utils import ssh_cmd, get_ssh_keys as _get_ssh_keys
+from lib.ssh import SSHOpts, get_ssh_keys as _get_ssh_keys
 
 bp = Blueprint("targets", __name__, url_prefix="/sources")
 
@@ -56,16 +56,9 @@ def _source_disk_info(target):
             return None
 
     if target.source_type == "ssh":
-        host = target.source_host
-        port = target.source_port or "22"
-        user = target.source_user or "root"
-        key = target.source_key if target.source_auth_method == "key" else ""
-        password = target.source_password if target.source_auth_method == "password" else ""
-        cmd = ssh_cmd(host, port, user, key, password)
-        env = None
-        if password:
-            env = os.environ.copy()
-            env["SSHPASS"] = password
+        ssh = SSHOpts.for_target_source(target)
+        cmd = ssh.ssh_cmd()
+        env = ssh.env()
         try:
             result = subprocess.run(
                 cmd + [f"df -h {shlex.quote(first_folder)} 2>/dev/null | tail -1"],

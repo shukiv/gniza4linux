@@ -6,9 +6,9 @@ import subprocess
 from flask import Blueprint, request, render_template
 from markupsafe import escape
 
+from lib.ssh import SSHOpts
 from web.app import login_required
 from web.helpers import get_rclone_remotes, _VALID_NAME_RE
-from web.ssh_utils import ssh_cmd, sftp_cmd as build_sftp_cmd
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -76,11 +76,9 @@ def browse_children():
 
 def _sftp_list_dirs(host, path, port="22", user="root", key="", password="", show_hidden=False):
     """List directories via sftp (for restricted shells like Hetzner Storage Box)."""
-    sftp_cmd = build_sftp_cmd(host, port, user, key, password)
-    env = None
-    if password:
-        env = os.environ.copy()
-        env["SSHPASS"] = password
+    ssh = SSHOpts.adhoc(host, port, user, key=key, password=password)
+    sftp_cmd = ssh.sftp_cmd()
+    env = ssh.env()
     if "\n" in path or "\r" in path:
         path = "/"
     sftp_path = shlex.quote(path if path and path != "/" else ".")
@@ -116,11 +114,9 @@ def _ssh_list_dirs(host, path, port="22", user="root", key="", password="", show
     find_cmd = f"find {quoted} -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sort"
     # -p appends / to directories so we can filter them
     ls_cmd = f"ls -1p {quoted}" if path != "/" else "ls -1p ."
-    base_cmd = ssh_cmd(host, port, user, key, password)
-    env = None
-    if password:
-        env = os.environ.copy()
-        env["SSHPASS"] = password
+    ssh = SSHOpts.adhoc(host, port, user, key=key, password=password)
+    base_cmd = ssh.ssh_cmd()
+    env = ssh.env()
     try:
         used_ls = False
         result = subprocess.run(base_cmd + [find_cmd], capture_output=True, text=True, timeout=15, env=env)

@@ -3,7 +3,7 @@ import os
 import subprocess
 import shlex
 
-from lib.ssh_utils import ssh_cmd, sftp_cmd
+from lib.ssh import SSHOpts
 
 
 def test_remote(remote):
@@ -26,13 +26,9 @@ def test_remote(remote):
         return True, None
 
     if remote.type == "ssh":
-        key = remote.key if remote.auth_method == "key" else ""
-        password = remote.password if remote.auth_method == "password" else ""
-        cmd = ssh_cmd(remote.host, remote.port, remote.user, key, password)
-        env = None
-        if password:
-            env = os.environ.copy()
-            env["SSHPASS"] = password
+        ssh = SSHOpts.for_remote(remote)
+        cmd = ssh.ssh_cmd()
+        env = ssh.env()
         base = remote.base or "/backups"
 
         # Step 1: Test SSH connection (try "echo ok", fall back to sftp for restricted shells)
@@ -43,9 +39,8 @@ def test_remote(remote):
             )
             if result.returncode != 0:
                 # Restricted shell (e.g. Hetzner Storage Box) -- try sftp fallback
-                sftp = sftp_cmd(remote.host, remote.port, remote.user, key, password)
                 sftp_result = subprocess.run(
-                    sftp, input="bye\n",
+                    ssh.sftp_cmd(), input="bye\n",
                     capture_output=True, text=True, timeout=15, env=env,
                 )
                 if sftp_result.returncode != 0:
@@ -169,16 +164,9 @@ def test_source(target):
         return True, None
 
     if target.source_type == "ssh":
-        host = target.source_host
-        port = target.source_port or "22"
-        user = target.source_user or "root"
-        key = target.source_key if target.source_auth_method == "key" else ""
-        password = target.source_password if target.source_auth_method == "password" else ""
-        cmd = ssh_cmd(host, port, user, key, password)
-        env = None
-        if password:
-            env = os.environ.copy()
-            env["SSHPASS"] = password
+        ssh = SSHOpts.for_target_source(target)
+        cmd = ssh.ssh_cmd()
+        env = ssh.env()
 
         # Step 1: Test SSH connection (try "echo ok", fall back to sftp for restricted shells)
         try:
@@ -187,9 +175,8 @@ def test_source(target):
                 capture_output=True, text=True, timeout=15, env=env,
             )
             if result.returncode != 0:
-                sftp = sftp_cmd(host, port, user, key, password)
                 sftp_result = subprocess.run(
-                    sftp, input="bye\n",
+                    ssh.sftp_cmd(), input="bye\n",
                     capture_output=True, text=True, timeout=15, env=env,
                 )
                 if sftp_result.returncode != 0:

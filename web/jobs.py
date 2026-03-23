@@ -146,6 +146,8 @@ class WebJobManager:
         When a pipelined SSH→SSH backup is killed locally, the rsync running
         on the destination server keeps going.  We SSH in and pkill it.
         """
+        from lib.ssh import SSHOpts
+
         if not job.log_file or not Path(job.log_file).is_file():
             return
         try:
@@ -166,33 +168,18 @@ class WebJobManager:
             host = conf.get("REMOTE_HOST", "")
             if not host or host not in log_text:
                 continue
-            remotes_to_clean.append({
-                "user": conf.get("REMOTE_USER", "gniza"),
-                "host": host,
-                "port": conf.get("REMOTE_PORT", "22"),
-                "key": conf.get("REMOTE_KEY", ""),
-                "auth_method": conf.get("REMOTE_AUTH_METHOD", "key"),
-                "base": conf.get("REMOTE_BASE", ""),
-            })
+            remotes_to_clean.append((conf, host))
 
-        for remote in remotes_to_clean:
-            # Use the remote base path to target only gniza rsync processes
-            pkill_pattern = f"rsync.*{remote['base']}" if remote["base"] else "rsync --fake-super"
-            ssh_cmd = ["ssh", "-p", remote["port"],
-                       "-o", "ConnectTimeout=5",
-                       "-o", "StrictHostKeyChecking=accept-new",
-                       "-o", "LogLevel=ERROR"]
-            if remote["auth_method"] != "password":
-                ssh_cmd += ["-o", "BatchMode=yes"]
-                if remote["key"]:
-                    ssh_cmd += ["-i", remote["key"]]
-            ssh_cmd += [f"{remote['user']}@{remote['host']}",
-                        f"pkill -f '{pkill_pattern}'"]
+        for conf, host in remotes_to_clean:
+            base = conf.get("REMOTE_BASE", "")
+            pkill_pattern = f"rsync.*{base}" if base else "rsync --fake-super"
+            ssh = SSHOpts.for_remote_conf(conf, timeout=5)
             try:
-                subprocess.run(ssh_cmd, capture_output=True, timeout=10)
-                logger.info(f"Killed remote rsync on {remote['user']}@{remote['host']}")
+                ssh.run(f"pkill -f '{pkill_pattern}'", timeout=10)
+                logger.info("Killed remote rsync on %s@%s",
+                            conf.get("REMOTE_USER", "gniza"), host)
             except Exception as e:
-                logger.warning(f"Failed to kill remote rsync on {remote['host']}: {e}")
+                logger.warning("Failed to kill remote rsync on %s: %s", host, e)
 
     def kill_job(self, job_id):
         self._invalidate_cache()

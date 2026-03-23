@@ -11,8 +11,8 @@ from flask import (
 from tui.config import CONFIG_DIR, list_conf_dir, parse_conf
 from web.app import login_required
 from web.backend import run_cli_sync
+from lib.ssh import SSHOpts
 from web.helpers import _VALID_NAME_RE
-from web.ssh_utils import ssh_cmd_from_conf
 
 bp = Blueprint("snapshots", __name__, url_prefix="/snapshots")
 _VALID_SNAPSHOT_RE = re.compile(r'^[A-Za-z0-9_.\-]+$')
@@ -81,12 +81,9 @@ def _list_dir_ssh(remote_conf, path):
         f"  done | sort; "
         f"else echo 'ERROR:not_found'; fi"
     )
-    cmd, sshpass_pw = ssh_cmd_from_conf(remote_conf)
-    cmd = cmd + [cmd_str]
-    env = None
-    if sshpass_pw:
-        env = os.environ.copy()
-        env["SSHPASS"] = sshpass_pw
+    ssh = SSHOpts.for_remote_conf(remote_conf)
+    cmd = ssh.ssh_cmd() + [cmd_str]
+    env = ssh.env()
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=15, env=env)
         if result.returncode != 0:
@@ -429,11 +426,9 @@ def download(target, remote, snapshot):
             )
 
     elif rtype == "ssh":
-        cmd, sshpass_pw = ssh_cmd_from_conf(remote_conf)
-        env = None
-        if sshpass_pw:
-            env = os.environ.copy()
-            env["SSHPASS"] = sshpass_pw
+        ssh = SSHOpts.for_remote_conf(remote_conf)
+        cmd = ssh.ssh_cmd()
+        env = ssh.env()
 
         sq = shlex.quote(full_path)
         safe_name = os.path.basename(filename).replace("\n", "").replace("\r", "").replace('"', "")

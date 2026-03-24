@@ -339,6 +339,19 @@ HELPEOF
 
             trap '_gniza_exit_rc=$?; release_all_target_locks; _finish_job_reg $_gniza_exit_rc; _gniza_log_exit_trap $_gniza_exit_rc' EXIT
 
+            # Python core dispatch (set GNIZA_USE_PYTHON_CORE=0 to fall back to Bash)
+            if [[ "${GNIZA_USE_PYTHON_CORE:-1}" == "1" ]]; then
+                local _py_args=("backup")
+                if [[ "$all" == "true" || -z "$target" ]]; then
+                    _py_args+=("--all")
+                elif [[ -n "$target" ]]; then
+                    _py_args+=("--source=$target")
+                fi
+                [[ -n "$remote" ]] && _py_args+=("--destination=$remote")
+                PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" -m lib.core.cli "${_py_args[@]}"
+                exit $?
+            fi
+
             if [[ "$all" == "true" || -z "$target" ]]; then
                 backup_all_targets "$remote"
             elif [[ "$target" == *,* ]]; then

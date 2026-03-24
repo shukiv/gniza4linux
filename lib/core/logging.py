@@ -44,11 +44,10 @@ def setup_backup_logger(
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
-    # Also log to stderr if running interactively or in daemon mode
-    if os.environ.get("GNIZA_DAEMON_TRACKED") == "1" or not log_dir:
-        sh = logging.StreamHandler()
-        sh.setFormatter(formatter)
-        logger.addHandler(sh)
+    # Always log to stderr (CLI sees output, daemon captures it)
+    sh = logging.StreamHandler()
+    sh.setFormatter(formatter)
+    logger.addHandler(sh)
 
     return logger
 

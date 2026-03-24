@@ -140,6 +140,25 @@ class BackupOrchestrator:
         except Exception as e:
             return False, str(e)
 
+    def run_backup(self, target=None, remote=None, all_targets=False) -> int:
+        """Run backup using Python core directly."""
+        from lib.core.backup import backup_target, backup_all_targets
+        if all_targets:
+            return backup_all_targets(remote)
+        elif target:
+            return backup_target(target, remote)
+        return 1
+
+    def run_restore(self, target, remote, snapshot, folder=None, dest=None,
+                    skip_mysql=False, skip_postgresql=False) -> int:
+        """Run restore using Python core directly."""
+        if folder:
+            from lib.core.restore import restore_folder
+            return restore_folder(target, folder, snapshot, remote, dest_dir=dest or "")
+        from lib.core.restore import restore_target
+        return restore_target(target, snapshot, remote, dest_dir=dest or "",
+                              skip_mysql=skip_mysql, skip_postgresql=skip_postgresql)
+
     def cli_args(self, cmd: list[str]) -> tuple[str, ...]:
         """Extract CLI args from a full command (strips the binary path).
 

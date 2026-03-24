@@ -301,6 +301,19 @@ HELPEOF
             remote=$(_parse_flag "--destination" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}") || true
             _has_flag "--all" "${SUBCMD_ARGS[@]+"${SUBCMD_ARGS[@]}"}" && all=true
 
+            # Python core dispatch (default on; set GNIZA_USE_PYTHON_CORE=0 to fall back to Bash)
+            if [[ "${GNIZA_USE_PYTHON_CORE:-1}" == "1" ]]; then
+                local _py_args=("backup")
+                if [[ "$all" == "true" || -z "$target" ]]; then
+                    _py_args+=("--all")
+                elif [[ -n "$target" ]]; then
+                    _py_args+=("--source=$target")
+                fi
+                [[ -n "$remote" ]] && _py_args+=("--destination=$remote")
+                PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" -m lib.core.cli "${_py_args[@]}"
+                exit $?
+            fi
+
             # Register in job registry so web/TUI can track CLI-started backups
             # Skip if daemon already tracks this process
             local _job_id=""
@@ -391,6 +404,22 @@ HELPEOF
                 [[ "$arg" == "--skip-postgresql" ]] && skip_postgresql="yes"
             done
             [[ -n "$skip_postgresql" ]] && export SKIP_POSTGRESQL_RESTORE="yes"
+
+            # Python core dispatch (default on; set GNIZA_USE_PYTHON_CORE=0 to fall back to Bash)
+            if [[ "${GNIZA_USE_PYTHON_CORE:-1}" == "1" ]]; then
+                [[ -z "$target" ]] && die "restore requires --source=NAME"
+                if [[ -z "$remote" ]]; then
+                    remote=$(list_remotes | head -1)
+                    [[ -z "$remote" ]] && die "No destinations configured"
+                fi
+                local _py_args=("restore" "--source=$target" "--destination=$remote" "--snapshot=${snapshot:-latest}")
+                [[ -n "$folder" ]] && _py_args+=("--folder=$folder")
+                [[ -n "$dest" ]] && _py_args+=("--dest=$dest")
+                [[ -n "$skip_mysql" ]] && _py_args+=("--skip-mysql")
+                [[ -n "$skip_postgresql" ]] && _py_args+=("--skip-postgresql")
+                PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" -m lib.core.cli "${_py_args[@]}"
+                exit $?
+            fi
 
             [[ -z "$target" ]] && die "restore requires --source=NAME"
 
@@ -901,6 +930,12 @@ HELPEOF
                 if [[ -n "$_sched_retention" ]]; then
                     export SCHEDULE_RETENTION_COUNT="$_sched_retention"
                 fi
+            fi
+
+            # Python core dispatch (default on; set GNIZA_USE_PYTHON_CORE=0 to fall back to Bash)
+            if [[ "${GNIZA_USE_PYTHON_CORE:-1}" == "1" ]]; then
+                PYTHONPATH="$GNIZA_DIR:${PYTHONPATH:-}" "$GNIZA_PYTHON" -m lib.core.cli backup "--schedule=$sched_name"
+                exit $?
             fi
 
             # Register job in shared registry so web/TUI can track it

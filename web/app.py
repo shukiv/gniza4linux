@@ -6,7 +6,7 @@ from functools import wraps
 from pathlib import Path
 
 from flask import (
-    Flask, request, redirect, url_for,
+    Flask, g, request, redirect, url_for,
     session, jsonify,
 )
 from flask_wtf.csrf import CSRFProtect
@@ -78,17 +78,27 @@ def create_app():
     # CSRF protection
     csrf.init_app(app)
 
+    # CSP nonce — generated per-request, available in templates as {{ csp_nonce }}
+    @app.before_request
+    def generate_csp_nonce():
+        g.csp_nonce = secrets.token_urlsafe(16)
+
+    @app.context_processor
+    def inject_csp_nonce():
+        return {"csp_nonce": getattr(g, "csp_nonce", "")}
+
     # Security headers
     @app.after_request
     def set_security_headers(response):
+        nonce = getattr(g, "csp_nonce", "")
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-            "style-src 'self' 'unsafe-inline'; "
+            f"script-src 'self' 'nonce-{nonce}' 'unsafe-eval'; "
+            f"style-src 'self' 'nonce-{nonce}' 'unsafe-inline'; "
             "img-src 'self' data:; "
             "font-src 'self'; "
             "connect-src 'self'; "

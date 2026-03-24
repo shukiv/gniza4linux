@@ -1,6 +1,6 @@
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-<script>
+<script nonce="{{ csp_nonce }}">
 (function() {
     var toast = document.getElementById('gniza-toast');
     if (!toast) return;

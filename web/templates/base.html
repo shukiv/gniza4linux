@@ -7,8 +7,8 @@
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='gniza.svg') }}">
     <link href="{{ url_for('static', filename='vendor/css/daisyui.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ url_for('static', filename='vendor/css/themes.css') }}" rel="stylesheet" type="text/css" />
-    <script src="{{ url_for('static', filename='vendor/js/tailwindcss-browser.js') }}"></script>
-    <script>
+    <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='vendor/js/tailwindcss-browser.js') }}"></script>
+    <script nonce="{{ csp_nonce }}">
       // Restore saved theme and persist changes
       (function() {
         var saved = localStorage.getItem('theme') || 'dark';
@@ -26,10 +26,10 @@
       })();
     </script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script src="{{ url_for('static', filename='vendor/js/htmx.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='vendor/js/sse.js') }}"></script>
-    <script src="{{ url_for('static', filename='vendor/js/idiomorph-ext.min.js') }}"></script>
-    <script>
+    <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='vendor/js/htmx.min.js') }}"></script>
+    <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='vendor/js/sse.js') }}"></script>
+    <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='vendor/js/idiomorph-ext.min.js') }}"></script>
+    <script nonce="{{ csp_nonce }}">
       // Inject CSRF token into all HTMX requests and fetch() POST calls
       (function() {
         var token = document.querySelector('meta[name="csrf-token"]').content;
@@ -47,7 +47,7 @@
         };
       })();
     </script>
-    <script>
+    <script nonce="{{ csp_nonce }}">
       document.addEventListener('alpine:init', () => {
         Alpine.store('help', {
           open: localStorage.getItem('helpOpen') === 'true',
@@ -65,8 +65,8 @@
         });
       });
     </script>
-    <script src="{{ url_for('static', filename='js/table-sort.js') }}"></script>
-    <script defer src="{{ url_for('static', filename='vendor/js/alpine.min.js') }}"></script>
+    <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/table-sort.js') }}"></script>
+    <script nonce="{{ csp_nonce }}" defer src="{{ url_for('static', filename='vendor/js/alpine.min.js') }}"></script>
     <style>th[data-sort] { cursor: pointer; user-select: none; }
     th[data-sort]:hover { color: oklch(var(--p)); }
     .sort-indicator { font-size: 0.65em; vertical-align: middle; }
@@ -77,7 +77,7 @@
 <body class="min-h-screen bg-base-100 text-base">
 
 <div id="gniza-toast" class="toast toast-top toast-end z-50 gap-2"></div>
-<script>
+<script nonce="{{ csp_nonce }}">
 function gnizaCopy(text) {
     if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text); }
     else { var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }

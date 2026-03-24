@@ -389,7 +389,7 @@
 <form id="form-check-update" method="POST" action="{{ url_for('settings.check_update') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
 <form id="form-update-now" method="POST" action="{{ url_for('settings.apply_update') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
 <form id="form-restart-services" method="POST" action="{{ url_for('settings.restart_services') }}" class="hidden"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
-<script>
+<script nonce="{{ csp_nonce }}">
 document.getElementById('btn-check-update').addEventListener('click', function() {
     document.getElementById('form-check-update').submit();
 });

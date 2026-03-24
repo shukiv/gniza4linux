@@ -187,7 +187,16 @@ class TestDeleteSnapshot:
             result = _delete_snapshot(ctx, "2026-03-20T100000")
         assert result is False
 
-    def test_rclone_returns_false(self):
+    def test_rclone_purge_success(self):
         ctx = _make_ctx(remote_type="s3")
-        result = _delete_snapshot(ctx, "2026-03-20T100000")
+        with patch("lib.core.rclone.rclone_cmd") as mock_cmd:
+            mock_cmd.return_value = MagicMock(returncode=0)
+            result = _delete_snapshot(ctx, "2026-03-20T100000")
+        assert result is True
+
+    def test_rclone_purge_failure(self):
+        ctx = _make_ctx(remote_type="s3")
+        with patch("lib.core.rclone.rclone_cmd") as mock_cmd:
+            mock_cmd.return_value = MagicMock(returncode=1)
+            result = _delete_snapshot(ctx, "2026-03-20T100000")
         assert result is False

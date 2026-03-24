@@ -121,8 +121,17 @@ class TestListSnapshots:
 
     def test_rclone_returns_empty(self):
         ctx = _make_ctx(remote_type="s3")
-        result = list_snapshots(ctx)
+        with patch("lib.core.rclone.rclone_list_dirs", return_value=[]):
+            result = list_snapshots(ctx)
         assert result == []
+
+    def test_rclone_returns_completed_snapshots(self):
+        ctx = _make_ctx(remote_type="s3")
+        with patch("lib.core.rclone.rclone_list_dirs",
+                    return_value=["2026-03-24T100000", "2026-03-22T100000"]):
+            with patch("lib.core.rclone._rclone_exists", return_value=True):
+                result = list_snapshots(ctx)
+        assert result == ["2026-03-24T100000", "2026-03-22T100000"]
 
 
 class TestGetLatestSnapshot:
@@ -270,9 +279,16 @@ class TestFinalizeSnapshot:
             result = finalize_snapshot(ctx)
         assert result is False
 
-    def test_rclone_returns_false(self):
+    def test_rclone_calls_finalize(self):
         ctx = _make_ctx(remote_type="s3", timestamp="2026-03-24T120000")
-        result = finalize_snapshot(ctx)
+        with patch("lib.core.rclone.rclone_rcat", return_value=0):
+            result = finalize_snapshot(ctx)
+        assert result is True
+
+    def test_rclone_finalize_failure(self):
+        ctx = _make_ctx(remote_type="s3", timestamp="2026-03-24T120000")
+        with patch("lib.core.rclone.rclone_rcat", return_value=1):
+            result = finalize_snapshot(ctx)
         assert result is False
 
 

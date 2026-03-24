@@ -47,8 +47,11 @@ def list_snapshots(ctx: BackupContext) -> list[str]:
         lines = r.stdout.strip().splitlines()
         return [os.path.basename(line.strip()) for line in lines if line.strip()]
 
+    elif ctx.is_rclone_remote:
+        from lib.core.rclone import rclone_list_remote_snapshots
+        return rclone_list_remote_snapshots(ctx, ctx.target.name)
+
     else:
-        # Rclone: will be implemented in Phase 3
         return []
 
 
@@ -116,6 +119,10 @@ def clean_partial_snapshots(ctx: BackupContext) -> None:
             log.info("Cleaning partial snapshots for %s..." % ctx.target.name)
             ssh.run("rm -rf %s/*.partial 2>/dev/null || sudo rm -rf %s/*.partial 2>/dev/null" % (sq, sq), timeout=120)
 
+    elif ctx.is_rclone_remote:
+        from lib.core.rclone import rclone_clean_partial_snapshots as _rclone_clean
+        _rclone_clean(ctx, ctx.target.name)
+
 
 def finalize_snapshot(ctx: BackupContext) -> bool:
     """Rename .partial to final, update 'latest' symlink.
@@ -158,6 +165,10 @@ def finalize_snapshot(ctx: BackupContext) -> bool:
         sq_latest = shquote(latest)
         ssh.run("rm -f %s && ln -s snapshots/%s %s" % (sq_latest, ctx.timestamp, sq_latest), timeout=10)
         return True
+
+    elif ctx.is_rclone_remote:
+        from lib.core.rclone import rclone_finalize_snapshot as _rclone_finalize
+        return _rclone_finalize(ctx, ctx.target.name, ctx.timestamp)
 
     return False
 

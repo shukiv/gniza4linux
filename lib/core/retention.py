@@ -116,4 +116,8 @@ def _delete_snapshot(ctx: BackupContext, snapshot: str) -> bool:
         r = ssh.run("rm -rf %s 2>/dev/null || sudo rm -rf %s 2>/dev/null" % (sq, sq), timeout=120)
         return r.returncode == 0
 
+    elif ctx.is_rclone_remote:
+        from lib.core.rclone import rclone_purge
+        return rclone_purge(ctx, "targets/%s/snapshots/%s" % (ctx.target.name, snapshot)) == 0
+
     return False

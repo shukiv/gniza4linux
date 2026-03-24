@@ -1,4 +1,4 @@
-<script nonce="{{ csp_nonce }}">document.getElementById('log-viewer-title').textContent = 'Log: ' + {{ job.label | tojson }};</script>
+<script>document.getElementById('log-viewer-title').textContent = 'Log: ' + {{ job.label | tojson }};</script>
 {% if job.status == "running" %}
 <div hx-get="{{ url_for('jobs.progress', job_id=job.id) }}"
      hx-trigger="every 2s"

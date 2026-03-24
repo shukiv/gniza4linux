@@ -8,7 +8,7 @@
     <a href="{{ url_for('targets.index') }}" class="btn btn-ghost btn-sm">&larr; Back to Sources</a>
 </div>
 
-<script nonce="{{ csp_nonce }}">
+<script>
     window._targetFolders = {{ target.folders.replace('"', '').split(',') | map('trim') | select | list | tojson }};
 </script>
 <form method="POST" action="{{ url_for('targets.save') }}"

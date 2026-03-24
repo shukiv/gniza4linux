@@ -172,7 +172,16 @@ class SSHOpts:
 
     # ── output methods ──────────────────────────────────────────
 
-    def ssh_cmd(self, remote_command=None) -> list[str]:
+    def _sshpass_prefix(self, pw_file: str = "") -> list[str]:
+        """Build sshpass prefix. Uses -f (file) for security, not -e (env)."""
+        if not self._is_password:
+            return []
+        if pw_file:
+            return ["sshpass", "-f", pw_file]
+        # Fallback: caller must provide pw_file via run() or manage env
+        return ["sshpass", "-f", "/dev/stdin"]
+
+    def ssh_cmd(self, remote_command=None, _pw_file: str = "") -> list[str]:
         """Build a subprocess-ready SSH command list.
 
         If remote_command is given, it is appended as arguments.
@@ -182,7 +191,7 @@ class SSHOpts:
         cmd += ["-p", self.port or "22"]
         cmd.append(f"{self.user}@{self.host}")
         if self._is_password:
-            cmd = ["sshpass", "-e"] + cmd
+            cmd = self._sshpass_prefix(_pw_file) + cmd
         if remote_command is not None:
             if isinstance(remote_command, str):
                 cmd.append(remote_command)
@@ -207,7 +216,7 @@ class SSHOpts:
             cmd += opts_extra
         cmd.append(f"{self.user}@{self.host}")
         if self._is_password:
-            cmd = ["sshpass", "-e"] + cmd
+            cmd = self._sshpass_prefix() + cmd
         return cmd
 
     def rsync_ssh_string(self) -> str:
@@ -233,15 +242,30 @@ class SSHOpts:
         """Run a remote command via SSH.
 
         Returns CompletedProcess. Passes capture_output=True, text=True
-        unless overridden in **kw.
+        unless overridden in **kw. For password auth, writes password to
+        a temp file (mode 0600) and uses sshpass -f.
         """
-        cmd = self.ssh_cmd(remote_command)
         kw.setdefault("capture_output", True)
         kw.setdefault("text", True)
-        kw.setdefault("env", self.env())
         if timeout is not None:
             kw["timeout"] = timeout
-        return subprocess.run(cmd, **kw)
+
+        if self._is_password:
+            import tempfile
+            fd, pw_file = tempfile.mkstemp(prefix="gniza-pw-", mode=0o600)
+            try:
+                os.write(fd, self.password.encode())
+                os.close(fd)
+                cmd = self.ssh_cmd(remote_command, _pw_file=pw_file)
+                return subprocess.run(cmd, **kw)
+            finally:
+                try:
+                    os.unlink(pw_file)
+                except OSError:
+                    pass
+        else:
+            cmd = self.ssh_cmd(remote_command)
+            return subprocess.run(cmd, **kw)
 
     def run_with_retry(self, remote_command, *, retries=None, backoff=10,
                        timeout=None, **kw) -> subprocess.CompletedProcess:

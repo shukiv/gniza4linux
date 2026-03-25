@@ -73,7 +73,11 @@
     .sort-indicator { font-size: 0.65em; vertical-align: middle; }
     .btn.htmx-request { pointer-events: none; opacity: .7; }
     .btn.htmx-request::after { content: ''; display: inline-block; width: .75rem; height: .75rem; margin-left: .4rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .5s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }</style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Active sidebar item: orange left border matching the GNIZA logo */
+    .menu li > .menu-active { border-left: 3px solid oklch(var(--wa, 0.8 0.15 75)); }
+    /* Sidebar section headers: subtle primary tint */
+    .menu .menu-title { color: oklch(var(--p) / 0.7); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.65rem; }</style>
 </head>
 <body class="min-h-screen bg-base-100 text-base">
 <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:btn focus:btn-primary focus:btn-sm">Skip to content</a>

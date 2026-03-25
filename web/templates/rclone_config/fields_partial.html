@@ -7,7 +7,7 @@
         </div>
         <div class="md:w-1/2">
             {% if field.Type == "bool" %}
-            <select name="{{ field.Name }}" class="select select-bordered w-full select-sm">
+            <select name="{{ field.Name }}" class="select w-full select-sm">
                 <option value="true" {{ 'selected' if values.get(field.Name, field.Default)|string|lower in ('true', '1') else '' }}>Yes</option>
                 <option value="false" {{ 'selected' if values.get(field.Name, field.Default)|string|lower in ('false', '0', 'none') else '' }}>No</option>
             </select>
@@ -15,7 +15,7 @@
             {% elif field.IsPassword %}
             <div x-data="{ show: false }" class="relative">
                 <input :type="show ? 'text' : 'password'" name="{{ field.Name }}"
-                       class="input input-bordered w-full input-sm pr-12"
+                       class="input w-full input-sm pr-12"
                        value="{{ values.get(field.Name, '') }}"
                        placeholder="{{ field.DefaultStr or '' }}"
                        {% if field.Required %}required data-required="{{ field.Name }}"{% endif %}>
@@ -24,7 +24,7 @@
             </div>
 
             {% elif field.Exclusive and field.Examples %}
-            <select name="{{ field.Name }}" class="select select-bordered w-full select-sm"
+            <select name="{{ field.Name }}" class="select w-full select-sm"
                     {% if field.Required %}required data-required="{{ field.Name }}"{% endif %}>
                 <option value="">-- Select --</option>
                 {% for ex in field.Examples %}
@@ -36,12 +36,12 @@
             </select>
 
             {% elif field.Type == "int" %}
-            <input type="number" name="{{ field.Name }}" class="input input-bordered w-full input-sm"
+            <input type="number" name="{{ field.Name }}" class="input w-full input-sm"
                    value="{{ values.get(field.Name, field.DefaultStr or field.Default or '') }}"
                    {% if field.Required %}required data-required="{{ field.Name }}"{% endif %}>
 
             {% elif field.Examples %}
-            <input type="text" name="{{ field.Name }}" class="input input-bordered w-full input-sm"
+            <input type="text" name="{{ field.Name }}" class="input w-full input-sm"
                    value="{{ values.get(field.Name, field.DefaultStr or '') }}"
                    placeholder="{{ field.DefaultStr or '' }}"
                    list="dl-{{ field.Name }}"
@@ -53,7 +53,7 @@
             </datalist>
 
             {% else %}
-            <input type="text" name="{{ field.Name }}" class="input input-bordered w-full input-sm"
+            <input type="text" name="{{ field.Name }}" class="input w-full input-sm"
                    value="{{ values.get(field.Name, field.DefaultStr or '') }}"
                    placeholder="{{ field.DefaultStr or '' }}"
                    {% if field.Required %}required data-required="{{ field.Name }}"{% endif %}>

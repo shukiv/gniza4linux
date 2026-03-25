@@ -251,7 +251,7 @@
                     <!-- Done State -->
                     <template x-if="state === 'done'">
                         <div>
-                            <div class="alert alert-success mb-4">
+                            <div role="alert" class="alert alert-success mb-4">
                                 <span>Destination configured successfully! Redirecting...</span>
                             </div>
                             <div class="bg-base-100 rounded p-3 text-sm font-mono max-h-48 overflow-y-auto">
@@ -265,7 +265,7 @@
                     <!-- Error State -->
                     <template x-if="state === 'error'">
                         <div>
-                            <div class="alert alert-error mb-4">
+                            <div role="alert" class="alert alert-error mb-4">
                                 <span x-text="errorMsg"></span>
                             </div>
                             <div x-show="logs.length > 0" class="bg-base-100 rounded p-3 text-sm font-mono max-h-48 overflow-y-auto mb-4">

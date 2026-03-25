@@ -105,7 +105,7 @@
                         <input type="text" x-model="dest" class="input input-sm w-full font-mono" placeholder="/path/to/restore/directory">
                     </div>
                 </fieldset>
-                <div x-show="error" x-cloak class="alert alert-error text-sm mb-3" x-text="error"></div>
+                <div x-show="error" x-cloak role="alert" class="alert alert-error text-sm mb-3" x-text="error"></div>
                 <div class="modal-action">
                     <form method="dialog"><button class="btn btn-ghost btn-sm">Cancel</button></form>
                     <button class="btn btn-primary btn-sm" @click="submit()" :disabled="loading"
@@ -115,7 +115,7 @@
         </template>
         <template x-if="result">
             <div>
-                <div class="alert alert-success text-sm mb-3" x-text="result"></div>
+                <div role="alert" class="alert alert-success text-sm mb-3" x-text="result"></div>
                 <div class="modal-action">
                     <form method="dialog"><button class="btn btn-primary btn-sm">Close</button></form>
                 </div>

@@ -89,7 +89,7 @@
                         <span class="text-sm text-base-content/60">Now paste the URL from the error page.</span>
                     </div>
 
-                    <div class="alert alert-warning text-sm mb-4 py-2">
+                    <div role="alert" class="alert alert-warning text-sm mb-4 py-2">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         <span>After signing in, your browser shows <strong>"This site can't be reached"</strong>. That's normal! Copy the <strong>full URL</strong> from the address bar.</span>
                     </div>
@@ -98,7 +98,7 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <fieldset class="fieldset">
                             <label class="fieldset-label text-sm">Paste the URL from your browser's address bar</label>
-                            <input type="text" name="redirect_url" class="input input-bordered w-full font-mono text-xs"
+                            <input type="text" name="redirect_url" class="input w-full font-mono text-xs"
                                    placeholder="http://127.0.0.1:53682/auth?code=4/0A...&scope=..." autofocus>
                         </fieldset>
                         <div class="flex justify-between items-center mt-4">

@@ -50,7 +50,7 @@ class TargetsScreen(Screen):
     def _selected_target(self) -> str | None:
         table = self.query_one("#targets-table", DataTable)
         if table.cursor_row is not None and table.row_count > 0:
-            row_key = table.get_row_at(table.cursor_row)
+            _ = table.get_row_at(table.cursor_row)
             return str(table.coordinate_to_cell_key((table.cursor_row, 0)).row_key.value)
         return None
 

@@ -111,7 +111,6 @@ def _pull_rclone_source(
     """Pull from S3/GDrive/rclone source using rclone copy."""
     from lib.core.rclone import RcloneSourceConfig
 
-    source_type = ctx.target.source_type
 
     try:
         with RcloneSourceConfig(ctx) as conf_path:

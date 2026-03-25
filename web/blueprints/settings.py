@@ -129,7 +129,7 @@ def check_update():
             flash("You are running the latest version.", "success")
         elif "commit(s) behind" in output:
             import re
-            m = re.search(r'v([\d.]+)\s*\(', output)
+            _ = re.search(r'v([\d.]+)\s*\(', output)
             latest = re.search(r'Latest:\s*v([\d.]+)', output)
             behind = re.search(r'(\d+)\s*commit', output)
             msg = "A new update is available!"

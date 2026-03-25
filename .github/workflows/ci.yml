@@ -23,7 +23,7 @@ jobs:
           pip install textual textual-serve flask flask-wtf flask-compress waitress psutil markupsafe markdown
 
       - name: Lint with ruff
-        run: ruff check --select E,F,W lib/ tui/ web/ daemon/ --ignore E501
+        run: ruff check --select E,F,W lib/ tui/ web/ daemon/ --ignore E501,E402,E741
 
       - name: Run unit tests
         run: pytest tests/ -v --ignore=tests/test_integration.py

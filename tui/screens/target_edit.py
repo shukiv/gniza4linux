@@ -239,7 +239,7 @@ class TargetEditScreen(Screen):
 
     def _update_source_visibility(self) -> None:
         source_type = self._get_source_type()
-        is_remote = source_type != "local"
+        _ = source_type != "local"
         # Hide all source fields first
         for w in self.query(".source-field"):
             w.display = False

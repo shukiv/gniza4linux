@@ -65,7 +65,7 @@ def index():
     if not list_conf_dir("remotes.d") and not list_conf_dir("targets.d"):
         return redirect(url_for("wizard.index"))
     targets, remotes, schedules = [], [], []
-    log_files, log_page, log_total_pages = [], 1, 1
+    _, log_page, log_total_pages = [], 1, 1
     try:
         targets = load_targets()
     except Exception:

@@ -1,12 +1,11 @@
 """Shared helper functions for web blueprints."""
 
-import re
 import subprocess
 
 from lib.config import parse_conf, CONFIG_DIR, list_conf_dir
 from lib.models import Target, Remote
+from lib.validation import VALID_NAME_RE as _VALID_NAME_RE  # noqa: F401 — re-exported for blueprints
 
-from lib.validation import VALID_NAME_RE as _VALID_NAME_RE
 
 
 def paginate(items, page, per_page=20):

@@ -10,6 +10,7 @@ dependencies = [
     "textual-serve",
     "flask>=3.0",
     "flask-wtf",
+    "flask-compress",
     "waitress",
     "psutil",
     "markupsafe",

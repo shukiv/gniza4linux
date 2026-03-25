@@ -10,6 +10,11 @@ from flask import (
     session, jsonify,
 )
 from flask_wtf.csrf import CSRFProtect
+try:
+    from flask_compress import Compress
+    _HAS_COMPRESS = True
+except ImportError:
+    _HAS_COMPRESS = False
 
 from lib.config import CONFIG_DIR, parse_conf
 
@@ -26,6 +31,7 @@ def _get_version():
     return "0.0"
 
 csrf = CSRFProtect()
+compress = Compress() if _HAS_COMPRESS else None
 
 
 def login_required(f):
@@ -77,6 +83,17 @@ def create_app():
 
     # CSRF protection
     csrf.init_app(app)
+    if compress:
+        compress.init_app(app)
+
+    # Cache static assets (1 week for vendor, 1 hour for app JS/CSS)
+    @app.after_request
+    def set_cache_headers(response):
+        if request.path.startswith("/static/vendor/"):
+            response.headers["Cache-Control"] = "public, max-age=604800"  # 7 days
+        elif request.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "public, max-age=3600"  # 1 hour
+        return response
 
     # Security headers
     @app.after_request

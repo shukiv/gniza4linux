@@ -7,7 +7,7 @@
 <div class="max-w-2xl" x-data="{ source: '', remote: '' }">
     <div class="card bg-base-200 shadow">
         <div class="card-body">
-            <h2 class="card-title">Run Backup</h2>
+            <h2 class="card-title text-base">Run Backup</h2>
             <p class="text-base-content/60 mb-4">Select a source and destination to start a backup job. The backup will run in the background and you can monitor it from the Running Tasks page.</p>
 
             <form method="POST" action="{{ url_for('backup.run') }}">

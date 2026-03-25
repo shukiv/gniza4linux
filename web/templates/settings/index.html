@@ -104,7 +104,7 @@
             <!-- Digest Reports -->
             <div class="card bg-base-200 shadow mb-4">
                 <div class="card-body">
-                    <h3 class="card-title text-sm mb-4">&#x1F4CA; Digest Reports</h3>
+                    <h3 class="card-title text-base mb-4">&#x1F4CA; Digest Reports</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4" x-data="{ freq: '{{ settings.digest_frequency }}' }">
                         <fieldset class="fieldset">
                             <label class="label cursor-pointer gap-2 justify-start p-0">
@@ -148,7 +148,7 @@
                 <div class="collapse-title font-medium flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     Email (SMTP)
-                    {% if settings.smtp_host %}<span class="badge badge-success badge-xs">configured</span>{% endif %}
+                    {% if settings.smtp_host %}<span class="badge badge-success badge-sm">configured</span>{% endif %}
                 </div>
                 <div class="collapse-content">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -204,7 +204,7 @@
                 <div class="collapse-title font-medium flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                     Telegram
-                    {% if settings.telegram_bot_token %}<span class="badge badge-success badge-xs">configured</span>{% endif %}
+                    {% if settings.telegram_bot_token %}<span class="badge badge-success badge-sm">configured</span>{% endif %}
                 </div>
                 <div class="collapse-content">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -236,7 +236,7 @@
                 <div class="collapse-title font-medium flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                     Webhook (Slack / Discord)
-                    {% if settings.webhook_url %}<span class="badge badge-success badge-xs">configured</span>{% endif %}
+                    {% if settings.webhook_url %}<span class="badge badge-success badge-sm">configured</span>{% endif %}
                 </div>
                 <div class="collapse-content">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -265,7 +265,7 @@
                 <div class="collapse-title font-medium flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                     ntfy
-                    {% if settings.ntfy_url %}<span class="badge badge-success badge-xs">configured</span>{% endif %}
+                    {% if settings.ntfy_url %}<span class="badge badge-success badge-sm">configured</span>{% endif %}
                 </div>
                 <div class="collapse-content">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -307,7 +307,7 @@
                 <div class="collapse-title font-medium flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     Healthchecks.io
-                    {% if settings.healthchecks_url %}<span class="badge badge-success badge-xs">configured</span>{% endif %}
+                    {% if settings.healthchecks_url %}<span class="badge badge-success badge-sm">configured</span>{% endif %}
                 </div>
                 <div class="collapse-content">
                     <div class="grid grid-cols-1 gap-4">

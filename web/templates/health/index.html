@@ -19,7 +19,7 @@
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-3">
                     <h3 class="font-mono font-bold text-lg">{{ r.name }}</h3>
-                    <span class="badge badge-outline badge-md">{{ r.type }}</span>
+                    <span class="badge badge-outline">{{ r.type }}</span>
                 </div>
             </div>
             <div data-health-check
@@ -37,8 +37,10 @@
 </div>
 {% else %}
 <div class="card bg-base-200 shadow">
-    <div class="card-body text-center text-base-content/40 py-12">
-        <p>No destinations configured</p>
+    <div class="p-8 text-center text-base-content/40">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
+        <p class="mb-3">No destinations configured</p>
+        <a href="{{ url_for('remotes.index') }}" class="btn btn-primary btn-sm">Add Destination</a>
     </div>
 </div>
 {% endif %}

@@ -31,7 +31,7 @@
                     {% for r in remotes %}
                     <tr class="hover:bg-base-300" x-data="{ testing: false, result: null }">
                         <td class="font-mono font-medium">{{ r.name }}</td>
-                        <td><span class="badge badge-outline badge-md">{{ r.type }}</span></td>
+                        <td><span class="badge badge-outline">{{ r.type }}</span></td>
                         <td>
                             <div class="flex gap-1 items-center flex-wrap">
                                 <button class="btn btn-neutral btn-sm"

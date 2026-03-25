@@ -7,9 +7,9 @@
     <!-- Connectivity -->
     <div class="flex items-center gap-2">
         {% if data.connectivity %}
-        <span class="badge badge-success badge-sm gap-1">Connected</span>
+        <span class="badge badge-success badge-md gap-1">Connected</span>
         {% else %}
-        <span class="badge badge-error badge-sm gap-1">Unreachable</span>
+        <span class="badge badge-error badge-md gap-1">Unreachable</span>
         {% endif %}
     </div>
 
@@ -50,7 +50,7 @@
             Source details ({{ data.targets|length }} source{{ 's' if data.targets|length != 1 else '' }})
         </summary>
         <div class="collapse-content">
-            <table class="table table-xs">
+            <table class="table table-sm">
                 <thead>
                     <tr>
                         <th>Source</th>
@@ -84,11 +84,11 @@
 <!-- Status badge -->
 <div class="mt-2 flex justify-end">
     {% if data.status == 'healthy' %}
-    <span class="badge badge-success badge-sm">Healthy</span>
+    <span class="badge badge-success badge-md">Healthy</span>
     {% elif data.status == 'warning' %}
-    <span class="badge badge-warning badge-sm">Warning</span>
+    <span class="badge badge-warning badge-md">Warning</span>
     {% else %}
-    <span class="badge badge-error badge-sm">Error</span>
+    <span class="badge badge-error badge-md">Error</span>
     {% endif %}
 </div>
 {% endif %}

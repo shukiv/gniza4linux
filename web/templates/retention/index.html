@@ -7,7 +7,7 @@
 <div class="max-w-2xl">
     <div class="card bg-base-200 shadow mb-6">
         <div class="card-body">
-            <h2 class="card-title">Default Retention Count</h2>
+            <h2 class="card-title text-base">Default Retention Count</h2>
             <p class="text-base-content/60 mb-4">Number of snapshots to keep by default.</p>
             <form method="POST" action="{{ url_for('retention.save_default') }}" class="flex gap-2 items-end">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -21,7 +21,7 @@
 
     <div class="card bg-base-200 shadow">
         <div class="card-body">
-            <h2 class="card-title">Run Retention Cleanup</h2>
+            <h2 class="card-title text-base">Run Retention Cleanup</h2>
             <p class="text-base-content/60 mb-4">Remove old snapshots based on retention policies.</p>
 
             <form method="POST" action="{{ url_for('retention.run') }}">

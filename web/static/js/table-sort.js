@@ -44,33 +44,57 @@ document.addEventListener('alpine:init', () => {
       return text.toLowerCase();
     }
 
+    function updateAriaSort(activeHeader, ascending) {
+      headers.forEach(h => {
+        if (h === activeHeader) {
+          h.setAttribute('aria-sort', ascending ? 'ascending' : 'descending');
+        } else {
+          h.setAttribute('aria-sort', 'none');
+        }
+      });
+    }
+
+    function doSort(th) {
+      const colIdx = Array.from(th.parentElement.children).indexOf(th);
+      const type = th.dataset.sort;
+      if (sortCol === colIdx) { sortAsc = !sortAsc; } else { sortCol = colIdx; sortAsc = true; }
+      // Update indicators
+      headers.forEach(h => {
+        let ind = h.querySelector('.sort-indicator');
+        if (ind) ind.remove();
+      });
+      const arrow = document.createElement('span');
+      arrow.className = 'sort-indicator';
+      arrow.textContent = sortAsc ? ' \u25B2' : ' \u25BC';
+      th.appendChild(arrow);
+      // Update ARIA sort attributes
+      updateAriaSort(th, sortAsc);
+      // Sort rows
+      const tbody = el.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const cellA = a.cells[colIdx], cellB = b.cells[colIdx];
+        if (!cellA || !cellB) return 0;
+        const va = parseValue(cellA, type), vb = parseValue(cellB, type);
+        let cmp = 0;
+        if (typeof va === 'number' && typeof vb === 'number') cmp = va - vb;
+        else cmp = String(va).localeCompare(String(vb));
+        return sortAsc ? cmp : -cmp;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    }
+
     headers.forEach((th) => {
-      th.addEventListener('click', () => {
-        const colIdx = Array.from(th.parentElement.children).indexOf(th);
-        const type = th.dataset.sort;
-        if (sortCol === colIdx) { sortAsc = !sortAsc; } else { sortCol = colIdx; sortAsc = true; }
-        // Update indicators
-        headers.forEach(h => {
-          let ind = h.querySelector('.sort-indicator');
-          if (ind) ind.remove();
-        });
-        const arrow = document.createElement('span');
-        arrow.className = 'sort-indicator';
-        arrow.textContent = sortAsc ? ' \u25B2' : ' \u25BC';
-        th.appendChild(arrow);
-        // Sort rows
-        const tbody = el.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        rows.sort((a, b) => {
-          const cellA = a.cells[colIdx], cellB = b.cells[colIdx];
-          if (!cellA || !cellB) return 0;
-          const va = parseValue(cellA, type), vb = parseValue(cellB, type);
-          let cmp = 0;
-          if (typeof va === 'number' && typeof vb === 'number') cmp = va - vb;
-          else cmp = String(va).localeCompare(String(vb));
-          return sortAsc ? cmp : -cmp;
-        });
-        rows.forEach(r => tbody.appendChild(r));
+      th.setAttribute('tabindex', '0');
+      th.setAttribute('role', 'button');
+      th.setAttribute('aria-sort', 'none');
+
+      th.addEventListener('click', () => doSort(th));
+      th.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          doSort(th);
+        }
       });
     });
   });

@@ -67,19 +67,23 @@
                         <td class="max-w-xs truncate text-base-content/60">{{ t.folders }}</td>
                         <td>
                             {% if t.enabled == 'yes' %}
-                            <span class="badge badge-success badge-md gap-1">Enabled</span>
+                            <span class="badge badge-success badge-md gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg> Enabled</span>
                             {% else %}
-                            <span class="badge badge-error badge-md gap-1">Disabled</span>
+                            <span class="badge badge-error badge-md gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg> Disabled</span>
                             {% endif %}
                         </td>
-                        <td><a href="{{ url_for('targets.edit', name=t.name) }}" class="btn btn-primary btn-xs">Edit</a></td>
+                        <td><a href="{{ url_for('targets.edit', name=t.name) }}" class="btn btn-primary btn-sm">Edit</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         {% else %}
-        <div class="p-8 text-center text-base-content/40">No sources configured</div>
+        <div class="p-8 text-center text-base-content/40">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            <p>No sources configured</p>
+            <a href="{{ url_for('targets.new') }}" class="btn btn-primary btn-sm mt-2">Add Source</a>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -109,14 +113,18 @@
                         <td><span class="badge badge-outline badge-md">{{ r.type }}</span></td>
                         <td>{{ r.host or '--' }}</td>
                         <td class="font-mono text-base-content/60">{{ r.base }}</td>
-                        <td><a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-primary btn-xs">Edit</a></td>
+                        <td><a href="{{ url_for('remotes.edit', name=r.name) }}" class="btn btn-primary btn-sm">Edit</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         {% else %}
-        <div class="p-8 text-center text-base-content/40">No destinations configured</div>
+        <div class="p-8 text-center text-base-content/40">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+            <p>No destinations configured</p>
+            <a href="{{ url_for('remotes.new') }}" class="btn btn-primary btn-sm mt-2">Add Destination</a>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -147,19 +155,23 @@
                         <td class="text-base-content/60">{{ s.targets or '--' }}</td>
                         <td>
                             {% if s.active == 'yes' %}
-                            <span class="badge badge-success badge-md gap-1">Active</span>
+                            <span class="badge badge-success badge-md gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg> Active</span>
                             {% else %}
-                            <span class="badge badge-error badge-md gap-1">Inactive</span>
+                            <span class="badge badge-error badge-md gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg> Inactive</span>
                             {% endif %}
                         </td>
-                        <td><a href="{{ url_for('schedules.edit', name=s.name) }}" class="btn btn-primary btn-xs">Edit</a></td>
+                        <td><a href="{{ url_for('schedules.edit', name=s.name) }}" class="btn btn-primary btn-sm">Edit</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         {% else %}
-        <div class="p-8 text-center text-base-content/40">No schedules configured</div>
+        <div class="p-8 text-center text-base-content/40">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <p>No schedules configured</p>
+            <a href="{{ url_for('schedules.new') }}" class="btn btn-primary btn-sm mt-2">Add Schedule</a>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -197,9 +209,9 @@
                         </td>
                         <td>
                             {% if job.status == 'success' %}
-                            <span class="badge badge-success badge-md gap-1">Success</span>
+                            <span class="badge badge-success badge-md gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg> Success</span>
                             {% elif job.status == 'failed' %}
-                            <span class="badge badge-error badge-md gap-1">Failed</span>
+                            <span class="badge badge-error badge-md gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg> Failed</span>
                             {% elif job.status == 'skipped' %}
                             <span class="badge badge-warning badge-md gap-1">Skipped</span>
                             {% else %}
@@ -213,7 +225,11 @@
         </div>
         {{ pagination(log_page, log_total_pages, '?log_page=') }}
         {% else %}
-        <div class="p-8 text-center text-base-content/40">No completed jobs found</div>
+        <div class="p-8 text-center text-base-content/40">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mx-auto mb-2 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <p>No completed jobs found</p>
+            <a href="{{ url_for('backup.index') }}" class="btn btn-primary btn-sm mt-2">Run a Backup</a>
+        </div>
         {% endif %}
     </div>
 </div>

@@ -69,12 +69,14 @@
     <script defer src="{{ url_for('static', filename='vendor/js/alpine.min.js') }}"></script>
     <style>th[data-sort] { cursor: pointer; user-select: none; }
     th[data-sort]:hover { color: oklch(var(--p)); }
+    th[data-sort]:focus-visible { outline: 2px solid oklch(var(--p)); outline-offset: 2px; }
     .sort-indicator { font-size: 0.65em; vertical-align: middle; }
     .btn.htmx-request { pointer-events: none; opacity: .7; }
     .btn.htmx-request::after { content: ''; display: inline-block; width: .75rem; height: .75rem; margin-left: .4rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .5s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }</style>
 </head>
 <body class="min-h-screen bg-base-100 text-base">
+<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:btn focus:btn-primary focus:btn-sm">Skip to content</a>
 
 <div id="gniza-toast" class="toast toast-top toast-end z-50 gap-2"></div>
 <script>
@@ -95,7 +97,7 @@ function gnizaCopy(text) {
         <!-- Header — always full width -->
         <div class="navbar bg-base-200 border-b border-base-300 sticky top-0 z-30">
             <div class="flex-none lg:hidden">
-                <label for="sidebar-toggle" class="btn btn-square btn-ghost">
+                <label for="sidebar-toggle" class="btn btn-square btn-ghost" aria-label="Toggle sidebar">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </label>
             </div>
@@ -104,11 +106,12 @@ function gnizaCopy(text) {
             </div>
             <div class="flex-none flex items-center gap-1">
                 <span id="running-tasks-badge"
+                      role="status" aria-live="polite"
                       hx-get="{{ url_for('jobs.running_badge') }}"
                       hx-trigger="load, every 5s"
                       hx-swap="outerHTML">
                 </span>
-                <div class="dropdown dropdown-end">
+                <div class="dropdown dropdown-end" aria-label="Theme selector">
                     <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
                     </div>
@@ -128,7 +131,7 @@ function gnizaCopy(text) {
 
         <!-- Page content + help panel side by side -->
         <div class="flex flex-1 min-h-0">
-            <main class="p-4 md:p-6 flex-1 min-w-0 flex flex-col">
+            <main id="main-content" class="p-4 md:p-6 flex-1 min-w-0 flex flex-col">
                 <div class="max-w-7xl mx-auto flex-1 w-full">
                     {% block content %}{% endblock %}
                 </div>

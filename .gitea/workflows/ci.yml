@@ -19,8 +19,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
-          pip install flask-compress
+          pip install pytest ruff
+          pip install textual textual-serve flask flask-wtf flask-compress waitress psutil markupsafe markdown
 
       - name: Lint with ruff
         run: ruff check --select E,F,W lib/ tui/ web/ daemon/ --ignore E501

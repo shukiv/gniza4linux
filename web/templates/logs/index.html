@@ -6,7 +6,7 @@
 
 {% block content %}
 {% set total_all = status_counts.values()|sum %}
-<div class="flex items-center justify-between mb-4">
+<div class="flex items-center justify-between flex-wrap gap-2 mb-4">
     <div class="flex gap-1 flex-wrap">
         <a href="{{ url_for('logs.index') }}" class="btn btn-sm {{ 'btn-primary' if not status_filter else 'btn-ghost' }}">All <span class="badge badge-sm ml-1">{{ total_all }}</span></a>
         <a href="{{ url_for('logs.index', status='success') }}" class="btn btn-sm {{ 'btn-success' if status_filter == 'success' else 'btn-ghost' }}">Success <span class="badge badge-sm ml-1">{{ status_counts.get('success', 0) }}</span></a>

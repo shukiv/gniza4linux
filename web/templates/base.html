@@ -104,7 +104,7 @@ function gnizaCopy(text) {
             <div class="flex-1">
                 <h1 class="text-lg font-semibold px-2">{% block page_title %}Dashboard{% endblock %}</h1>
             </div>
-            <div class="flex-none flex items-center gap-1">
+            <div class="flex-none flex items-center flex-wrap gap-1">
                 <span id="running-tasks-badge"
                       role="status" aria-live="polite"
                       hx-get="{{ url_for('jobs.running_badge') }}"

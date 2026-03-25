@@ -4,7 +4,7 @@
 {% block page_title %}Health{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="flex items-center justify-between flex-wrap gap-2 mb-6">
     <h2 class="text-xl font-semibold">Destination Health</h2>
     <button class="btn btn-primary btn-sm" onclick="document.querySelectorAll('[data-health-check]').forEach(el => htmx.trigger(el, 'load'))">
         Refresh All

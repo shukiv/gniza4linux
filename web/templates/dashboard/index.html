@@ -13,7 +13,7 @@
 </div>
 
 <!-- Stats Row -->
-<div class="stats shadow w-full mb-6">
+<div class="stats shadow w-full mb-6 stats-vertical sm:stats-horizontal">
     <a href="{{ url_for('targets.index') }}" class="stat cursor-pointer hover:bg-base-200 transition-colors">
         <div class="stat-title">Sources</div>
         <div class="stat-value">{{ targets|length }}</div>
@@ -44,7 +44,7 @@
 <!-- Sources Table -->
 <div class="card bg-base-200 shadow mb-6">
     <div class="card-body p-0">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-base-300">
+        <div class="flex items-center justify-between flex-wrap gap-2 px-6 py-4 border-b border-base-300">
             <a href="{{ url_for('targets.index') }}" class="card-title text-base hover:text-primary transition-colors">Sources</a>
         </div>
         {% if targets %}
@@ -91,7 +91,7 @@
 <!-- Destinations Table -->
 <div class="card bg-base-200 shadow mb-6">
     <div class="card-body p-0">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-base-300">
+        <div class="flex items-center justify-between flex-wrap gap-2 px-6 py-4 border-b border-base-300">
             <a href="{{ url_for('remotes.index') }}" class="card-title text-base hover:text-primary transition-colors">Destinations</a>
         </div>
         {% if remotes %}
@@ -132,7 +132,7 @@
 <!-- Schedules Table -->
 <div class="card bg-base-200 shadow mb-6">
     <div class="card-body p-0">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-base-300">
+        <div class="flex items-center justify-between flex-wrap gap-2 px-6 py-4 border-b border-base-300">
             <a href="{{ url_for('schedules.index') }}" class="card-title text-base hover:text-primary transition-colors">Schedules</a>
         </div>
         {% if schedules %}
@@ -179,7 +179,7 @@
 <!-- Recent Jobs -->
 <div class="card bg-base-200 shadow mb-6">
     <div class="card-body p-0">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-base-300">
+        <div class="flex items-center justify-between flex-wrap gap-2 px-6 py-4 border-b border-base-300">
             <h2 class="card-title text-base">Recent Jobs</h2>
             <a href="{{ url_for('logs.index') }}" class="btn btn-ghost btn-sm">View all</a>
         </div>

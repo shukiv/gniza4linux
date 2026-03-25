@@ -8,7 +8,7 @@
 <div x-data="{ showModal: false, deleteUrl: '', deleteName: '', showRunAll: false }"
      @open-delete.window="deleteName = $event.detail.name; deleteUrl = $event.detail.url; showModal = true">
 
-<div class="flex items-center justify-between mb-6">
+<div class="flex items-center justify-between flex-wrap gap-2 mb-6">
     <h2 class="text-xl font-semibold">Backup Schedules</h2>
     <div class="flex gap-2">
         <button class="btn btn-outline btn-sm" @click="showRunAll = true">

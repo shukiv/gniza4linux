@@ -283,7 +283,8 @@ class JobManager:
                 entry["cli_args"] = list(job._cli_args)
             entries.append(entry)
         try:
-            import fcntl, tempfile
+            import fcntl
+            import tempfile
             REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True)
             lock_path = str(REGISTRY_FILE) + ".lock"
             with open(lock_path, "w") as lock_f:

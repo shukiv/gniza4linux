@@ -465,7 +465,7 @@ def send_stale_alert(stale_sources):
 
     subject = f"[gniza] [{hostname}] Stale Backup Alert"
     lines = [
-        f"Stale Backup Alert",
+        "Stale Backup Alert",
         "=" * 30,
         f"Hostname: {hostname}",
         f"Timestamp: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}",

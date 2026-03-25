@@ -10,18 +10,15 @@ import os
 import subprocess
 import tempfile
 import time
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from lib.models import AppSettings
 
 from lib.core.context import BackupContext
 from lib.core.locking import TargetLock
-from lib.core.logging import get_logger, setup_backup_logger
+from lib.core.logging import get_logger
 from lib.core.snapshot import (
-    list_snapshots,
     get_latest_snapshot,
     clean_partial_snapshots,
     finalize_snapshot,
@@ -32,10 +29,9 @@ from lib.core.transfer import (
     transfer_local,
     transfer_ssh_to_local,
     transfer_ssh_to_ssh,
-    build_filter_args,
 )
 from lib.core.source import pull_folder_from_source
-from lib.core.utils import make_timestamp, human_size, human_duration, shquote
+from lib.core.utils import make_timestamp, human_duration, shquote
 
 
 def backup_target(
@@ -74,7 +70,7 @@ def backup_target(
 
     # Step 1: Load and validate target
     from lib.config import CONFIG_DIR, WORK_DIR, parse_conf, list_conf_dir
-    from lib.models import Target, Remote, AppSettings as AS
+    from lib.models import Target, AppSettings as AS
 
     target_conf = CONFIG_DIR / "targets.d" / ("%s.conf" % target_name)
     if not target_conf.exists():

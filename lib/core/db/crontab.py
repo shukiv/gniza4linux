@@ -5,7 +5,6 @@ Dumps per-user crontabs, /etc/crontab, and /etc/cron.d/ files.
 from __future__ import annotations
 
 import logging
-import os
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -14,9 +13,7 @@ if TYPE_CHECKING:
     from lib.core.context import BackupContext
 
 from lib.core.db.common import (
-    is_db_remote,
     run_db_command,
-    ssh_run_raw,
     validate_username,
 )
 

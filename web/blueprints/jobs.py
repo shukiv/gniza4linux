@@ -108,7 +108,7 @@ def stream(job_id):
                 yield f"data: {line}\n\n"
             job = web_job_manager.get_job(job_id)
             if not job:
-                yield f"event: done\ndata: not_found\n\n"
+                yield "event: done\ndata: not_found\n\n"
                 break
             if job.status != "running":
                 yield f"event: done\ndata: {job.status}\n\n"

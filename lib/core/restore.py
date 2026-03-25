@@ -8,7 +8,6 @@ from __future__ import annotations
 import os
 import subprocess
 import tempfile
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -16,7 +15,7 @@ if TYPE_CHECKING:
 
 from lib.core.context import BackupContext
 from lib.core.logging import get_logger
-from lib.core.snapshot import resolve_snapshot_timestamp, get_snapshot_dir
+from lib.core.snapshot import resolve_snapshot_timestamp
 from lib.core.utils import shquote
 from lib.ssh import SSHOpts
 
@@ -79,8 +78,8 @@ def restore_target(
     log = get_logger()
 
     # Load target and remote
-    from lib.config import CONFIG_DIR, WORK_DIR, parse_conf
-    from lib.models import Target, Remote, AppSettings
+    from lib.config import CONFIG_DIR, parse_conf
+    from lib.models import Target
 
     target_conf = CONFIG_DIR / "targets.d" / ("%s.conf" % target_name)
     if not target_conf.exists():
@@ -125,7 +124,7 @@ def restore_target(
 
         try:
             os.makedirs(restore_dest, exist_ok=True)
-        except OSError as e:
+        except OSError:
             log.error("Failed to create destination: %s", restore_dest)
             errors += 1
             continue
@@ -246,8 +245,7 @@ def restore_folder(
     log = get_logger()
 
     # Load target and remote
-    from lib.config import CONFIG_DIR, parse_conf
-    from lib.models import Target, Remote, AppSettings
+    from lib.config import CONFIG_DIR
 
     target_conf = CONFIG_DIR / "targets.d" / ("%s.conf" % target_name)
     if not target_conf.exists():
@@ -281,7 +279,7 @@ def restore_folder(
 
     try:
         os.makedirs(restore_dest, exist_ok=True)
-    except OSError as e:
+    except OSError:
         log.error("Failed to create destination: %s", restore_dest)
         return 1
 
@@ -326,7 +324,7 @@ def list_snapshot_contents(
     """
     log = get_logger()
 
-    from lib.config import CONFIG_DIR, parse_conf
+    from lib.config import CONFIG_DIR
 
     if not remote_name:
         log.error("No remote specified")

@@ -417,7 +417,6 @@ def transfer_local(
     Mirrors Bash rsync_local().
     Returns 0 on success, 1 on failure.
     """
-    from lib.ssh import SSHOpts
 
     # Use SSH retries default for max_retries (matches Bash)
     try:

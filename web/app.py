@@ -56,8 +56,8 @@ def create_app():
     if not stored_key:
         stored_key = secrets.token_urlsafe(32)
         print(f"\n{'='*60}")
-        print(f"  No WEB_API_KEY (password) configured.")
-        print(f"  Set WEB_API_KEY in gniza.conf to set a password.")
+        print("  No WEB_API_KEY (password) configured.")
+        print("  Set WEB_API_KEY in gniza.conf to set a password.")
         print(f"{'='*60}\n")
 
     # Read or generate salt

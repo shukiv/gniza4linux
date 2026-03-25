@@ -2,7 +2,6 @@
 
 import json
 import re
-import secrets
 import shlex
 import subprocess
 import threading

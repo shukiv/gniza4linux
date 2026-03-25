@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from lib.core.context import BackupContext
 
 from lib.core.logging import get_logger
-from lib.core.snapshot import get_snapshot_dir, is_snapshot_pinned, list_snapshots
+from lib.core.snapshot import get_snapshot_dir, list_snapshots
 from lib.ssh import SSHOpts
 
 
